@@ -1946,6 +1946,41 @@ export function soNguoiCan(question: string): string {
   return 'SỐ NGƯỜI CẦN: số liệu không có định mức (đơn mỗi người, thời gian khách chờ). KHÔNG đưa số người "nên có" như kết luận, không suy từ doanh thu (doanh thu 40% không có nghĩa cần 40% nhân sự). Nói thẳng chưa đủ số để chốt, nêu số người đang có nếu có, rồi cho 1 cách đo: thử 1 tuần, ghi số đơn mỗi giờ và thời gian khách chờ lúc đông; khách chờ lâu thì thêm, nhân viên rảnh nhiều thì bớt.';
 }
 
+/** 06/11: câu tiếp thị đã bám số nhưng không nói việc đó đáng bao nhiêu tiền ("giảm 10% có lời không" → chưa kết luận). Mã tính, không thêm lời dặn. */
+export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts | null | undefined, question: string): string {
+  const q = question.normalize('NFC').toLowerCase();
+  if (!f || f.revenue <= 0 || f.orders <= 0) return '';
+  // chỉ bật đúng chủ đề: "có nên giảm giá bạc xỉu" là một món, từng nhận cả phép tính giảm toàn menu
+  const canTang = /t[aă]ng (?:doanh|đ[oơ]n|kh[aá]ch)|doanh (?:thu|số) (?:\S+ ){0,3}(?:t[aă]ng|l[eê]n)|khuy[eế]n m[aã]i g[iì]|ch[aạ]y khuy[eế]n m[aã]i|combo|m[oờ]i th[eê]m|b[aá]n th[eê]m|đ[aẩ]y (?:m[oó]n|doanh)|k[eé]o kh[aá]ch|h[uú]t kh[aá]ch|qu[aả]ng c[aá]o|facebook|tiktok|marketing|ti[eế]p th[iị]|gi[oờ] v[aắ]ng|mua nhi[eề]u h[oơ]n/.test(q);
+  const toanMenu = /(?:c[aả]|to[aà]n|t[aấ]t c[aả]|đ[oồ]ng lo[aạ]t)(?: \S+)? (?:menu|m[oó]n|qu[aá]n)|gi[aả]m gi[aá] (?:chung|đ[oồ]ng lo[aạ]t)/.test(q) && /gi[aả]m/.test(q);
+  const hoiMa = /(?:^|\s)m[aã](?: gi[aả]m| khuy[eế]n m[aã]i|\s*$| \p{Lu})|voucher|khuy[eế]n m[aã]i/u.test(q);
+  if (!canTang && !toanMenu && !hoiMa) return '';
+  const cnt = weekdayCounts(f.from, f.to), bw = f.by_weekday;
+  const ngay = cnt && bw?.some((v) => v > 0) ? cnt.reduce((a, c, i) => a + (nn(bw[i]) > 0 ? c : 0), 0) : soNgay(f.period);
+  if (ngay < 1) return '';
+  const aov = f.revenue / f.orders, moiNgay = (don: number) => qty(Math.max(1, Math.round((don / ngay) * 10) / 10));
+  const out = [`Tăng 10% doanh thu kỳ này = thêm ${vnd(f.revenue * 0.1)} = khoảng ${moiNgay(f.orders * 0.1)} đơn nữa mỗi ngày bán, hoặc thêm ${vnd(Math.round(aov * 0.1 / 100) * 100)} mỗi đơn. Mỗi đơn thêm 3.000đ (mời thêm món nhỏ) = ${vnd(3000 * f.orders)}/kỳ.`];
+  const lieu = arr((m?.finance as Row | undefined)?.top_expense).find((x) => /nguy[eê]n li[eệ]u|nh[aậ]p h[aà]ng/iu.test(ss(x.name)));
+  const c = lieu ? nn(lieu.amount) / f.revenue : 0;
+  if (c >= 0.15 && c <= 0.8) {
+    const giam = /gi[aả]m[^\d%]{0,12}(\d{1,2})\s*%/.exec(q), d = giam ? +giam[1] / 100 : 0.1, con = 1 - c - d;
+    const pc = String(Math.round(c * 1000) / 10).replace('.', ',');
+    if (toanMenu) out.push(con <= 0
+      ? `Giảm ${Math.round(d * 100)}% toàn menu: tiền giảm đã lớn hơn phần còn lại sau nguyên liệu (nguyên liệu ${pc}% doanh thu), bán thêm bao nhiêu cũng không bù được.`
+      : `Giảm ${Math.round(d * 100)}% toàn menu: nguyên liệu đang ${pc}% doanh thu nên phải bán thêm khoảng ${Math.round((d / con) * 100)}% số đơn (${moiNgay((f.orders * d) / con)} đơn mỗi ngày) chỉ để giữ nguyên tiền còn lại sau nguyên liệu, chưa tính lương, mặt bằng.`);
+    const lon = [...arr((m?.khuyen_mai as Row | undefined)?.used)].sort((a, b) => nn(b.discount) - nn(a.discount))[0];
+    if (hoiMa && lon && nn(lon.discount) > 0) out.push(`Mã ${ss(lon.code)} đã bớt ${vnd(nn(lon.discount))}: mỗi đơn còn khoảng ${vnd(aov * (1 - c))} sau nguyên liệu, nên mã phải kéo thêm khoảng ${qty(Math.round(nn(lon.discount) / (aov * (1 - c))))} đơn mới bù đủ (chưa biết thực tế kéo được bao nhiêu).`);
+  }
+  // người chấm: Boom hay mời đúng món giá vốn 45–54% trong khi quán có món lời hơn
+  const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.qty > 0);
+  // mời thêm là món nhỏ: "mời thêm cơm tấm bì chả" cho người đã gọi cơm là vô lý
+  const moiThem = /m[oờ]i th[eê]m|b[aá]n th[eê]m|mua nhi[eề]u h[oơ]n/.test(q);
+  const tot = mon.filter((t) => t.cost! / t.price! <= 0.4 && (!moiThem || t.price! <= aov * 0.6)).sort((x, y) => y.price! - y.cost! - (x.price! - x.cost!)).slice(0, 3);
+  const cao = mon.filter((t) => t.cost! / t.price! > 0.45).sort((x, y) => y.qty - x.qty).slice(0, 3);
+  if (canTang && tot.length) out.push(`${moiThem ? 'Món nhỏ lời tốt, nên mời thêm' : 'Món lời nhiều mỗi phần, nên ưu tiên'}: ${tot.map((t) => `${t.name} lời ${vnd(t.price! - t.cost!)}/phần (giá vốn ${Math.round((t.cost! / t.price!) * 100)}%)`).join('; ')}.${cao.length ? ` Giá vốn cao, đừng giảm giá hay tặng kèm: ${cao.map((t) => `${t.name} ${Math.round((t.cost! / t.price!) * 100)}%`).join('; ')}.` : ''}`);
+  return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${out.join(' ')}`;
+}
+
 /** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
 export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
   if (!muc?.length) return '';
@@ -2080,6 +2115,7 @@ export function buildMessages(
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
     soNguoiCan(question),
+    baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
@@ -2624,6 +2660,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     extra?.modules ? formatModules(extra.modules, now, question, extra.facts ?? null) : '',
     extra?.chain ? formatChain(extra.chain) : '',
     caBan(extra?.facts, question),
+    baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, now, extra?.facts),
     kichBanGia(extra?.facts, question),
     todayBlock(now),

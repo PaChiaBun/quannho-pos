@@ -22,6 +22,7 @@ import {
   matchTokens,
   cacheKey,
   blockReason,
+  baiToanTiepThi,
   buildMessages,
   choXemSo,
   soNguoiCan,
@@ -1540,4 +1541,32 @@ Deno.test('ghiKy: nhận đúng câu đã nói kỳ, không coi tháng 11 là đ
 Deno.test('loaiCau: chữ e (em) và giảm giá không nhận khung chẩn đoán', () => {
   for (const q of ['e muốn hỏi doanh thu', 'cho e xin doanh thu', 'mã giảm giá đang có gì', 'bao nhiêu đơn giảm giá']) assertEquals(loaiCau(q), null, q);
   for (const q of ['mon nao e', 'dạo này ế quá', 'ế quá', 'bán ế', 'doanh thu giảm', 'hôm nay vắng', 'vì sao giảm']) assertEquals(loaiCau(q), 'chan_doan', q);
+});
+
+Deno.test('baiToanTiepThi: tính hoà vốn giảm giá và mục tiêu 10%', () => {
+  const f = parseFacts({ period: 'Tháng này (1–10/10/2026)', from: '2026-10-01', to: '2026-10-10', revenue: 10000000, orders: 200 })!;
+  const m = parseModules({ finance: { period: 'x', top_expense: [{ name: 'Nguyên liệu', amount: 4000000 }] }, khuyen_mai: { period: 'x', used: [{ code: 'A', times: 10, discount: 300000 }, { code: 'B', times: 5, discount: 900000 }] } })!;
+  const t = baiToanTiepThi(f, m, 'giảm giá 10% cả menu có lời không');
+  assertStringIncludes(t, 'thêm 1.000.000đ');
+  assertStringIncludes(t, 'phải bán thêm khoảng 20% số đơn');
+  const ma = baiToanTiepThi(f, m, 'có nên chạy mã giảm giá không');
+  assertStringIncludes(ma, 'Mã B đã bớt 900.000đ');
+  assertStringIncludes(ma, 'kéo thêm khoảng 30 đơn');
+  assertStringIncludes(baiToanTiepThi(f, m, 'giảm 60% toàn menu có được không'), 'không bù được');
+  assertEquals(baiToanTiepThi(f, m, 'doanh thu tháng này bao nhiêu'), '');
+  assertEquals(baiToanTiepThi(f, m, 'có nên giảm giá bạc xỉu không'), '');
+  assert(!baiToanTiepThi(f, m, 'có nên chạy mã giảm giá không').includes('toàn menu'));
+  assertStringIncludes(baiToanTiepThi(f, m, 'có nên chạy mã giảm giá không'), 'Mã B');
+  assert(!baiToanTiepThi(f, m, 'làm sao tăng doanh số').includes('Mã B'));
+  const g = parseFacts({ period: 'Tháng này (1–10/10/2026)', from: '2026-10-01', to: '2026-10-10', revenue: 10000000, orders: 200, groups: [{ name: 'N', revenue: 1, qty: 1, items: 2, unsold: 0, unsold_names: [], top: [{ name: 'Nước', qty: 5, revenue: 100000, price: 20000, cost: 6000 }, { name: 'Cơm', qty: 9, revenue: 360000, price: 40000, cost: 22000 }], slow: [] }] })!;
+  const tt = baiToanTiepThi(g, null, 'nhân viên nên mời thêm món gì');
+  assertStringIncludes(tt, 'Nước lời 14.000đ/phần');
+  assertStringIncludes(tt, 'đừng giảm giá hay tặng kèm: Cơm 55%');
+  const g2 = parseFacts({ period: 'Tháng này (1–10/10/2026)', from: '2026-10-01', to: '2026-10-10', revenue: 10000000, orders: 200, groups: [{ name: 'N', revenue: 1, qty: 1, items: 2, unsold: 0, unsold_names: [], top: [{ name: 'Cơm to', qty: 5, revenue: 100000, price: 45000, cost: 10000 }, { name: 'Trứng', qty: 9, revenue: 90000, price: 8000, cost: 3000 }], slow: [] }] })!;
+  const t2 = baiToanTiepThi(g2, null, 'bán thêm món gì');
+  assertStringIncludes(t2, 'Trứng lời 5.000đ/phần');
+  assert(!t2.includes('Cơm to lời'));
+  assertStringIncludes(baiToanTiepThi(g2, null, 'làm sao tăng doanh số'), 'Cơm to lời');
+  assertEquals(baiToanTiepThi(null, m, 'tăng doanh số thế nào'), '');
+  assert(!baiToanTiepThi(f, null, 'tăng doanh số thế nào').includes('toàn menu'));
 });
