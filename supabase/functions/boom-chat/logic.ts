@@ -2001,7 +2001,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const uong = (f.groups ?? []).filter((g) => /u[oố]ng|n[uư][oớ]c|tr[aà]\b|c[aà] ph[eê]|sinh t[oố]/iu.test(g.name));
     const qUong = uong.reduce((a, g) => a + g.qty, 0), rUong = uong.reduce((a, g) => a + g.revenue, 0);
     if (qUong > 0 && rUong < f.revenue * 0.3 && qUong / f.orders < 0.8) co.push({ t: `đồ uống từ ${qty(Math.round((qUong / f.orders) * 100) / 100)} lên ${qty(Math.round((qUong / f.orders + 0.1) * 100) / 100)} phần mỗi đơn`, v: f.orders * 0.1 * (rUong / qUong) });
-    if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. Nên làm hướng nhiều tiền trước, nói rõ là ước.`);
+    if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. Câu đầu nêu hướng đứng đầu kèm số tiền ước, việc làm bám hướng đó trước; nói rõ là ước.`);
   }
   // người chấm: Boom hay mời đúng món giá vốn 45–54% trong khi quán có món lời hơn
   const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.qty > 0);
