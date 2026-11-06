@@ -2,7 +2,7 @@
   "_ghi_chu": "Mã băm file nguồn lúc bài được rà lại lần cuối. Ghi bằng tool/dong_dau_huong_dan.dart.",
   "bai": {
     "ban-hang.md": {
-      "lib/core/providers/app_providers.dart": "9891a503651b27b6",
+      "lib/core/providers/app_providers.dart": "a8d1c42acdc06aaf",
       "lib/core/widgets/order_detail_dialog.dart": "64516eb78d08e0de",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
       "lib/modules/pos/repository/pos_repository.dart": "3b092c1a3f94f53a",
@@ -40,7 +40,7 @@
     },
     "in-hoa-don.md": {
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "aec1e69fd2d84a4e",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "36c4df3ff2510491",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "0592e9405d40aee9",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
       "lib/modules/bill_printer/screens/print_rules_screen.dart": "ab8bdd344e611481",
@@ -71,7 +71,7 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "9891a503651b27b6",
+      "lib/core/providers/app_providers.dart": "a8d1c42acdc06aaf",
       "lib/core/utils/quantity_formatter.dart": "2d36b37e9622aee8",
       "lib/modules/kho/repository/kho_repository.dart": "50e45fe6b23d3c9c",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "c14d5138282e39ff",
@@ -196,7 +196,7 @@
       "lib/core/services/app_update_manager.dart": "282ca160d860dddc",
       "lib/core/services/bug_reporter_service.dart": "8e58b11c1e419ea4",
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "aec1e69fd2d84a4e",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "36c4df3ff2510491",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "0592e9405d40aee9",
       "lib/modules/qr_order/providers/qr_order_providers.dart": "59f84e785d6dadef",
       "lib/screens/ban_screen.dart": "8bf0d3b177d7c36e",
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b",

@@ -34,6 +34,13 @@ const _kAllModules = [
 // Key mới — tránh xung đột với legacy SharedPrefs key cũ
 const _kSupabaseKey  = 'module_config_v2';
 const _kLegacyPrefsKey = 'module_configs_v1'; // key cũ để migrate
+const _kLastGoodPrefix = 'module_config_last_good_v1_';
+
+/// Chờ bao lâu trước lần đọc lại thứ [attempt] (từ 0) khi chưa đọc được cấu hình module.
+Duration moduleRetryDelay(int attempt) {
+  const seconds = [3, 5, 10, 20];
+  return Duration(seconds: attempt < seconds.length ? seconds[attempt] : 30);
+}
 
 /// Kết quả nạp danh sách module từ máy chủ: phân biệt "chưa có dòng" với "lỗi/không đọc được".
 class ActiveIdsFetch {
@@ -104,7 +111,32 @@ class ModuleRepository {
   /// Danh sách tốt gần nhất theo quán: dùng khi đọc lỗi/anon để không rơi về mặc định.
   static final Map<String, List<String>> _lastGoodIds = {};
   static SupabaseClient get _sb => Supabase.instance.client;
+  /// Đọc lỗi liên tiếp chỉ ghi log một lần cho mỗi quán (app tự đọc lại mỗi vài giây).
+  static final Set<String> _warnedStores = {};
   final _uuid = const Uuid();
+
+  /// Lưu xuống máy: mở app lúc mất mạng vẫn có đúng module của quán, không rơi về mặc định
+  /// (KAY 06/11: mặc định tắt Bếp nên bàn C 4 không gửi bếp được).
+  @visibleForTesting
+  static Future<void> saveLastGoodIds(String storeId, List<String> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('$_kLastGoodPrefix$storeId', ids);
+    } catch (e) {
+      debugPrint('[ModuleRepo] saveLastGoodIds error: $e');
+    }
+  }
+
+  @visibleForTesting
+  static Future<List<String>?> readLastGoodIds(String storeId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getStringList('$_kLastGoodPrefix$storeId');
+    } catch (e) {
+      debugPrint('[ModuleRepo] readLastGoodIds error: $e');
+      return null;
+    }
+  }
 
   Future<String?> _storeId() async {
     final info = await StoreAuthService.getStoreInfo();
@@ -123,7 +155,11 @@ class ModuleRepository {
       final raw = row?['value'] as String?;
       if (raw == null) return const ActiveIdsFetch(ids: null, ok: true);
       final ids = (jsonDecode(raw) as List).cast<String>();
-      _lastGoodIds[storeId] = List<String>.of(ids);
+      if (!listEquals(_lastGoodIds[storeId], ids)) {
+        _lastGoodIds[storeId] = List<String>.of(ids);
+        await saveLastGoodIds(storeId, ids);
+      }
+      _warnedStores.remove(storeId);
       return ActiveIdsFetch(ids: ids, ok: true);
     } catch (e) {
       debugPrint('[ModuleRepo] _fetchActiveIds error: $e');
@@ -150,9 +186,12 @@ class ModuleRepository {
   }
 
   // ── Lấy toàn bộ modules (active state từ Supabase) ────────────────────────
-  Future<List<ModuleConfig>> getAll() async {
+  Future<List<ModuleConfig>> getAll() async => (await load()).modules;
+
+  /// Như [getAll], thêm `ok = false` khi không đọc được máy chủ: danh sách chỉ là tạm, cần đọc lại.
+  Future<({List<ModuleConfig> modules, bool ok})> load() async {
     final storeId = await _storeId();
-    if (storeId == null) return List.from(_kAllModules);
+    if (storeId == null) return (modules: List<ModuleConfig>.from(_kAllModules), ok: true);
 
     final fetched = await _fetchActiveIdsResult(storeId);
     var activeIds = fetched.ids;
@@ -171,13 +210,16 @@ class ModuleRepository {
         await prefs.remove(_kLegacyPrefsKey);
       } else {
         // Đọc lỗi hoặc đang dùng khóa anon: KHÔNG ghi đè cấu hình thật trên máy chủ.
-        activeIds = _lastGoodIds[storeId] ?? await _migrateFromSharedPrefs();
-        AppLogger.warning(
-          'modules',
-          'Không đọc được cấu hình module (ok=${fetched.ok}) -> dùng '
-          '${_lastGoodIds.containsKey(storeId) ? "bản gần nhất" : "mặc định"} '
-          'tạm thời, KHÔNG ghi lên máy chủ',
-        );
+        final lastGood = _lastGoodIds[storeId] ?? await readLastGoodIds(storeId);
+        activeIds = lastGood ?? await _migrateFromSharedPrefs();
+        if (_warnedStores.add(storeId)) {
+          AppLogger.warning(
+            'modules',
+            'Không đọc được cấu hình module (ok=${fetched.ok}) -> dùng '
+            '${lastGood != null ? "bản gần nhất" : "mặc định"} '
+            'tạm thời, KHÔNG ghi lên máy chủ',
+          );
+        }
       }
     }
 
@@ -200,7 +242,7 @@ class ModuleRepository {
       }
     }
 
-    return result;
+    return (modules: result, ok: fetched.ok);
   }
 
   // ── Migrate từ SharedPreferences ─────────────────────────────────────────

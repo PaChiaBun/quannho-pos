@@ -1855,6 +1855,45 @@ class StationPrinterDispatcher {
   /// Hàng đợi do công cụ "Cài máy in" tạo (QN-ThuNgan, QN-Bep, QN-Bar, QN-Tem).
   static bool isQnRawQueue(String name) => name.startsWith('QN-');
 
+  /// Khổ giấy cuộn báo cho driver Windows: chiều dài thật của phiếu. Thư viện `printing` đổi
+  /// chiều cao vô hạn thành số vô nghĩa, driver tự chọn trang nên phiếu dài bị cắt (mất món,
+  /// KAY 06/11). Không ngắn hơn bề ngang: thư viện sẽ tự xoay ngang trang.
+  /// 3.000 mm: chiều dài giấy trong lệnh in của Windows chỉ chứa được tới 3.276 mm.
+  static PdfPageFormat rollFormatForPage(
+    PdfPageFormat format,
+    double pageHeightPt,
+  ) {
+    if (format.height != double.infinity || pageHeightPt <= 0) return format;
+    final height = pageHeightPt.clamp(
+      format.width,
+      3000 * PdfPageFormat.mm,
+    );
+    return format.copyWith(height: height);
+  }
+
+  static Future<PdfPageFormat> _fitRollToPdf(
+    Uint8List pdf,
+    PdfPageFormat format,
+  ) async {
+    if (!Platform.isWindows || format.height != double.infinity) return format;
+    try {
+      var tallest = 0.0;
+      // 72 dpi: mỗi điểm ảnh đúng bằng 1 pt của PDF, chỉ để đo nên không cần nét.
+      await for (final page in Printing.raster(pdf, dpi: 72)) {
+        if (page.height > tallest) tallest = page.height.toDouble();
+      }
+      final fitted = rollFormatForPage(format, tallest);
+      writePrintLog(
+        '[_dispatchPrint] Trang cao ${(fitted.height / PdfPageFormat.mm).round()} mm',
+      );
+      return fitted;
+    } catch (e) {
+      // Đo lỗi vẫn phải in: thà có nguy cơ cụt phiếu còn hơn bếp không có phiếu.
+      writePrintLog('[_dispatchPrint ERROR] Không đo được trang: $e');
+      return format;
+    }
+  }
+
   static Future<bool> _printRawRaster(
     Uint8List pdf,
     PrinterConfig config,
@@ -1943,7 +1982,7 @@ class StationPrinterDispatcher {
             printer: targetPrinter,
             onLayout: (_) async => bytes,
             name: jobName,
-            format: finalFormat,
+            format: await _fitRollToPdf(bytes, finalFormat),
           );
           writePrintLog('[_dispatchPrint] Result: $success');
           return success;

@@ -98,17 +98,34 @@ final allCustomersProvider = StreamProvider.autoDispose<List<CustomerModel>>((re
 });
 
 /// Tất cả modules (refresh khi session thay đổi)
-final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) async* {
+final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  yield await ref.read(moduleRepositoryProvider).getAll();
+  return _modulesWithRetry(ref);
 });
 
 /// Chỉ active modules (refresh khi session thay đổi)
-final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) async* {
+final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  final all = await ref.read(moduleRepositoryProvider).getAll();
-  yield all.where((m) => m.isActive).toList();
+  return _modulesWithRetry(ref).map(
+    (all) => all.where((m) => m.isActive).toList(),
+  );
 });
+
+/// Mở app lúc mất mạng thì danh sách chỉ là tạm: đọc lại tới khi được, không bắt nhân viên
+/// tắt mở app. Lúc đang lỗi không phát gì nên phải tự dừng theo [alive], không chờ huỷ luồng.
+Stream<List<ModuleConfig>> _modulesWithRetry(Ref ref) async* {
+  final repo = ref.read(moduleRepositoryProvider);
+  var alive = true;
+  ref.onDispose(() => alive = false);
+  var result = await repo.load();
+  yield result.modules;
+  for (var attempt = 0; alive && !result.ok; attempt++) {
+    await Future.delayed(moduleRetryDelay(attempt));
+    if (!alive) return;
+    result = await repo.load();
+    if (result.ok) yield result.modules;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS PROVIDERS
