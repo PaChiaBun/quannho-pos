@@ -164,8 +164,15 @@ Deno.test('docKy: cách nói kỳ thường gặp (06/11, hôm nay Thứ Sáu 6/
     const r = docKy(q, now);
     assertEquals([r.tu.slice(0, 10), r.den.slice(0, 10)], [tu, den], q);
   }
+  const homNay = ['nay dc bn r', 'hum nay bán sao', 'tổng tiền nay', 'được nhiêu rồi', 'bán đc nhiêu rồi'];
+  for (const q of homNay) assertEquals(docKy(q, now).nhan, 'Hôm nay', q);
+  for (const q of ['tn ban dc bn', 'th này bán sao', 't này bán được nhiêu']) assert(docKy(q, now).nhan.startsWith('Tháng này'), q);
+  for (const q of ['tt ban dc bn', 't trước bán sao']) assert(docKy(q, now).nhan.startsWith('Tháng trước'), q);
+  assertEquals(docKy('qua dc bn', now).tu.slice(0, 10), '2026-11-05');
+  // "được nhiêu rồi" sau câu có kỳ thì giữ kỳ đó
+  assert(docKy('được nhiêu rồi', now, 'tháng trước bán sao').nhan.startsWith('Tháng trước'));
   const mac = docKy('món nào bán chạy', now).nhan;
-  for (const q of ['quán này bán gì được', 'em này bán tốt không', 'mỗi ngày 20 ly thì sao', 'chủ nhật này', 'hôm trước khách phàn nàn món bún bò quá mặn nên xử lý sao em']) assertEquals(docKy(q, now).nhan, mac, q);
+  for (const q of ['t2 ban sao', 't7 có đông không', 'tn khách phàn nàn', 'quán này bán gì được', 'em này bán tốt không', 'mỗi ngày 20 ly thì sao', 'chủ nhật này', 'hôm trước khách phàn nàn món bún bò quá mặn nên xử lý sao em']) assertEquals(docKy(q, now).nhan, mac, q);
   const y = docKy('tháng này so với cùng kỳ năm ngoái', now);
   assertEquals([y.truocTu.slice(0, 10), y.truocDen.slice(0, 10), y.nhanTruoc], ['2025-11-01', '2025-11-06', 'cùng kỳ năm ngoái (1/11–6/11/2025)']);
   assert(y.nhan.startsWith('Tháng này'));

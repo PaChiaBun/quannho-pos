@@ -199,10 +199,12 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
     return t.getUTCDate() === d ? motNgay(t, now) : null;
   });
   // bỏ dấu thì "tới nay" trùng "tối nay": "đầu tháng tới nay" từng đọc thành hôm nay
-  them(/\b(?:(?:ngay )?hom nay|hnay|bua nay|sang nay|trua nay|chieu nay|(?<!\b(?:thang|thg|nam|tuan|\d) )toi nay)\b/, () => kyCo('hom_nay', now));
-  them(/^nay (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_nay', now));
+  them(/\b(?:(?:ngay )?hom nay|hnay|hum nay|bua nay|sang nay|trua nay|chieu nay|(?<!\b(?:thang|thg|nam|tuan|\d) )toi nay)\b/, () => kyCo('hom_nay', now));
+  them(/^nay (?=(?:ban|duoc|dc|thu|doanh|dt|co|e|dong|vang|khach|don|tong)\b)/, () => kyCo('hom_nay', now));
+  // "tổng tiền nay", "thu nay": "nay" đứng cuối câu ngắn
+  if (f.split(' ').length <= 5) them(/\b(?:tien|thu|ban|dc|duoc|don|doanh thu|dt) nay$/, () => kyCo('hom_nay', now));
   them(/(?:^(?:toi|den) (?:gio|h)|\b(?:tu sang|sang (?:gio|h)))\b/, () => kyCo('hom_nay', now));
-  them(/^qua (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_qua', now));
+  them(/^qua (?=(?:ban|duoc|dc|thu|doanh|dt|co|e|dong|vang|khach|don|tong)\b)/, () => kyCo('hom_qua', now));
   // "hôm trước" trong câu ngắn: hiểu là hôm qua, nhãn kỳ cho chủ quán thấy để chỉnh; câu dài thường kể chuyện, không phải hỏi số
   if (f.split(' ').length <= 8) them(/\b(?:hom|bua) truoc\b/, () => kyCo('hom_qua', now));
   // máy chủ đọc số tối đa 92 ngày, dòng KỲ BỊ GIỚI HẠN nói rõ giới hạn
@@ -220,12 +222,16 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
   them(/\btuan (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
   them(/\b(?:thang|thg) nay nam (?:ngoai|truoc|trc|roi)\b/, () => thang(nowM, nowY - 1, now));
-  them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay| h\b)|den (?:gio|h)\b|toi h\b|\d))|dau (?:thang|thg) (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
-  them(/\b(?:thang|thg) (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
+  them(/^tn (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi)\b)/, () => kyCo('thang_nay', now));
+  them(/^tt (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi)\b)/, () => kyCo('thang_truoc', now));
+  them(/\b(?:(?:thang|thg|th|t) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay| h\b)|den (?:gio|h)\b|toi h\b|\d))|dau (?:thang|thg) (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
+  them(/\b(?:thang|thg|th|t) (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
   // "tháng 9", "tháng 12 năm ngoái"; tháng chưa tới năm nay → năm ngoái
   them(/\b(?:thang|thg|t) ?(\d{1,2})\b(?! (?:lan|trieu|tr|k|nghin|ngan|ly|phan)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {
     const mo = +m[1];
     if (mo < 1 || mo > 12) return null;
+    // "t2 bán sao": người bán hay gọi thứ 2 là t2 nên không đọc thành tháng 2 khi không ghi năm
+    if (/^t ?[2-7]\b/.test(m[0]) && !m[2]) return null;
     const y = m[2] && m[2] !== 'nay' ? nowY - 1 : mo > nowM ? nowY - 1 : nowY;
     return thang(mo, y, now);
   });
@@ -321,7 +327,8 @@ export function docKy(question: string, now: Date = new Date(), cauTruoc?: strin
     chinh = kyCo(tenNay, vn);
     so = kySo(chinh, k, f);
   } else {
-    chinh = ds[0]?.doan ?? macDinh(vn);
+    // "được nhiêu rồi": không nêu kỳ mà hỏi số tới lúc này thì hiểu là hôm nay; đã có kỳ câu trước thì giữ kỳ đó
+    chinh = ds[0]?.doan ?? (f.split(' ').length <= 6 && /\b(?:nhieu|bn) r(?:oi)?$/.test(f) ? kyCo('hom_nay', vn) : macDinh(vn));
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
     so = k2 ? kySo(chinh, k2, f) : chinh.truoc();
   }
