@@ -23,6 +23,7 @@ import {
   cacheKey,
   blockReason,
   buildMessages,
+  choXemSo,
   ghiKy,
   loaiCau,
   khuyenNguoc,
@@ -1487,4 +1488,9 @@ Deno.test('quán chưa lưu khách: chỉ nêu số khách khi được hỏi v�
   const m = parseModules({ khach: { period: '30 ngày qua', total: 0, new: 0, returning: 0, with_points: 0, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0, top: [] } })!;
   assertStringIncludes(formatModules(m, now, 'quán có bao nhiêu khách đã lưu'), '0 khách đã lưu');
   assert(!formatModules(m, now, 'món nào bán chạy').includes('KHÁCH HÀNG'));
+});
+
+Deno.test('choXemSo: không chỉ tới màn không có, chỉ đúng chỗ có', () => {
+  for (const [q, y] of [['bàn nào thu nhiều tiền nhất', 'DOANH THU THEO BÀN'], ['đơn lớn nhất tháng này bao nhiêu', 'ĐƠN LỚN NHẤT'], ['bao nhiêu đơn mang về', 'TÁCH ĐƠN'], ['ai đang nợ tiền quán', 'CÔNG NỢ'], ['món nào bị huỷ nhiều nhất', 'Huỷ/Duyệt'], ['còn bao nhiêu tiền trong két', 'Thu Chi']]) assertStringIncludes(choXemSo(q), y);
+  for (const q of ['món nào bán chạy', 'khách mang về nhiều nên làm gì', 'có nên thêm bàn không', 'tháng này bán sao', 'huỷ món đã gửi bếp thế nào']) assertEquals(choXemSo(q), '', q);
 });

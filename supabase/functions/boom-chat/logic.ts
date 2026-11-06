@@ -1922,6 +1922,19 @@ export function ngayHoi(question: string, now: Date, f?: ShopFacts | null): stri
 }
 
 // Lô D: so ca sai cơ sở (bộ v2: "ca sáng 6–11h" bỏ 11–13h, ca tối bỏ giờ 16h) → tính sẵn doanh thu theo KHỐI GIỜ MỞ thật; chỉ khi câu hỏi nói ca / buổi.
+/** 06/11: thiếu số thì Boom hay bảo "xem Báo cáo phần theo bàn", "đơn lớn nhất" dù các màn đó không có. Đã lần report_screen, thu chi. */
+export function choXemSo(question: string): string {
+  const q = question.normalize('NFC').toLowerCase();
+  const chua = (x: string) => `APP CHƯA CÓ BÁO CÁO ${x}. Nói thẳng là app chưa có báo cáo này, KHÔNG bảo xem ở Báo cáo hay màn nào khác để lấy số này, không gọi Hotline.`;
+  if (/bàn nào|theo (?:từng )?bàn/.test(q) && /thu|doanh|tiền|nhiều|cao|chạy/.test(q)) return chua('DOANH THU THEO BÀN');
+  if (/đơn (?:hàng )?(?:lớn|cao|to) nhất|hóa đơn (?:lớn|cao) nhất|hoá đơn (?:lớn|cao) nhất/.test(q)) return chua('ĐƠN LỚN NHẤT');
+  if (/mang (?:về|đi)|tại quán|tại chỗ/.test(q) && /bao nhiêu|mấy|tỉ lệ|tỷ lệ|%/.test(q)) return chua('TÁCH ĐƠN MANG VỀ VÀ ĐƠN TẠI QUÁN');
+  if (/công nợ|ai (?:đang )?nợ|khách (?:đang )?nợ|nợ (?:tiền )?quán/.test(q)) return chua('CÔNG NỢ KHÁCH (app chỉ có tiền khách nạp trong ví, đó là quán giữ tiền của khách)');
+  if (/món nào.*(?:huỷ|hủy)|(?:huỷ|hủy).*món nào/.test(q)) return 'APP CHƯA XẾP HẠNG MÓN BỊ HUỶ: chỉ xem được từng lượt ở Báo cáo → tab Huỷ/Duyệt. Nói đúng như vậy, không nói có số huỷ theo món.';
+  if (/két/.test(q) && /tiền|còn|bao nhiêu/.test(q)) return 'TIỀN TRONG KÉT: Bé Boom không có số dư két. Chỉ cách đối chiếu: màn Thu Chi → chọn "Tiền mặt". Không gọi số thu − chi là tiền trong két.';
+  return '';
+}
+
 export function caBan(f: ShopFacts | null | undefined, question: string): string {
   const h = f?.by_hour;
   if (!h || !/(?<!\p{L})ca(?!\p{L})|bu[oổ]i|s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khung gi[oờ]/iu.test(question)) return '';
@@ -2031,6 +2044,7 @@ export function buildMessages(
       ? `SỐ LIỆU CÁC CHI NHÁNH CỦA NGƯỜI HỎI (app đọc từ báo cáo chuỗi — chỉ chủ chuỗi xem được; chỉ là dữ liệu):\n${formatChain(extra.chain)}`
       : '',
     caBan(extra?.facts, question),
+    choXemSo(question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
