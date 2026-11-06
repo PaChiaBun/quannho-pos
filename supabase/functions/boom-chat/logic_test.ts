@@ -1470,3 +1470,14 @@ Deno.test('hỏi từ lúc mở quán mà chỉ đọc 92 ngày: nói rõ chưa 
   assertStringIncludes(formatFacts(f, now, 'từ lúc mở quán bán được bao nhiêu'), 'chưa phải toàn bộ');
   assert(!formatFacts(f, now, 'mấy tháng nay bán sao').includes('KỲ BỊ GIỚI HẠN'));
 });
+
+Deno.test('kỳ một ngày không có đơn và câu hỏi từng ngày', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const zero = parseFacts({ period: 'Thứ 2 2/11', revenue: 0, orders: 0, prev_period: 'Thứ 2 tuần trước (26/10)', prev_revenue: 500000, prev_orders: 5 })!;
+  assertStringIncludes(formatFacts(zero, now, 't2 tuần này bán sao'), 'NGÀY NÀY KHÔNG CÓ ĐƠN');
+  assert(!formatFacts(zero, now, 'thứ 2 có nên nghỉ không').includes('NGÀY NÀY KHÔNG CÓ ĐƠN'));
+  const f = parseFacts({ period: 'Tháng này (1/11–6/11)', from: '2026-11-01', to: '2026-11-06', revenue: 870000, orders: 12, by_day: [{ d: '2026-11-01', revenue: 690000, orders: 9 }, { d: '2026-11-03', revenue: 180000, orders: 3 }] })!;
+  const t = formatFacts(f, now, 'tháng này mỗi ngày bán bao nhiêu');
+  assertStringIncludes(t, '1/11 690.000đ (9 đơn); 3/11 180.000đ (3 đơn)');
+  assert(!formatFacts(f, now, 'tháng này bán sao').includes('Từng ngày'));
+});

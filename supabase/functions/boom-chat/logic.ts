@@ -955,10 +955,16 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   // Kỳ 1 ngày: nhiều món chưa ai gọi là bình thường → không nêu "món chưa bán" (Chủ Quán thấy "57 món chưa bán" 24/10)
   // lần 51: câu dự báo cũng bỏ món chưa bán — GPT chèn "ẩn món chưa bán" vào câu "tuần này chắc được bao nhiêu" (D47)
   const duBao = loaiCau(question) === 'du_bao';
-  const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC')) || duBao;
+  // 06/11: "Thứ 2 2/11" là nhãn kỳ một ngày của máy chủ, trước đây vẫn liệt kê món chưa bán
+  const motNgayKy = /^(?:hôm (?:nay|qua|kia)|thứ \d|chủ nhật)/i.test(f.period.normalize('NFC'));
+  const shortPeriod = motNgayKy || duBao;
   // Tính sẵn % so kỳ trước + giá trị đơn trung bình (GPT hay bỏ qua / tính sai — chấm cố vấn 24/10)
   const avg = f.orders > 0 ? ` Trung bình ${vnd(f.revenue / f.orders)} / đơn.` : '';
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
+  // 06/11: ngày 0 đơn vẫn viết đủ Vì sao / Việc tuần này, bảo rà nguyên liệu và nhập giá vốn
+  if (motNgayKy && f.orders === 0 && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
+    lines.push('NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu: nói ngày đó 0đ, 0 đơn (nếu là hôm nay thì "tới giờ này"), nêu số của kỳ so sánh nếu có, rồi hỏi quán có nghỉ hay bán ngoài app không. KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG nhắc món, giá vốn, nguyên liệu.');
+  }
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
   const prof = shopProfile(f);
   if (prof) lines.unshift(`HỒ SƠ QUÁN (tự suy từ số liệu): ${prof}`);
@@ -1054,7 +1060,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const tong = f.cashiers.reduce((t, x) => t + x.revenue, 0);
     lines.push(`Doanh thu theo thu ngân trong kỳ (cùng số với Báo cáo): ${[...f.cashiers].sort((a, b) => b.revenue - a.revenue).map((x) => `${x.name} ${vnd(x.revenue)} (${pctTxt((x.revenue / tong) * 100)}%)`).join('; ')}. Đây là người bấm thanh toán, phụ thuộc ca làm, KHÔNG dùng để kết luận ai bán giỏi.`);
   }
-  if (f.by_day?.length && /(?:ng[aà]y|h[oô]m) n[aà]o|ng[aà]y (?:cao|th[aấ]p|đ[oô]ng|v[aắ]ng|nhi[eề]u|[ií]t)/iu.test(question)) {
+  // 06/11: "mỗi ngày bán bao nhiêu" từng trả lời chưa có số từng ngày dù máy chủ đã đọc được
+  if (f.by_day?.length && f.by_day.length <= 31 && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng) ng[àa]y/iu.test(question)) {
+    lines.push(`Từng ngày có đơn trong kỳ (cùng số với Báo cáo, ngày không ghi là không có đơn${f.by_day.some((x) => x.d === f.to) && todayD >= 0 ? ', hôm nay còn đang dở' : ''}): ${f.by_day.map((x) => `${+x.d.slice(8, 10)}/${+x.d.slice(5, 7)} ${vnd(x.revenue)} (${x.orders} đơn)`).join('; ')}.`);
+  } else if (f.by_day?.length && /(?:ng[aà]y|h[oô]m) n[aà]o|ng[aà]y (?:cao|th[aấ]p|đ[oô]ng|v[aắ]ng|nhi[eề]u|[ií]t)/iu.test(question)) {
     // hôm nay chưa hết ngày → không xếp hạng
     const xd = f.by_day.filter((x) => x.d !== f.to || todayD < 0);
     if (xd.length) {
