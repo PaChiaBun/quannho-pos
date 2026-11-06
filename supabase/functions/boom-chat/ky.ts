@@ -222,8 +222,8 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
   them(/\btuan (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
   them(/\b(?:thang|thg) nay nam (?:ngoai|truoc|trc|roi)\b/, () => thang(nowM, nowY - 1, now));
-  them(/^tn (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi)\b)/, () => kyCo('thang_nay', now));
-  them(/^tt (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi)\b)/, () => kyCo('thang_truoc', now));
+  them(/^tn (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi|ck|tm|tien|mon|gio|bn)\b)/, () => kyCo('thang_nay', now));
+  them(/^tt (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi|ck|tm|tien|mon|gio|bn)\b)/, () => kyCo('thang_truoc', now));
   them(/\b(?:(?:thang|thg|th|t) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay| h\b)|den (?:gio|h)\b|toi h\b|\d))|dau (?:thang|thg) (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
   them(/\b(?:thang|thg|th|t) (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
   // "tháng 9", "tháng 12 năm ngoái"; tháng chưa tới năm nay → năm ngoái

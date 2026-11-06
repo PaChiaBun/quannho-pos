@@ -167,7 +167,7 @@ Deno.test('docKy: cách nói kỳ thường gặp (06/11, hôm nay Thứ Sáu 6/
   const homNay = ['nay dc bn r', 'hum nay bán sao', 'tổng tiền nay', 'được nhiêu rồi', 'bán đc nhiêu rồi'];
   for (const q of homNay) assertEquals(docKy(q, now).nhan, 'Hôm nay', q);
   for (const q of ['tn ban dc bn', 'th này bán sao', 't này bán được nhiêu']) assert(docKy(q, now).nhan.startsWith('Tháng này'), q);
-  for (const q of ['tt ban dc bn', 't trước bán sao']) assert(docKy(q, now).nhan.startsWith('Tháng trước'), q);
+  for (const q of ['tt ban dc bn', 't trước bán sao', 'tt ck bn', 'tt tm bn', 'tt mon nao chay']) assert(docKy(q, now).nhan.startsWith('Tháng trước'), q);
   assertEquals(docKy('qua dc bn', now).tu.slice(0, 10), '2026-11-05');
   // "được nhiêu rồi" sau câu có kỳ thì giữ kỳ đó
   assert(docKy('được nhiêu rồi', now, 'tháng trước bán sao').nhan.startsWith('Tháng trước'));
