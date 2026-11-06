@@ -1,6 +1,6 @@
 // Test lay_so.ts — KHÔNG gọi mạng: fetch giả trả JSON theo bảng (đường dẫn) + tham số.
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { type Ctx, docMuc, docQuyen, type Ky, mucDuocXem, type Quyen, xemDuocBanHang } from './lay_so.ts';
+import { type Ctx, docMuc, docQuyen, type Ky, mucDuocXem, type Quyen, soKhuyenMai, xemDuocBanHang } from './lay_so.ts';
 import { parseModules } from './logic.ts';
 
 type Row = Record<string, unknown>;
@@ -249,7 +249,9 @@ Deno.test('docMuc quản lý: đủ 5 mục, đúng khoá / số, parseModules n
     ],
     active_count: 2,
     used: [{ code: 'GIAM10', times: 2, discount: 15000 }],
-    used_scope: 'ban',
+    used_scope: 'all',
+    no_code_orders: 1,
+    no_code_discount: 15000,
     orders: 3,
     orders_with_discount: 1,
     discount_total: 15000,
@@ -304,4 +306,17 @@ Deno.test('docMuc: mục lỗi / quá 6 giây → loi, mục khác vẫn có', a
   assert(Date.now() - t < 7500);
   assertEquals(loi, ['Thu Chi', 'Khuyến mãi']);
   assertEquals(Object.keys(modules), ['kho', 'nhan_su', 'khach']);
+});
+
+Deno.test('soKhuyenMai: đọc mã trong ghi chú đơn quầy như thẻ Voucher, tách giảm không qua mã', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const r = soKhuyenMai([], [{ id: 's1', session_id: 'p1', coupon_code: 'ban5', coupon_discount: 5000 }, { id: 's2', coupon_code: 'ZERO', coupon_discount: 0 }], [
+    { id: 'a', discount: 10000, total: 90000, note: 'khách quen [Voucher: giam10]' },
+    { id: 'b', discount: 4000, total: 50000, note: 'Coupon: GIAM10 nhé' },
+    { id: 'c', discount: 3000, total: 50000, note: 'giảm tay' },
+    { id: 'd', discount: 5000, total: 50000, note: null }, // đơn đã chốt qua bàn, không đếm lại
+    { id: 'e', discount: 0, total: 20000, note: '[Voucher: KHONGGIAM]' },
+  ], 'Tháng trước', now, new Set(['d']));
+  assertEquals(r.used, [{ code: 'GIAM10', times: 2, discount: 14000 }, { code: 'BAN5', times: 1, discount: 5000 }]);
+  assertEquals([r.no_code_orders, r.no_code_discount, r.orders_with_discount, r.discount_total], [1, 3000, 4, 22000]);
 });

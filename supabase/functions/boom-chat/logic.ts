@@ -699,7 +699,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
             : ' Số lần dùng từng mã: chưa có số (chỉ đọc được bán tại bàn, kỳ này chưa có) — KHÔNG kết luận mã nào không ai dùng.'
           : used.length
           ? ` Mã được dùng: ${used.map((x) => `${ss(x.code)} ${nn(x.times)} lần, quán bớt cho khách ${vnd(nn(x.discount))} (trung bình ${vnd(nn(x.discount) / Math.max(1, nn(x.times)))} / lần) = ${pctOf(nn(x.discount), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm`).join('; ')}.`
-          : ' Chưa mã nào được dùng trong kỳ.'),
+          : ' Chưa đơn nào dùng mã giảm giá / voucher trong kỳ, khớp thẻ Voucher của Báo cáo.') +
+        (nn(p.no_code_orders) > 0 ? ` ${nn(p.no_code_orders)} đơn giảm tổng ${vnd(nn(p.no_code_discount))} KHÔNG qua mã (giảm trực tiếp trên đơn), không phải voucher; hỏi voucher thì nói tách riêng hai loại.` : ''),
     );
     // lần 49: GPT coi tiền giảm là doanh thu mã mang về → "mã dùng nhiều hiệu quả hơn" (D37), "tắt mã thì doanh thu giảm 9 triệu" (D46)
     if (used.length) {

@@ -746,7 +746,7 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   assertStringIncludes(t, '50 khách đến từ 2 lần trở lên (25%)');
   assertStringIncludes(t, 'GIAM10 giảm 10%');
   assertStringIncludes(t, 'tổng giảm 100.000đ = 1% giá trị trước giảm');
-  assertStringIncludes(t, 'Chưa mã nào được dùng');
+  assertStringIncludes(t, 'Chưa đơn nào dùng mã giảm giá');
   // chữ bẩn / khoá lạ / quá sâu bị bỏ
   const bad = parseModules({ finance: { period: 'x\u0000"""y', 'Bad-Key': 1, top_expense: [{ name: 'a', deep: { deeper: { deepest: 1 } } }] } })!;
   assertEquals((bad.finance as Record<string, unknown>).period, 'x "y');

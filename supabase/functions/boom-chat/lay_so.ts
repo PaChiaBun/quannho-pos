@@ -327,15 +327,21 @@ async function khuyenMai(ctx: Ctx, ky: Ky, signal: AbortSignal) {
     ], signal),
     // Lượt dùng mã: bảng thanh toán (pos_coupon_redemptions không mở quyền đọc cho app)
     tatCa(ctx, 'payment_settlements', [
-      ['select', 'id,coupon_code,coupon_discount'],
+      ['select', 'id,session_id,coupon_code,coupon_discount,discount'],
       ...s,
       ['status', 'eq.completed'],
       ['coupon_code', 'not.is.null'],
       ...trongKy('created_at', ky.tu, ky.den),
     ], signal),
-    tatCa(ctx, 'orders', [['select', 'id,discount,total_amount,total'], ...s, ['status', 'eq.completed'], ...trongKy('created_at', ky.tu, ky.den)], signal),
+    tatCa(ctx, 'orders', [['select', 'id,discount,total_amount,total,note'], ...s, ['status', 'eq.completed'], ...trongKy('created_at', ky.tu, ky.den)], signal),
   ]);
-  return soKhuyenMai(coupons, redemptions, orders, ky.nhan, new Date());
+  // Đơn đã chốt qua bàn nằm trong payment_settlements, bỏ để không đếm trùng (như thẻ Voucher của Báo cáo)
+  const linked = new Set<string>();
+  const phien = [...new Set(redemptions.map((x) => s0(x.session_id)).filter(Boolean))];
+  for (let i = 0; i < phien.length; i += 100) {
+    for (const r of await doc(ctx, 'ban_session_orders', [['select', 'order_id'], ['session_id', `in.(${phien.slice(i, i + 100).join(',')})`]], signal)) linked.add(s0(r.order_id));
+  }
+  return soKhuyenMai(coupons, redemptions, orders, ky.nhan, new Date(), linked);
 }
 
 /** Mỗi mục tối đa [ms]: quá hạn → huỷ các lần gọi đang chờ và ném lỗi. */
@@ -596,7 +602,10 @@ export function soKhach(total: number, newInPeriod: number, returning: number, t
   };
 }
 
-export function soKhuyenMai(coupons: Row[], redemptions: Row[], orders: Row[], period: string, now: Date) {
+// = _VoucherTab của Báo cáo: bán tại quầy ghi mã trong ghi chú đơn
+const maTrongGhiChu = (note: unknown) => (/\[Voucher:\s*([^\]]+)\]/i.exec(s0(note)) ?? /(?:Voucher|Mã giảm giá|Coupon):\s*([A-Za-z0-9_-]+)/i.exec(s0(note)))?.[1]?.trim().toUpperCase() ?? '';
+
+export function soKhuyenMai(coupons: Row[], redemptions: Row[], orders: Row[], period: string, now: Date, linked: Set<string> = new Set()) {
   const live = (c: Row) => {
     if (c.is_active === false) return false;
     const end = ngay(c.end_date), start = ngay(c.start_date);
@@ -604,18 +613,27 @@ export function soKhuyenMai(coupons: Row[], redemptions: Row[], orders: Row[], p
   };
   const used = new Map<string, { n: number; d: number }>();
   for (const x of redemptions) {
-    const code = s0(x.coupon_code).trim().toUpperCase();
-    if (!code) continue;
+    const code = s0(x.coupon_code).trim().toUpperCase(), d = n(x.coupon_discount ?? x.discount ?? x.discount_amount);
+    if (!code || d <= 0) continue;
     const u = used.get(code) ?? { n: 0, d: 0 };
-    used.set(code, { n: u.n + 1, d: u.d + n(x.coupon_discount ?? x.discount_amount) });
+    used.set(code, { n: u.n + 1, d: u.d + d });
   }
-  let disc = 0, revenue = 0, withDisc = 0;
+  let disc = 0, revenue = 0, withDisc = 0, noCode = 0, noCodeD = 0;
   for (const o of orders) {
     const d = n(o.discount);
     revenue += n(o.total_amount ?? o.total);
     if (d > 0) {
       disc += d;
       withDisc++;
+      if (linked.has(s0(o.id))) continue;
+      const code = maTrongGhiChu(o.note);
+      if (code) {
+        const u = used.get(code) ?? { n: 0, d: 0 };
+        used.set(code, { n: u.n + 1, d: u.d + d });
+      } else {
+        noCode++;
+        noCodeD += d;
+      }
     }
   }
   const dangChay = coupons.filter(live);
@@ -635,8 +653,9 @@ export function soKhuyenMai(coupons: Row[], redemptions: Row[], orders: Row[], p
     }),
     active_count: dangChay.length,
     used: giam([...used.entries()], (e) => e[1].n).slice(0, 8).map(([code, u]) => ({ code, times: u.n, discount: r2(u.d) })),
-    // Lượt dùng từng mã chỉ đọc được ở bán tại bàn (bán tại quầy ghi vào bảng app chưa được đọc)
-    used_scope: 'ban',
+    used_scope: 'all',
+    no_code_orders: noCode,
+    no_code_discount: r2(noCodeD),
     orders: orders.length,
     orders_with_discount: withDisc,
     discount_total: r2(disc),
