@@ -1536,3 +1536,8 @@ Deno.test('ghiKy: nhận đúng câu đã nói kỳ, không coi tháng 11 là đ
   for (const a of ['Trong 30 ngày quán bán 490.000đ.', 'Từ 8/10 quán bán 490.000đ.']) assertEquals(ghiKy(a, k, 'món nào bán chạy', now), a);
   for (const a of ['Từ đầu tháng tới ngày 6/11 có 180.000đ.', 'Từ 1–6/11 có 180.000đ.', 'Tháng 11 có 180.000đ.']) assertEquals(ghiKy(a, m, 'ck bao nhiêu', now), a);
 });
+
+Deno.test('loaiCau: chữ e (em) và giảm giá không nhận khung chẩn đoán', () => {
+  for (const q of ['e muốn hỏi doanh thu', 'cho e xin doanh thu', 'mã giảm giá đang có gì', 'bao nhiêu đơn giảm giá']) assertEquals(loaiCau(q), null, q);
+  for (const q of ['mon nao e', 'dạo này ế quá', 'ế quá', 'bán ế', 'doanh thu giảm', 'hôm nay vắng', 'vì sao giảm']) assertEquals(loaiCau(q), 'chan_doan', q);
+});

@@ -1818,7 +1818,8 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
   if (hit(' (?:so với|so sánh|(?<!(?:doanh|tổng) )so (?:tuần|tháng|năm|hôm|kỳ)|hơn hay|thua|khác gì|khác nhau|tăng hay giảm|tăng giảm|(?:lời|hiệu quả|chạy|ngon|đông) hơn|(?:món|nhóm|mã|ca|chi nhánh) nào (?:\\S+ ){0,3}(?:hơn|nhất)) ')) return 'so_sanh';
   if (hit(' (?:kế hoạch|lên kế hoạch|lên lịch|lộ trình|chiến lược|chương trình|nên làm gì|làm (?:\\S+ ){0,3}cho hiệu quả|làm gì (?:\\S+ ){0,3}(?:tháng|tuần) (?:sau|tới)) ')) return 'ke_hoach';
   if (hit(' (?:có nên|nên (?:\\S+ ){0,6}(?:không|ko|hông|k|chưa)|có đáng|được không|đc không|có sợ) ')) return 'quyet_dinh';
-  if (hit(' (?:sao|vì sao|tại sao|do đâu|do khoản|nguyên nhân|giảm|ế|vắng|tụt|bất thường|cao quá|nhiều quá|(?:khách|đơn|doanh thu|bán) (?:\\S+ ){0,2}(?:ít|thấp)) ')) return 'chan_doan';
+  // 06/11: bỏ dấu "e" (em) trùng "ế", "giảm giá" không phải doanh thu giảm: "e muốn hỏi doanh thu", "mã giảm giá đang có gì" từng nhận khung chẩn đoán
+  if (hit(' (?:sao|vì sao|tại sao|do đâu|do khoản|nguyên nhân|giảm(?! giá)|(?:bán|món|hàng|quán|nào|này|bị|nhóm) ế|ế (?:quá|ghê|vậy|thế|nhất|lắm)|vắng|tụt|bất thường|cao quá|nhiều quá|(?:khách|đơn|doanh thu|bán) (?:\\S+ ){0,2}(?:ít|thấp)) ')) return 'chan_doan';
   return null;
 }
 
