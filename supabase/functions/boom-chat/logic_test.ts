@@ -1050,7 +1050,7 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   const h = Array(24).fill(0), ph = Array(24).fill(0);
   h[7] = 600; ph[7] = 900; h[8] = 300; ph[8] = 320; h[15] = 100; ph[15] = 80;
   const f = parseFacts({
-    period: 'Tháng này', revenue: 1000, orders: 10, prev_period: 'Cùng kỳ tháng trước', prev_revenue: 1300, prev_orders: 13, top: [], slow: [],
+    period: 'Tháng này', revenue: 1000, orders: 100, prev_period: 'Cùng kỳ tháng trước', prev_revenue: 1300, prev_orders: 130, top: [], slow: [],
     from: '2026-10-01', to: '2026-10-28', prev_from: '2026-09-01', prev_to: '2026-09-28',
     by_hour: h, prev_by_hour: ph, by_weekday: [200, 200, 200, 200, 100, 100, 0], prev_by_weekday: [200, 200, 300, 300, 150, 150, 0],
     groups: [{ name: 'Cà phê', revenue: 800, prev_revenue: 1100, qty: 30, items: 3, unsold: 0, top: [], slow: [], unsold_names: [] }],
@@ -1675,6 +1675,7 @@ Deno.test('baiToanTiepThi: ít đơn không xếp hướng; mã có ngưỡng v�
   const it = L.baiToanTiepThi(co as never, null, 'tăng doanh thu thế nào');
   assertEquals(it.includes('chưa đủ để nói'), true);
   assertEquals(it.includes('Tăng 10%'), false);
+  assertEquals(L.baiToanTiepThi(co as never, null, 'làm sao kéo thêm khách').includes('chưa đủ để nói'), true);
   const nhieu = { ...co, revenue: 7000000, orders: 100, to: '2026-11-30' };
   const ma = L.baiToanTiepThi(nhieu as never, null, 'nên tạo mã giảm thế nào');
   // đơn 70.000đ → ngưỡng 85.000đ, thêm 15.000đ, giả sử còn 60% = 9.000đ
@@ -1685,4 +1686,17 @@ Deno.test('baiToanTiepThi: ít đơn không xếp hướng; mã có ngưỡng v�
 Deno.test('uuDaiTrongBai: bài không xin khuyến mãi thì không nhắc ưu đãi', () => {
   assertEquals(L.uuDaiTrongBai('viết bài giới thiệu quán', null).includes('KHÔNG nhắc ưu đãi'), true);
   assertEquals(L.uuDaiTrongBai('viết bài khuyến mãi', null).includes('[ưu đãi của quán]'), true);
+});
+
+Deno.test('kỳ ít đơn: changeLine bỏ giờ, thứ, món; khuyenTheoKyIt bắt việc theo giờ', () => {
+  const co = { revenue: 870000, orders: 12, prev_revenue: 25000000, prev_orders: 300, prev_period: 'cùng kỳ tháng trước', period: 'tháng này', from: '2026-11-01', to: '2026-11-06', prev_from: '2026-10-01', prev_to: '2026-10-06', by_hour: Array(24).fill(0), prev_by_hour: Array(24).fill(100000), by_weekday: [1, 1, 1, 1, 1, 1, 1], prev_by_weekday: [2, 2, 2, 2, 2, 2, 2], groups: [], moves: [{ name: 'Phở', qty: 1, prev_qty: 9, revenue: 1, prev_revenue: 9 }] };
+  assertEquals(L.changeLine(co as never), '');
+  assertEquals(L.changeLine({ ...co, orders: 300 } as never).includes('theo giờ'), true);
+  const ref = 'Kỳ này mới có 12 đơn, chưa đủ để nói giờ';
+  assertEquals(L.khuyenTheoKyIt('Việc tuần này: bớt 2.000đ cho đơn 8h–9h. Xem 30 ngày qua.', ref).length, 1);
+  assertEquals(L.khuyenTheoKyIt('Vì sao: 8h–9h giảm.\nViệc tuần này: nhắn khách cũ. Xem 30 ngày qua.', ref).length, 0);
+  assertEquals(L.khuyenTheoKyIt('Việc tuần này: nhắn khách cũ.', ref), ['thiếu gợi ý xem kỳ dài hơn']);
+  assertEquals(L.khuyenTheoKyIt('Việc tuần này: bớt 8h–9h.', 'khác').length, 0);
+  assertEquals(L.khuyenTheoKyIt('Việc tuần này: nhắn khách cũ.\n- Xem theo giờ trong 30 ngày qua trước khi chọn khung giờ.', ref).length, 0);
+  assertEquals(L.formatFacts(L.parseFacts(co)!, new Date('2026-11-06T14:00:00+07:00'), 'làm sao tăng doanh thu').includes('Việc nên nhắm'), false);
 });

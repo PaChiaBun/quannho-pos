@@ -808,6 +808,8 @@ function parseMoves(v: unknown): ShopFacts['moves'] {
 }
 
 /** Lần 59: tăng / giảm ở đâu so kỳ trước (tính sẵn) — giờ, thứ (trung bình / ngày), nhóm, món đổi nhiều nhất. */
+/** Dưới mức này trong một kỳ thì vài đơn lệch là đổi kết luận về giờ, thứ, món. */
+const IT_DON = 30;
 export function changeLine(f: ShopFacts, todayD = -1): string {
   if (f.prev_revenue === null) return '';
   const tang = f.revenue >= f.prev_revenue;
@@ -816,15 +818,17 @@ export function changeLine(f: ShopFacts, todayD = -1): string {
   // ghi theo chiều thời gian "kỳ trước → nay" để GPT không đọc ngược hay lấy nay trừ tiếp phần chênh (lần 60)
   const doi = (a: number, b: number) => `kỳ trước ${vnd(b)} → nay ${vnd(a)} (${sign(a - b)}${pct(a, b)})`;
   const parts: string[] = [];
+  // 06/11: kỳ 12 đơn so "8h: 6.307.000đ → 0đ" làm Boom khuyên ưu đãi đúng giờ đó và đặt mốc tiền theo giờ; ít đơn thì mọi giờ, thứ, món đều tụt như nhau
+  const itDon = f.orders < IT_DON;
   // giờ: 3 giờ đổi nhiều nhất theo chiều của tổng (giảm → giờ giảm nhiều nhất)
-  if (f.by_hour && f.prev_by_hour) {
+  if (!itDon && f.by_hour && f.prev_by_hour) {
     const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h], d: v - f.prev_by_hour![h] })).filter((x) => x.v > 0 || x.p > 0)
       .sort((a, b) => (tang ? b.d - a.d : a.d - b.d)).filter((x) => (tang ? x.d > 0 : x.d < 0)).slice(0, 3);
     if (hs.length) parts.push(`theo giờ, ${tang ? 'tăng' : 'giảm'} nhiều nhất: ${hs.map((x) => `${x.h}h ${doi(x.v, x.p)}`).join('; ')}`);
   }
   // thứ: trung bình / ngày (hai kỳ có thể khác số ngày mỗi thứ)
   const c1 = weekdayCounts(f.from, f.to), c0 = weekdayCounts(f.prev_from, f.prev_to);
-  if (f.by_weekday && f.prev_by_weekday && c1 && c0) {
+  if (!itDon && f.by_weekday && f.prev_by_weekday && c1 && c0) {
     const names = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
     // hôm nay chưa hết ngày, ngày cuối kỳ trước cũng bị cắt cùng giờ → không đếm hai ngày dở đó vào số ngày.
     // Không bỏ hẳn thứ đó: bỏ thì giấu mất ngày yếu thật khi hôm nay đúng là thứ yếu (chấm mù 05/11)
@@ -839,7 +843,7 @@ export function changeLine(f: ShopFacts, todayD = -1): string {
   }
   const gs = (f.groups ?? []).filter((g) => g.prev_revenue !== null && g.prev_revenue !== undefined);
   if (gs.length) parts.push(`theo nhóm: ${gs.map((g) => `${g.name} ${doi(g.revenue, g.prev_revenue!)}`).join('; ')}`);
-  if (f.moves?.length) parts.push(`món đổi nhiều nhất: ${f.moves.map((m) => `${m.name} kỳ trước ${m.prev_qty} phần → nay ${m.qty} phần (doanh thu ${sign(m.revenue - m.prev_revenue)})`).join('; ')}`);
+  if (!itDon && f.moves?.length) parts.push(`món đổi nhiều nhất: ${f.moves.map((m) => `${m.name} kỳ trước ${m.prev_qty} phần → nay ${m.qty} phần (doanh thu ${sign(m.revenue - m.prev_revenue)})`).join('; ')}`);
   return parts.length ? `SO ${f.prev_period!.toUpperCase()} — ${tang ? 'TĂNG' : 'GIẢM'} Ở ĐÂU (tính sẵn, số cùng độ dài kỳ): ${parts.join('. ')}. Dùng dòng này để nêu nguyên nhân có số (giờ / thứ / nhóm / món nào kéo ${tang ? 'tăng' : 'giảm'}); số không cho biết LÝ DO khách đổi.` : '';
 }
 
@@ -1036,7 +1040,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         viec = ` Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): ${monGiam.name} kỳ trước ${monGiam.prev_qty} → nay ${monGiam.qty} phần — GIỮ GIÁ (tăng giá làm mất thêm khách, giảm giá làm mỏng lời); nhân viên mời ${monGiam.name} kèm món đang bán chạy${khung}, ghi lên bảng ở quầy 2 tuần${ngayKy ? `; mốc đo: nay ~${tuan(monGiam.qty)} phần / tuần, mục tiêu ~${tuan((monGiam.qty + monGiam.prev_qty) / 2)} phần / tuần (nửa đường về mức cũ)` : ''}.`;
       } else if (hoiVi && f.revenue < f.prev_revenue!) {
         // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
-        if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]|ng[aà]y (?:v[aắ]ng|y[eế]u|[eế])|th[uứ] (?:\d|m[aấ]y)|(?:đ[aầ]u|cu[oố]i) tu[aầ]n/i.test(question)) {
+        if (f.orders >= IT_DON && Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]|ng[aà]y (?:v[aắ]ng|y[eế]u|[eế])|th[uứ] (?:\d|m[aấ]y)|(?:đ[aầ]u|cu[oố]i) tu[aầ]n/i.test(question)) {
           // ngưỡng giữ tính theo NGÀY — số khung giờ là của cả kỳ, thử chỉ 2 tuần
           const ngay = ngayMoBan(f);
           const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
@@ -1962,7 +1966,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const q = question.normalize('NFC').toLowerCase();
   if (!f || f.revenue <= 0 || f.orders <= 0) return '';
   // chỉ bật đúng chủ đề: "có nên giảm giá bạc xỉu" là một món, từng nhận cả phép tính giảm toàn menu
-  const canTang = /t[aă]ng (?:doanh|đ[oơ]n|kh[aá]ch)|doanh (?:thu|số) (?:\S+ ){0,3}(?:t[aă]ng|l[eê]n)|khuy[eế]n m[aã]i g[iì]|ch[aạ]y khuy[eế]n m[aã]i|combo|m[oờ]i th[eê]m|b[aá]n th[eê]m|đ[aẩ]y (?:m[oó]n|doanh)|k[eé]o kh[aá]ch|h[uú]t kh[aá]ch|qu[aả]ng c[aá]o|facebook|tiktok|marketing|ti[eế]p th[iị]|gi[oờ] v[aắ]ng|mua nhi[eề]u h[oơ]n/.test(q);
+  const canTang = /t[aă]ng (?:doanh|đ[oơ]n|kh[aá]ch)|doanh (?:thu|số) (?:\S+ ){0,3}(?:t[aă]ng|l[eê]n)|khuy[eế]n m[aã]i g[iì]|ch[aạ]y khuy[eế]n m[aã]i|combo|m[oờ]i th[eê]m|b[aá]n th[eê]m|đ[aẩ]y (?:m[oó]n|doanh)|k[eé]o (?:th[eê]m )?kh[aá]ch|h[uú]t (?:th[eê]m )?kh[aá]ch|qu[aả]ng c[aá]o|facebook|tiktok|marketing|ti[eế]p th[iị]|gi[oờ] v[aắ]ng|mua nhi[eề]u h[oơ]n/.test(q);
   const toanMenu = /(?:c[aả]|to[aà]n|t[aấ]t c[aả]|đ[oồ]ng lo[aạ]t)(?: \S+)? (?:menu|m[oó]n|qu[aá]n)|gi[aả]m gi[aá] (?:chung|đ[oồ]ng lo[aạ]t)/.test(q) && /gi[aả]m/.test(q);
   const hoiMa = /(?:^|\s)m[aã](?: gi[aả]m| khuy[eế]n m[aã]i|\s*$| \p{Lu})|voucher|khuy[eế]n m[aã]i/u.test(q);
   if (!canTang && !toanMenu && !hoiMa) return '';
@@ -1971,7 +1975,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   if (ngay < 1) return '';
   const aov = f.revenue / f.orders, moiNgay = (don: number) => qty(Math.max(1, Math.round((don / ngay) * 10) / 10));
   // 06/11: Demo 12 đơn mà Boom chỉ ra "giờ vắng", "thứ yếu"; vài đơn lệch là đổi kết luận
-  const itDon = f.orders < 30;
+  const itDon = f.orders < IT_DON;
   const out = itDon ? [`Kỳ này mới có ${qty(f.orders)} đơn, chưa đủ để nói giờ, thứ hay món nào yếu: KHÔNG khuyên theo giờ vắng, thứ yếu hay món bán chậm của kỳ này, cũng không tính "tăng 10%". Đơn trung bình ${vnd(aov)}. Nói thẳng điều này, gợi ý xem kỳ dài hơn (vd "30 ngày qua"), việc làm thì nhắm có thêm khách quay lại.`] : [`Tăng 10% doanh thu kỳ này = thêm ${vnd(f.revenue * 0.1)} = khoảng ${moiNgay(f.orders * 0.1)} đơn nữa mỗi ngày bán, hoặc thêm ${vnd(Math.round(aov * 0.1 / 100) * 100)} mỗi đơn. Mỗi đơn thêm 3.000đ (mời thêm món nhỏ) = ${vnd(3000 * f.orders)}/kỳ.`];
   const lieu = arr((m?.finance as Row | undefined)?.top_expense).find((x) => /nguy[eê]n li[eệ]u|nh[aậ]p h[aà]ng/iu.test(ss(x.name)));
   const c = lieu ? nn(lieu.amount) / f.revenue : 0;
@@ -2699,6 +2703,17 @@ export function soGanSai(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** 06/11: web Demo 12 đơn: nói "chưa đủ để kết luận giờ" rồi vẫn khuyên ưu đãi 8h–9h, không gợi ý kỳ dài hơn. Chỉ soi phần việc làm. */
+export function khuyenTheoKyIt(answer: string, ref: string): string[] {
+  if (!/Kỳ này mới có [\d.]+ đơn, chưa đủ để nói/.test(ref)) return [];
+  const i = answer.search(/việc (?:tuần này|làm|nên làm|cần làm)/iu), viec = i >= 0 ? answer.slice(i) : answer;
+  // câu bảo xem thêm số trước khi chọn giờ thì đúng ý, không bắt
+  const viecLam = viec.split(/(?<=[.!?;])\s+|\n+/).filter((c) => !/30 ngày|90 ngày|kỳ dài|chưa đủ|trước khi/iu.test(c)).join('\n');
+  const sai = [...viecLam.matchAll(/(?<![\d/.,])\d{1,2}\s*h?\s*[–-]\s*\d{1,2}\s*h(?!\p{L})|khung (?:giờ|sáng|trưa|chiều|tối)|giờ vắng|th[ứ] (?:[2-7]|hai|ba|tư|năm|sáu|bảy)(?!\p{L})|chủ nhật/giu)].map((x) => x[0]);
+  if (!/30 ngày|90 ngày|kỳ dài/iu.test(answer)) sai.push('thiếu gợi ý xem kỳ dài hơn');
+  return [...new Set(sai)];
+}
+
 /** 06/11: lời dặn "app không biết khách lâu chưa ghé" vẫn bị bỏ qua 4/6 lượt, nên kiểm bằng mã. Câu đã nói app không làm được hoặc làm tay thì không bắt. */
 export function viecAppKhongLam(answer: string): string[] {
   const sai: string[] = [];
@@ -2744,6 +2759,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const cheUuDai = uuDaiTuChe(answer, ref);
   const khongLam = viecAppKhongLam(answer);
   const thuNgoai = ngoaiThuBan(answer, ref);
+  const kyIt = khuyenTheoKyIt(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -2756,6 +2772,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   return [
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
+    ...(kyIt.length ? [`kỳ này quá ít đơn nên không khuyên theo giờ, theo thứ (${kyIt.join('; ')}) → bỏ việc theo giờ, thứ, không đặt mốc tiền theo giờ, thay bằng việc kéo khách quay lại; nói rõ nên xem "30 ngày qua" để có đủ số`] : []),
     ...(thuNgoai.length ? [`đề xuất ưu đãi vào ngày quán nghỉ (${thuNgoai.join(', ')}) → chỉ đề xuất ngày quán có bán`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
