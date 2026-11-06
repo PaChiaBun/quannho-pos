@@ -1582,3 +1582,14 @@ Deno.test('baiToanTiepThi: xếp hướng theo tiền và giả định khi thi�
   assertStringIncludes(baiToanTiepThi(f, null, 'giảm giá 10% cả menu có lời không'), 'GIẢ SỬ nguyên liệu 35–45%');
   assertStringIncludes(baiToanTiepThi(f, null, 'giảm giá 10% cả menu có lời không'), '18–22%');
 });
+
+Deno.test('combo tính sẵn không ghép món giá vốn trên 45%', () => {
+  const nhom = (name: string, top: unknown[]) => ({ name, revenue: 1000000, qty: 10, items: 2, unsold: 0, unsold_names: [], top, slow: [] });
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const a = parseFacts({ period: 'Tháng này (1–6/11)', revenue: 2000000, orders: 20, groups: [nhom('Cơm', [{ name: 'Sườn', qty: 9, revenue: 360000, price: 40000, cost: 22000 }, { name: 'Gà', qty: 5, revenue: 175000, price: 35000, cost: 14000 }]), nhom('Đồ uống', [{ name: 'Sâm', qty: 5, revenue: 60000, price: 12000, cost: 4000 }])] })!;
+  const t = formatFacts(a, now, 'nên làm combo gì');
+  assertStringIncludes(t, 'Gà + Sâm');
+  assert(!t.includes('Sườn + Sâm'));
+  const b = parseFacts({ period: 'Tháng này (1–6/11)', revenue: 2000000, orders: 20, groups: [nhom('Cơm', [{ name: 'Sườn', qty: 9, revenue: 360000, price: 40000, cost: 22000 }]), nhom('Đồ uống', [{ name: 'Sâm', qty: 5, revenue: 60000, price: 12000, cost: 4000 }])] })!;
+  assertStringIncludes(formatFacts(b, now, 'nên làm combo gì'), 'KHÔNG đề xuất combo giảm giá');
+});

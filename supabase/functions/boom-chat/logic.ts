@@ -1263,7 +1263,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         f.groups.map((g) => `${g.name} ${String(Math.round((g.qty / f.orders) * 100) / 100).replace('.', ',')} phần`).join('; ') + '.',
     );
     // Gợi ý combo tính sẵn: món chạy nhất nhóm doanh thu cao nhất + món chạy nhất của 1–2 nhóm kế; giá rẻ hơn lẻ 5–10%
-    const lead = f.groups[0]?.top[0];
+    // 06/11: người chấm: combo giảm giá ghép món giá vốn 51–54% rồi lại dặn đừng giảm món đó
+    const vonCao = (t?: FactItem | null) => !!(t?.cost && t.price && t.cost / t.price > 0.45);
+    const lead = f.groups[0]?.top.find((t) => !vonCao(t));
     const k = (n: number) => `${Math.round(n / 1000) * 1000}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
     // Ghép món chủ lực với món đi kèm: quán đồ uống → bánh / ăn vặt; quán đồ ăn → đồ uống / tráng miệng / ăn vặt
     // (rẻ hơn nhiều so với món chính). Không ghép 2 món chính, 2 đồ uống, món thêm / topping / combo.
@@ -1273,6 +1275,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const pairs = f.groups.slice(1)
       .filter((g) => !addon(g.name) && (g.top[0]?.price ?? 0) > 5000 && lead?.price)
       .filter((g) => (leadDrink ? !drink(g.name) : (g.top[0].price ?? 0) < (lead!.price ?? 0) * 0.6))
+      .filter((g) => !vonCao(g.top[0]))
       .slice(0, 2)
       .map((g) => g.top[0]);
     if (lead && pairs.length) {
@@ -1283,6 +1286,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
             return `${lead.name} + ${t.name}: lẻ ${vnd(sum)} → ${k(sum * 0.9)}–${k(sum * 0.95)}`;
           }).join('; ') + '.',
       );
+    } else if (!lead && f.groups[0]?.top.length) {
+      lines.push(`Combo: các món chạy nhất nhóm "${f.groups[0].name}" đều giá vốn trên 45% giá bán nên KHÔNG đề xuất combo giảm giá với các món này; muốn kéo đơn thì mời thêm món nhỏ giá vốn thấp, giữ nguyên giá món chính.`);
     }
     // lần 85: hỏi bán thêm MỘT nhóm (D27 "muốn bán thêm nước uống") — GPT quảng bá chung, bỏ sót nhóm chỉ ~7%, đẩy món chưa bán
     // → tính sẵn: tỉ trọng + phần / đơn, món nên mời (giá khá, bán được, không giá vốn cao), ghép với món chủ lực, mốc +30%
