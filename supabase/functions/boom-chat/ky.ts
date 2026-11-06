@@ -86,6 +86,7 @@ function motNgay(t: Date, now: Date): Doan {
   return { tu: t, den: cong(t, D), nhan: `${thuVN(t)} ${dm(t)}`, dangChay: false, truoc: () => ({ tu: b, den: cong(b, D), nhan: `${thuVN(b)} tuần trước (${dm(b)})` }) };
 }
 
+const TET: [number, number, number][] = [[2024, 2, 10], [2025, 1, 29], [2026, 2, 17], [2027, 2, 6], [2028, 1, 26]];
 const SO_THU: Record<string, number> = { hai: 1, '2': 1, ba: 2, '3': 2, tu: 3, '4': 3, nam: 4, '5': 4, sau: 5, '6': 5, bay: 6, '7': 6, nhat: 0, cn: 0 };
 
 /** Mọi lần nhắc kỳ trong câu (đã bỏ dấu), theo vị trí. */
@@ -102,7 +103,7 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
       if (d) out.push({ at, end, doan: d });
     }
   };
-  const soChu = (x: string) => ({ hai: 2, ba: 3, bon: 4 } as Record<string, number>)[x] ?? +x;
+  const soChu = (x: string) => ({ hai: 2, ba: 3, bon: 4, nam: 5, sau: 6, bay: 7, tam: 8, chin: 9, muoi: 10 } as Record<string, number>)[x] ?? +x;
   const gan = (n: number) => { const k = Math.min(n, 92), s = cong(hn, -(k - 1) * D); return khoang(now, s, cong(hn, D), cong(s, -k * D), `${k} ngày qua`, `${k} ngày trước đó`); };
   // 05/11: các luật này phải đứng trước "tháng qua" / "tuần qua": "3 tháng qua" từng bị đọc là tháng trước, "2 tuần qua" là tuần trước
   // "từ 1/10 đến 15/10", "1/10 - 15/10" (bỏ dấu thì gạch ngang thành khoảng trắng), "từ 1 đến 15/10"
@@ -121,33 +122,55 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   });
   them(/\b(\d) thang dau nam\b/, (m) => { const s = ngay(nowY, 1), k = Math.min(+m[1] * 30, 92); return khoang(now, s, cong(s, k * D), cong(s, -k * D), `${k} ngày đầu năm ${nowY}`, `${k} ngày trước đó`); });
   them(/\bnua nam(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi))?\b/, () => gan(92));
+  // 06/11: "từ 1/10 tới nay" từng đọc thành một ngày 1/10
+  them(/\btu (?:ngay )?(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(20\d{2}))? (?:den|toi) (?:nay|gio|bay gio|hom nay)\b/, (m) => {
+    const mo = +m[2];
+    if (mo < 1 || mo > 12) return null;
+    const s = ngay(m[3] ? +m[3] : ngay(nowY, mo, +m[1]) > hn ? nowY - 1 : nowY, mo, +m[1]), n = Math.round((hn.getTime() - s.getTime()) / D) + 1;
+    if (n < 1) return null;
+    return n > 92 ? gan(92) : khoang(now, s, cong(hn, D), cong(s, -n * D), `${n} ngày từ ${dm(s)}`, `${n} ngày trước đó`);
+  });
+  // "từ ngày 1 đến ngày 15", kèm "tháng trước" / "tháng 10" thì theo tháng đó, không kèm thì tháng gần nhất có đủ ngày
+  them(/\btu ngay (\d{1,2}) (?:den|toi) (?:ngay )?(\d{1,2})\b(?!\s*\/)(?: (?:cua )?(?:thang|thg) (truoc|trc|roi|qua|nay|\d{1,2}))?/, (m) => {
+    const a = +m[1], b = +m[2];
+    if (a < 1 || b > 31 || a >= b) return null;
+    const mo = !m[3] ? (b <= hn.getUTCDate() ? nowM : nowM - 1) : m[3] === 'nay' ? nowM : /\d/.test(m[3]) ? +m[3] : nowM - 1;
+    if (mo > 12) return null;
+    const y = mo > nowM ? nowY - 1 : nowY, s = ngay(y, mo, a), n = b - a + 1;
+    return khoang(now, s, ngay(y, mo, b + 1), cong(s, -n * D), `${n} ngày từ ${dm(s)}`, `${n} ngày trước đó`);
+  });
   // "30 ngày qua", "2 tuần nay", "3 tháng gần đây" (tới 92 ngày)
-  them(/(?<!\bthu )\b(\d{1,3}|hai|ba|bon) (ngay|hom|bua|tuan|thang)(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi|tro lai day))\b/, (m) => {
+  them(/(?<!\bthu )\b(\d{1,3}|hai|ba|bon|nam|sau|bay|tam|chin|muoi) (ngay|hom|bua|tuan|thang)(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi|tro lai day))\b/, (m) => {
     const c = soChu(m[1]), n = c * ({ tuan: 7, thang: 30 } as Record<string, number>)[m[2]] || c;
     return n < 1 ? null : gan(n);
   });
-  them(/\b(?:may|vai) (ngay|hom|bua|tuan|thang) (?:nay|qua|gan day)\b/, (m) => gan(m[1] === 'thang' ? 92 : m[1] === 'tuan' ? 14 : 7));
+  them(/\b(?:may|vai) (ngay|hom|bua|tuan|thang) (?:nay|qua|gan day|truoc)\b/, (m) => gan(m[1] === 'thang' ? 92 : m[1] === 'tuan' ? 14 : 7));
   // "2 tháng trước", "3 ngày trước", "tháng trước nữa", "tuần trước nữa"
   const thangLui = (n: number) => { const t = ngay(nowY, nowM - n); return thang(t.getUTCMonth() + 1, t.getUTCFullYear(), now); };
   const tuanLui = (n: number) => { const s = cong(t2, -7 * n * D); return khoang(now, s, cong(s, 7 * D), cong(s, -7 * D), `Tuần ${dm(s)}–${dm(cong(s, 6 * D))}`, 'tuần trước đó'); };
   them(/\b(?:thang|thg) (?:truoc|trc) nua\b/, () => thangLui(2));
   them(/\btuan (?:truoc|trc) nua\b/, () => tuanLui(2));
-  them(/(?<!\bthu )\b(\d{1,2}|hai|ba|bon) (ngay|hom|bua|tuan|thang) (?:truoc|trc)\b/, (m) => {
+  them(/(?<!\bthu )\b(\d{1,2}|hai|ba|bon|nam|sau|bay|tam|chin|muoi) (ngay|hom|bua|tuan|thang) (?:truoc|trc)\b/, (m) => {
     const n = soChu(m[1]);
     if (n < 1) return null;
     return m[2] === 'thang' ? thangLui(n) : m[2] === 'tuan' ? tuanLui(n) : motNgay(cong(hn, -n * D), now);
   });
   // "thứ 7 vừa rồi", "chủ nhật vừa rồi", "cuối tuần vừa rồi": ngày đã qua gần nhất
-  them(/\b(?:thu (hai|ba|tu|nam|sau|bay|[2-7])|chu (nhat)|(cn)) (?:vua roi|vua qua|roi|qua)\b/, (m) => {
-    const d = SO_THU[m[1] ?? m[2] ?? m[3]], lui = ((hn.getUTCDay() - d + 7) % 7) || 7;
-    return motNgay(cong(hn, -lui * D), now);
-  });
+  const THU = '(?:thu (hai|ba|tu|nam|sau|bay|[2-7])|t([2-7])|chu (nhat)|(cn))';
+  const thuCua = (m: RegExpExecArray) => SO_THU[m[1] ?? m[2] ?? m[3] ?? m[4]];
+  const thuVuaQua = (m: RegExpExecArray) => motNgay(cong(hn, -(((hn.getUTCDay() - thuCua(m) + 7) % 7) || 7) * D), now);
+  them(new RegExp(`\\b${THU} (?:vua roi|vua qua|roi|qua)\\b`), thuVuaQua);
+  them(new RegExp(`\\b(?:hom|bua) ${THU}\\b`), thuVuaQua);
   them(/\bcuoi tuan (?:vua roi|vua qua|roi|qua|truoc|trc)\b/, () => { const s = cong(t2, -2 * D); return khoang(now, s, t2, cong(s, -7 * D), `Cuối tuần ${dm(s)}–${dm(cong(t2, -D))}`, 'cuối tuần trước đó'); });
   // thứ cụ thể: "thứ 2 tuần trước", "chủ nhật tuần này\"
-  them(/\b(?:thu (hai|ba|tu|nam|sau|bay|[2-7])|chu (nhat)|(cn)) tuan (nay|truoc|trc|roi|qua)\b/, (m) => {
-    const d = SO_THU[m[1] ?? m[2] ?? m[3]];
-    const base = m[4] === 'nay' ? t2 : cong(t2, -7 * D);
-    return motNgay(cong(base, ((d + 6) % 7) * D), now);
+  them(new RegExp(`\\b${THU} tuan (nay|truoc|trc|roi|qua)\\b`), (m) => {
+    const base = m[5] === 'nay' ? t2 : cong(t2, -7 * D);
+    return motNgay(cong(base, ((thuCua(m) + 6) % 7) * D), now);
+  });
+  // "thứ 3 này": thứ đã qua trong tuần thì lấy số, chưa tới thì không phải kỳ số liệu
+  them(new RegExp(`\\b${THU} nay\\b`), (m) => {
+    const t = cong(t2, ((thuCua(m) + 6) % 7) * D);
+    return t > hn ? null : motNgay(t, now);
   });
   // ngày cụ thể dd/mm(/yyyy); chưa tới trong năm nay → năm ngoái
   them(/\b(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(20\d{2}))?\b/, (m) => {
@@ -162,20 +185,54 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
     const t = ngay(y, mo, d);
     return t > hn ? null : motNgay(t, now);
   });
-  them(/\b(?:(?:ngay )?hom nay|hnay|bua nay|sang nay|trua nay|chieu nay|toi nay)\b/, () => kyCo('hom_nay', now));
+  // "ngày 20 tháng 10" từng đọc thành cả tháng 10; "ngày 20" là ngày gần nhất đã qua; "mỗi ngày 2 ly" không phải kỳ
+  them(/\b(?:ngay|mung|hom) (\d{1,2}) (?:thang|thg) (\d{1,2})\b(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {
+    const mo = +m[2], d = +m[1];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    const y = m[3] && m[3] !== 'nay' ? nowY - 1 : ngay(nowY, mo, d) > hn ? nowY - 1 : nowY;
+    return motNgay(ngay(y, mo, d), now);
+  });
+  them(/(?<!\b(?:moi|1|mot) )\b(?:ngay|mung) (\d{1,2})\b(?! (?:ly|phan|lan|don|trieu|tr|k|nghin|ngan|kg|khach|ca|gio|mon|to|dia|thung|bich|goi|nguoi|thang)\b)/, (m) => {
+    const d = +m[1];
+    if (d < 1 || d > 31) return null;
+    const t = ngay(nowY, d <= hn.getUTCDate() ? nowM : nowM - 1, d);
+    return t.getUTCDate() === d ? motNgay(t, now) : null;
+  });
+  // bỏ dấu thì "tới nay" trùng "tối nay": "đầu tháng tới nay" từng đọc thành hôm nay
+  them(/\b(?:(?:ngay )?hom nay|hnay|bua nay|sang nay|trua nay|chieu nay|(?<!\b(?:thang|thg|nam|tuan|\d) )toi nay)\b/, () => kyCo('hom_nay', now));
+  them(/^nay (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_nay', now));
+  them(/(?:^(?:toi|den) gio|\b(?:tu sang|sang gio))\b/, () => kyCo('hom_nay', now));
+  them(/^qua (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_qua', now));
+  // "hôm trước" trong câu ngắn: hiểu là hôm qua, nhãn kỳ cho chủ quán thấy để chỉnh; câu dài thường kể chuyện, không phải hỏi số
+  if (f.split(' ').length <= 8) them(/\b(?:hom|bua) truoc\b/, () => kyCo('hom_qua', now));
+  // máy chủ đọc số tối đa 92 ngày, dòng KỲ BỊ GIỚI HẠN nói rõ giới hạn
+  them(/\b(?:tu truoc (?:toi|den) (?:gio|nay)|tu (?:luc|khi|hoi) (?:moi )?(?:mo|khai truong)(?: quan)?)\b/, () => gan(92));
+  // Tết: 10 ngày trước tới 6 ngày sau mùng 1, chỉ khi nói rõ Tết đã qua
+  them(/\btet (nam nay|vua roi|vua qua|roi|nam ngoai|nam truoc|nam roi)\b/, (m) => {
+    const qua = TET.filter((t) => ngay(t[0], t[1], t[2]) <= hn), t = qua[qua.length - (/ngoai|truoc|nam roi/.test(m[1]) ? 2 : 1)];
+    if (!t) return null;
+    const s = cong(ngay(t[0], t[1], t[2]), -10 * D);
+    return khoang(now, s, cong(s, 17 * D), cong(s, -17 * D), `Tết ${t[0]}`, '17 ngày trước đó');
+  });
   // 05/11: "hôm kia bán bao nhiêu" rơi về 30 ngày qua
   them(/\b(?:hom kia|hum kia|bua kia)\b/, () => motNgay(cong(hn, -2 * D), now));
   them(/\b(?:(?:ngay )?hom qua|hqua|hum qua|hom wa|bua qua|toi qua|dem qua|sang qua|trua qua|chieu qua)\b/, () => kyCo('hom_qua', now));
-  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua)))\b/, () => kyCo('tuan_nay', now));
-  them(/\btuan (?:truoc|trc|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
+  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
+  them(/\btuan (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
+  them(/\b(?:thang|thg) nay nam (?:ngoai|truoc|trc|roi)\b/, () => thang(nowM, nowY - 1, now));
   them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay)|\d))|dau (?:thang|thg) (?:toi gio|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
-  them(/\b(?:thang|thg) (?:truoc|trc|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
+  them(/\b(?:thang|thg) (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
   // "tháng 9", "tháng 12 năm ngoái"; tháng chưa tới năm nay → năm ngoái
   them(/\b(?:thang|thg|t) ?(\d{1,2})\b(?! (?:lan|trieu|tr|k|nghin|ngan|ly|phan)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {
     const mo = +m[1];
     if (mo < 1 || mo > 12) return null;
     const y = m[2] && m[2] !== 'nay' ? nowY - 1 : mo > nowM ? nowY - 1 : nowY;
     return thang(mo, y, now);
+  });
+  const THANG_CHU: Record<string, number> = { mot: 1, gieng: 1, hai: 2, ba: 3, tu: 4, nam: 5, sau: 6, bay: 7, tam: 8, chin: 9, muoi: 10, 'muoi mot': 11, 'muoi hai': 12, chap: 12 };
+  them(/\b(?:thang|thg) (muoi mot|muoi hai|muoi|mot|gieng|hai|ba|tu|nam|sau|bay|tam|chin|chap)\b(?! (?:nay|ngoai|truoc|roi|qua)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {
+    const mo = THANG_CHU[m[1]];
+    return thang(mo, m[2] && m[2] !== 'nay' ? nowY - 1 : mo > nowM ? nowY - 1 : nowY, now);
   });
   them(/\bquy (1|2|3|4|nay|truoc|trc|roi)\b(?! nua)(?: nam nay)?/, (m) => {
     const cur = Math.floor((nowM + 2) / 3);
@@ -229,6 +286,8 @@ export function canGiuKy(question: string, now: Date = new Date()): boolean {
   return f.split(' ').length <= 8 && !timKy(f, cong(now, VN)).length && !/\b(?:hien tai|bay gio|luc nay|hien gio|dang con|con lai|ton kho)\b/.test(f);
 }
 
+const YOY = /\bcung ky (?:nam ngoai|nam truoc|nam roi)\b/;
+
 export const coNeuKy = (question: string, now: Date = new Date()) => timKy(boDau(question), cong(now, VN)).length > 0;
 
 /** Dò từ câu mới nhất về trước, qua các câu ngắn không nêu kỳ, tới câu có kỳ; gặp câu dài / nói "bây giờ" thì dừng. */
@@ -244,6 +303,9 @@ export function cauGiuKy(truoc: string[], now: Date = new Date()): string | null
 export function docKy(question: string, now: Date = new Date(), cauTruoc?: string | null): Ky {
   const vn = cong(now, VN);
   let f = boDau(question);
+  // "so với cùng kỳ năm ngoái" từng so với 92 ngày cuối năm ngoái
+  const coYoy = YOY.test(f);
+  if (coYoy) f = f.replace(YOY, ' ').replace(/ +/g, ' ').trim();
   let ds = timKy(f, vn);
   // 05/11: "tháng trước bán sao" rồi "còn tiền mặt thì sao": câu nối tiếp không nêu kỳ thì giữ kỳ câu trước, không về mặc định
   if (!ds.length && cauTruoc) {
@@ -262,6 +324,11 @@ export function docKy(question: string, now: Date = new Date(), cauTruoc?: strin
     chinh = ds[0]?.doan ?? macDinh(vn);
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
     so = k2 ? kySo(chinh, k2, f) : chinh.truoc();
+  }
+  if (coYoy) {
+    const lui = (t: Date) => new Date(Date.UTC(t.getUTCFullYear() - 1, t.getUTCMonth(), t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds()));
+    const tu = lui(chinh.tu), den = lui(chinh.den);
+    so = { tu, den, nhan: `cùng kỳ năm ngoái (${dm(tu)}–${dm(cong(den, -1000))}/${tu.getUTCFullYear()})` };
   }
   return { tu: iso(chinh.tu), den: iso(chinh.den), truocTu: iso(so.tu), truocDen: iso(so.den), nhan: chinh.nhan, nhanTruoc: so.nhan };
 }

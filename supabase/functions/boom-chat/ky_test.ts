@@ -147,3 +147,26 @@ Deno.test('cauGiuKy: dò qua chuỗi câu ngắn tới câu có kỳ, gặp câu
   assertEquals(cauGiuKy([], NOW), null);
   assertEquals(docKy('món nào bán chạy', NOW, cauGiuKy(['tiền mặt chiếm bao nhiêu phần trăm', dau], NOW)).nhan, docKy(dau, NOW).nhan);
 });
+
+Deno.test('docKy: cách nói kỳ thường gặp (06/11, hôm nay Thứ Sáu 6/11/2026)', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const bang: [string, string, string][] = [
+    ['tuần vừa rồi', '2026-10-26', '2026-11-02'], ['tháng vừa qua', '2026-10-01', '2026-11-01'], ['tháng mười', '2026-10-01', '2026-11-01'],
+    ['tháng chạp năm ngoái', '2025-12-01', '2026-01-01'], ['bảy ngày qua', '2026-10-31', '2026-11-06'], ['t7 tuần trước', '2026-10-31', '2026-11-01'],
+    ['t3 tuần này', '2026-11-03', '2026-11-04'], ['hôm thứ 3', '2026-11-03', '2026-11-04'], ['thứ 3 này bán sao', '2026-11-03', '2026-11-04'],
+    ['ngày 20 tháng 10', '2026-10-20', '2026-10-21'], ['ngày 20 bán bao nhiêu', '2026-10-20', '2026-10-21'], ['mùng 3 bán sao', '2026-11-03', '2026-11-04'],
+    ['từ 1/10 tới nay', '2026-10-01', '2026-11-06'], ['từ ngày 1 đến ngày 15 tháng trước', '2026-10-01', '2026-10-16'], ['đầu tháng tới nay', '2026-11-01', '2026-11-06'],
+    ['nay bán sao', '2026-11-06', '2026-11-06'], ['qua bán được bao nhiêu', '2026-11-05', '2026-11-06'], ['hôm trước bán sao', '2026-11-05', '2026-11-06'],
+    ['từ sáng tới giờ', '2026-11-06', '2026-11-06'], ['tới giờ bán được bao nhiêu', '2026-11-06', '2026-11-06'], ['tháng này năm ngoái bán sao', '2025-11-01', '2025-12-01'],
+    ['tết vừa rồi', '2026-02-07', '2026-02-24'], ['tết năm ngoái', '2025-01-19', '2025-02-05'],
+  ];
+  for (const [q, tu, den] of bang) {
+    const r = docKy(q, now);
+    assertEquals([r.tu.slice(0, 10), r.den.slice(0, 10)], [tu, den], q);
+  }
+  const mac = docKy('món nào bán chạy', now).nhan;
+  for (const q of ['quán này bán gì được', 'em này bán tốt không', 'mỗi ngày 20 ly thì sao', 'chủ nhật này', 'hôm trước khách phàn nàn món bún bò quá mặn nên xử lý sao em']) assertEquals(docKy(q, now).nhan, mac, q);
+  const y = docKy('tháng này so với cùng kỳ năm ngoái', now);
+  assertEquals([y.truocTu.slice(0, 10), y.truocDen.slice(0, 10), y.nhanTruoc], ['2025-11-01', '2025-11-06', 'cùng kỳ năm ngoái (1/11–6/11/2025)']);
+  assert(y.nhan.startsWith('Tháng này'));
+});

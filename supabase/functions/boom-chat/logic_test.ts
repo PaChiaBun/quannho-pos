@@ -1463,3 +1463,10 @@ Deno.test('ghiKy: thêm câu ghi kỳ khi câu trả lời có số mà chưa n�
   assertEquals(ghiKy('Dạ, Anh/Chị mở màn Báo cáo.', '30 ngày qua', 'xem lãi', now), 'Dạ, Anh/Chị mở màn Báo cáo.');
   assertEquals(ghiKy(a, undefined, 'món nào bán chạy', now), a);
 });
+
+Deno.test('hỏi từ lúc mở quán mà chỉ đọc 92 ngày: nói rõ chưa phải toàn bộ', () => {
+  const f = parseFacts({ period: '92 ngày qua (7/8/2026–6/11/2026)', revenue: 1000000, orders: 10 })!;
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  assertStringIncludes(formatFacts(f, now, 'từ lúc mở quán bán được bao nhiêu'), 'chưa phải toàn bộ');
+  assert(!formatFacts(f, now, 'mấy tháng nay bán sao').includes('KỲ BỊ GIỚI HẠN'));
+});
