@@ -171,6 +171,11 @@ Deno.test('docKy: cách nói kỳ thường gặp (06/11, hôm nay Thứ Sáu 6/
   assertEquals(docKy('qua dc bn', now).tu.slice(0, 10), '2026-11-05');
   // "được nhiêu rồi" sau câu có kỳ thì giữ kỳ đó
   assert(docKy('được nhiêu rồi', now, 'tháng trước bán sao').nhan.startsWith('Tháng trước'));
+  // "số" bỏ dấu không phải "so với": lấy số cả kỳ đó, không về cùng kỳ
+  for (const q of ['doanh số tháng trước', 'số đơn tháng trước', 'số tiền tháng trước', 'so don thang truoc', 'tổng số đơn tháng trước']) {
+    assertEquals([docKy(q, now).tu.slice(0, 10), docKy(q, now).den.slice(0, 10)], ['2026-10-01', '2026-11-01'], q);
+  }
+  for (const q of ['doanh thu so với tháng trước', 'so tháng trước', 'doanh thu so tuần trước']) assert(/này|Tháng|Tuần/.test(docKy(q, now).nhan) && !docKy(q, now).nhan.includes('trước'), q);
   const mac = docKy('món nào bán chạy', now).nhan;
   for (const q of ['t2 ban sao', 't7 có đông không', 'tn khách phàn nàn', 'quán này bán gì được', 'em này bán tốt không', 'mỗi ngày 20 ly thì sao', 'chủ nhật này', 'hôm trước khách phàn nàn món bún bò quá mặn nên xử lý sao em']) assertEquals(docKy(q, now).nhan, mac, q);
   const y = docKy('tháng này so với cùng kỳ năm ngoái', now);

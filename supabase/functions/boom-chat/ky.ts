@@ -319,7 +319,8 @@ export function docKy(question: string, now: Date = new Date(), cauTruoc?: strin
     ds = timKy(f, vn);
   }
   let chinh: Doan, so: { tu: Date; den: Date; nhan: string };
-  const cue = /\b(?:so voi|so sanh|so|hon|kem)\b/.exec(f);
+  // 06/11: bỏ dấu "số đơn tháng trước", "doanh số tháng trước" có chữ "so" nên từng đọc thành so với tháng trước và ra số cùng kỳ
+  const cue = /\b(?:so voi|so sanh|(?<!\b(?:doanh|tong) )so(?= (?:thang|thg|tuan|hom|bua|quy|nam|ky|thu|chu nhat|cn|t\d|ngay|cung|\d))|hon|kem)\b/.exec(f);
   if (ds.length === 1 && cue && cue.index < ds[0].at) {
     const k = ds[0].doan;
     // "doanh thu so với hôm qua / tuần trước / tháng trước" → kỳ đang chạy tương ứng
