@@ -7,6 +7,11 @@ void main() {
   test('nhận câu đổi cách gọi tự nhiên', () {
     const cases = {
       'Gọi chế xưng bé': 'che',
+      'gọi anh thôi': 'anh',
+      'kêu chị được rồi': 'chi',
+      'gọi là cô được rồi': 'co',
+      'goi toi la chi': 'chi',
+      'keu tui la co nha': 'co',
       'Gọi tôi là Anh': 'anh',
       'gọi tôi là chị': 'chi',
       'Boom ơi, từ giờ gọi tôi là cô nhé': 'co',
