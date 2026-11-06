@@ -1481,3 +1481,10 @@ Deno.test('kỳ một ngày không có đơn và câu hỏi từng ngày', () =>
   assertStringIncludes(t, '1/11 690.000đ (9 đơn); 3/11 180.000đ (3 đơn)');
   assert(!formatFacts(f, now, 'tháng này bán sao').includes('Từng ngày'));
 });
+
+Deno.test('quán chưa lưu khách: chỉ nêu số khách khi được hỏi về khách', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const m = parseModules({ khach: { period: '30 ngày qua', total: 0, new: 0, returning: 0, with_points: 0, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0, top: [] } })!;
+  assertStringIncludes(formatModules(m, now, 'quán có bao nhiêu khách đã lưu'), '0 khách đã lưu');
+  assert(!formatModules(m, now, 'món nào bán chạy').includes('KHÁCH HÀNG'));
+});

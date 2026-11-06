@@ -37,7 +37,7 @@ function quyenGia(o: { member: Row | null; config?: string; roles?: Row[]; staff
 // Bảng mong đợi — đọc từ resolveBoomPerms + boomModuleAccess + kDefaultPerms (Dart):
 // | trường hợp                                  | finance | kho     | nhan_su | khach | khuyen_mai | bán hàng |
 // | chủ quán, mọi module bật                    | all     | all     | all     | all   | all        | có       |
-// | chủ quán, chưa lưu cấu hình (pos,report,…)  | all     | all     | -       | -     | all        | có       |
+// | chủ quán, chưa lưu cấu hình (pos,report,…)  | all     | all     | -       | all   | all        | có       |
 // | quản lý (mặc định), mọi module bật          | all     | all     | all     | all   | all        | có       |
 // | phục vụ (mặc định), mọi module bật          | -       | -       | self    | -     | -          | không    |
 // | thu ngân + store_roles ["pos","finance"]    | all     | -       | -       | -     | -          | không    |
@@ -49,7 +49,7 @@ function quyenGia(o: { member: Row | null; config?: string; roles?: Row[]; staff
 const _ = null;
 const BANG: [string, Parameters<typeof quyenGia>[0], (string | null)[], boolean][] = [
   ['chủ quán, mọi module bật', { member: { role: 'Chủ quán', is_owner: true }, config: TAT_CA }, ['all', 'all', 'all', 'all', 'all'], true],
-  ['chủ quán, chưa lưu cấu hình', { member: { role: 'owner', is_owner: false } }, ['all', 'all', _, _, 'all'], true],
+  ['chủ quán, chưa lưu cấu hình', { member: { role: 'owner', is_owner: false } }, ['all', 'all', _, 'all', 'all'], true],
   ['quản lý mặc định', { member: { role: 'Quản lý' }, config: TAT_CA }, ['all', 'all', 'all', 'all', 'all'], true],
   ['phục vụ mặc định', { member: { role: 'Phục vụ' }, config: TAT_CA }, [_, _, 'self', _, _], false],
   [
@@ -319,4 +319,11 @@ Deno.test('soKhuyenMai: đọc mã trong ghi chú đơn quầy như thẻ Vouche
   ], 'Tháng trước', now, new Set(['d']));
   assertEquals(r.used, [{ code: 'GIAM10', times: 2, discount: 14000 }, { code: 'BAN5', times: 1, discount: 5000 }]);
   assertEquals([r.no_code_orders, r.no_code_discount, r.orders_with_discount, r.discount_total], [1, 3000, 4, 22000]);
+});
+
+Deno.test('chủ quán đọc được mục Khách hàng dù module chưa bật, nhân viên thì không', () => {
+  const q = (isOwner: boolean, canonicalRole: string): Quyen => ({ isOwner, canonicalRole, modules: [], active: new Set(['pos', 'report']) });
+  assertEquals(mucDuocXem(q(true, 'owner')).khach, 'all');
+  assertEquals(mucDuocXem(q(false, 'manager')).khach, null);
+  assertEquals(mucDuocXem(q(false, 'staff')).khach, null);
 });

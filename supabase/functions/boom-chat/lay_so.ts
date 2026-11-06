@@ -126,7 +126,8 @@ export function mucDuocXem(q: Quyen): Record<MucId, string | null> {
       : can(q, 'chamcong') || can(q, 'tinhluong')
       ? 'self'
       : null,
-    khach: can(q, 'loyalty') || (m && on(q, 'loyalty')) ? 'all' : null,
+    // Chủ quán luôn mở được màn Khách hàng trên thanh bên dù module chưa bật (06/11: 171/185 quán chưa bật, Boom nói chưa có số)
+    khach: boss(q) || can(q, 'loyalty') || (m && on(q, 'loyalty')) ? 'all' : null,
     khuyen_mai: can(q, 'loyalty') || can(q, 'report') || (m && (on(q, 'loyalty') || on(q, 'report'))) ? 'all' : null,
   };
 }

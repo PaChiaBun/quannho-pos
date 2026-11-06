@@ -667,7 +667,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     }
   }
   const c = m.khach;
-  if (c) {
+  // Quán chưa lưu khách: chỉ nói khi được hỏi về khách, tránh câu tư vấn khác bị kéo sang chuyện lưu khách
+  if (c && (nn(c.total) > 0 || /kh[aá]ch|đi[eể]m|\bdiem\b|v[ií] (?:ti[eề]n|đi[eệ]n)/iu.test(question))) {
     const total = nn(c.total);
     out.push(
       `[KHÁCH HÀNG — ${ss(c.period)}] ${total} khách đã lưu; ${nn(c.new)} khách mới trong kỳ; ${nn(c.returning)} khách đến từ 2 lần trở lên (${pctOf(nn(c.returning), total)}); ` +
