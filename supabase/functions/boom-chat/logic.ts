@@ -1969,7 +1969,34 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
       ? `Giảm ${Math.round(d * 100)}% toàn menu: tiền giảm đã lớn hơn phần còn lại sau nguyên liệu (nguyên liệu ${pc}% doanh thu), bán thêm bao nhiêu cũng không bù được.`
       : `Giảm ${Math.round(d * 100)}% toàn menu: nguyên liệu đang ${pc}% doanh thu nên phải bán thêm khoảng ${Math.round((d / con) * 100)}% số đơn (${moiNgay((f.orders * d) / con)} đơn mỗi ngày) chỉ để giữ nguyên tiền còn lại sau nguyên liệu, chưa tính lương, mặt bằng.`);
     const lon = [...arr((m?.khuyen_mai as Row | undefined)?.used)].sort((a, b) => nn(b.discount) - nn(a.discount))[0];
-    if (hoiMa && lon && nn(lon.discount) > 0) out.push(`Mã ${ss(lon.code)} đã bớt ${vnd(nn(lon.discount))}: mỗi đơn còn khoảng ${vnd(aov * (1 - c))} sau nguyên liệu, nên mã phải kéo thêm khoảng ${qty(Math.round(nn(lon.discount) / (aov * (1 - c))))} đơn mới bù đủ (chưa biết thực tế kéo được bao nhiêu).`);
+    if (hoiMa && lon && nn(lon.discount) > 0) out.push(`Mã ${ss(lon.code)} đã bớt ${vnd(nn(lon.discount))}: đơn trung bình TOÀN QUÁN (không phải riêng đơn dùng mã) còn khoảng ${vnd(aov * (1 - c))} sau nguyên liệu, nên mã phải kéo thêm khoảng ${qty(Math.round(nn(lon.discount) / (aov * (1 - c))))} đơn mới bù đủ (chưa biết thực tế kéo được bao nhiêu).`);
+  }
+  // 06/11: chưa ghi khoản nguyên liệu (quán thật hay thiếu) thì vẫn cho khoảng, nói rõ là giả định
+  if (toanMenu && !(c >= 0.15 && c <= 0.8)) {
+    const giam = /gi[aả]m[^\d%]{0,12}(\d{1,2})\s*%/.exec(q), d = giam ? +giam[1] / 100 : 0.1;
+    if (d < 0.5) out.push(`Giảm ${Math.round(d * 100)}% toàn menu: quán chưa ghi khoản nguyên liệu; GIẢ SỬ nguyên liệu 35–45% doanh thu thì phải bán thêm khoảng ${Math.round((d / (0.65 - d)) * 100)}–${Math.round((d / (0.55 - d)) * 100)}% số đơn chỉ để giữ nguyên tiền còn lại sau nguyên liệu; nói rõ là giả định, ghi phiếu chi nguyên liệu thì tính đúng được.`);
+  }
+  // 06/11: chủ quán cần biết làm việc nào trước, nên xếp các hướng theo tiền
+  if (canTang) {
+    const co: { t: string; v: number }[] = [];
+    const tenThu = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+    if (cnt && bw) {
+      const tb = bw.map((v, i) => ({ i, a: nn(v) > 0 && cnt[i] > 0 ? nn(v) / cnt[i] : 0 })).filter((x) => x.a > 0).sort((x, y) => x.a - y.a);
+      if (tb.length >= 3) {
+        const giua = tb[Math.floor(tb.length / 2)].a, it = tb[0];
+        if (it.a < giua * 0.8) co.push({ t: `${tenThu[it.i]} (${vnd(it.a)}/ngày) lên nửa khoảng cách với ngày giữa (${vnd(giua)}/ngày)`, v: ((giua - it.a) / 2) * cnt[it.i] });
+      }
+    }
+    const h = (f.by_hour ?? []).map((v) => nn(v)), mo = h.flatMap((v, i) => (v > 0 ? [i] : []));
+    if (mo.length >= 6) {
+      const trong = mo.slice(1, -1).filter((i) => h[i + 1] > 0).map((i) => ({ i, a: h[i] + h[i + 1] })).sort((x, y) => x.a - y.a)[0];
+      const giua = [...mo.map((i) => h[i])].sort((x, y) => x - y)[Math.floor(mo.length / 2)];
+      if (trong && trong.a < 2 * giua * 0.8) co.push({ t: `khung ${trong.i}–${trong.i + 2}h (${vnd(trong.a)}/kỳ) lên nửa khoảng cách với 2 giờ thường`, v: (2 * giua - trong.a) / 2 });
+    }
+    const uong = (f.groups ?? []).filter((g) => /u[oố]ng|n[uư][oớ]c|tr[aà]\b|c[aà] ph[eê]|sinh t[oố]/iu.test(g.name));
+    const qUong = uong.reduce((a, g) => a + g.qty, 0), rUong = uong.reduce((a, g) => a + g.revenue, 0);
+    if (qUong > 0 && rUong < f.revenue * 0.3 && qUong / f.orders < 0.8) co.push({ t: `đồ uống từ ${qty(Math.round((qUong / f.orders) * 100) / 100)} lên ${qty(Math.round((qUong / f.orders + 0.1) * 100) / 100)} phần mỗi đơn`, v: f.orders * 0.1 * (rUong / qUong) });
+    if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. Nên làm hướng nhiều tiền trước, nói rõ là ước.`);
   }
   // người chấm: Boom hay mời đúng món giá vốn 45–54% trong khi quán có món lời hơn
   const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.qty > 0);

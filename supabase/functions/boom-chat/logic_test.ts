@@ -1570,3 +1570,15 @@ Deno.test('baiToanTiepThi: tính hoà vốn giảm giá và mục tiêu 10%', ()
   assertEquals(baiToanTiepThi(null, m, 'tăng doanh số thế nào'), '');
   assert(!baiToanTiepThi(f, null, 'tăng doanh số thế nào').includes('toàn menu'));
 });
+
+Deno.test('baiToanTiepThi: xếp hướng theo tiền và giả định khi thiếu số chi', () => {
+  const f = parseFacts({ period: 'Tháng này (5–18/10/2026)', from: '2026-10-05', to: '2026-10-18', revenue: 28000000, orders: 500, by_weekday: [2000000, 4000000, 4000000, 4000000, 4000000, 6000000, 4000000], by_hour: [0,0,0,0,0,0,0,3000000,3000000,3000000,3000000,1000000,1000000,3000000,3000000,3000000,3000000,2000000,0,0,0,0,0,0], groups: [{ name: 'Cơm', revenue: 26000000, qty: 480, items: 1, unsold: 0, unsold_names: [], top: [], slow: [] }, { name: 'Đồ uống', revenue: 2000000, qty: 100, items: 1, unsold: 0, unsold_names: [], top: [], slow: [] }] })!;
+  const t = baiToanTiepThi(f, null, 'làm sao tăng doanh số');
+  assertStringIncludes(t, 'Các hướng xếp theo tiền');
+  assertStringIncludes(t, 'Thứ 2 (1.000.000đ/ngày)');
+  assertStringIncludes(t, 'khung 11–13h');
+  assertStringIncludes(t, 'đồ uống từ 0,2 lên 0,3 phần mỗi đơn = thêm khoảng 1.000.000đ');
+  assert(t.indexOf('khung 11–13h') < t.indexOf('đồ uống từ'), 'nhiều tiền trước');
+  assertStringIncludes(baiToanTiepThi(f, null, 'giảm giá 10% cả menu có lời không'), 'GIẢ SỬ nguyên liệu 35–45%');
+  assertStringIncludes(baiToanTiepThi(f, null, 'giảm giá 10% cả menu có lời không'), '18–22%');
+});
