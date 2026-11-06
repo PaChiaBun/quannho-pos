@@ -2125,7 +2125,7 @@ export function buildMessages(
   question: string,
   chunks: HelpChunk[],
   persona?: Persona | null,
-  extra?: { khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
+  extra?: { tenQuan?: string | null; khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
 ): { role: 'system' | 'user'; content: string }[] {
   // Lượt trước + số liệu đặt TRƯỚC câu hỏi, trong tin nhắn người dùng (câu dặn giữ nguyên → vẫn được giảm giá).
   // Trí nhớ (sổ hỏi đáp) + lượt app gửi kèm (lượt số liệu không qua GPT, không có trong sổ) → một khối, cũ → mới
@@ -2159,6 +2159,7 @@ export function buildMessages(
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
     viecTiepThiTrongApp(question),
+    extra?.tenQuan ? `TÊN QUÁN: ${extra.tenQuan.replace(/["\n]/g, ' ').slice(0, 80)}. Viết bài, tin nhắn thì dùng đúng tên này, không để [Tên quán]; thứ không biết như địa chỉ, số điện thoại thì ghi một chỗ để chủ quán tự điền.` : '',
     soNguoiCan(question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),

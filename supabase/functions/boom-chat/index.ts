@@ -401,7 +401,7 @@ Deno.serve(async (req) => {
   }
 
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
-  let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false;
+  let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false, tenQuan: string | null = null;
   let huongDan: HelpChunk[] = [];
   if (r.mode === 'ask') {
     if (r.chunk_ids.length) {
@@ -417,6 +417,11 @@ Deno.serve(async (req) => {
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
       khongXem = so.khongXem;
+      // 06/11: bài đăng để sót [Tên quán]; chỉ đọc khi cần viết, và người hỏi đã có quyền ở quán
+      if ((so.facts || so.modules) && /vi[eế]t|b[aà]i đ[aă]ng|đ[aă]ng g[iì]|facebook|zalo|tiktok|caption|t[oờ] r[oơ]i|tin nh[aắ]n/i.test(r.question)) {
+        tenQuan = await rest(`stores?select=name&id=eq.${r.store_id}&limit=1`, { signal: AbortSignal.timeout(1000) })
+          .then((x) => (Array.isArray(x) && typeof x[0]?.name === 'string' ? x[0].name : null)).catch(() => null);
+      }
       laChu = so.laChu;
       askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
     } catch {
@@ -533,7 +538,7 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  const messages = buildMessages(r.question, chunks, who, { khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
+  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',

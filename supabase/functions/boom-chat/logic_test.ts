@@ -1611,3 +1611,9 @@ Deno.test('viecTiepThiTrongApp: nói đúng việc app làm được', () => {
   assertStringIncludes(viecTiepThiTrongApp('giờ vắng chạy mã giảm được không'), 'KHÔNG giới hạn được theo giờ');
   assertEquals(viecTiepThiTrongApp('món nào bán chạy nhất'), '');
 });
+
+Deno.test('tên quán vào lời nhắc khi có', () => {
+  const m = buildMessages('viết bài facebook', [], null, { tenQuan: 'Bò Đen', huongDan: [] });
+  assertStringIncludes(JSON.stringify(m), 'TÊN QUÁN: Bò Đen');
+  assert(!JSON.stringify(buildMessages('viết bài facebook', [], null, { huongDan: [] })).includes('TÊN QUÁN:'));
+});
