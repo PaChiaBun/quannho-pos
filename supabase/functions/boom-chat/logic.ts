@@ -694,7 +694,7 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
   if (p) {
     const act = arr(p.active), used = arr(p.used);
     out.push(
-      `[KHUYẾN MÃI — ${ss(p.period)}] ${nn(p.active_count)} mã đang chạy` +
+      `[KHUYẾN MÃI — ${ss(p.period)}] ${nn(p.active_count) > 0 ? `${nn(p.active_count)} mã đang chạy` : 'Quán CHƯA có mã nào đang chạy (đã đọc đủ danh sách mã, không phải thiếu số)'}` +
         (act.length ? `: ${act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` hết hạn ${ss(x.end)}` : ''}`).join('; ')}` : '') + '.',
     );
     out.push(
@@ -1970,7 +1970,9 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const ngay = cnt && bw?.some((v) => v > 0) ? cnt.reduce((a, c, i) => a + (nn(bw[i]) > 0 ? c : 0), 0) : soNgay(f.period);
   if (ngay < 1) return '';
   const aov = f.revenue / f.orders, moiNgay = (don: number) => qty(Math.max(1, Math.round((don / ngay) * 10) / 10));
-  const out = [`Tăng 10% doanh thu kỳ này = thêm ${vnd(f.revenue * 0.1)} = khoảng ${moiNgay(f.orders * 0.1)} đơn nữa mỗi ngày bán, hoặc thêm ${vnd(Math.round(aov * 0.1 / 100) * 100)} mỗi đơn. Mỗi đơn thêm 3.000đ (mời thêm món nhỏ) = ${vnd(3000 * f.orders)}/kỳ.`];
+  // 06/11: Demo 12 đơn mà Boom chỉ ra "giờ vắng", "thứ yếu"; vài đơn lệch là đổi kết luận
+  const itDon = f.orders < 30;
+  const out = itDon ? [`Kỳ này mới có ${qty(f.orders)} đơn, chưa đủ để nói giờ, thứ hay món nào yếu: KHÔNG khuyên theo giờ vắng, thứ yếu hay món bán chậm của kỳ này, cũng không tính "tăng 10%". Đơn trung bình ${vnd(aov)}. Nói thẳng điều này, gợi ý xem kỳ dài hơn (vd "30 ngày qua"), việc làm thì nhắm có thêm khách quay lại.`] : [`Tăng 10% doanh thu kỳ này = thêm ${vnd(f.revenue * 0.1)} = khoảng ${moiNgay(f.orders * 0.1)} đơn nữa mỗi ngày bán, hoặc thêm ${vnd(Math.round(aov * 0.1 / 100) * 100)} mỗi đơn. Mỗi đơn thêm 3.000đ (mời thêm món nhỏ) = ${vnd(3000 * f.orders)}/kỳ.`];
   const lieu = arr((m?.finance as Row | undefined)?.top_expense).find((x) => /nguy[eê]n li[eệ]u|nh[aậ]p h[aà]ng/iu.test(ss(x.name)));
   const c = lieu ? nn(lieu.amount) / f.revenue : 0;
   if (c >= 0.15 && c <= 0.8) {
@@ -1987,8 +1989,14 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const giam = /gi[aả]m[^\d%]{0,12}(\d{1,2})\s*%/.exec(q), d = giam ? +giam[1] / 100 : 0.1;
     if (d < 0.5) out.push(`Giảm ${Math.round(d * 100)}% toàn menu: quán chưa ghi khoản nguyên liệu; GIẢ SỬ nguyên liệu 35–45% doanh thu thì phải bán thêm khoảng ${Math.round((d / (0.65 - d)) * 100)}–${Math.round((d / (0.55 - d)) * 100)}% số đơn chỉ để giữ nguyên tiền còn lại sau nguyên liệu; nói rõ là giả định, ghi phiếu chi nguyên liệu thì tính đúng được.`);
   }
+  // 06/11: chủ quán hỏi mở mã mà không biết đặt đơn tối thiểu, mức giảm bao nhiêu thì không lỗ; đơn tối thiểu cao hơn đơn thường để kéo đơn lớn lên
+  if (!itDon && hoiMa && /n[eê]n|t[aạ]o|l[aà]m|ch[aạ]y|đ[aặ]t|m[uứ]c|th[eế] n[aà]o|sao/.test(q)) {
+    const nguong = Math.ceil((aov * 1.2) / 5000) * 5000, them = nguong - aov, co = c >= 0.15 && c <= 0.8, con = co ? 1 - c : 0.6;
+    const toiDa = Math.floor((them * con) / 1000) * 1000;
+    if (toiDa >= 1000) out.push(`Nếu tạo mã giảm tiền: đơn trung bình đang ${vnd(aov)}, đặt đơn tối thiểu khoảng ${vnd(nguong)}; khách mua thêm ${vnd(them)} thì quán còn thêm khoảng ${vnd(them * con)} sau nguyên liệu (${co ? `nguyên liệu ${Math.round(c * 100)}% doanh thu` : 'GIẢ SỬ nguyên liệu 40%, nói rõ là giả định'}), nên giảm tối đa ${vnd(toiDa)}. Khách vốn đã mua trên mức này cũng được giảm, nên thử 2 tuần rồi so đơn trung bình và số đơn.`);
+  }
   // 06/11: chủ quán cần biết làm việc nào trước, nên xếp các hướng theo tiền
-  if (canTang) {
+  if (canTang && !itDon) {
     const co: { t: string; v: number }[] = [];
     const tenThu = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
     if (cnt && bw) {
@@ -2015,7 +2023,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const moiThem = /m[oờ]i th[eê]m|b[aá]n th[eê]m|mua nhi[eề]u h[oơ]n/.test(q);
   const tot = mon.filter((t) => t.cost! / t.price! <= 0.4 && (!moiThem || t.price! <= aov * 0.6)).sort((x, y) => y.price! - y.cost! - (x.price! - x.cost!)).slice(0, 3);
   const cao = mon.filter((t) => t.cost! / t.price! > 0.45).sort((x, y) => y.qty - x.qty).slice(0, 3);
-  if (canTang && tot.length) out.push(`${moiThem ? 'Món nhỏ lời tốt, nên mời thêm' : 'Món lời nhiều mỗi phần, nên ưu tiên'}: ${tot.map((t) => `${t.name} lời ${vnd(t.price! - t.cost!)}/phần (giá vốn ${Math.round((t.cost! / t.price!) * 100)}%)`).join('; ')}.${cao.length ? ` Giá vốn cao, đừng giảm giá hay tặng kèm: ${cao.map((t) => `${t.name} ${Math.round((t.cost! / t.price!) * 100)}%`).join('; ')}.` : ''}`);
+  if (canTang && !itDon && tot.length) out.push(`${moiThem ? 'Món nhỏ lời tốt, nên mời thêm' : 'Món lời nhiều mỗi phần, nên ưu tiên'}: ${tot.map((t) => `${t.name} lời ${vnd(t.price! - t.cost!)}/phần (giá vốn ${Math.round((t.cost! / t.price!) * 100)}%)`).join('; ')}.${cao.length ? ` Giá vốn cao, đừng giảm giá hay tặng kèm: ${cao.map((t) => `${t.name} ${Math.round((t.cost! / t.price!) * 100)}%`).join('; ')}.` : ''}`);
   return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${out.join(' ')}`;
 }
 
@@ -2039,6 +2047,8 @@ export function uuDaiTrongBai(question: string, m: ModuleFacts | null | undefine
   if (act.length) {
     return `ƯU ĐÃI TRONG BÀI: chỉ được nhắc đúng các mã đang chạy: ${act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` hết hạn ${ss(x.end)}` : ''}`).join('; ')}. KHÔNG tự chế ưu đãi hay mức giảm khác.`;
   }
+  // 06/11: "viết bài giới thiệu món" không xin khuyến mãi thì đừng hứa ưu đãi rồi để chỗ trống
+  if (!/khuy[eế]n m[aã]i|ưu đãi|gi[aả]m|voucher|t[aặ]ng|(?:^|\s)m[aã](?:\s|$)/.test(q)) return 'ƯU ĐÃI TRONG BÀI: chưa thấy mã nào đang chạy và câu hỏi không xin khuyến mãi. Bài chỉ giới thiệu quán, món; KHÔNG nhắc ưu đãi, mức giảm hay quà tặng.';
   return 'ƯU ĐÃI TRONG BÀI: chưa thấy mã nào đang chạy. Trong bài chỉ để chỗ [ưu đãi của quán], KHÔNG viết mức giảm hay quà tặng nào như thật. Muốn gợi ý thì viết SAU bài, mở đầu bằng "Đề xuất:", và nhắc tạo mã ở Khách hàng → tab Khuyến mãi → Thêm mã mới trước khi đăng.';
 }
 
@@ -2689,6 +2699,33 @@ export function soGanSai(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** 06/11: lời dặn "app không biết khách lâu chưa ghé" vẫn bị bỏ qua 4/6 lượt, nên kiểm bằng mã. Câu đã nói app không làm được hoặc làm tay thì không bắt. */
+export function viecAppKhongLam(answer: string): string[] {
+  const sai: string[] = [];
+  for (const c of answer.split(/(?<=[.!?;:])\s+|\n+/)) {
+    if (/app (?:không|chưa)|(?:không|chưa) (?:biết|lọc|gửi|giới hạn|có)|ngoài app|nhân viên (?:nhớ|ghi)|sổ tay|tự (?:ghi|nhớ)|dặn|làm tay/iu.test(c)) continue;
+    if (/l[aâ]u (?:rồi )?(?:chưa|không) (?:ghé|quay lại|đến|tới)|\d+ ngày (?:chưa|không) (?:ghé|quay lại|đến|tới)/iu.test(c)) sai.push('tìm khách lâu chưa ghé: app không có ngày ghé cuối của khách');
+    if (/(?:nhân đôi|gấp đôi|x2) điểm/iu.test(c)) sai.push('nhân đôi điểm: app không có');
+    if (/(?:tạo|cài|bật|trong app)[^.]{0,40}thẻ tích ly/iu.test(c)) sai.push('thẻ tích ly trong app: app không có, dùng thẻ giấy');
+    if (/(?:app|hệ thống|quán nhỏ)[^.]{0,30}(?:gửi|nhắn)(?: tin| zalo| sms| tự động)|gửi (?:tin|sms|zalo) (?:hàng loạt|tự động)/iu.test(c)) sai.push('gửi tin từ app: app không gửi tin');
+    if (/mã[^.]{0,40}(?:chỉ (?:áp|dùng|có hiệu lực)(?: dụng)?(?: từ| trong| lúc| vào)? ?\d{1,2}\s*(?:h|giờ)|mỗi khách (?:1|một) lần|giới hạn (?:số lần|theo giờ|theo khách))/iu.test(c)) sai.push('mã theo giờ, theo khách, số lần: app không giới hạn được, chỉ có đơn tối thiểu, mức giảm tối đa, ngày hết hạn; muốn theo giờ thì dặn nhân viên áp đúng giờ');
+  }
+  return [...new Set(sai)];
+}
+
+/** 06/11: gợi ý ưu đãi đúng ngày quán nghỉ. Câu bàn chuyện mở thêm ngày nghỉ thì không bắt. */
+export function ngoaiThuBan(answer: string, ref: string): string[] {
+  const m = /([^.:;\n—]*): quán NGHỈ/.exec(ref);
+  if (!m) return [];
+  const ten: Record<string, RegExp> = { 'Thứ 2': /th[uứ] (?:2|hai)|\bt2\b/iu, 'Thứ 3': /th[uứ] (?:3|ba)|\bt3\b/iu, 'Thứ 4': /th[uứ] (?:4|tư)|\bt4\b/iu, 'Thứ 5': /th[uứ] (?:5|năm)|\bt5\b/iu, 'Thứ 6': /th[uứ] (?:6|sáu)|\bt6\b/iu, 'Thứ 7': /th[uứ] (?:7|bảy)|\bt7\b/iu, 'Chủ nhật': /chủ nhật|\bcn\b/iu };
+  const nghi = Object.keys(ten).filter((k) => m[1].includes(k)), sai: string[] = [];
+  for (const c of answer.split(/(?<=[.!?;])\s+|\n+/)) {
+    if (!/ưu đãi|combo|giảm|khuyến mãi|(?:^|\s)mã(?:\s|$)|tặng|voucher/iu.test(c) || /nghỉ|mở (?:thử|thêm|cửa)|thử mở|đóng/iu.test(c)) continue;
+    for (const k of nghi) if (ten[k].test(c)) sai.push(k);
+  }
+  return [...new Set(sai)];
+}
+
 /** 06/11: người chấm: đề xuất khung 16–20h khi quán nghỉ 13–17h. Chỉ bắt khung nằm hẳn ngoài giờ bán. */
 export function ngoaiGioBan(answer: string, ref: string): string[] {
   const m = /có bán ((?:\d{1,2}h–\d{1,2}h(?:, )?)+)(?! \(hôm nay)/.exec(ref);
@@ -2705,6 +2742,8 @@ export function ngoaiGioBan(answer: string, ref: string): string[] {
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
+  const khongLam = viecAppKhongLam(answer);
+  const thuNgoai = ngoaiThuBan(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -2716,6 +2755,8 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const gs = soGanSai(answer, ref);
   return [
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
+    ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
+    ...(thuNgoai.length ? [`đề xuất ưu đãi vào ngày quán nghỉ (${thuNgoai.join(', ')}) → chỉ đề xuất ngày quán có bán`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),

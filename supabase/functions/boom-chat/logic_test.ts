@@ -1,4 +1,5 @@
 import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
+import * as L from './logic.ts';
 import {
   todayBlock,
   chonViecCu,
@@ -1647,4 +1648,40 @@ Deno.test('bài viết không tự chế ưu đãi', () => {
   assertEquals(uuDaiTuChe('Dùng mã GIAM10 giảm 10% tối đa 20.000đ.', l1), []);
   assertEquals(uuDaiTuChe('Giảm 15% cả tuần!', l1), ['Giảm 15%']);
   assertEquals(uuDaiTuChe('Giảm 5k mỗi ly', 'không có dòng'), []);
+});
+
+Deno.test('viecAppKhongLam: bắt việc app không làm, tha câu đã nói rõ', () => {
+  assertEquals(L.viecAppKhongLam('Lọc khách lâu chưa ghé rồi gửi mã.').length, 1);
+  assertEquals(L.viecAppKhongLam('Nhắn khách 30 ngày chưa quay lại.').length, 1);
+  assertEquals(L.viecAppKhongLam('App không biết khách nào lâu chưa ghé, nên nhờ nhân viên nhớ mặt.').length, 0);
+  assertEquals(L.viecAppKhongLam('Chưa có số khách cũ lâu chưa ghé để đối chiếu.').length, 0);
+  assertEquals(L.viecAppKhongLam('Chạy nhân đôi điểm Thứ 3.').length, 1);
+  assertEquals(L.viecAppKhongLam('Tạo mã chỉ áp từ 14h đến 16h.').length, 1);
+  assertEquals(L.viecAppKhongLam('Tạo mã CHIEU, dặn nhân viên chỉ áp từ 14h.').length, 0);
+  assertEquals(L.viecAppKhongLam('Đẩy trà đá giờ trưa.').length, 0);
+});
+
+Deno.test('ngoaiThuBan: ưu đãi đúng ngày nghỉ', () => {
+  const ref = 'Doanh thu theo thứ: Thứ 2 100đ. Cao nhất: Thứ 2; thấp nhất: Thứ 3; Thứ 7, Chủ nhật: quán NGHỈ (không mở bán)';
+  assertEquals(L.ngoaiThuBan('Chạy ưu đãi Thứ 7 cho nhóm bạn.', ref), ['Thứ 7']);
+  assertEquals(L.ngoaiThuBan('Combo Thứ 3 cho khách trưa.', ref), []);
+  assertEquals(L.ngoaiThuBan('Có thể mở thử Thứ 7 với combo nhẹ.', ref), []);
+  assertEquals(L.ngoaiThuBan('Chạy ưu đãi Thứ 7.', 'Cao nhất: Thứ 2'), []);
+});
+
+Deno.test('baiToanTiepThi: ít đơn không xếp hướng; mã có ngưỡng và mức giảm', () => {
+  const co = { revenue: 870000, orders: 12, period: 'tháng này', from: '2026-11-01', to: '2026-11-06', groups: [], by_hour: [], by_weekday: [1, 1, 1, 1, 1, 1, 1] };
+  const it = L.baiToanTiepThi(co as never, null, 'tăng doanh thu thế nào');
+  assertEquals(it.includes('chưa đủ để nói'), true);
+  assertEquals(it.includes('Tăng 10%'), false);
+  const nhieu = { ...co, revenue: 7000000, orders: 100, to: '2026-11-30' };
+  const ma = L.baiToanTiepThi(nhieu as never, null, 'nên tạo mã giảm thế nào');
+  // đơn 70.000đ → ngưỡng 85.000đ, thêm 15.000đ, giả sử còn 60% = 9.000đ
+  assertEquals(ma.includes('85.000đ') && ma.includes('giảm tối đa 9.000đ') && ma.includes('GIẢ SỬ'), true);
+  assertEquals(L.baiToanTiepThi(nhieu as never, null, 'mã giảm đang có gì').includes('Nếu tạo mã'), false);
+});
+
+Deno.test('uuDaiTrongBai: bài không xin khuyến mãi thì không nhắc ưu đãi', () => {
+  assertEquals(L.uuDaiTrongBai('viết bài giới thiệu quán', null).includes('KHÔNG nhắc ưu đãi'), true);
+  assertEquals(L.uuDaiTrongBai('viết bài khuyến mãi', null).includes('[ưu đãi của quán]'), true);
 });
