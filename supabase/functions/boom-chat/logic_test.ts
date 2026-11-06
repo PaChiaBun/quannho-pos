@@ -24,6 +24,7 @@ import {
   blockReason,
   buildMessages,
   choXemSo,
+  khongXemDuoc,
   ghiKy,
   loaiCau,
   khuyenNguoc,
@@ -1493,4 +1494,20 @@ Deno.test('quán chưa lưu khách: chỉ nêu số khách khi được hỏi v�
 Deno.test('choXemSo: không chỉ tới màn không có, chỉ đúng chỗ có', () => {
   for (const [q, y] of [['bàn nào thu nhiều tiền nhất', 'DOANH THU THEO BÀN'], ['đơn lớn nhất tháng này bao nhiêu', 'ĐƠN LỚN NHẤT'], ['bao nhiêu đơn mang về', 'TÁCH ĐƠN'], ['ai đang nợ tiền quán', 'CÔNG NỢ'], ['món nào bị huỷ nhiều nhất', 'Huỷ/Duyệt'], ['còn bao nhiêu tiền trong két', 'Thu Chi']]) assertStringIncludes(choXemSo(q), y);
   for (const q of ['món nào bán chạy', 'khách mang về nhiều nên làm gì', 'có nên thêm bàn không', 'tháng này bán sao', 'huỷ món đã gửi bếp thế nào']) assertEquals(choXemSo(q), '', q);
+});
+
+Deno.test('khongXemDuoc: nhân viên nhờ chủ quán, chủ quán bật mục, không có gì thì im', () => {
+  assertStringIncludes(khongXemDuoc(['Bán hàng']), 'nhờ chủ quán');
+  assertStringIncludes(khongXemDuoc(['Thu Chi'], true), 'Sửa → Thêm');
+  assertEquals(khongXemDuoc([]), '');
+  assertEquals(khongXemDuoc(undefined), '');
+});
+
+Deno.test('chấm công có cột đi trễ: không dặn "không kết luận"; số của chính người hỏi', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  const m = parseModules({ nhan_su: { period: '30 ngày qua', self: true, staff_count: 1, total_hours: 8, shifts: 1, open_now: 0, forgot_clock_out: 0, late_total: 1, staff: [{ name: 'Lan', shifts: 1, hours: 8, late: 1, late_minutes: 12 }] } })!;
+  const t = formatModules(m, now, 'em có đi trễ không');
+  assertStringIncludes(t, 'Đi trễ: 1 ca (Lan 1 ca, tổng 12 phút)');
+  assert(!t.includes('KHÔNG kết luận ai đi trễ'));
+  assertStringIncludes(t, 'chính người đang hỏi');
 });

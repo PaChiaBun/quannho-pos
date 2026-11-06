@@ -6,7 +6,7 @@ import { docBanHang } from './ban_hang.ts';
 import { type Ctx, docMuc, docQuyen, xemDuocBanHang } from './lay_so.ts';
 import { type ModuleFacts, parseFacts, parseModules, type ShopFacts } from './logic.ts';
 
-export type SoCuaCau = { ky: Ky; facts: ShopFacts | null; modules: ModuleFacts | null; khongXem: string[]; loi: string[]; dem: boolean };
+export type SoCuaCau = { ky: Ky; facts: ShopFacts | null; modules: ModuleFacts | null; khongXem: string[]; laChu: boolean; loi: string[]; dem: boolean };
 
 const DEM = new Map<string, { het: number; v: Omit<SoCuaCau, 'dem'> }>();
 const DEM_TOI_DA = 500;
@@ -32,7 +32,8 @@ export async function laySoChoCau(ctx: Ctx, question: string, now = new Date(), 
     ky,
     facts: ban ? parseFacts(ban) : null,
     modules: Object.keys(muc.modules).length ? parseModules(muc.modules) : null,
-    khongXem: muc.khongXem,
+    khongXem: q && !xemDuocBanHang(q) ? ['Bán hàng', ...muc.khongXem] : muc.khongXem,
+    laChu: !!q && (q.isOwner || q.canonicalRole === 'owner'),
     // bán hàng đọc lỗi → không đệm, lần hỏi sau đọc lại
     loi: [...muc.loi, ...(q && xemDuocBanHang(q) && !ban ? ['Bán hàng'] : [])],
   };

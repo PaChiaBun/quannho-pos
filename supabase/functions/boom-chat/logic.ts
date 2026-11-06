@@ -639,10 +639,15 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     const pr = arr(n.payroll);
     const stName: Record<string, string> = { draft: 'nháp', pending_review: 'chờ duyệt', approved: 'đã duyệt', paid: 'đã trả' };
     if (pr.length) out.push(`Kỳ lương gần nhất: ${pr.map((x) => `${ss(x.name)} (${ss(x.from)} → ${ss(x.to)}) ${stName[ss(x.status)] ?? ss(x.status)}, tổng ${vnd(nn(x.total))}`).join('; ')}.`);
-    out.push('Không có lịch ca / giờ vào quy định → KHÔNG kết luận ai đi trễ; không nêu lương từng người.');
+    // 06/11: có cột đi trễ của app mà vẫn dặn "không kết luận" nên Boom vừa nói có 1 ca trễ vừa nói chưa xác định được
+    out.push(typeof n.late_total === 'number'
+      ? `${/tr[eễ](?!\p{L})|mu[oộ]n/iu.test(question) ? 'Đi trễ lấy đúng số app đã ghi ở trên, nói thẳng, không thêm câu "chưa xác định được"; không suy thêm từ giờ vào. ' : ''}Không nêu lương từng người.`
+      : 'Không có lịch ca / giờ vào quy định → KHÔNG kết luận ai đi trễ; không nêu lương từng người.');
+    if (n.self) out.push('Số này là của chính người đang hỏi: gọi họ như lời chào, không gọi bằng tên như người khác.');
     // lô B (03/11): "ai làm quá sức" — Boom so số ca, không quy 300 giờ / 4 tuần ra ~75 giờ / tuần
     const tu = soNgay(n.period) / 7;
-    if (st.length && tu >= 1) {
+    // số của chính người hỏi: "tháng này em làm bao nhiêu giờ" từng lấy nhầm số giờ / tuần (2 giờ thay vì 8 giờ)
+    if (st.length && tu >= 1 && (!n.self || /tu[aầ]n/iu.test(question))) {
       const gw = st.map((x) => ({ x, g: Math.round(nn(x.hours) / tu) })).sort((a, b) => b.g - a.g);
       out.push(`Giờ làm mỗi người / tuần (tính sẵn, ${qty(Math.round(tu * 10) / 10)} tuần; so theo GIỜ, không theo số ca): ${gw.map(({ x, g }) => `${ss(x.name)} ~${g} giờ${g > 48 ? ' (QUÁ 48 giờ — quá tải)' : ''}`).join('; ')}.`);
     }
@@ -1922,6 +1927,14 @@ export function ngayHoi(question: string, now: Date, f?: ShopFacts | null): stri
 }
 
 // Lô D: so ca sai cơ sở (bộ v2: "ca sáng 6–11h" bỏ 11–13h, ca tối bỏ giờ 16h) → tính sẵn doanh thu theo KHỐI GIỜ MỞ thật; chỉ khi câu hỏi nói ca / buổi.
+/** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
+export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
+  if (!muc?.length) return '';
+  return laChu
+    ? `CHƯA ĐỌC ĐƯỢC: ${muc.join(', ')} (mục chưa bật ở quán). Câu hỏi cần số này thì nói thẳng mục chưa bật nên Bé Boom chưa đọc được; muốn bật thì ở Trang chủ bấm Sửa → Thêm. Không đoán số, không xin gửi số.`
+    : `TÀI KHOẢN NÀY CHƯA XEM ĐƯỢC: ${muc.join(', ')} (mục chưa bật hoặc chưa được cấp quyền). Câu hỏi cần số này thì chỉ trả lời 1–2 câu: nói thẳng tài khoản này chưa xem được, muốn xem thì nhờ chủ quán. KHÔNG bảo tự mở Báo cáo hay màn đó, không xin gửi số, không đoán, không lấy số khác thay thế, không viết Vì sao, Việc tuần này.`;
+}
+
 /** 06/11: thiếu số thì Boom hay bảo "xem Báo cáo phần theo bàn", "đơn lớn nhất" dù các màn đó không có. Đã lần report_screen, thu chi. */
 export function choXemSo(question: string): string {
   const q = question.normalize('NFC').toLowerCase();
@@ -2014,7 +2027,7 @@ export function buildMessages(
   question: string,
   chunks: HelpChunk[],
   persona?: Persona | null,
-  extra?: { huongDan?: HelpChunk[]; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
+  extra?: { khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
 ): { role: 'system' | 'user'; content: string }[] {
   // Lượt trước + số liệu đặt TRƯỚC câu hỏi, trong tin nhắn người dùng (câu dặn giữ nguyên → vẫn được giảm giá).
   // Trí nhớ (sổ hỏi đáp) + lượt app gửi kèm (lượt số liệu không qua GPT, không có trong sổ) → một khối, cũ → mới
@@ -2045,6 +2058,7 @@ export function buildMessages(
       : '',
     caBan(extra?.facts, question),
     choXemSo(question),
+    khongXemDuoc(extra?.khongXem, extra?.laChu),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng

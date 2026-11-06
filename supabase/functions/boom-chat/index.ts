@@ -401,7 +401,7 @@ Deno.serve(async (req) => {
   }
 
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
-  let kyHoi: string | undefined, askTag = '';
+  let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false;
   let huongDan: HelpChunk[] = [];
   if (r.mode === 'ask') {
     if (r.chunk_ids.length) {
@@ -416,6 +416,8 @@ Deno.serve(async (req) => {
       const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), cauTruoc);
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
+      khongXem = so.khongXem;
+      laChu = so.laChu;
       askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
     } catch {
       return json(503, { error: 'SERVER_BUSY' });
@@ -531,7 +533,7 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  const messages = buildMessages(r.question, chunks, who, { huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
+  const messages = buildMessages(r.question, chunks, who, { khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
