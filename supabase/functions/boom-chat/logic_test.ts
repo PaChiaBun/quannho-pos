@@ -25,6 +25,8 @@ import {
   baiToanTiepThi,
   buildMessages,
   choXemSo,
+  uuDaiTrongBai,
+  uuDaiTuChe,
   shopProfile,
   viecTiepThiTrongApp,
   ngoaiGioBan,
@@ -1631,4 +1633,18 @@ Deno.test('kỳ ngắn, ít đơn: chỉ là giờ có đơn, mã kiểm giờ k
   assertEquals(ngoaiGioBan('Thử khung 8–9h.', shopProfile(g)), ['8–9h']);
   assertEquals(ngoaiGioBan('Khung 8–9h.', 'có bán 6h–8h (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)'), []);
   assertStringIncludes(JSON.stringify(buildMessages('viết bài', [], null, { tenQuan: 'A', huongDan: [] })), 'KHÔNG suy giờ mở cửa');
+});
+
+Deno.test('bài viết không tự chế ưu đãi', () => {
+  const co = parseModules({ khuyen_mai: { period: 'x', active: [{ code: 'GIAM10', type: 'percent', value: 10, min_order: 40000, max_discount: 20000, end: '2026-12-31' }] } })!;
+  const l1 = uuDaiTrongBai('viết bài facebook khuyến mãi', co);
+  assertStringIncludes(l1, 'GIAM10 giảm 10%');
+  const l0 = uuDaiTrongBai('viết bài facebook khuyến mãi', null);
+  assertStringIncludes(l0, '[ưu đãi của quán]');
+  assertEquals(uuDaiTrongBai('món nào bán chạy', co), '');
+  assertEquals(uuDaiTuChe('Mỗi đơn từ 80.000đ được giảm 5.000đ.', l0), ['giảm 5.000đ']);
+  assertEquals(uuDaiTuChe('Quán có [ưu đãi của quán]. Đề xuất: giảm 5.000đ cho đơn từ 80.000đ.', l0), []);
+  assertEquals(uuDaiTuChe('Dùng mã GIAM10 giảm 10% tối đa 20.000đ.', l1), []);
+  assertEquals(uuDaiTuChe('Giảm 15% cả tuần!', l1), ['Giảm 15%']);
+  assertEquals(uuDaiTuChe('Giảm 5k mỗi ly', 'không có dòng'), []);
 });

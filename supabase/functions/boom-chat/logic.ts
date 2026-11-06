@@ -2031,6 +2031,31 @@ export function viecTiepThiTrongApp(question: string): string {
   return out.length ? `VIỆC LÀM ĐƯỢC TRONG APP: ${out.join('. ')}. Việc khuyên phải làm được theo đúng các điều này.` : '';
 }
 
+/** 06/11: quán 0 mã mà bài đăng viết "đơn từ 80.000đ giảm 5.000đ" như thật; đăng lên thì quán phải giữ lời với khách. */
+export function uuDaiTrongBai(question: string, m: ModuleFacts | null | undefined): string {
+  const q = question.normalize('NFC').toLowerCase();
+  if (!/vi[eế]t|so[aạ]n|b[aà]i đ[aă]ng|đ[aă]ng g[iì]|caption|t[oờ] r[oơ]i|tin nh[aắ]n|nh[aắ]n zalo/.test(q)) return '';
+  const act = arr((m?.khuyen_mai as Row | undefined)?.active);
+  if (act.length) {
+    return `ƯU ĐÃI TRONG BÀI: chỉ được nhắc đúng các mã đang chạy: ${act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` hết hạn ${ss(x.end)}` : ''}`).join('; ')}. KHÔNG tự chế ưu đãi hay mức giảm khác.`;
+  }
+  return 'ƯU ĐÃI TRONG BÀI: chưa thấy mã nào đang chạy. Trong bài chỉ để chỗ [ưu đãi của quán], KHÔNG viết mức giảm hay quà tặng nào như thật. Muốn gợi ý thì viết SAU bài, mở đầu bằng "Đề xuất:", và nhắc tạo mã ở Khách hàng → tab Khuyến mãi → Thêm mã mới trước khi đăng.';
+}
+
+/** Bài viết có mức giảm không khớp mã đang chạy; phần sau chữ "Đề xuất" được phép gợi ý. */
+export function uuDaiTuChe(answer: string, ref: string): string[] {
+  const m = /ƯU ĐÃI TRONG BÀI: ([^\n]*)/.exec(ref);
+  if (!m) return [];
+  const cat = answer.search(/đề xuất|gợi ý/iu), bai = cat >= 0 ? answer.slice(0, cat) : answer;
+  const so = (x: string) => x.replace(/[.,\s]/g, '').toLowerCase();
+  const cho = so(m[1]), sai: string[] = [];
+  for (const x of bai.matchAll(/(?:gi[aả]m|b[oớ]t|t[aặ]ng|ưu đãi)(?: \p{L}+){0,2} (\d[\d.,]*)\s*(đ|k|%|ngh[iì]n|ng[aà]n)(?!\p{L})/giu)) {
+    const nguyen = /k|ngh|ng[aà]n/i.test(x[2]) ? `${so(x[1])}000đ` : so(x[1]) + x[2];
+    if (!cho.includes(nguyen)) sai.push(x[0]);
+  }
+  return [...new Set(sai)];
+}
+
 /** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
 export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
   if (!muc?.length) return '';
@@ -2165,6 +2190,7 @@ export function buildMessages(
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
     viecTiepThiTrongApp(question),
+    uuDaiTrongBai(question, extra?.modules),
     extra?.tenQuan ? `TÊN QUÁN: ${extra.tenQuan.replace(/["\n]/g, ' ').slice(0, 80)}. Viết bài, tin nhắn thì dùng đúng tên này, không để [Tên quán]; thứ không biết như địa chỉ, số điện thoại, giờ mở cửa thì ghi một chỗ để chủ quán tự điền, KHÔNG suy giờ mở cửa từ số liệu.` : '',
     soNguoiCan(question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
@@ -2678,6 +2704,7 @@ export function ngoaiGioBan(answer: string, ref: string): string[] {
 
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
+  const cheUuDai = uuDaiTuChe(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -2688,6 +2715,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const ct = goiSaiCaoThap(answer, ref);
   const gs = soGanSai(answer, ref);
   return [
+    ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
@@ -2728,6 +2756,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     extra?.chain ? formatChain(extra.chain) : '',
     caBan(extra?.facts, question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
+    uuDaiTrongBai(question, extra?.modules),
     ngayHoi(question, now, extra?.facts),
     kichBanGia(extra?.facts, question),
     todayBlock(now),
