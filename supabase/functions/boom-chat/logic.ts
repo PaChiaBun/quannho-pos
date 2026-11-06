@@ -2643,7 +2643,21 @@ export function soGanSai(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** 06/11: người chấm: đề xuất khung 16–20h khi quán nghỉ 13–17h. Chỉ bắt khung nằm hẳn ngoài giờ bán. */
+export function ngoaiGioBan(answer: string, ref: string): string[] {
+  const m = /có bán ((?:\d{1,2}h–\d{1,2}h(?:, )?)+)/.exec(ref);
+  if (!m) return [];
+  const mo = [...m[1].matchAll(/(\d{1,2})h–(\d{1,2})h/g)].map((x) => [+x[1], +x[2]]);
+  const sai: string[] = [];
+  for (const x of answer.matchAll(/(?<![\d/.,])(\d{1,2})\s*h?\s*[–-]\s*(\d{1,2})\s*h(?!\p{L})/gu)) {
+    const a = +x[1], b = +x[2];
+    if (b > a && b <= 24 && !mo.some(([p, q]) => a < q && b > p)) sai.push(x[0]);
+  }
+  return [...new Set(sai)];
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
+  const gioNgoai = ngoaiGioBan(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -2654,6 +2668,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const ct = goiSaiCaoThap(answer, ref);
   const gs = soGanSai(answer, ref);
   return [
+    ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
     ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),

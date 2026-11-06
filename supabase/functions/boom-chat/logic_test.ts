@@ -25,6 +25,7 @@ import {
   baiToanTiepThi,
   buildMessages,
   choXemSo,
+  ngoaiGioBan,
   soNguoiCan,
   goTat,
   khongXemDuoc,
@@ -1592,4 +1593,13 @@ Deno.test('combo tính sẵn không ghép món giá vốn trên 45%', () => {
   assert(!t.includes('Sườn + Sâm'));
   const b = parseFacts({ period: 'Tháng này (1–6/11)', revenue: 2000000, orders: 20, groups: [nhom('Cơm', [{ name: 'Sườn', qty: 9, revenue: 360000, price: 40000, cost: 22000 }]), nhom('Đồ uống', [{ name: 'Sâm', qty: 5, revenue: 60000, price: 12000, cost: 4000 }])] })!;
   assertStringIncludes(formatFacts(b, now, 'nên làm combo gì'), 'KHÔNG đề xuất combo giảm giá');
+});
+
+Deno.test('ngoaiGioBan: bắt khung nằm hẳn ngoài giờ bán', () => {
+  const ref = 'HỒ SƠ QUÁN: có bán 6h–13h, 17h–21h; nghỉ Chủ nhật';
+  assertEquals(ngoaiGioBan('Thử ưu đãi khung 14–16h.', ref), ['14–16h']);
+  assertEquals(ngoaiGioBan('Thử khung 15h-16h nhé.', ref), ['15h-16h']);
+  assertEquals(ngoaiGioBan('Khung 7–9h và 17–19h đông, 12–14h có một phần.', ref), []);
+  assertEquals(ngoaiGioBan('Từ 1–6/11 bán 5–10 phần.', ref), []);
+  assertEquals(ngoaiGioBan('Khung 14–16h.', 'không có giờ bán'), []);
 });
