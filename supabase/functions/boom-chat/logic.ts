@@ -2703,7 +2703,7 @@ export function soGanSai(answer: string, ref: string): string[] {
 export function viecAppKhongLam(answer: string): string[] {
   const sai: string[] = [];
   for (const c of answer.split(/(?<=[.!?;:])\s+|\n+/)) {
-    if (/app (?:không|chưa)|(?:không|chưa) (?:biết|lọc|gửi|giới hạn|có)|ngoài app|nhân viên (?:nhớ|ghi)|sổ tay|tự (?:ghi|nhớ)|dặn|làm tay/iu.test(c)) continue;
+    if (/app (?:không|chưa)|(?:không|chưa)(?: cho)? (?:biết|lọc|gửi|giới hạn|có)|ngoài app|nhân viên (?:nhớ|ghi)|sổ tay|tự (?:ghi|nhớ)|dặn|làm tay/iu.test(c)) continue;
     if (/l[aâ]u (?:rồi )?(?:chưa|không) (?:ghé|quay lại|đến|tới)|\d+ ngày (?:chưa|không) (?:ghé|quay lại|đến|tới)/iu.test(c)) sai.push('tìm khách lâu chưa ghé: app không có ngày ghé cuối của khách');
     if (/(?:nhân đôi|gấp đôi|x2) điểm/iu.test(c)) sai.push('nhân đôi điểm: app không có');
     if (/(?:tạo|cài|bật|trong app)[^.]{0,40}thẻ tích ly/iu.test(c)) sai.push('thẻ tích ly trong app: app không có, dùng thẻ giấy');

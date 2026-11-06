@@ -1655,6 +1655,7 @@ Deno.test('viecAppKhongLam: bắt việc app không làm, tha câu đã nói rõ
   assertEquals(L.viecAppKhongLam('Nhắn khách 30 ngày chưa quay lại.').length, 1);
   assertEquals(L.viecAppKhongLam('App không biết khách nào lâu chưa ghé, nên nhờ nhân viên nhớ mặt.').length, 0);
   assertEquals(L.viecAppKhongLam('Chưa có số khách cũ lâu chưa ghé để đối chiếu.').length, 0);
+  assertEquals(L.viecAppKhongLam('Số liệu chưa cho biết khách nào lâu chưa ghé.').length, 0);
   assertEquals(L.viecAppKhongLam('Chạy nhân đôi điểm Thứ 3.').length, 1);
   assertEquals(L.viecAppKhongLam('Tạo mã chỉ áp từ 14h đến 16h.').length, 1);
   assertEquals(L.viecAppKhongLam('Tạo mã CHIEU, dặn nhân viên chỉ áp từ 14h.').length, 0);
