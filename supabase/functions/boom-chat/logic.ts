@@ -935,7 +935,13 @@ export function shopProfile(f: ShopFacts): string {
     if (v <= 0 && st >= 0) { spans.push(`${st}h–${h}h`); st = -1; }
   });
   // lần 53: kỳ hôm nay chưa hết ngày → giờ cuối chỉ là "tới giờ này", không phải giờ đóng cửa (D48: GPT bỏ qua ca tối)
-  if (spans.length) out.push(`có bán ${spans.join(', ')}${/^hôm nay/i.test(f.period.normalize('NFC')) ? ' (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)' : ''}`);
+  // 06/11: kỳ ngắn, ít đơn thì đây chỉ là giờ có đơn: Boom từng ghi "quán bán từ 14h–15h" vào bài đăng, mã kiểm giờ cũng dựa dòng này
+  const homNay = /^hôm nay/i.test(f.period.normalize('NFC')), ngayKy = soNgay(f.period);
+  if (spans.length) out.push(homNay
+    ? `có bán ${spans.join(', ')} (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)`
+    : f.orders < 100 || (ngayKy > 0 && ngayKy < 14)
+    ? `có đơn lúc ${spans.join(', ')} (kỳ ngắn hoặc ít đơn: mới là giờ có đơn, CHƯA chắc là giờ mở cửa, đừng nói quán chỉ bán giờ đó)`
+    : `có bán ${spans.join(', ')}`);
   const cnt = weekdayCounts(f.from, f.to);
   if (cnt && f.by_weekday) {
     const names = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -2159,7 +2165,7 @@ export function buildMessages(
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
     viecTiepThiTrongApp(question),
-    extra?.tenQuan ? `TÊN QUÁN: ${extra.tenQuan.replace(/["\n]/g, ' ').slice(0, 80)}. Viết bài, tin nhắn thì dùng đúng tên này, không để [Tên quán]; thứ không biết như địa chỉ, số điện thoại thì ghi một chỗ để chủ quán tự điền.` : '',
+    extra?.tenQuan ? `TÊN QUÁN: ${extra.tenQuan.replace(/["\n]/g, ' ').slice(0, 80)}. Viết bài, tin nhắn thì dùng đúng tên này, không để [Tên quán]; thứ không biết như địa chỉ, số điện thoại, giờ mở cửa thì ghi một chỗ để chủ quán tự điền, KHÔNG suy giờ mở cửa từ số liệu.` : '',
     soNguoiCan(question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
@@ -2659,7 +2665,7 @@ export function soGanSai(answer: string, ref: string): string[] {
 
 /** 06/11: người chấm: đề xuất khung 16–20h khi quán nghỉ 13–17h. Chỉ bắt khung nằm hẳn ngoài giờ bán. */
 export function ngoaiGioBan(answer: string, ref: string): string[] {
-  const m = /có bán ((?:\d{1,2}h–\d{1,2}h(?:, )?)+)/.exec(ref);
+  const m = /có bán ((?:\d{1,2}h–\d{1,2}h(?:, )?)+)(?! \(hôm nay)/.exec(ref);
   if (!m) return [];
   const mo = [...m[1].matchAll(/(\d{1,2})h–(\d{1,2})h/g)].map((x) => [+x[1], +x[2]]);
   const sai: string[] = [];

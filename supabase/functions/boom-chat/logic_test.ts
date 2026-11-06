@@ -25,6 +25,7 @@ import {
   baiToanTiepThi,
   buildMessages,
   choXemSo,
+  shopProfile,
   viecTiepThiTrongApp,
   ngoaiGioBan,
   soNguoiCan,
@@ -1616,4 +1617,18 @@ Deno.test('tên quán vào lời nhắc khi có', () => {
   const m = buildMessages('viết bài facebook', [], null, { tenQuan: 'Bò Đen', huongDan: [] });
   assertStringIncludes(JSON.stringify(m), 'TÊN QUÁN: Bò Đen');
   assert(!JSON.stringify(buildMessages('viết bài facebook', [], null, { huongDan: [] })).includes('TÊN QUÁN:'));
+});
+
+Deno.test('kỳ ngắn, ít đơn: chỉ là giờ có đơn, mã kiểm giờ không chạy', () => {
+  const gio = Array.from({ length: 24 }, (_, h) => (h === 14 || h === 16 ? 100000 : 0));
+  const f = parseFacts({ period: 'Tuần này (từ thứ Hai 2/11)', revenue: 200000, orders: 7, by_hour: gio })!;
+  const hs = shopProfile(f);
+  assertStringIncludes(hs, 'có đơn lúc 14h–15h, 16h–17h');
+  assertStringIncludes(hs, 'CHƯA chắc là giờ mở cửa');
+  assertEquals(ngoaiGioBan('Thử khung 8–9h.', hs), []);
+  const g = parseFacts({ period: 'Tháng trước (tháng 10)', revenue: 90000000, orders: 900, by_hour: gio })!;
+  assertStringIncludes(shopProfile(g), 'có bán 14h–15h, 16h–17h');
+  assertEquals(ngoaiGioBan('Thử khung 8–9h.', shopProfile(g)), ['8–9h']);
+  assertEquals(ngoaiGioBan('Khung 8–9h.', 'có bán 6h–8h (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)'), []);
+  assertStringIncludes(JSON.stringify(buildMessages('viết bài', [], null, { tenQuan: 'A', huongDan: [] })), 'KHÔNG suy giờ mở cửa');
 });
