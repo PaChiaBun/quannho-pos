@@ -24,6 +24,7 @@ import {
   blockReason,
   buildMessages,
   choXemSo,
+  soNguoiCan,
   goTat,
   khongXemDuoc,
   ghiKy,
@@ -1522,4 +1523,9 @@ Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {
   assertStringIncludes(goTat('tn ban dc bn'), 'tn = tháng này');
   assertStringIncludes(goTat('tt ck bn'), 'ck = chuyển khoản');
   assertEquals(goTat('tháng này doanh thu bao nhiêu'), '');
+});
+
+Deno.test('soNguoiCan: không chốt số người khi không có căn cứ', () => {
+  for (const q of ['giờ cao điểm cần mấy nhân viên', 'ca sáng nên để mấy người', 'cuối tuần thêm mấy người', 'quán cần bao nhiêu người']) assertStringIncludes(soNguoiCan(q), 'SỐ NGƯỜI CẦN', q);
+  for (const q of ['quán có mấy nhân viên', 'có nên cắt bớt 1 người không', 'ai làm nhiều nhất']) assertEquals(soNguoiCan(q), '', q);
 });

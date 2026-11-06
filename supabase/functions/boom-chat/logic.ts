@@ -1935,6 +1935,13 @@ export function goTat(question: string): string {
   return co.length ? `CÁCH GÕ TẮT TRONG CÂU: ${co.join(', ')}. Hiểu theo đó, không hỏi lại nghĩa.` : '';
 }
 
+/** 06/11: "ca sáng nên để 2 người", "cuối tuần chỉ cần 40% nhân sự" không có căn cứ; đo 2 lượt ra 2 người, 3 người. */
+export function soNguoiCan(question: string): string {
+  const q = question.normalize('NFC').toLowerCase();
+  if (!/(?:mấy|bao nhiêu|thêm) (?:người|nhân viên|nv)|đủ người/.test(q) || !/nên|cần|thêm|để|xếp|đủ/.test(q) || /cắt|bớt/.test(q)) return '';
+  return 'SỐ NGƯỜI CẦN: số liệu không có định mức (đơn mỗi người, thời gian khách chờ). KHÔNG đưa số người "nên có" như kết luận, không suy từ doanh thu (doanh thu 40% không có nghĩa cần 40% nhân sự). Nói thẳng chưa đủ số để chốt, nêu số người đang có nếu có, rồi cho 1 cách đo: thử 1 tuần, ghi số đơn mỗi giờ và thời gian khách chờ lúc đông; khách chờ lâu thì thêm, nhân viên rảnh nhiều thì bớt.';
+}
+
 /** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
 export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
   if (!muc?.length) return '';
@@ -2068,6 +2075,7 @@ export function buildMessages(
     choXemSo(question),
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
+    soNguoiCan(question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
