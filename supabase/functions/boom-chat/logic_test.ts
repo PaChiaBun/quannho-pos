@@ -1729,3 +1729,17 @@ Deno.test('baiToanTiepThi: chọn ngày theo mẫu tuần, đơn tụt', () => {
   assertEquals(L.baiToanTiepThi({ ...vp, prev_orders: 6000 } as never, null, 'làm sao tăng doanh thu').includes('ĐƠN ĐANG TỤT'), true);
   assertEquals(L.baiToanTiepThi({ ...vp, prev_orders: 6000 } as never, null, 'tăng giá có tăng doanh thu không').includes('ĐƠN ĐANG TỤT'), false);
 });
+
+Deno.test('hướng theo tiền: tính hồi nửa phần mất, số phải đúng giờ', () => {
+  const h = Array(24).fill(0), ph = Array(24).fill(0);
+  for (const [i, a, b] of [[7, 900, 1000], [8, 300, 3000], [9, 500, 2000], [14, 100, 200], [15, 100, 200], [16, 800, 900], [17, 900, 1000], [18, 900, 1000]]) { h[i] = a * 1000; ph[i] = b * 1000; }
+  const f = { revenue: 3600000, orders: 100, prev_orders: 300, period: 'x', from: '2026-10-08', to: '2026-11-06', groups: [], by_hour: h, prev_by_hour: ph, by_weekday: [1000000, 1000000, 300000, 1000000, 1000000, 1000000, 1000000] };
+  const r = L.baiToanTiepThi(f as never, null, 'làm sao tăng doanh thu');
+  // 8h, 9h: kỳ trước 5.000.000đ, nay 800.000đ → nửa phần mất 2.100.000đ
+  assertStringIncludes(r, '8h và 9h (kỳ trước 5.000.000đ, nay 800.000đ) hồi nửa phần mất = thêm khoảng 2.100.000đ');
+  const ref = 'Các hướng xếp theo tiền (ước): 8h và 9h (kỳ trước 5.000.000đ, nay 800.000đ) hồi nửa phần mất = thêm khoảng 2.100.000đ; khung 14–16h (200.000đ/kỳ) lên nửa khoảng cách với 2 giờ thường = thêm khoảng 800.000đ. Câu đầu nêu hướng';
+  assertEquals(L.soHuongSaiGio('Nên kéo khung 8h–9h, thêm khoảng 800.000đ.', ref).length, 1);
+  assertEquals(L.soHuongSaiGio('Nên kéo khung 8h–9h, thêm khoảng 2.100.000đ.', ref).length, 0);
+  assertEquals(L.soHuongSaiGio('Nên kéo khung 14–16h, thêm khoảng 800.000đ.', ref).length, 0);
+  assertEquals(L.soHuongSaiGio('Có thể thêm khoảng 800.000đ.', ref).length, 0);
+});

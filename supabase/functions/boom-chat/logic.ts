@@ -2044,6 +2044,14 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const uong = (f.groups ?? []).filter((g) => /u[oố]ng|n[uư][oớ]c|tr[aà]\b|c[aà] ph[eê]|sinh t[oố]/iu.test(g.name));
     const qUong = uong.reduce((a, g) => a + g.qty, 0), rUong = uong.reduce((a, g) => a + g.revenue, 0);
     if (qUong > 0 && rUong < f.revenue * 0.3 && qUong / f.orders < 0.8) co.push({ t: `đồ uống từ ${qty(Math.round((qUong / f.orders) * 100) / 100)} lên ${qty(Math.round((qUong / f.orders + 0.1) * 100) / 100)} phần mỗi đơn`, v: f.orders * 0.1 * (rUong / qUong) });
+    // 06/11: web Demo: dòng phân tích bảo kéo lại 8h, 9h, còn số tiền ước của khung khác; Boom ghép thành "8h–9h hồi nửa khoảng cách = 2.270.000đ" (đúng phải là 9.251.500đ)
+    if (f.prev_orders && f.orders / f.prev_orders <= 0.9 && f.prev_by_hour) {
+      const mat = h.map((v, i) => ({ i, v, p: nn(f.prev_by_hour![i]) })).filter((x) => x.v < x.p).sort((x, y) => x.v - x.p - (y.v - y.p)).slice(0, 2).sort((x, y) => x.i - y.i);
+      if (mat.length) {
+        const v = mat.reduce((a, x) => a + x.v, 0), p = mat.reduce((a, x) => a + x.p, 0);
+        co.push({ t: `${mat.map((x) => `${x.i}h`).join(' và ')} (kỳ trước ${vnd(p)}, nay ${vnd(v)}) hồi nửa phần mất`, v: (p - v) / 2 });
+      }
+    }
     if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. Câu đầu nêu hướng đứng đầu kèm số tiền ước, việc làm bám hướng đó trước; nói rõ là ước.`);
   }
   // người chấm: Boom hay mời đúng món giá vốn 45–54% trong khi quán có món lời hơn
@@ -2728,6 +2736,29 @@ export function soGanSai(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** Số tiền ước của một hướng phải đi cùng đúng giờ của hướng đó; soLa không bắt vì số vẫn có trong khối. */
+export function soHuongSaiGio(answer: string, ref: string): string[] {
+  const dong = /Các hướng xếp theo tiền[^:]*: ([^\n]*?)\. Câu đầu nêu/.exec(ref);
+  if (!dong) return [];
+  const gio = (x: string) => {
+    const k = /(\d{1,2})–(\d{1,2})h/.exec(x);
+    if (k) return Array.from({ length: +k[2] - +k[1] + 1 }, (_, i) => +k[1] + i);
+    return [...x.matchAll(/(?<![\d.,])(\d{1,2})h(?!\p{L})/gu)].map((m) => +m[1]);
+  };
+  const sai: string[] = [];
+  for (const huong of dong[1].split('; ')) {
+    const m = /^(.*) = thêm khoảng ([\d.]+đ)$/.exec(huong);
+    if (!m) continue;
+    const co = gio(m[1]);
+    for (const c of answer.split(/(?<=[.!?])\s+|\n+/)) {
+      if (!c.includes(m[2])) continue;
+      const noi = gio(c.replace(/\d[\d.,]*đ/g, ''));
+      if (noi.length && !noi.some((x) => co.includes(x))) sai.push(`${m[2]} là của "${m[1].split(' (')[0]}"`);
+    }
+  }
+  return [...new Set(sai)];
+}
+
 /** Phần việc làm của câu trả lời; không có tiêu đề thì cả câu. */
 const phanViec = (answer: string) => {
   const i = answer.search(/việc (?:tuần này|làm|nên làm|cần làm)/iu);
@@ -2825,6 +2856,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const thuNgoai = ngoaiThuBan(answer, ref);
   const kyIt = khuyenTheoKyIt(answer, ref);
   const tangGia = tangGiaKhiTut(answer, ref);
+  const huongGio = soHuongSaiGio(answer, ref);
   const dauCau = dauKhongViec(answer, ref);
   const cbGia = comboThieuGia(answer, ref);
   const maGiong = maTrung(answer, ref);
@@ -2840,6 +2872,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   return [
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
+    ...(huongGio.length ? [`gắn số tiền ước vào sai giờ: ${huongGio.join('; ')} → dùng đúng cặp giờ và số tiền trong các hướng xếp theo tiền`] : []),
     ...(tangGia ? ['số đơn đang tụt mà khuyên tăng giá → bỏ việc tăng giá, thay bằng việc kéo đơn lại'] : []),
     ...(dauCau ? ['câu đầu mới nêu số, chưa nói nên làm gì → viết lại câu đầu nói ngay việc nên làm trước, số để sau'] : []),
     ...(cbGia.length ? [`đề xuất combo mà chưa có giá combo (${cbGia.join('; ')}) → ghi rõ giá combo, dùng dòng combo tính sẵn nếu có`] : []),
