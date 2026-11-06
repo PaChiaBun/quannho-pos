@@ -1,4 +1,5 @@
 // Phần xử lý thuần của hàm boom-chat (không gọi mạng) — test bằng `deno test supabase/functions/boom-chat`.
+import { boDau, coNeuKy } from './ky.ts';
 
 export const LIMITS = {
   // byte UTF-8: chữ Việt có dấu tốn 2–3 byte; khối số liệu theo nhóm món có thể tới ~20 KB (QC 24/10)
@@ -1331,6 +1332,22 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
 }
 
 /** Câu trả lời hiển thị dạng chữ thường: bỏ ký hiệu định dạng (**đậm**, # tiêu đề) GPT hay chèn. */
+/** Người hỏi không nêu kỳ mà câu trả lời có số bán hàng, chưa nói kỳ thì mã ghi thêm một câu.
+ *  06/11: chỉ 28/96 câu nói kỳ; bắt mô hình nói kỳ làm tư vấn tụt (chấm mù 45 câu −0,38 ± 0,33) nên không dặn trong lời nhắc. */
+export function ghiKy(answer: string, nhan: string | undefined, question: string, now: Date = new Date()): string {
+  if (!nhan || coNeuKy(question, now)) return answer;
+  // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
+  if (/\b(?:kho|ton|con lai|con bao nhieu|sap het|hien tai|bay gio|lam sao|o dau|the nao|cach)\b/.test(boDau(question))) return answer;
+  if (!/\d[\d.,]*\s*(?:đ\b|đồng|đơn|phần|ly\b|khách|triệu|%)/i.test(answer)) return answer;
+  const dau = nhan.split('(')[0].trim().toLowerCase();
+  const thang = /(\d{1,2})(?:\/\d{4})?\)$/.exec(nhan)?.[1];
+  const khoa = [dau, ...(thang ? [`tháng ${thang}`] : []), ...(/\(tháng (\d+)\)/.exec(nhan) ? [nhan.slice(nhan.indexOf('(') + 1, -1)] : [])];
+  // "Việc tuần này:" là nhãn mục, không phải nói kỳ
+  const tl = answer.normalize('NFC').toLowerCase().replace(/việc tuần này/g, '');
+  if (khoa.some((k) => tl.includes(k))) return answer;
+  return `${answer}\n\nSố trên là của ${nhan.charAt(0).toLowerCase()}${nhan.slice(1)}.`;
+}
+
 export function plainAnswer(s: string): string {
   const t = s
     // "(theo hướng dẫn ở Đoạn 1)" / "Đoạn 2" — người dùng không thấy các đoạn (QC 24/10)

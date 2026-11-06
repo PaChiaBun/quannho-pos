@@ -19,8 +19,9 @@
 //   JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (có sẵn trong dịch vụ hàm của Supabase tự host)
 import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
-import { canGiuKy } from './ky.ts';
+import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
+  ghiKy,
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
   blockReason,
@@ -183,18 +184,17 @@ async function isMember(storeId: string, userId: string): Promise<boolean> {
 }
 
 /** Trí nhớ 5 giờ: tối đa 4 lượt GPT trả lời gần nhất của người hỏi ở quán này (lỗi → không nhớ). */
-/** Câu người này hỏi trong 10 phút qua (không tính trước lúc bấm làm mới chat); chậm / lỗi → bỏ qua, về kỳ mặc định. */
-async function cauVuaHoi(storeId: string, userId: string, memoryAgeS: number | null | undefined): Promise<string | null> {
+/** Các câu người này hỏi trong 10 phút qua, mới nhất trước (không tính trước lúc bấm làm mới chat); chậm / lỗi → rỗng, về kỳ mặc định. */
+async function cauVuaHoi(storeId: string, userId: string, memoryAgeS: number | null | undefined): Promise<string[]> {
   try {
     const moc = Math.max(Date.now() - 600_000, memorySince(new Date(), memoryAgeS).getTime());
     const rows = await rest(
-      `boom_qa_log?select=question&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&created_at=gte.${encodeURIComponent(new Date(moc).toISOString())}&order=created_at.desc&limit=1`,
+      `boom_qa_log?select=question&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&created_at=gte.${encodeURIComponent(new Date(moc).toISOString())}&order=created_at.desc&limit=5`,
       { signal: AbortSignal.timeout(1000) },
     );
-    const q = Array.isArray(rows) ? rows[0]?.question : null;
-    return typeof q === 'string' ? q : null;
+    return Array.isArray(rows) ? rows.map((x) => x?.question).filter((q): q is string => typeof q === 'string') : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -411,7 +411,9 @@ Deno.serve(async (req) => {
     }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     try {
-      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), r.history?.q ?? (canGiuKy(r.question) ? await cauVuaHoi(r.store_id, user, r.memory_age_s) : null));
+      const hq = r.history?.q ?? null;
+      const cauTruoc = !canGiuKy(r.question) ? hq : cauGiuKy(hq ? [hq] : []) ?? cauGiuKy(await cauVuaHoi(r.store_id, user, r.memory_age_s));
+      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), cauTruoc);
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
       askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
@@ -626,6 +628,7 @@ Deno.serve(async (req) => {
       await finish(logId, { model: kind, status: 'error', latency_ms: latency, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, answer: 'EMPTY' });
       return json(502, { error: 'AI_EMPTY_ANSWER' });
     }
+    answer = ghiKy(answer, kyHoi, r.question);
     await finish(logId, { model: kind, status: 'ok', answer: r.chain ? CHAIN_LOG_NOTE : r.modules ? MODULE_LOG_NOTE : answer, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, latency_ms: latency });
     const refused = modelRefused(answer);
     await writeFull({ log_id: logId, store_id: r.store_id, user_id: user, source: 'gpt',

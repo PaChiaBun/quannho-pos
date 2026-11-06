@@ -229,6 +229,17 @@ export function canGiuKy(question: string, now: Date = new Date()): boolean {
   return f.split(' ').length <= 8 && !timKy(f, cong(now, VN)).length && !/\b(?:hien tai|bay gio|luc nay|hien gio|dang con|con lai|ton kho)\b/.test(f);
 }
 
+export const coNeuKy = (question: string, now: Date = new Date()) => timKy(boDau(question), cong(now, VN)).length > 0;
+
+/** Dò từ câu mới nhất về trước, qua các câu ngắn không nêu kỳ, tới câu có kỳ; gặp câu dài / nói "bây giờ" thì dừng. */
+export function cauGiuKy(truoc: string[], now: Date = new Date()): string | null {
+  for (const q of truoc) {
+    if (coNeuKy(q, now)) return q;
+    if (!canGiuKy(q, now)) return null;
+  }
+  return null;
+}
+
 /** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
 export function docKy(question: string, now: Date = new Date(), cauTruoc?: string | null): Ky {
   const vn = cong(now, VN);

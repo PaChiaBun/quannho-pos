@@ -1,5 +1,5 @@
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { canGiuKy, docKy } from './ky.ts';
+import { canGiuKy, cauGiuKy, docKy } from './ky.ts';
 
 // Hôm nay Thứ Ba 03/11/2026 09:00 giờ VN — 30 câu đo thử bộ định tuyến GPT ngày 03/11 (GPT đúng 15/30)
 const NOW = new Date('2026-11-03T09:00:00+07:00');
@@ -136,4 +136,14 @@ Deno.test('canGiuKy: câu ngắn không nêu kỳ thì xem câu vừa hỏi', ()
   // ghép với docKy: câu vừa hỏi không có kỳ thì giữ mặc định
   assert(docKy('tiền mặt chiếm bao nhiêu phần trăm', now, 'tháng trước tiền mặt bao nhiêu').nhan.startsWith('Tháng trước'));
   assertEquals(docKy('món nào bán chạy', now, 'cách in hoá đơn').nhan, docKy('món nào bán chạy', now).nhan);
+});
+
+Deno.test('cauGiuKy: dò qua chuỗi câu ngắn tới câu có kỳ, gặp câu dài hoặc "bây giờ" thì dừng', () => {
+  const dau = 'tháng trước tiền mặt bao nhiêu';
+  assertEquals(cauGiuKy(['tiền mặt chiếm bao nhiêu phần trăm', dau], NOW), dau);
+  assertEquals(cauGiuKy([dau], NOW), dau);
+  assertEquals(cauGiuKy(['kho bây giờ còn gì', dau], NOW), null);
+  assertEquals(cauGiuKy(['quán em bán cơm tấm gần trường học thì nên làm khuyến mãi gì cho học sinh', dau], NOW), null);
+  assertEquals(cauGiuKy([], NOW), null);
+  assertEquals(docKy('món nào bán chạy', NOW, cauGiuKy(['tiền mặt chiếm bao nhiêu phần trăm', dau], NOW)).nhan, docKy(dau, NOW).nhan);
 });

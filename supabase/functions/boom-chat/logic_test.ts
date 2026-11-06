@@ -23,6 +23,7 @@ import {
   cacheKey,
   blockReason,
   buildMessages,
+  ghiKy,
   loaiCau,
   khuyenNguoc,
   MAU_LOAI,
@@ -1448,4 +1449,17 @@ Deno.test('tỉ lệ phương thức thanh toán chia trên doanh thu như Báo 
   const t = formatFacts(f, new Date(), 'tiền mặt bao nhiêu', '');
   assertStringIncludes(t, 'tiền mặt 44.340.000đ (59,8%)');
   assertStringIncludes(t, 'cách khác như ví 858.000đ');
+});
+
+Deno.test('ghiKy: thêm câu ghi kỳ khi câu trả lời có số mà chưa nói kỳ', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00'), a = 'Dạ, Trà đào bán chạy nhất: 14 phần, 490.000đ.';
+  assertEquals(ghiKy(a, '30 ngày qua', 'món nào bán chạy nhất', now), `${a}\n\nSố trên là của 30 ngày qua.`);
+  assertEquals(ghiKy(`${a}\nViệc tuần này: mời khách.`, 'Tuần này (2/11–6/11)', 'món nào bán chạy', now).endsWith('Số trên là của tuần này (2/11–6/11).'), true);
+  for (const x of ['Trong 30 ngày qua, Trà đào 14 phần.']) assertEquals(ghiKy(x, '30 ngày qua', 'món nào bán chạy', now), x);
+  const t10 = 'Tháng 10 tiền mặt chiếm 59,8%.';
+  assertEquals(ghiKy(t10, 'Tháng trước (tháng 10)', 'tiền mặt chiếm bao nhiêu', now), t10);
+  assertEquals(ghiKy(a, '30 ngày qua', 'tháng trước món nào bán chạy', now), a);
+  assertEquals(ghiKy(a, '30 ngày qua', 'kho còn bao nhiêu', now), a);
+  assertEquals(ghiKy('Dạ, Anh/Chị mở màn Báo cáo.', '30 ngày qua', 'xem lãi', now), 'Dạ, Anh/Chị mở màn Báo cáo.');
+  assertEquals(ghiKy(a, undefined, 'món nào bán chạy', now), a);
 });
