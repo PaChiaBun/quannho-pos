@@ -1700,3 +1700,32 @@ Deno.test('kỳ ít đơn: changeLine bỏ giờ, thứ, món; khuyenTheoKyIt b�
   assertEquals(L.khuyenTheoKyIt('Việc tuần này: nhắn khách cũ.\n- Xem theo giờ trong 30 ngày qua trước khi chọn khung giờ.', ref).length, 0);
   assertEquals(L.formatFacts(L.parseFacts(co)!, new Date('2026-11-06T14:00:00+07:00'), 'làm sao tăng doanh thu').includes('Việc nên nhắm'), false);
 });
+
+Deno.test('kiểm tiếp thị: tăng giá khi đơn tụt, dòng đầu, combo, mã trùng, mã theo món', () => {
+  assertEquals(L.tangGiaKhiTut('Việc tuần này: thử tăng giá Cà phê lên 27.000đ.', 'ĐƠN ĐANG TỤT: giảm'), true);
+  assertEquals(L.tangGiaKhiTut('Việc tuần này: chưa nên tăng giá.', 'ĐƠN ĐANG TỤT: giảm'), false);
+  assertEquals(L.tangGiaKhiTut('Việc tuần này: thử tăng giá.', 'khác'), false);
+  const dau = 'CÂU ĐẦU: nói ngay việc';
+  assertEquals(L.dauKhongViec('Dạ Anh/Chị, doanh thu là 870.000đ, giảm 96,5%. Việc: nhắn khách.', dau), true);
+  assertEquals(L.dauKhongViec('Dạ Anh/Chị, nên kéo khách cũ trước vì đơn giảm 96%.', dau), false);
+  const cb = 'Combo tính sẵn: A';
+  assertEquals(L.comboThieuGia('Việc tuần này:\n- Thử combo Trà 35.000đ với Bánh mì 30.000đ, đo số bán.', cb).length, 1);
+  assertEquals(L.comboThieuGia('Việc tuần này:\n- Thử combo Trà + Bánh mì lẻ 65.000đ còn 60.000đ.', cb).length, 0);
+  const ma = '[KHUYẾN MÃI — x] 1 mã đang chạy: TRUAVUI giảm 5.000đ đơn từ 80.000đ hết hạn 30/11.';
+  assertEquals(L.maTrung('Nên tạo mã giảm 5.000đ cho đơn từ 80.000đ.', ma), ['TRUAVUI']);
+  assertEquals(L.maTrung('Giữ TRUAVUI giảm 5.000đ đơn từ 80.000đ.', ma), []);
+  assertEquals(L.maTrung('Nên tạo mã giảm 3.000đ cho đơn từ 60.000đ.', ma), []);
+  assertEquals(L.viecAppKhongLam('Tạo mã chỉ áp cho món Bạc xỉu.').length, 1);
+  assertEquals(L.viecAppKhongLam('Tạo mã riêng cho khách quay lại.').length, 1);
+});
+
+Deno.test('baiToanTiepThi: chọn ngày theo mẫu tuần, đơn tụt', () => {
+  const vp = { revenue: 95000000, orders: 3000, period: 'x', from: '2026-10-01', to: '2026-10-28', groups: [], by_hour: [], by_weekday: [18000000, 17000000, 16000000, 17000000, 17000000, 7000000, 0] };
+  const a = L.baiToanTiepThi(vp as never, null, 'ngày nào nên chạy ưu đãi');
+  assertEquals(a.includes('thấp hẳn so với ngày thường') && a.includes('Thứ 3') === false, true);
+  assertEquals(a.includes('Nên thử trước ở Thứ 4'), true);
+  const dong = L.baiToanTiepThi({ ...vp, by_weekday: [10000000, 10000000, 10000000, 10000000, 10000000, 20000000, 20000000] } as never, null, 'cuối tuần nên làm khuyến mãi gì');
+  assertEquals(dong.includes('đã đông hơn'), true);
+  assertEquals(L.baiToanTiepThi({ ...vp, prev_orders: 6000 } as never, null, 'làm sao tăng doanh thu').includes('ĐƠN ĐANG TỤT'), true);
+  assertEquals(L.baiToanTiepThi({ ...vp, prev_orders: 6000 } as never, null, 'tăng giá có tăng doanh thu không').includes('ĐƠN ĐANG TỤT'), false);
+});
