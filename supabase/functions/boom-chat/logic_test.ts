@@ -1529,3 +1529,10 @@ Deno.test('soNguoiCan: không chốt số người khi không có căn cứ', ()
   for (const q of ['giờ cao điểm cần mấy nhân viên', 'ca sáng nên để mấy người', 'cuối tuần thêm mấy người', 'quán cần bao nhiêu người']) assertStringIncludes(soNguoiCan(q), 'SỐ NGƯỜI CẦN', q);
   for (const q of ['quán có mấy nhân viên', 'có nên cắt bớt 1 người không', 'ai làm nhiều nhất']) assertEquals(soNguoiCan(q), '', q);
 });
+
+Deno.test('ghiKy: nhận đúng câu đã nói kỳ, không coi tháng 11 là đã nói 30 ngày qua', () => {
+  const now = new Date('2026-11-06T09:00:00+07:00'), k = '30 ngày qua (8/10/2026–6/11/2026)', m = 'Tháng này (1/11–6/11)';
+  assert(ghiKy('Tháng 11 quán bán 490.000đ.', k, 'món nào bán chạy', now).endsWith(`Số trên là của 30 ngày qua (8/10/2026–6/11/2026).`));
+  for (const a of ['Trong 30 ngày quán bán 490.000đ.', 'Từ 8/10 quán bán 490.000đ.']) assertEquals(ghiKy(a, k, 'món nào bán chạy', now), a);
+  for (const a of ['Từ đầu tháng tới ngày 6/11 có 180.000đ.', 'Từ 1–6/11 có 180.000đ.', 'Tháng 11 có 180.000đ.']) assertEquals(ghiKy(a, m, 'ck bao nhiêu', now), a);
+});

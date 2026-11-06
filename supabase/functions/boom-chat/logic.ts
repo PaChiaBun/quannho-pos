@@ -1356,13 +1356,16 @@ export function ghiKy(answer: string, nhan: string | undefined, question: string
   if (!nhan || coNeuKy(question, now)) return answer;
   // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
   if (/\b(?:kho|ton|con lai|con bao nhieu|sap het|hien tai|bay gio|lam sao|o dau|the nao|cach)\b/.test(boDau(question))) return answer;
-  if (!/\d[\d.,]*\s*(?:đ\b|đồng|đơn|phần|ly\b|khách|triệu|%)/i.test(answer)) return answer;
+  // \b không dùng được sau "đ" (JS coi đ không phải chữ)
+  if (!/\d[\d.,]*\s*(?:đ(?!\p{L})|đồng|đơn|phần|ly(?!\p{L})|khách|triệu|%)/iu.test(answer)) return answer;
   const dau = nhan.split('(')[0].trim().toLowerCase();
-  const thang = /(\d{1,2})(?:\/\d{4})?\)$/.exec(nhan)?.[1];
-  const khoa = [dau, ...(thang ? [`tháng ${thang}`] : []), ...(/\(tháng (\d+)\)/.exec(nhan) ? [nhan.slice(nhan.indexOf('(') + 1, -1)] : [])];
+  // 06/11: "30 ngày qua (8/10–6/11)" từng coi chữ "tháng 11" là đã nói kỳ; "từ đầu tháng", "1–6/11" thì lại ghi thừa
+  const thang = /^tháng/.test(dau) ? /(\d{1,2})(?:\/\d{4})?\)$/.exec(nhan)?.[1] : undefined;
+  const ngayDau = /\((\d{1,2}\/\d{1,2})/.exec(nhan)?.[1];
+  const khoa = [dau, dau.replace(/ qua$/, ''), ...(thang ? [`tháng ${thang}`] : []), ...(/\(tháng (\d+)\)/.exec(nhan) ? [nhan.slice(nhan.indexOf('(') + 1, -1)] : []), ...(ngayDau ? [ngayDau] : []), ...(/^tháng này/.test(dau) ? ['đầu tháng'] : [])];
   // "Việc tuần này:" là nhãn mục, không phải nói kỳ
   const tl = answer.normalize('NFC').toLowerCase().replace(/việc tuần này/g, '');
-  if (khoa.some((k) => tl.includes(k))) return answer;
+  if (khoa.some((k) => tl.includes(k)) || /\b\d{1,2}\s*[–-]\s*\d{1,2}\/\d{1,2}/.test(tl)) return answer;
   return `${answer}\n\nSố trên là của ${nhan.charAt(0).toLowerCase()}${nhan.slice(1)}.`;
 }
 
