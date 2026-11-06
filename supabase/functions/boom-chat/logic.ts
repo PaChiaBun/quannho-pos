@@ -2013,6 +2013,18 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${out.join(' ')}`;
 }
 
+/** 06/11: Boom khuyên "nhắn khách lâu chưa ghé", thẻ tích ly, mã theo giờ mà app không làm được. Đã lần loyalty_screen, bảng customers không có ngày ghé cuối. */
+export function viecTiepThiTrongApp(question: string): string {
+  const q = question.normalize('NFC').toLowerCase(), out: string[] = [];
+  if (/kh[aá]ch (?:quay l[aạ]i|quen|c[uũ])|t[ií]ch (?:đ[iể]+m|diem|ly)|gi[uữ] kh[aá]ch|nh[aắ]n (?:tin )?kh[aá]ch|zalo|sms/.test(q)) {
+    out.push('khách: app tích điểm và trừ tiền bằng "Điểm thưởng" lúc thanh toán; thẻ tích ly thì dùng thẻ giấy; app KHÔNG biết khách nào lâu chưa ghé và KHÔNG gửi tin, muốn nhắn thì quán tự nhắn ngoài app từ danh sách khách, đừng bảo lọc khách lâu chưa ghé');
+  }
+  if (/(?:^|\s)m[aã](?: gi[aả]m|\s)|voucher|khuy[eế]n m[aã]i|gi[oờ] v[aắ]ng|ưu đãi/.test(q)) {
+    out.push('mã giảm: tạo ở Khách hàng → tab Khuyến mãi → Thêm mã mới; có đơn tối thiểu, mức giảm tối đa, ngày hết hạn; KHÔNG giới hạn được theo giờ trong ngày, theo khách hay số lần dùng, ưu đãi theo giờ thì tạo mã riêng và dặn nhân viên chỉ áp đúng giờ');
+  }
+  return out.length ? `VIỆC LÀM ĐƯỢC TRONG APP: ${out.join('. ')}. Việc khuyên phải làm được theo đúng các điều này.` : '';
+}
+
 /** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
 export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
   if (!muc?.length) return '';
@@ -2146,6 +2158,7 @@ export function buildMessages(
     choXemSo(question),
     khongXemDuoc(extra?.khongXem, extra?.laChu),
     goTat(question),
+    viecTiepThiTrongApp(question),
     soNguoiCan(question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),

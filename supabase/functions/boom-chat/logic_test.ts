@@ -25,6 +25,7 @@ import {
   baiToanTiepThi,
   buildMessages,
   choXemSo,
+  viecTiepThiTrongApp,
   ngoaiGioBan,
   soNguoiCan,
   goTat,
@@ -1603,4 +1604,10 @@ Deno.test('ngoaiGioBan: bắt khung nằm hẳn ngoài giờ bán', () => {
   assertEquals(ngoaiGioBan('Khung 7–9h và 17–19h đông, 12–14h có một phần.', ref), []);
   assertEquals(ngoaiGioBan('Từ 1–6/11 bán 5–10 phần.', ref), []);
   assertEquals(ngoaiGioBan('Khung 14–16h.', 'không có giờ bán'), []);
+});
+
+Deno.test('viecTiepThiTrongApp: nói đúng việc app làm được', () => {
+  assertStringIncludes(viecTiepThiTrongApp('làm sao để khách quay lại nhiều hơn'), 'KHÔNG biết khách nào lâu chưa ghé');
+  assertStringIncludes(viecTiepThiTrongApp('giờ vắng chạy mã giảm được không'), 'KHÔNG giới hạn được theo giờ');
+  assertEquals(viecTiepThiTrongApp('món nào bán chạy nhất'), '');
 });
