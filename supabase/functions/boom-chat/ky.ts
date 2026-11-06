@@ -123,7 +123,7 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   them(/\b(\d) thang dau nam\b/, (m) => { const s = ngay(nowY, 1), k = Math.min(+m[1] * 30, 92); return khoang(now, s, cong(s, k * D), cong(s, -k * D), `${k} ngày đầu năm ${nowY}`, `${k} ngày trước đó`); });
   them(/\bnua nam(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi))?\b/, () => gan(92));
   // 06/11: "từ 1/10 tới nay" từng đọc thành một ngày 1/10
-  them(/\btu (?:ngay )?(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(20\d{2}))? (?:den|toi) (?:nay|gio|bay gio|hom nay)\b/, (m) => {
+  them(/\btu (?:ngay )?(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(20\d{2}))? (?:den|toi) (?:nay|gio|h|bay gio|hom nay)\b/, (m) => {
     const mo = +m[2];
     if (mo < 1 || mo > 12) return null;
     const s = ngay(m[3] ? +m[3] : ngay(nowY, mo, +m[1]) > hn ? nowY - 1 : nowY, mo, +m[1]), n = Math.round((hn.getTime() - s.getTime()) / D) + 1;
@@ -201,7 +201,7 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   // bỏ dấu thì "tới nay" trùng "tối nay": "đầu tháng tới nay" từng đọc thành hôm nay
   them(/\b(?:(?:ngay )?hom nay|hnay|bua nay|sang nay|trua nay|chieu nay|(?<!\b(?:thang|thg|nam|tuan|\d) )toi nay)\b/, () => kyCo('hom_nay', now));
   them(/^nay (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_nay', now));
-  them(/(?:^(?:toi|den) gio|\b(?:tu sang|sang gio))\b/, () => kyCo('hom_nay', now));
+  them(/(?:^(?:toi|den) (?:gio|h)|\b(?:tu sang|sang (?:gio|h)))\b/, () => kyCo('hom_nay', now));
   them(/^qua (?=(?:ban|duoc|thu|doanh|co|e|dong|vang|khach)\b)/, () => kyCo('hom_qua', now));
   // "hôm trước" trong câu ngắn: hiểu là hôm qua, nhãn kỳ cho chủ quán thấy để chỉnh; câu dài thường kể chuyện, không phải hỏi số
   if (f.split(' ').length <= 8) them(/\b(?:hom|bua) truoc\b/, () => kyCo('hom_qua', now));
@@ -217,10 +217,10 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   // 05/11: "hôm kia bán bao nhiêu" rơi về 30 ngày qua
   them(/\b(?:hom kia|hum kia|bua kia)\b/, () => motNgay(cong(hn, -2 * D), now));
   them(/\b(?:(?:ngay )?hom qua|hqua|hum qua|hom wa|bua qua|toi qua|dem qua|sang qua|trua qua|chieu qua)\b/, () => kyCo('hom_qua', now));
-  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
+  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
   them(/\btuan (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
   them(/\b(?:thang|thg) nay nam (?:ngoai|truoc|trc|roi)\b/, () => thang(nowM, nowY - 1, now));
-  them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay)|\d))|dau (?:thang|thg) (?:toi gio|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
+  them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay| h\b)|den (?:gio|h)\b|toi h\b|\d))|dau (?:thang|thg) (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
   them(/\b(?:thang|thg) (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
   // "tháng 9", "tháng 12 năm ngoái"; tháng chưa tới năm nay → năm ngoái
   them(/\b(?:thang|thg|t) ?(\d{1,2})\b(?! (?:lan|trieu|tr|k|nghin|ngan|ly|phan)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {

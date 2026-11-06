@@ -74,6 +74,44 @@ String? boomModuleAccess(BoomModule m, BoomPerms p) {
 /// Số bán hàng (doanh thu, món bán chạy) — như màn Báo cáo.
 bool boomCanSeeSales(BoomPerms p) => p.manager || p.can('report');
 
+/// Bỏ câu gợi ý cần số mà tài khoản không xem được (câu dưới mỗi trả lời); câu khác giữ nguyên.
+List<String> boomLocGoiY(List<String> goiY, BoomPerms p) {
+  final banHang = boomCanSeeSales(p);
+  final kho = boomModuleAccess(BoomModule.kho, p) != null;
+  final nhanSu = boomModuleAccess(BoomModule.nhanSu, p) == 'all';
+  return goiY.where((g) {
+    final s = g.toLowerCase();
+    if (s.contains('ai đang làm')) return nhanSu;
+    if (s.startsWith('kho ')) return kho;
+    if (RegExp(r'^(?:hôm nay |món nào |doanh thu ).*(?:bán|doanh thu)|^doanh thu').hasMatch(s)) {
+      return banHang;
+    }
+    return true;
+  }).toList();
+}
+
+/// Câu gợi ý ai cũng dùng được: câu cách làm, không cần quyền xem số.
+const kBoomGoiYChung = [
+  'Huỷ món đã gửi bếp thế nào?',
+  'Vào ca thế nào?',
+  'Cài máy in thế nào?',
+];
+
+/// Câu gợi ý theo quyền. Nhân viên từng bấm "Hôm nay bán được bao nhiêu?" rồi bị từ chối ngay câu
+/// đầu (sổ thật 06/11). Chưa rõ quyền → chỉ câu chung.
+List<String> boomGoiYTheoQuyen(BoomPerms? p) {
+  if (p == null) return kBoomGoiYChung;
+  final banHang = boomCanSeeSales(p);
+  return [
+    if (banHang) 'Hôm nay bán được bao nhiêu?',
+    kBoomGoiYChung.first,
+    if (boomModuleAccess(BoomModule.kho, p) != null) 'Kho có gì sắp hết?',
+    if (banHang) 'Món nào bán chạy nhất?',
+    if (boomModuleAccess(BoomModule.nhanSu, p) == 'all') 'Hôm nay ai đang làm?',
+    if (!banHang) ...kBoomGoiYChung.skip(1),
+  ];
+}
+
 /// Hàng sắp hết — như màn Kho.
 bool boomCanSeeStock(BoomPerms p) => p.can('kho') || p.can('kho_pro');
 

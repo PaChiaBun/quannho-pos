@@ -9,6 +9,8 @@ import 'package:quannho_pos/features/ai_assistant/screens/boom_chat_screen.dart'
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_message_bubble.dart';
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_typing_indicator.dart';
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_suggestion_chips.dart';
+import 'package:quannho_pos/features/ai_assistant/providers/boom_chat_provider.dart';
+import 'package:quannho_pos/features/ai_assistant/services/boom_module_data_service.dart';
 
 void main() {
   setUpAll(() async {
@@ -36,7 +38,19 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return ProviderScope(
-      overrides: [boomHelpIndexProvider.overrideWith((ref) async => null)],
+      overrides: [
+        boomHelpIndexProvider.overrideWith((ref) async => null),
+        boomGoiYProvider.overrideWith(
+          (ref) async => boomGoiYTheoQuyen(
+            const BoomPerms(
+              isOwner: true,
+              canonicalRole: 'owner',
+              modules: [],
+              active: {'kho', 'report', 'chamcong'},
+            ),
+          ),
+        ),
+      ],
       child: const MaterialApp(home: Scaffold(body: BoomChatScreen())),
     );
   }

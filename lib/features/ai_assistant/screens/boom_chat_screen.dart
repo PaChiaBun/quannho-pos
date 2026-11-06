@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/providers/session_provider.dart';
 import '../help/boom_help_repository.dart';
 import '../providers/boom_chat_provider.dart';
+import '../services/boom_module_data_service.dart';
 import '../widgets/boom_message_bubble.dart';
 import '../widgets/boom_suggestion_chips.dart';
 
@@ -22,14 +23,6 @@ class _BoomChatScreenState extends ConsumerState<BoomChatScreen> {
   static const _kNavy = Color(0xFF1C2151);
   static const _kOrange = Color(0xFFFF6B35);
   static const _kCream = Color(0xFFFFF8F0);
-
-  final List<String> _defaultSuggestions = [
-    'Hôm nay bán được bao nhiêu?',
-    'Huỷ món đã gửi bếp thế nào?',
-    'Kho có gì sắp hết?',
-    'Món nào bán chạy nhất?',
-    'Hôm nay ai đang làm?',
-  ];
 
   @override
   void initState() {
@@ -74,6 +67,7 @@ class _BoomChatScreenState extends ConsumerState<BoomChatScreen> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(boomChatProvider);
+    final goiY = ref.watch(boomGoiYProvider).value ?? kBoomGoiYChung;
     final session = ref.watch(sessionProvider);
 
     final bool isOwnerOrManager =
@@ -267,7 +261,7 @@ class _BoomChatScreenState extends ConsumerState<BoomChatScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 12.0),
                             child: BoomSuggestionChips(
-                              suggestions: _defaultSuggestions,
+                              suggestions: goiY,
                               onSuggestionTap: _sendMessage,
                             ),
                           ),

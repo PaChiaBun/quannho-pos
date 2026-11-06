@@ -1210,6 +1210,15 @@ final boomAiServiceProvider = Provider<BoomAiService?>((ref) {
   }
 });
 
+/// Câu gợi ý trong khung chat, theo quyền của người đang đăng nhập ở quán đang mở.
+final boomGoiYProvider = FutureProvider.autoDispose<List<String>>((ref) async {
+  final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
+  if (storeId == null || storeId.isEmpty) return kBoomGoiYChung;
+  return boomGoiYTheoQuyen(
+    await ref.read(boomChatProvider.notifier)._perms(storeId),
+  );
+});
+
 final boomChatProvider = NotifierProvider<BoomChatNotifier, List<BoomMessage>>(
   BoomChatNotifier.new,
 );
@@ -2326,7 +2335,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         content: fullReply,
         role: MessageRole.boom,
         status: MessageStatus.completed,
-        suggestions: suggestions,
+        suggestions: _locGoiY(suggestions),
         evidenceReference: evidenceRef,
         sourceMessageId: sourceUserMessageId,
       ),
@@ -2578,6 +2587,15 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
   bool _modulePermsFailed = false;
 
   /// Quyền của người hỏi ở quán đang mở (đọc lại từ máy chủ, nhớ 2 phút). Lỗi → null = không có quyền.
+  /// Dùng quyền đã đọc lúc mở khung chat; chưa đọc được thì giữ nguyên câu gợi ý.
+  List<String>? _locGoiY(List<String>? goiY) {
+    final c = _permsCache, s = ref.read(sessionProvider), p = c?.p;
+    if (goiY == null || p == null || c?.key != '${s?.userId ?? ''}|${s?.storeId}') {
+      return goiY;
+    }
+    return boomLocGoiY(goiY, p);
+  }
+
   Future<BoomPerms?> _perms(String storeId) async {
     final uid = ref.read(sessionProvider)?.userId ?? '';
     final key = '$uid|$storeId';
