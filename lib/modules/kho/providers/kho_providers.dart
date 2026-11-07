@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/app_providers.dart';
 import '../repository/kho_repository.dart';
+import '../../../core/utils/string_utils.dart';
 
 // khoRepositoryProvider đã khai báo trong app_providers.dart
 export '../../../core/providers/app_providers.dart' show khoRepositoryProvider;
@@ -9,25 +10,29 @@ export '../../../core/providers/app_providers.dart' show khoRepositoryProvider;
 // STREAM PROVIDERS — Reactive data
 // ─────────────────────────────────────────────────────────────────────────────
 
-final allStockProvider = StreamProvider<List<StockItem>>((ref) {
+final allStockProvider = StreamProvider.autoDispose<List<StockItem>>((ref) {
   return ref.watch(khoRepositoryProvider).watchAllStock();
 });
 
-final lowStockKhoProvider = StreamProvider<List<StockItem>>((ref) {
-  return ref.watch(khoRepositoryProvider).watchLowStock();
+final lowStockKhoProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
+  return ref.watch(allStockProvider).whenData((items) => items
+      .where((item) => item.minStock > 0 && item.stockQty <= item.minStock)
+      .toList());
 });
 
-final outOfStockProvider = StreamProvider<List<StockItem>>((ref) {
-  return ref.watch(khoRepositoryProvider).watchOutOfStock();
+/// Hết hàng = có theo dõi tồn (tồn tối thiểu > 0) và tồn ≤ 0 — khớp nhãn tồn và màn Bán hàng.
+final outOfStockProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
+  return ref.watch(allStockProvider).whenData(
+      (items) => items.where((item) => item.minStock > 0 && item.stockQty <= 0).toList());
 });
 
 final recentMovementsProvider =
-    StreamProvider<List<StockMovementModel>>((ref) {
+    StreamProvider.autoDispose<List<StockMovementModel>>((ref) {
   return ref.watch(khoRepositoryProvider).watchRecentMovements();
 });
 
 final productMovementsProvider =
-    StreamProvider.family<List<StockMovementModel>, String>((ref, productId) {
+    StreamProvider.autoDispose.family<List<StockMovementModel>, String>((ref, productId) {
   return ref.watch(khoRepositoryProvider).watchMovements(productId);
 });
 
@@ -35,13 +40,19 @@ final suppliersProvider = FutureProvider.autoDispose<List<SupplierModel>>((ref) 
   return ref.read(khoRepositoryProvider).fetchSuppliers();
 });
 
-final purchaseOrdersProvider = StreamProvider<List<PurchaseOrderModel>>((ref) {
+final purchaseOrdersProvider = StreamProvider.autoDispose<List<PurchaseOrderModel>>((ref) {
   return ref.watch(khoRepositoryProvider).watchPurchaseOrders();
 });
 
-final khoStatsProvider = FutureProvider<KhoStats>((ref) async {
+/// Món có công thức gắn máy bán hàng: Kho hiện "Theo công thức" và không cộng vào giá trị kho.
+final recipeProductIdsProvider = FutureProvider.autoDispose<Set<String>>((ref) {
+  return ref.read(khoRepositoryProvider).recipeProductIds();
+});
+
+final khoStatsProvider = FutureProvider.autoDispose<KhoStats>((ref) async {
   ref.watch(allStockProvider); // depend để auto-refresh
-  return ref.read(khoRepositoryProvider).getStats();
+  final recipeIds = await ref.watch(recipeProductIdsProvider.future);
+  return ref.read(khoRepositoryProvider).getStats(recipeProductIds: recipeIds);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,8 +83,8 @@ class StockFilterState {
   List<StockItem> apply(List<StockItem> items) {
     return items.where((item) {
       final matchQ = query.isEmpty ||
-          item.name.toLowerCase().contains(query.toLowerCase()) ||
-          (item.sku?.toLowerCase().contains(query.toLowerCase()) ?? false);
+          item.name.containsSearch(query) ||
+          (item.sku?.containsSearch(query) ?? false);
       final matchCat    = category == null || (item.category ?? '') == category;
       final matchStatus = statusFilter == null || item.status == statusFilter;
       return matchQ && matchCat && matchStatus;
@@ -96,7 +107,7 @@ final stockFilterProvider =
   StockFilterNotifier.new,
 );
 
-final filteredStockProvider = Provider<AsyncValue<List<StockItem>>>((ref) {
+final filteredStockProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
   final filter   = ref.watch(stockFilterProvider);
   final allAsync = ref.watch(allStockProvider);
   return allAsync.whenData((items) => filter.apply(items));

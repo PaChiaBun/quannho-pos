@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/drive_service.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../../../core/utils/paged_query.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OPS REPOSITORY — Nhật Ký Vận Hành
@@ -177,13 +178,23 @@ class OpsRepository {
     if (storeId == null) { yield []; return; }
     final today = _todayStr();
 
-    yield* _robustStream(
-      'ops_daily_logs', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['staff_id'] == staffId && r['log_date'] == today)
-          .map(OpsDailyLogModel.fromMap)
-          .toList()
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt))
+    // Lọc ngày + nhân viên ở máy chủ (trước đây đọc cả bảng của quán — KAY 2.030 dòng →
+    // chỉ nhận dòng cũ, việc hôm nay không hiện).
+    yield* watchByRefetch(
+        table: 'ops_daily_logs',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('ops_daily_logs')
+              .select()
+              .eq('store_id', storeId)
+              .eq('staff_id', staffId)
+              .eq('log_date', today)
+              .order('created_at')
+              .order('id')
+              .range(offset, end));
+          return rows.map(OpsDailyLogModel.fromMap).toList();
+        }
     );
   }
 
@@ -329,16 +340,19 @@ class OpsRepository {
     });
   }
 
-  /// Lấy bàn giao ca mới nhất hôm nay
-  Future<OpsShiftHandoverModel?> getLatestHandoverToday() async {
+  /// Lấy bàn giao ca mới nhất trong 24 giờ qua (ca đêm bàn giao sang sáng hôm sau vẫn thấy)
+  Future<OpsShiftHandoverModel?> getLatestHandover() async {
     final storeId = await _storeId();
     if (storeId == null) return null;
-    final today = _todayStr();
+    final since = DateTime.now()
+        .subtract(const Duration(hours: 24))
+        .toUtc()
+        .toIso8601String();
     final rows = await _sb
         .from('ops_shift_handovers')
         .select()
         .eq('store_id', storeId)
-        .eq('handover_date', today)
+        .gte('created_at', since)
         .order('created_at', ascending: false)
         .limit(1);
     if (rows.isEmpty) return null;
@@ -352,12 +366,19 @@ class OpsRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
     final today = _todayStr();
-    yield* _robustStream(
-      'ops_daily_logs', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['log_date'] == today)
-          .map(OpsDailyLogModel.fromMap)
-          .toList()
+    yield* watchByRefetch(
+        table: 'ops_daily_logs',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('ops_daily_logs')
+              .select()
+              .eq('store_id', storeId)
+              .eq('log_date', today)
+              .order('id')
+              .range(offset, end));
+          return rows.map(OpsDailyLogModel.fromMap).toList();
+        }
     );
   }
 
@@ -447,7 +468,7 @@ class OpsRepository {
   // ── Helpers ────────────────────────────────────────────────────────────────
   String _todayStr() {
     final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2,'0')}-${now.day.toString().padLeft(2,'0')}';
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 }
 
@@ -862,11 +883,13 @@ class OpsShiftHandoverModel {
     fromShiftId:   m['from_shift_id'] as String?,
     toShiftId:     m['to_shift_id'] as String?,
     handoverDate:  m['handover_date'] as String? ?? '',
-    createdBy:     m['created_by'] as String,
+    createdBy:     m['created_by'] as String? ?? '',
     createdByName: m['created_by_name'] as String? ?? '',
     issues:        m['issues'] as String?,
     notes:         m['notes'] as String?,
-    pendingTasks:  (m['pending_tasks'] as List?)?.cast<String>() ?? [],
+    pendingTasks: [
+            for (final e in (m['pending_tasks'] as List?) ?? const []) '$e'
+          ],
     createdAt:     m['created_at'] as String? ?? '',
   );
 }

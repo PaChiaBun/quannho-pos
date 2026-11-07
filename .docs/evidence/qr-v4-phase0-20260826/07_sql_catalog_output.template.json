@@ -1,0 +1,43 @@
+{
+  "catalog_query_pack_version": "20260827.03",
+  "execution_target": "Supabase SQL Editor / PostgreSQL Direct Catalog Probe",
+  "data_hygiene_attestation": {
+    "zero_customer_rows": true,
+    "zero_phone_numbers": true,
+    "zero_password_hashes": true,
+    "zero_pin_hashes": true,
+    "zero_api_keys_or_secrets": true,
+    "metadata_only": true
+  },
+  "status": "TEMPLATE_ONLY_NOT_EXECUTED",
+  "blocker_description": "No trusted PostgreSQL catalog result is available. An authorized operator must execute the repository-safe query pack in Supabase SQL Editor, map each result set to the matching key below, validate that no application rows or expression bodies were copied, and only then change status to EXECUTED_SANITIZED.",
+  "operator_attestation": {
+    "executed_at_utc": null,
+    "project_reference_sanitized": null,
+    "query_pack_sha256": null,
+    "raw_expression_bodies_not_committed": true,
+    "result_sets_mapped_without_row_samples": true
+  },
+  "query_results_template": {
+    "query_1_schema_migrations": [],
+    "query_2_pg_class_relations_and_rls_state": [],
+    "query_3_pg_proc_routines": [],
+    "query_4_information_schema_columns": [],
+    "query_5_pg_constraint_definitions": [],
+    "query_6_pg_policies_rls": [],
+    "query_7_role_table_and_column_grants": {
+      "table_grants": [],
+      "column_privileges": []
+    },
+    "query_8_indexes_and_triggers": {
+      "indexes": [],
+      "triggers": []
+    },
+    "query_9_routine_execute_acls": []
+  },
+  "migration_strategy_verdict": "BLOCKED_PENDING_CATALOG_EXECUTION",
+  "strategy_options": [
+    "CLEAN V4 INSTALLATION (Applicable if no V3 tables/routines exist or all are legacy obsolete)",
+    "V3 TO V4 COMPATIBILITY MIGRATION (Applicable if V3 active data or structures exist)"
+  ]
+}

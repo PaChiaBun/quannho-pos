@@ -1,0 +1,334 @@
+{
+ "note": "QC giai đoạn 1 — hội thoại 2 lượt, chấm câu 2; hôm nay 28/10/2026",
+ "cases": [
+  {
+   "q1": "tuan nay ban sao",
+   "q2": "cho xin chi tiet tung ngay",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "_closingP bỏ dấu: xịn→xin chặn nói tiếp"
+  },
+  {
+   "q1": "doanh thu tuần này",
+   "q2": "món nào tuyệt đối không nên bỏ",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'tuyệt' trần trong _closingP"
+  },
+  {
+   "q1": "doanh thu hôm nay bao nhiêu",
+   "q2": "in báo cáo tóm tắt cuối ngày kiểu gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bao-cao#man-hinh-gom-nhung-gi",
+    "bao-cao#bao-cao-la-gi",
+    "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+   ],
+   "nhom": "QCG1",
+   "ghi": "'tóm tắt' trong _followUpStrongP → nói tiếp, help bị ép none"
+  },
+  {
+   "q1": "khach quen thang nay bao nhieu nguoi",
+   "q2": "cap nhat moi so dien thoai khach",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-2-xem-chi-tiet-khach",
+    "khach-hang#cac-viec-thuong-lam-1-them-khach"
+   ],
+   "nhom": "QCG1",
+   "ghi": "'mỗi số' bỏ dấu = 'moi so' (mới số)"
+  },
+  {
+   "q1": "doanh thu tuần này",
+   "q2": "viết giúp bài đăng tuyển nhân viên ngắn gọn",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'ngắn gọn' nói tiếp mạnh, boomIsFollowUp không xét kiến thức chung"
+  },
+  {
+   "q1": "",
+   "q2": "hàng nào sắp hết",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "low_stock bị boomModuleTopics chặn số nhanh"
+  },
+  {
+   "q1": "",
+   "q2": "nhân viên nào đang trong ca",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "staff_on_shift bị chặn (nhanSu 'nhân viên nào')"
+  },
+  {
+   "q1": "",
+   "q2": "doanh thu tiền mặt hôm nay bao nhiêu",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "today",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "finance 'tiền mặt' chặn revenue_summary"
+  },
+  {
+   "q1": "",
+   "q2": "nhân viên tải app nào để vào màn hình bếp",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bep#bep-la-gi",
+    "bep#ai-dung-duoc"
+   ],
+   "nhom": "QCG1",
+   "ghi": "'app nào' → kiến thức chung"
+  },
+  {
+   "q1": "",
+   "q2": "khách dùng app nào để quét mã gọi món",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-2-khach-goi-mon-de-huong-dan-khach",
+    "qr-goi-mon#hai-loai-ma-qr"
+   ],
+   "nhom": "QCG1",
+   "ghi": "'app nào' → kiến thức chung"
+  },
+  {
+   "q1": "",
+   "q2": "sao tăng giá món trong menu mà không lưu",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu",
+    "ban-hang#loi-loi-gia-mon-da-doi-cap-nhat-gio-hang-truoc-khi-thanh-toan"
+   ],
+   "nhom": "QCG1",
+   "ghi": "cue mới 'sao tăng' + 'món' → tư vấn số"
+  },
+  {
+   "q1": "tuần này doanh thu bao nhiêu",
+   "q2": "tạo voucher kéo khách kiểu gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "QCG1",
+   "ghi": "bỏ 'kiểu gì' khỏi _realEditP → goal bỏ qua hỏi cách"
+  },
+  {
+   "q1": "",
+   "q2": "tuần này có ngày nào không có đơn không",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "_metricHowP 'không có' chặn"
+  },
+  {
+   "q1": "",
+   "q2": "sao báo cáo kho lại khác số đếm thực tế",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong",
+    "kho-hang#ton-kho-tu-thay-doi-khi-nao",
+    "bao-cao#tung-tab-kho"
+   ],
+   "nhom": "QCG1",
+   "ghi": "đồng nghĩa 'lai khac' (lại khác) kéo bài Lợi nhuận khác Thu Chi"
+  },
+  {
+   "q1": "",
+   "q2": "tra khach tien thua o cho nao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-thanh-toan"
+   ],
+   "nhom": "QCG1",
+   "ghi": "đồng nghĩa 'tra khach' kéo bài tìm khách"
+  },
+  {
+   "q1": "",
+   "q2": "hôm nay khách trả lại món thì xử lý thế nào",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "ban-hang#loi-khach-muon-huy-hoan-tien-don-da-thanh-toan",
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "nhom": "QCG1",
+   "ghi": "_metricP 'khách' + 'thế nào' + kỳ → tư vấn số (cũ, chưa chặn)"
+  },
+  {
+   "q1": "",
+   "q2": "nhìn số quán có đi lên không",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "không kỳ → boomAsksPeriodMetric không chạy; cue thiếu 'đi lên'"
+  },
+  {
+   "q1": "",
+   "q2": "dạo này quán tốt hay tệ",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'dạo này' không phải kỳ; 'quán' trần không phải chủ đề"
+  },
+  {
+   "q1": "doanh thu tuần này",
+   "q2": "sao giảm so với bình thường",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'so với bình thường' không có trong chủ đề"
+  },
+  {
+   "q1": "khung giờ trưa hôm nay bán sao",
+   "q2": "còn khung giờ tối",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "đơn vị đổi chữ chỉ nhận 'khung tối', không 'khung giờ tối'"
+  },
+  {
+   "q1": "khung trưa hôm nay bán ổn ko",
+   "q2": "còn tối thì sao",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'tối' trần không khớp đơn vị"
+  },
+  {
+   "q1": "doanh thu cn 1 hôm nay",
+   "q2": "còn cn2",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'cn2' → 'chi nhánh2' dính số"
+  },
+  {
+   "q1": "",
+   "q2": "MU thắng không boom",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "cần chữ 'đá' sau MU"
+  },
+  {
+   "q1": "",
+   "q2": "man utd tối nay đá mấy giờ",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "'man utd' không khớp 'man ?u'"
+  },
+  {
+   "q1": "tuan nay ban sao",
+   "q2": "tran mu toi nay may gio",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "không có 'da'"
+  },
+  {
+   "q1": "doanh thu tháng này",
+   "q2": "đỉnh thật boom",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "khen ngoài danh sách"
+  },
+  {
+   "q1": "tuần này bán được bao nhiêu",
+   "q2": "tom lai la nen lam gi",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "nói tiếp bỏ dấu"
+  },
+  {
+   "q1": "doanh thu tháng này",
+   "q2": "ly trà sữa nên để giá mấy",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "_priceAdviceP chỉ có 'nên bán (giá) mấy'"
+  },
+  {
+   "q1": "",
+   "q2": "báo cáo hôm nay ghi chưa có giao dịch là sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bao-cao#loi-chua-co-giao-dich-hom-nay-chua-co-doanh-thu-ky-nay"
+   ],
+   "nhom": "QCG1",
+   "ghi": ""
+  },
+  {
+   "q1": "cách nạp ví cho khách",
+   "q2": "vậy tháng này nạp ví được bao nhiêu",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "QCG1",
+   "ghi": "câu số tự đủ nghĩa sau bài hướng dẫn"
+  }
+ ]
+}

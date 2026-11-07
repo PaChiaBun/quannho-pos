@@ -1,0 +1,230 @@
+{
+ "moi": [
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót số đơn giảm và khung chiều; ghép 36.668.000đ cả kỳ với mốc 1.475.000đ/ngày gây khó hiểu; nói CPSĐ lời tốt hơn khi không có giá vốn."
+  },
+  {
+   "id": "D51_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói rõ nguyên nhân là số đơn giảm; đẩy Bạc xỉu giờ chiều dù món này giá vốn 45%, lời mỏng."
+  },
+  {
+   "id": "D51_7",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'Cà phê sữa đá và Trà đào có giá vốn hợp lý' khi khối số liệu không có giá vốn hai món này; việc 3 chỉ là 'tăng cường quảng bá'."
+  },
+  {
+   "id": "D51_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Nói CPSĐ/cà phê đen 'lợi nhuận cao hơn' không có giá vốn, và đẩy cà phê vào chiều trái số liệu món chiều (Trà tắc, Bạc xỉu)."
+  },
+  {
+   "id": "D51_8",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nói thẳng nguyên nhân là số đơn giảm 14,8%; mở đầu bằng lời chào thay vì kết luận."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu số liệu và mốc đo cụ thể (combo không nêu 70 phần, chiều không nêu 6.723.000đ / 240.000đ/ngày)."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 0
+   },
+   "loi": "Gọi 7h–8h (giờ đông nhất) là 'giờ vắng' và cuối bài có câu xin lỗi về Bạc xỉu lạc chỗ, như lộ lời nhắc nội bộ."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Mốc đo combo mơ hồ, bỏ sót khung chiều; nói CPSĐ 'lợi nhuận tốt hơn' khi không có giá vốn."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Chỉ tìm ra combo đắt hơn lẻ, bỏ sót số đơn giảm và khung chiều 14–17h; nói Cà phê sữa đá 'lợi nhuận tốt' khi không có giá vốn."
+  },
+  {
+   "id": "D51_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ có 2 việc, mốc đo combo mơ hồ ('theo dõi số phần') và bỏ sót khung chiều 14–17h vắng."
+  },
+  {
+   "id": "D51_7",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gọi 7h–8h (giờ đông nhất) là 'giờ yếu' và bỏ sót khung chiều 14–17h, không nêu số đơn giảm."
+  },
+  {
+   "id": "D51_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa 'Cà phê sữa đá, Cà phê đen đá có giá vốn hợp lý'; việc 3 chung chung, bỏ sót khung chiều."
+  },
+  {
+   "id": "D51_8",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa 'giá vốn hợp lý... không làm mỏng lời' cho CPSĐ và Cà phê đen đá; bỏ sót khung chiều vắng."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 3 (ẩn món chưa bán) là giảm chi phí, không giúp tăng doanh thu; bỏ sót khung chiều 14–17h và số đơn giảm."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 3 'chạy quảng cáo nhỏ' cho CPSĐ chung chung; bỏ sót khung chiều 14–17h."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc 3 lẫn giữa tăng giá Bạc xỉu và quảng bá CPSĐ, không có mốc đo; bỏ sót khung chiều và số đơn giảm."
+  }
+ ]
+}

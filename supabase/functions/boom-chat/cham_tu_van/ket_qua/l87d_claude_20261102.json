@@ -1,0 +1,90 @@
+{
+ "moi": [
+  {
+   "id": "D13_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng (văn phòng nghỉ CN, thử nửa buổi, so doanh thu với chi phí người + điện) nhưng không nói thử mấy Chủ nhật."
+  },
+  {
+   "id": "D13_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng (văn phòng nghỉ CN, thử nửa buổi, so doanh thu với chi phí người + điện) nhưng không nói thử mấy Chủ nhật."
+  },
+  {
+   "id": "D13_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng (văn phòng nghỉ CN, thử nửa buổi, so doanh thu với chi phí người + điện) nhưng không nói thử mấy Chủ nhật."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D13_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 'số đang nghiêng về mở' khi không có số liệu, bỏ qua việc văn phòng nghỉ CN và đòi xem số khách CN tháng trước trong khi quán nghỉ CN."
+  },
+  {
+   "id": "D13_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 'số đang nghiêng về mở' khi không có số và cho rằng CN thu hút được khách văn phòng, trái hồ sơ."
+  },
+  {
+   "id": "D13_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 'số đang nghiêng về mở' khi không có số, không nêu văn phòng nghỉ CN, đòi doanh thu CN quá khứ trong khi quán nghỉ CN."
+  }
+ ]
+}

@@ -104,7 +104,7 @@ extension BillBlockTypeX on BillBlockType {
       case BillBlockType.appBranding:
         return {'fontSize': 8, 'align': 'center'};
       case BillBlockType.taxInfo:
-        return {'invoicePattern': '1/001', 'invoiceSerial': '1C26TAA', 'fontSize': 10, 'showSerial': true, 'showPattern': true};
+        return {'invoicePattern': '', 'invoiceSerial': '', 'fontSize': 10, 'showSerial': true, 'showPattern': true};
     }
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../../../core/utils/paged_query.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY REPOSITORY — 100% Supabase
@@ -64,15 +64,20 @@ class LoyaltyRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'customers', 'store_id', storeId,
-      (rows) {
-        final sorted = rows
-            .where((r) => r['is_deleted'] != true && (r['loyalty_pts'] as num? ?? 0) > 0)
-            .map(LoyaltyCustomerModel.fromMap)
-            .toList()
-          ..sort((a, b) => b.loyaltyPts.compareTo(a.loyaltyPts));
-        return sorted.length > limit ? sorted.sublist(0, limit) : sorted;
+    // Sắp xếp + giới hạn ở máy chủ (trước đây "top" chọn trong 1.000 khách bất kỳ).
+    yield* watchByRefetch(
+        table: 'customers',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await _sb
+              .from('customers')
+              .select()
+              .eq('store_id', storeId)
+              .or('is_deleted.is.null,is_deleted.eq.false')
+              .gt('loyalty_pts', 0)
+              .order('loyalty_pts', ascending: false)
+              .limit(limit);
+          return rows.map(LoyaltyCustomerModel.fromMap).toList();
       }
     );
   }
@@ -81,14 +86,25 @@ class LoyaltyRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'customers', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['is_deleted'] != true &&
-              (!withPoints || (r['loyalty_pts'] as num? ?? 0) > 0))
-          .map(LoyaltyCustomerModel.fromMap)
-          .toList()
-        ..sort((a, b) => b.totalSpent.compareTo(a.totalSpent))
+    // Tải đủ khách theo trang (trước đây quán > 1.000 khách bị thiếu khách trong danh sách / ô tìm ở Bán hàng).
+    yield* watchByRefetch(
+        table: 'customers',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) {
+            var q = _sb
+                .from('customers')
+                .select()
+                .eq('store_id', storeId)
+                .or('is_deleted.is.null,is_deleted.eq.false');
+            if (withPoints) q = q.gt('loyalty_pts', 0);
+            return q
+                .order('total_spent', ascending: false)
+                .order('id')
+                .range(offset, end);
+          });
+          return rows.map(LoyaltyCustomerModel.fromMap).toList();
+        }
     );
   }
 
@@ -98,13 +114,20 @@ class LoyaltyRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'loyalty_transactions', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['customer_id'] == customerId)
-          .map(LoyaltyTransactionModel.fromMap)
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt))
+    yield* watchByRefetch(
+        table: 'loyalty_transactions',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('loyalty_transactions')
+              .select()
+              .eq('store_id', storeId)
+              .eq('customer_id', customerId)
+              .order('created_at', ascending: false)
+              .order('id')
+              .range(offset, end));
+          return rows.map(LoyaltyTransactionModel.fromMap).toList();
+        }
     );
   }
 
@@ -229,27 +252,37 @@ class LoyaltyRepository {
     final storeId = await _storeId();
     if (storeId == null) return LoyaltyStats.empty;
 
-    final customers = await _sb
+    // Máy chủ trả tối đa 1.000 dòng/lần: đếm khách bằng count, chỉ tải khách có điểm (theo trang).
+    final total = await _sb
         .from('customers')
-        .select()
+        .select('id')
         .eq('store_id', storeId)
-        .eq('is_deleted', false);
-    final totalPts = customers.fold<double>(
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .count(CountOption.exact);
+    final withPtsRows = await fetchAllPages((offset, end) => _sb
+        .from('customers')
+        .select('id, loyalty_pts')
+        .eq('store_id', storeId)
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .gt('loyalty_pts', 0)
+        .order('id')
+        .range(offset, end));
+    final totalPts = withPtsRows.fold<double>(
         0, (s, c) => s + ((c['loyalty_pts'] as num?)?.toDouble() ?? 0));
-    final withPts = customers.where((c) => (c['loyalty_pts'] as num? ?? 0) > 0).length;
+    final withPts = withPtsRows.length;
 
-    // ‼️ FIX Bug #27: select chỉ cột cần thiết + limit để tránh query timeout
-    // Với store lớn: toàn bộ txs không limit → request quá lớn
-    final txs = await _sb
+    // ‼️ FIX Bug #27: select chỉ cột cần thiết. `.limit(10000)` cũ vẫn bị máy chủ cắt ở 1.000 → tải theo trang.
+    final txs = await fetchAllPages((offset, end) => _sb
         .from('loyalty_transactions')
-        .select('pts_earned, pts_used')
+        .select('id, pts_earned, pts_used')
         .eq('store_id', storeId)
-        .limit(10000); // guard: nếu cần chính xác hơn dùng PostgreSQL SUM aggregate
+        .order('id')
+        .range(offset, end));
     final totalEarned   = txs.fold<double>(0, (s, t) => s + ((t['pts_earned'] as num?)?.toDouble() ?? 0));
     final totalRedeemed = txs.fold<double>(0, (s, t) => s + ((t['pts_used'] as num?)?.toDouble() ?? 0));
 
     return LoyaltyStats(
-      totalCustomers:   customers.length,
+      totalCustomers:   total.count,
       customersWithPts: withPts,
       totalActivePts:   totalPts,
       totalPtsEarned:   totalEarned,
@@ -259,99 +292,52 @@ class LoyaltyRepository {
 
   // ── Wallet (Nạp tiền + Bonus) ───────────────────────────────────
 
-  /// Nạp tiền vào ví khách hàng.
-  /// [realAmount] = tiền thật khách trả.
-  /// [bonusAmount] = thưởng thêm (do quán tặng).
-  /// [bonusMonths] = thời hạn bonus (null = không hết hạn).
-  Future<void> topUpWallet({
+  /// Nạp tiền vào ví khách qua RPC `topup_customer_wallet_v1` (một transaction ở máy chủ):
+  /// khoá dòng khách, kiểm quyền thu tiền, tự tính bonus từ gói nạp, chống trùng theo
+  /// [idempotencyKey], ghi số dư + lịch sử ví + thu chi đúng quỹ [fundType] ('cash' | 'bank').
+  /// [expectedBonus] là bonus màn hình đang hiện; máy chủ tính khác → [WalletTopUpException]
+  /// mã `QUOTE_CHANGED`, không ghi gì. Lỗi mạng ném nguyên ngoại lệ: gửi lại cùng
+  /// [idempotencyKey] không nạp trùng.
+  Future<WalletTopUpResult> topUpWallet({
     required String customerId,
     required double realAmount,
-    double bonusAmount = 0,
-    int? bonusMonths,
-    String? note,
-    String? customerName, // dùng cho mô tả finance_records
-    String fundType = 'cash',
-  }) async {
-    if (realAmount <= 0) throw Exception('Số tiền nạp phải lớn hơn 0');
+      required String idempotencyKey,
+      String fundType = 'cash',
+      int? bonusMonths,
+      double? expectedBonus,
+      String? note}) async {
+    if (realAmount <= 0)
+      throw const WalletTopUpException(
+          'INVALID_AMOUNT', 'Số tiền nạp phải lớn hơn 0');
     final storeId = await _storeId();
-    if (storeId == null) throw Exception('Chưa chọn quán');
-    final now = DateTime.now().toUtc().toIso8601String();
+    if (storeId == null) throw const WalletTopUpException('NO_STORE', 'Chưa chọn quán');
 
-    // Fetch số dư hiện tại
-    final cust = await _sb.from('customers')
-        .select('real_balance, bonus_balance, total_topup')
-        .eq('id', customerId).maybeSingle();
-    if (cust == null) throw Exception('Không tìm thấy khách hàng');
-
-    final curReal  = (cust['real_balance'] as num?)?.toDouble() ?? 0;
-    final curBonus = (cust['bonus_balance'] as num?)?.toDouble() ?? 0;
-    final curTopup = (cust['total_topup'] as num?)?.toDouble() ?? 0;
-    final newReal  = curReal + realAmount;
-    final newBonus = curBonus + bonusAmount;
-    final expires  = bonusMonths != null
-        ? DateTime.now().add(Duration(days: bonusMonths * 30)).toUtc().toIso8601String()
-        : null;
-
-    // 1. Cập nhật số dư khách hàng
-    await _sb.from('customers').update({
-      'real_balance':    newReal,
-      'bonus_balance':   newBonus,
-      'total_topup':     curTopup + realAmount,
-      if (expires != null) 'bonus_expires_at': expires,
-      'updated_at':      now,
-    }).eq('id', customerId);
-
-    // 2. Ghi balance_transactions (lịch sử nội bộ loyalty)
-    await _sb.from('balance_transactions').insert([
-      {
-        'id':           _uuid.v4(),
-        'store_id':     storeId,
-        'customer_id':  customerId,
-        'type':         'topup_real',
-        'amount':       realAmount,
-        'balance_after': newReal,
-        'bonus_after':   newBonus,
-        'note':         note ?? 'Nạp tiền',
-        'created_at':   now,
-      },
-      if (bonusAmount > 0) {
-        'id':           _uuid.v4(),
-        'store_id':     storeId,
-        'customer_id':  customerId,
-        'type':         'topup_bonus',
-        'amount':       bonusAmount,
-        'balance_after': newReal,
-        'bonus_after':   newBonus,
-        'note':         'Thưởng +${bonusAmount.toStringAsFixed(0)}đ',
-        'created_at':   now,
-      },
-    ]);
-
-    // 3. Ghi finance_records income — chống gian lận thu ngân
-    // is_auto=true → không thể xoá thủ công, reference_id trỏ về customer để trace
-    final label = customerName != null && customerName.isNotEmpty
-        ? customerName
-        : 'Khách hàng';
-    final bonusNote = bonusAmount > 0
-        ? ' (tặng thêm ${bonusAmount.toStringAsFixed(0)}đ bonus)'
-        : '';
-    try {
-      await _sb.from('finance_records').insert({
-        'id':           _uuid.v4(),
-        'store_id':     storeId,
-        'type':         'income',
-        'amount':       realAmount,
-        'description':  'Nạp ví: $label$bonusNote',
-        'reference_id': customerId,
-        'is_auto':      true,
-        'recorded_at':  now,
-        'fund_type':    fundType,
-      });
-      debugPrint('[LoyaltyRepo] ✅ finance_records inserted OK — $label $realAmount');
-    } catch (e, st) {
-      debugPrint('[LoyaltyRepo] ❌ finance_records INSERT FAILED: $e');
-      debugPrint('[LoyaltyRepo] StackTrace: $st');
+    final raw = await _sb.rpc('topup_customer_wallet_v1', params: {
+      'p_store_id': storeId,
+      'p_customer_id': customerId,
+      'p_amount': realAmount.round(),
+      'p_fund_type': fundType,
+      'p_idempotency_key': idempotencyKey,
+      'p_bonus_months': bonusMonths,
+      'p_expected_bonus': expectedBonus?.round(),
+      'p_note': note
+    });
+    if (raw is! Map)
+      throw const WalletTopUpException(
+          'BAD_RESPONSE', 'Phản hồi nạp ví không hợp lệ');
+    final res = Map<String, dynamic>.from(raw);
+    if (res['success'] != true) {
+      throw WalletTopUpException(res['error_code'] as String? ?? 'UNKNOWN',
+          res['message'] as String? ?? 'Nạp ví thất bại');
     }
+    final data = Map<String, dynamic>.from(res['data'] as Map);
+    double n(String k) => (data[k] as num?)?.toDouble() ?? 0;
+    return WalletTopUpResult(
+        amount: n('amount'),
+        bonusAmount: n('bonus_amount'),
+        realBalance: n('real_balance'),
+        bonusBalance: n('bonus_balance'),
+        isReplay: data['is_replay'] == true);
   }
 
   /// Tính toán số tiền real + bonus được dùng cho một bill.
@@ -439,13 +425,20 @@ class LoyaltyRepository {
       String customerId) async* {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
-    yield* _robustStream(
-      'balance_transactions', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['customer_id'] == customerId)
-          .map(BalanceTransactionModel.fromMap)
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt))
+    yield* watchByRefetch(
+        table: 'balance_transactions',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('balance_transactions')
+              .select()
+              .eq('store_id', storeId)
+              .eq('customer_id', customerId)
+              .order('created_at', ascending: false)
+              .order('id')
+              .range(offset, end));
+          return rows.map(BalanceTransactionModel.fromMap).toList();
+        }
     );
   }
 
@@ -481,7 +474,11 @@ class LoyaltyRepository {
     final eligible = packages
         .where((p) => p.isActive && p.minAmount <= amount)
         .toList()
-      ..sort((a, b) => b.minAmount.compareTo(a.minAmount));
+      // Cùng thứ tự với topup_customer_wallet_v1: min_amount giảm dần, rồi bonus_pct giảm dần.
+      ..sort((a, b) {
+        final c = b.minAmount.compareTo(a.minAmount);
+        return c != 0 ? c : b.bonusPct.compareTo(a.bonusPct);
+      });
     return eligible.isEmpty ? null : eligible.first;
   }
 
@@ -533,6 +530,29 @@ class LoyaltyRepository {
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS
 // ─────────────────────────────────────────────────────────────────────────────
+
+class WalletTopUpResult {
+  final double amount;
+  final double bonusAmount;
+  final double realBalance;
+  final double bonusBalance;
+  final bool isReplay;
+  const WalletTopUpResult(
+      {required this.amount,
+      required this.bonusAmount,
+      required this.realBalance,
+      required this.bonusBalance,
+      required this.isReplay});
+}
+
+/// Máy chủ từ chối lần nạp (chưa ghi gì). [message] là câu tiếng Việt hiển thị được.
+class WalletTopUpException implements Exception {
+  final String code;
+  final String message;
+  const WalletTopUpException(this.code, this.message);
+  @override
+  String toString() => message;
+}
 
 class LoyaltyCustomerModel {
   final String id;

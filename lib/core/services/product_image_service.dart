@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -10,8 +12,7 @@ import 'package:uuid/uuid.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class ProductImageService {
   static const _bucket = 'product-images';
-  // 🔑 Gemini API Key — Tạo Ảnh Món - Quán Nhỏ
-  static const _geminiApiKey = 'AIzaSyCfLxMSN9FAPWW_S611wnHrvhOFoqBF4Vs';
+  // (Đã gỡ khóa Gemini ghi cứng 13/10/2026: không dùng ở đâu và đã lộ trong bản web. Nếu cần AI, đặt khóa phía máy chủ.)
 
   final _uuid = const Uuid();
   final _picker = ImagePicker();
@@ -99,16 +100,60 @@ class ProductImageService {
   }
 
   Future<String> _upload(Uint8List bytes, String mime) async {
-    final filename = '${_uuid.v4()}.${mime.split('/').last}';
+    // Nén trước khi tải (ảnh chụp điện thoại thường 2–5 MB → vài trăm KB). Máy chủ còn có bộ nén
+    // thứ hai (services/image_optimizer.py) cho các bản app cũ.
+    final prepared = prepareForUpload(bytes, mime);
+    final filename = '${_uuid.v4()}.${prepared.ext}';
     final storage = Supabase.instance.client.storage.from(_bucket);
 
     await storage.uploadBinary(
       filename,
-      bytes,
-      fileOptions: FileOptions(contentType: mime, upsert: false),
+      prepared.bytes,
+      fileOptions: FileOptions(contentType: prepared.mime, upsert: false),
     );
 
     return storage.getPublicUrl(filename);
+  }
+
+  /// Cạnh dài tối đa và chất lượng JPEG khi nén ảnh món.
+  static const int maxSide = 1024;
+  static const int jpegQuality = 80;
+
+  /// Thu nhỏ + nén ảnh thành JPEG. Không đọc được ảnh thì trả lại nguyên bản (máy chủ sẽ xử lý sau).
+  /// Chỉ dùng bản nén nếu thật sự nhỏ hơn bản gốc.
+  static ({Uint8List bytes, String mime, String ext}) prepareForUpload(
+    Uint8List original,
+    String mime,
+  ) {
+    ({Uint8List bytes, String mime, String ext}) keep() =>
+        (bytes: original, mime: mime, ext: mime.split('/').last);
+    try {
+      var image = img.decodeImage(original);
+      if (image == null) return keep();
+      image = img.bakeOrientation(image); // xoay đúng chiều theo EXIF
+      final longest = math.max(image.width, image.height);
+      if (longest > maxSide) {
+        final scale = maxSide / longest;
+        image = img.copyResize(
+          image,
+          width: (image.width * scale).round(),
+          height: (image.height * scale).round(),
+          interpolation: img.Interpolation.average,
+        );
+      }
+      if (image.hasAlpha) {
+        // JPEG không có nền trong suốt: dán lên nền trắng thay vì để đen
+        final bg = img.Image(width: image.width, height: image.height);
+        img.fill(bg, color: img.ColorRgb8(255, 255, 255));
+        img.compositeImage(bg, image);
+        image = bg;
+      }
+      final out = Uint8List.fromList(img.encodeJpg(image, quality: jpegQuality));
+      if (out.length >= original.length && longest <= maxSide) return keep();
+      return (bytes: out, mime: 'image/jpeg', ext: 'jpg');
+    } catch (_) {
+      return keep();
+    }
   }
 
   // ── Xoá ảnh cũ ─────────────────────────────────────────────────────────

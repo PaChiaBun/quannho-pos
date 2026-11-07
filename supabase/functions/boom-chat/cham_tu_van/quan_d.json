@@ -1,0 +1,1323 @@
+{
+ "ten": "Quán D — Cơm tấm Út Hiền",
+ "mo_ta": "Quán cơm tấm trong khu dân cư gần trường THCS, 5 người làm (2 bán thời gian). Mở 6h–13h và 17h–21h, NGHỈ Chủ nhật. Bán tại quán và giao qua sàn (ShopeeFood, GrabFood); nướng sườn bằng than.",
+ "facts": {
+  "thang_truoc": {
+   "period": "Tháng 9/2026",
+   "revenue": 124600000,
+   "orders": 2745,
+   "top": [
+    {
+     "name": "Cơm tấm sườn",
+     "qty": 1123,
+     "revenue": 44920000
+    },
+    {
+     "name": "Cơm tấm sườn bì chả",
+     "qty": 585,
+     "revenue": 29250000
+    },
+    {
+     "name": "Cơm tấm sườn trứng",
+     "qty": 468,
+     "revenue": 21060000
+    },
+    {
+     "name": "Cơm tấm gà nướng",
+     "qty": 307,
+     "revenue": 12280000
+    },
+    {
+     "name": "Cơm tấm bì chả",
+     "qty": 164,
+     "revenue": 5740000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Sữa đậu nành",
+     "qty": 54
+    },
+    {
+     "name": "Canh khổ qua",
+     "qty": 105
+    },
+    {
+     "name": "Trà tắc",
+     "qty": 115
+    }
+   ],
+   "items_revenue": 122889000,
+   "groups": [
+    {
+     "name": "Cơm tấm",
+     "revenue": 113250000,
+     "qty": 2647,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Cơm tấm sườn",
+       "qty": 1123,
+       "revenue": 44920000,
+       "price": 40000,
+       "cost": 21600
+      },
+      {
+       "name": "Cơm tấm sườn bì chả",
+       "qty": 585,
+       "revenue": 29250000,
+       "price": 50000,
+       "cost": 26000
+      },
+      {
+       "name": "Cơm tấm sườn trứng",
+       "qty": 468,
+       "revenue": 21060000,
+       "price": 45000,
+       "cost": 23000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm tấm bì chả",
+       "qty": 164,
+       "revenue": 5740000,
+       "price": 35000,
+       "cost": 14000
+      },
+      {
+       "name": "Cơm tấm gà nướng",
+       "qty": 307,
+       "revenue": 12280000,
+       "price": 40000,
+       "cost": 17000
+      }
+     ],
+     "unsold_names": [
+      "Cơm tấm sườn cây"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 6837000,
+     "qty": 1193,
+     "items": 4,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Nước sâm",
+       "qty": 205,
+       "revenue": 2460000,
+       "price": 12000,
+       "cost": 4000
+      },
+      {
+       "name": "Trà đá",
+       "qty": 819,
+       "revenue": 2457000,
+       "price": 3000
+      },
+      {
+       "name": "Trà tắc",
+       "qty": 115,
+       "revenue": 1380000,
+       "price": 12000,
+       "cost": 3500
+      }
+     ],
+     "slow": [
+      {
+       "name": "Sữa đậu nành",
+       "qty": 54,
+       "revenue": 540000,
+       "price": 10000,
+       "cost": 4000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 2802000,
+     "qty": 397,
+     "items": 2,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trứng ốp thêm",
+       "qty": 292,
+       "revenue": 1752000,
+       "price": 6000,
+       "cost": 3200
+      },
+      {
+       "name": "Canh khổ qua",
+       "qty": 105,
+       "revenue": 1050000,
+       "price": 10000,
+       "cost": 4500
+      }
+     ],
+     "slow": [],
+     "unsold_names": []
+    }
+   ],
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    12323000,
+    20538000,
+    12323000,
+    6846000,
+    9585000,
+    23277000,
+    19169000,
+    0,
+    0,
+    0,
+    0,
+    5477000,
+    8900000,
+    4108000,
+    2054000,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    19007000,
+    19218000,
+    19429000,
+    19112000,
+    20379000,
+    27454000,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 520
+     },
+     {
+      "name": "Cơm tấm sườn bì chả",
+      "qty": 260
+     },
+     {
+      "name": "Trà đá",
+      "qty": 300
+     }
+    ],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 330
+     },
+     {
+      "name": "Cơm tấm sườn trứng",
+      "qty": 210
+     },
+     {
+      "name": "Trà đá",
+      "qty": 280
+     }
+    ],
+    [],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 130
+     },
+     {
+      "name": "Cơm tấm gà nướng",
+      "qty": 70
+     },
+     {
+      "name": "Nước sâm",
+      "qty": 40
+     }
+    ]
+   ],
+   "from": "2026-09-01",
+   "to": "2026-09-30",
+   "prev_period": "Tháng 8/2026",
+   "prev_revenue": 121900000,
+   "prev_orders": 2702,
+   "prev_from": "2026-08-01",
+   "prev_to": "2026-08-31"
+  },
+  "thang_nay": {
+   "period": "Tháng này (1–28/10/2026)",
+   "revenue": 118000000,
+   "orders": 2600,
+   "top": [
+    {
+     "name": "Cơm tấm sườn",
+     "qty": 1147,
+     "revenue": 45880000
+    },
+    {
+     "name": "Cơm tấm sườn bì chả",
+     "qty": 608,
+     "revenue": 30400000
+    },
+    {
+     "name": "Cơm tấm sườn trứng",
+     "qty": 480,
+     "revenue": 21600000
+    },
+    {
+     "name": "Cơm tấm gà nướng",
+     "qty": 292,
+     "revenue": 11680000
+    },
+    {
+     "name": "Cơm tấm bì chả",
+     "qty": 140,
+     "revenue": 4900000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Sữa đậu nành",
+     "qty": 47
+    },
+    {
+     "name": "Canh khổ qua",
+     "qty": 99
+    },
+    {
+     "name": "Trà tắc",
+     "qty": 111
+    }
+   ],
+   "items_revenue": 124134000,
+   "groups": [
+    {
+     "name": "Cơm tấm",
+     "revenue": 114460000,
+     "qty": 2667,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Cơm tấm sườn",
+       "qty": 1147,
+       "revenue": 45880000,
+       "price": 40000,
+       "cost": 21600
+      },
+      {
+       "name": "Cơm tấm sườn bì chả",
+       "qty": 608,
+       "revenue": 30400000,
+       "price": 50000,
+       "cost": 26000
+      },
+      {
+       "name": "Cơm tấm sườn trứng",
+       "qty": 480,
+       "revenue": 21600000,
+       "price": 45000,
+       "cost": 23000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm tấm bì chả",
+       "qty": 140,
+       "revenue": 4900000,
+       "price": 35000,
+       "cost": 14000
+      },
+      {
+       "name": "Cơm tấm gà nướng",
+       "qty": 292,
+       "revenue": 11680000,
+       "price": 40000,
+       "cost": 17000
+      }
+     ],
+     "unsold_names": [
+      "Cơm tấm sườn cây"
+     ],
+     "prev_revenue": 104538462
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 6860000,
+     "qty": 1211,
+     "items": 4,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Nước sâm",
+       "qty": 211,
+       "revenue": 2532000,
+       "price": 12000,
+       "cost": 4000
+      },
+      {
+       "name": "Trà đá",
+       "qty": 842,
+       "revenue": 2526000,
+       "price": 3000
+      },
+      {
+       "name": "Trà tắc",
+       "qty": 111,
+       "revenue": 1332000,
+       "price": 12000,
+       "cost": 3500
+      }
+     ],
+     "slow": [
+      {
+       "name": "Sữa đậu nành",
+       "qty": 47,
+       "revenue": 470000,
+       "price": 10000,
+       "cost": 4000
+      }
+     ],
+     "unsold_names": [],
+     "prev_revenue": 6311077
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 2814000,
+     "qty": 403,
+     "items": 2,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trứng ốp thêm",
+       "qty": 304,
+       "revenue": 1824000,
+       "price": 6000,
+       "cost": 3200
+      },
+      {
+       "name": "Canh khổ qua",
+       "qty": 99,
+       "revenue": 990000,
+       "price": 10000,
+       "cost": 4500
+      }
+     ],
+     "slow": [],
+     "unsold_names": [],
+     "prev_revenue": 2586462
+    }
+   ],
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    11670000,
+    19451000,
+    11670000,
+    6484000,
+    9077000,
+    22044000,
+    18154000,
+    0,
+    0,
+    0,
+    0,
+    5187000,
+    8429000,
+    3890000,
+    1945000,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    18000000,
+    18200000,
+    18400000,
+    18100000,
+    19300000,
+    26000000,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 520
+     },
+     {
+      "name": "Cơm tấm sườn bì chả",
+      "qty": 260
+     },
+     {
+      "name": "Trà đá",
+      "qty": 300
+     }
+    ],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 330
+     },
+     {
+      "name": "Cơm tấm sườn trứng",
+      "qty": 210
+     },
+     {
+      "name": "Trà đá",
+      "qty": 280
+     }
+    ],
+    [],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 130
+     },
+     {
+      "name": "Cơm tấm gà nướng",
+      "qty": 70
+     },
+     {
+      "name": "Nước sâm",
+      "qty": 40
+     }
+    ]
+   ],
+   "from": "2026-10-01",
+   "to": "2026-10-28",
+   "prev_period": "Cùng kỳ tháng trước (1–28/9/2026)",
+   "prev_revenue": 114452000,
+   "prev_orders": 2534,
+   "prev_from": "2026-09-01",
+   "prev_to": "2026-09-28",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    11184000,
+    18640000,
+    11184000,
+    6213000,
+    8699000,
+    21126000,
+    17398000,
+    0,
+    0,
+    0,
+    0,
+    5716000,
+    8699000,
+    3728000,
+    1864000,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    17585000,
+    17886000,
+    18087000,
+    17987000,
+    18690000,
+    24217000,
+    0
+   ],
+   "moves": [
+    {
+     "name": "Cơm tấm sườn",
+     "qty": 1147,
+     "prev_qty": 1037,
+     "revenue": 45880000,
+     "prev_revenue": 41464615
+    },
+    {
+     "name": "Cơm tấm sườn bì chả",
+     "qty": 608,
+     "prev_qty": 540,
+     "revenue": 30400000,
+     "prev_revenue": 27000000
+    },
+    {
+     "name": "Cơm tấm sườn trứng",
+     "qty": 480,
+     "prev_qty": 432,
+     "revenue": 21600000,
+     "prev_revenue": 19440000
+    },
+    {
+     "name": "Cơm tấm bì chả",
+     "qty": 140,
+     "prev_qty": 151,
+     "revenue": 4900000,
+     "prev_revenue": 5298462
+    },
+    {
+     "name": "Cơm tấm gà nướng",
+     "qty": 292,
+     "prev_qty": 283,
+     "revenue": 11680000,
+     "prev_revenue": 11335385
+    },
+    {
+     "name": "Nước sâm",
+     "qty": 211,
+     "prev_qty": 189,
+     "revenue": 2532000,
+     "prev_revenue": 2270769
+    }
+   ]
+  },
+  "tuan_nay": {
+   "period": "Tuần này (26–28/10/2026)",
+   "revenue": 13650000,
+   "orders": 301,
+   "top": [
+    {
+     "name": "Cơm tấm sườn",
+     "qty": 143,
+     "revenue": 5720000
+    },
+    {
+     "name": "Cơm tấm sườn bì chả",
+     "qty": 76,
+     "revenue": 3800000
+    },
+    {
+     "name": "Cơm tấm sườn trứng",
+     "qty": 60,
+     "revenue": 2700000
+    },
+    {
+     "name": "Cơm tấm gà nướng",
+     "qty": 36,
+     "revenue": 1440000
+    },
+    {
+     "name": "Cơm tấm bì chả",
+     "qty": 18,
+     "revenue": 630000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Sữa đậu nành",
+     "qty": 6
+    },
+    {
+     "name": "Canh khổ qua",
+     "qty": 12
+    },
+    {
+     "name": "Trà tắc",
+     "qty": 14
+    }
+   ],
+   "items_revenue": 15493000,
+   "groups": [
+    {
+     "name": "Cơm tấm",
+     "revenue": 114460000,
+     "qty": 2667,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Cơm tấm sườn",
+       "qty": 1147,
+       "revenue": 45880000,
+       "price": 40000,
+       "cost": 21600
+      },
+      {
+       "name": "Cơm tấm sườn bì chả",
+       "qty": 608,
+       "revenue": 30400000,
+       "price": 50000,
+       "cost": 26000
+      },
+      {
+       "name": "Cơm tấm sườn trứng",
+       "qty": 480,
+       "revenue": 21600000,
+       "price": 45000,
+       "cost": 23000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm tấm bì chả",
+       "qty": 140,
+       "revenue": 4900000,
+       "price": 35000,
+       "cost": 14000
+      },
+      {
+       "name": "Cơm tấm gà nướng",
+       "qty": 292,
+       "revenue": 11680000,
+       "price": 40000,
+       "cost": 17000
+      }
+     ],
+     "unsold_names": [
+      "Cơm tấm sườn cây"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 6860000,
+     "qty": 1211,
+     "items": 4,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Nước sâm",
+       "qty": 211,
+       "revenue": 2532000,
+       "price": 12000,
+       "cost": 4000
+      },
+      {
+       "name": "Trà đá",
+       "qty": 842,
+       "revenue": 2526000,
+       "price": 3000
+      },
+      {
+       "name": "Trà tắc",
+       "qty": 111,
+       "revenue": 1332000,
+       "price": 12000,
+       "cost": 3500
+      }
+     ],
+     "slow": [
+      {
+       "name": "Sữa đậu nành",
+       "qty": 47,
+       "revenue": 470000,
+       "price": 10000,
+       "cost": 4000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 2814000,
+     "qty": 403,
+     "items": 2,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trứng ốp thêm",
+       "qty": 304,
+       "revenue": 1824000,
+       "price": 6000,
+       "cost": 3200
+      },
+      {
+       "name": "Canh khổ qua",
+       "qty": 99,
+       "revenue": 990000,
+       "price": 10000,
+       "cost": 4500
+      }
+     ],
+     "slow": [],
+     "unsold_names": []
+    }
+   ],
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1350000,
+    2250000,
+    1350000,
+    750000,
+    1050000,
+    2550000,
+    2100000,
+    0,
+    0,
+    0,
+    0,
+    600000,
+    975000,
+    450000,
+    225000,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    4520000,
+    4560000,
+    4570000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 65
+     },
+     {
+      "name": "Cơm tấm sườn bì chả",
+      "qty": 32
+     },
+     {
+      "name": "Trà đá",
+      "qty": 38
+     }
+    ],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 41
+     },
+     {
+      "name": "Cơm tấm sườn trứng",
+      "qty": 26
+     },
+     {
+      "name": "Trà đá",
+      "qty": 35
+     }
+    ],
+    [],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 16
+     },
+     {
+      "name": "Cơm tấm gà nướng",
+      "qty": 9
+     },
+     {
+      "name": "Nước sâm",
+      "qty": 5
+     }
+    ]
+   ],
+   "from": "2026-10-26",
+   "to": "2026-10-28",
+   "prev_period": "Cùng kỳ tuần trước (19–21/10)",
+   "prev_revenue": 13420000,
+   "prev_orders": 296,
+   "prev_from": "2026-10-19",
+   "prev_to": "2026-10-21"
+  },
+  "hom_nay": {
+   "period": "Hôm nay (28/10/2026, tới 9h)",
+   "revenue": 1620000,
+   "orders": 36,
+   "top": [
+    {
+     "name": "Cơm tấm sườn",
+     "qty": 38,
+     "revenue": 1520000
+    },
+    {
+     "name": "Cơm tấm sườn bì chả",
+     "qty": 20,
+     "revenue": 1000000
+    },
+    {
+     "name": "Cơm tấm sườn trứng",
+     "qty": 16,
+     "revenue": 720000
+    },
+    {
+     "name": "Cơm tấm gà nướng",
+     "qty": 10,
+     "revenue": 400000
+    },
+    {
+     "name": "Cơm tấm bì chả",
+     "qty": 5,
+     "revenue": 175000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Sữa đậu nành",
+     "qty": 2
+    },
+    {
+     "name": "Canh khổ qua",
+     "qty": 3
+    },
+    {
+     "name": "Trà tắc",
+     "qty": 4
+    }
+   ],
+   "items_revenue": 4141000,
+   "groups": [
+    {
+     "name": "Cơm tấm",
+     "revenue": 114460000,
+     "qty": 2667,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Cơm tấm sườn",
+       "qty": 1147,
+       "revenue": 45880000,
+       "price": 40000,
+       "cost": 21600
+      },
+      {
+       "name": "Cơm tấm sườn bì chả",
+       "qty": 608,
+       "revenue": 30400000,
+       "price": 50000,
+       "cost": 26000
+      },
+      {
+       "name": "Cơm tấm sườn trứng",
+       "qty": 480,
+       "revenue": 21600000,
+       "price": 45000,
+       "cost": 23000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm tấm bì chả",
+       "qty": 140,
+       "revenue": 4900000,
+       "price": 35000,
+       "cost": 14000
+      },
+      {
+       "name": "Cơm tấm gà nướng",
+       "qty": 292,
+       "revenue": 11680000,
+       "price": 40000,
+       "cost": 17000
+      }
+     ],
+     "unsold_names": [
+      "Cơm tấm sườn cây"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 6860000,
+     "qty": 1211,
+     "items": 4,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Nước sâm",
+       "qty": 211,
+       "revenue": 2532000,
+       "price": 12000,
+       "cost": 4000
+      },
+      {
+       "name": "Trà đá",
+       "qty": 842,
+       "revenue": 2526000,
+       "price": 3000
+      },
+      {
+       "name": "Trà tắc",
+       "qty": 111,
+       "revenue": 1332000,
+       "price": 12000,
+       "cost": 3500
+      }
+     ],
+     "slow": [
+      {
+       "name": "Sữa đậu nành",
+       "qty": 47,
+       "revenue": 470000,
+       "price": 10000,
+       "cost": 4000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 2814000,
+     "qty": 403,
+     "items": 2,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trứng ốp thêm",
+       "qty": 304,
+       "revenue": 1824000,
+       "price": 6000,
+       "cost": 3200
+      },
+      {
+       "name": "Canh khổ qua",
+       "qty": 99,
+       "revenue": 990000,
+       "price": 10000,
+       "cost": 4500
+      }
+     ],
+     "slow": [],
+     "unsold_names": []
+    }
+   ],
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    520000,
+    760000,
+    340000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    0,
+    0,
+    1620000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 17
+     },
+     {
+      "name": "Cơm tấm sườn bì chả",
+      "qty": 9
+     },
+     {
+      "name": "Trà đá",
+      "qty": 10
+     }
+    ],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 11
+     },
+     {
+      "name": "Cơm tấm sườn trứng",
+      "qty": 7
+     },
+     {
+      "name": "Trà đá",
+      "qty": 9
+     }
+    ],
+    [],
+    [
+     {
+      "name": "Cơm tấm sườn",
+      "qty": 4
+     },
+     {
+      "name": "Cơm tấm gà nướng",
+      "qty": 2
+     },
+     {
+      "name": "Nước sâm",
+      "qty": 1
+     }
+    ]
+   ],
+   "from": "2026-10-28",
+   "to": "2026-10-28",
+   "prev_period": "Thứ 4 tuần trước (21/10, tới 9h)",
+   "prev_revenue": 1710000,
+   "prev_orders": 38,
+   "prev_from": "2026-10-21",
+   "prev_to": "2026-10-21"
+  }
+ },
+ "modules": {
+  "thang_nay": {
+   "finance": {
+    "period": "Tháng này (1–28/10/2026)",
+    "income": 118250000,
+    "prev_income": 114800000,
+    "auto_income": 118000000,
+    "expense": 99450000,
+    "prev_expense": 84300000,
+    "count": 74,
+    "top_expense": [
+     {
+      "name": "Nguyên liệu (thịt, gạo tấm, trứng, rau)",
+      "amount": 52000000,
+      "prev": 44000000
+     },
+     {
+      "name": "Lương nhân viên",
+      "amount": 24500000,
+      "prev": 24500000
+     },
+     {
+      "name": "Chiết khấu sàn giao hàng (ShopeeFood, GrabFood)",
+      "amount": 10600000,
+      "prev": 7900000
+     },
+     {
+      "name": "Mặt bằng",
+      "amount": 7000000,
+      "prev": 7000000
+     },
+     {
+      "name": "Than, gas",
+      "amount": 3150000,
+      "prev": 2900000
+     },
+     {
+      "name": "Điện nước",
+      "amount": 2200000,
+      "prev": 2000000
+     }
+    ],
+    "top_income": [
+     {
+      "name": "Bán hàng",
+      "amount": 118000000
+     },
+     {
+      "name": "Thu khác",
+      "amount": 250000
+     }
+    ],
+    "expense_cash": 61200000,
+    "expense_bank": 38250000
+   },
+   "kho": {
+    "period": "Tháng này (1–28/10/2026)",
+    "items": 28,
+    "stock_value": 6800000,
+    "low_count": 2,
+    "out_count": 1,
+    "low": [
+     {
+      "name": "Than",
+      "qty": 0,
+      "unit": "bao",
+      "min": 3
+     },
+     {
+      "name": "Trứng gà",
+      "qty": 40,
+      "unit": "quả",
+      "min": 120
+     }
+    ],
+    "imports": 27,
+    "import_total": 50800000,
+    "top_suppliers": [
+     {
+      "name": "Lò thịt Năm Lợi",
+      "amount": 27500000
+     },
+     {
+      "name": "Gạo tấm Bà Ba",
+      "amount": 8200000
+     },
+     {
+      "name": "Trứng gà Minh Phát",
+      "amount": 4100000
+     }
+    ],
+    "losses": [
+     {
+      "name": "Cơm tấm (nấu dư)",
+      "qty": 22,
+      "unit": "kg",
+      "value": 396000
+     },
+     {
+      "name": "Bì heo",
+      "qty": 4,
+      "unit": "kg",
+      "value": 360000
+     },
+     {
+      "name": "Mỡ hành",
+      "qty": 3,
+      "unit": "kg",
+      "value": 0
+     }
+    ]
+   },
+   "nhan_su": {
+    "period": "Tháng này (1–28/10/2026)",
+    "self": false,
+    "shifts": 150,
+    "total_hours": 1010,
+    "staff_count": 5,
+    "staff": [
+     {
+      "name": "Út Hiền",
+      "hours": 300,
+      "shifts": 24
+     },
+     {
+      "name": "Lan",
+      "hours": 240,
+      "shifts": 30
+     },
+     {
+      "name": "Phúc",
+      "hours": 230,
+      "shifts": 29
+     },
+     {
+      "name": "Ngọc (bán thời gian)",
+      "hours": 130,
+      "shifts": 34
+     },
+     {
+      "name": "Khoa (bán thời gian)",
+      "hours": 110,
+      "shifts": 33
+     }
+    ],
+    "open_now": 3,
+    "forgot_clock_out": 2,
+    "payroll": [
+     {
+      "name": "Lương tháng 9/2026",
+      "from": "01/09/2026",
+      "to": "30/09/2026",
+      "status": "paid",
+      "total": 24500000
+     }
+    ]
+   },
+   "khach": {
+    "period": "Tháng này (1–28/10/2026)",
+    "total": 420,
+    "new": 35,
+    "returning": 34,
+    "with_points": 300,
+    "wallet_customers": 0,
+    "wallet_real": 0,
+    "wallet_bonus": 0,
+    "top": [
+     {
+      "name": "Chị Mai (khu A)",
+      "spent": 1450000,
+      "visits": 30
+     },
+     {
+      "name": "Anh Hùng (giao)",
+      "spent": 1210000,
+      "visits": 22
+     }
+    ]
+   },
+   "khuyen_mai": {
+    "period": "Tháng này (1–28/10/2026)",
+    "active_count": 1,
+    "active": [
+     {
+      "code": "GIAOHANG10",
+      "type": "percent",
+      "value": 10,
+      "min_order": 100000,
+      "end": "31/12/2026"
+     }
+    ],
+    "orders_with_discount": 420,
+    "orders": 2600,
+    "discount_total": 6300000,
+    "revenue": 118000000,
+    "used": [
+     {
+      "code": "GIAOHANG10",
+      "times": 420,
+      "discount": 6300000
+     }
+    ]
+   }
+  }
+ },
+ "van_de": [
+  {
+   "id": "D1",
+   "mo_ta": "Chiết khấu sàn giao hàng 10.600.000đ (tháng trước 7.900.000đ, +34%) ≈ 9% doanh thu bán hàng — khoản chi lớn thứ 3; số liệu KHÔNG tách doanh thu đơn giao → chưa tính được đơn giao lời hay lỗ."
+  },
+  {
+   "id": "D2",
+   "mo_ta": "Nguyên liệu 52.000.000đ (+18% so 44.000.000đ) trong khi doanh thu chỉ +3,1% → giá vốn tăng; Cơm tấm sườn giá vốn 21.600đ = 54% giá bán 40.000đ (cao hơn mốc 25–35%), là món bán nhiều nhất (1.147 phần)."
+  },
+  {
+   "id": "D3",
+   "mo_ta": "Ca tối 17–21h chỉ ≈ 16,5% doanh thu dù mở 4 giờ; giờ đông 7h và 11h; 13h–17h quán đóng (không phải \"chiều vắng\")."
+  },
+  {
+   "id": "D4",
+   "mo_ta": "Thứ 7 cao nhất (~26 triệu cả tháng ≈ 1,4 lần ngày thường); Chủ nhật quán NGHỈ (0đ) → không gợi ý việc ngày Chủ nhật như ngày bán; Thứ 7 cần thêm người / hàng."
+  },
+  {
+   "id": "D5",
+   "mo_ta": "Kho: Than đã HẾT (0 / tối thiểu 3 bao) — quán nướng sườn bằng than; Trứng gà 40 / 120 quả; hao hụt cơm tấm nấu dư 22 kg (396.000đ), bì 4 kg (360.000đ), mỡ hành 3 kg chưa có giá vốn."
+  },
+  {
+   "id": "D6",
+   "mo_ta": "Khách: 34 / 420 khách đã lưu đến từ 2 lần ≈ 8% (thấp); 300 khách có điểm — KHÔNG phải \"300 khách lâu chưa ghé\"; 35 khách mới tháng này."
+  },
+  {
+   "id": "D7",
+   "mo_ta": "Mã GIAOHANG10 (giảm 10% đơn ≥ 100.000đ) dùng 420 lần, tiền bớt 6.300.000đ — cộng chiết khấu sàn → đơn giao có thể lỗ; chưa có số so đơn giao có mã / không mã."
+  },
+  {
+   "id": "D8",
+   "mo_ta": "Nhân sự: Út Hiền 300 giờ / 4 tuần ≈ 75 giờ / tuần (quá tải), 2 bạn bán thời gian ~30 giờ / tuần; 2 ca quá 16 giờ chưa chấm ra."
+  }
+ ]
+}

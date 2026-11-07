@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ sót cơm sườn giá vốn 48% (lời mỏng) và không nói thiếu giá vốn bún bò; việc 'quảng bá qua kênh truyền thông' chung chung."
+  },
+  {
+   "id": "D39_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ sót cơm sườn giá vốn 48% và thiếu giá vốn bún bò; quảng bá/combo bún bò không có con số cụ thể."
+  },
+  {
+   "id": "D39_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Chỉ đọc lại số phần/doanh thu, không việc làm, không nêu cơm sườn lời mỏng hay thiếu giá vốn bún bò."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói thiếu giá vốn bún bò nên chưa so được món nào lời hơn; 'tăng giá nhẹ' chưa có mức cụ thể."
+  },
+  {
+   "id": "D39_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ sót cơm sườn giá vốn 48% và thiếu giá vốn bún bò; 'quảng bá hơn nữa' chung chung."
+  },
+  {
+   "id": "D39_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gợi tăng giá/giảm định lượng cơm sườn nhưng không nêu giá vốn 48% làm lý do, lẫn 'tăng doanh thu' với cải thiện lời, không nói thiếu giá vốn bún bò."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên chủ quán 'thử cả hai món' như khách, không có việc làm, bỏ sót cơm sườn lời mỏng."
+  },
+  {
+   "id": "D39_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi bún bò 'bán chạy nhất' (Trà đá 900 phần mới cao nhất), khuyên chủ 'thử cả hai món', bỏ sót cơm sườn lời mỏng."
+  },
+  {
+   "id": "D39_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi bún bò 'bán chạy nhất', khuyên chủ 'thử cả hai món', không rút ra kết luận hay việc làm nào."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 0,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Không dùng số liệu, tự bịa mô tả hương vị (đậm đà, sườn mềm) và chúc ăn ngon như nói với khách."
+  },
+  {
+   "id": "D39_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi bún bò 'bán chạy nhất', khuyên chủ 'thử cả hai món', bỏ sót cơm sườn lời mỏng."
+  },
+  {
+   "id": "D39_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi bún bò 'bán chạy nhất', không kết luận khách chọn món nào, việc 'hỏi ý kiến khách' mơ hồ."
+  }
+ ]
+}

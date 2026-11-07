@@ -1,0 +1,23 @@
+#!/bin/bash
+# ─────────────────────────────────────────────────────────────────────────────
+# scripts/qn — CLI Wrapper for Quán Nhỏ POS Commands
+# Supports:
+#   /qn phát hành bản mới [mô_tả]
+#   scripts/qn phát hành bản mới [mô_tả]
+#   scripts/qn --dry-run [mô_tả]
+# ─────────────────────────────────────────────────────────────────────────────
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="$HOME/flutter/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+PYTHON_EXEC="python3"
+
+# Check python availability
+if ! command -v "$PYTHON_EXEC" &> /dev/null; then
+    echo "❌ Lỗi: Không tìm thấy python3 trên hệ thống!"
+    exit 1
+fi
+
+# Execute release engine
+exec "$PYTHON_EXEC" "$SCRIPT_DIR/qn_release.py" "$@"

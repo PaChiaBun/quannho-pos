@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 String removeDiacritics(String str) {
   const map = {
     'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
@@ -71,4 +73,117 @@ extension StringDiacriticsExtension on String {
 
     return false;
   }
+}
+
+/// Máy chủ ghi "Thanh toán bàn " + tên bàn; tên bàn đã có chữ "Bàn" ("Bàn 1", "bàn 13") nên thành
+/// "Thanh toán bàn bàn 13" → bỏ chữ lặp khi đọc (dòng cũ cũng gọn, không đụng hàm thanh toán).
+String? tidyFinanceDescription(String? s) =>
+    s?.replaceFirst(RegExp(r'^Thanh toán bàn (?=bàn\s)', caseSensitive: false), 'Thanh toán ');
+
+/// Cùng lỗi ở chỗ khác trong câu: ghi chú đơn "Món thanh toán tại bàn bàn 13" → "… tại bàn 13".
+String tidyRepeatedTableWord(String s) =>
+    s.replaceAll(RegExp(r'\bbàn\s+(?=bàn\s)', caseSensitive: false), '');
+
+/// Phần tử topping trong `modifiers_json`: món bàn ghi `"type":"topping"`; đơn QR (máy chủ `qr_price_items_v4`
+/// dựng lại) KHÔNG có "type" mà có "quantity". Tuỳ chọn hương vị (dòng product_modifiers) không có cả hai.
+bool isToppingModifier(Map m) => m['type'] == 'topping' || m.containsKey('quantity');
+
+/// Dòng món bàn có topping ghi số TỔNG cả dòng ("qty"): đổi số ly của dòng (+/−, gộp lượt gọi, gộp dòng
+/// in bill) làm số topping lệch với tiền → không gộp, không cho +/−. Topping QR ghi mỗi phần nên không bị.
+bool hasLineTotalToppings(Object? modifiersJson) => _jsonList(modifiersJson)
+    .any((e) => e is Map && e['type'] == 'topping' && e.containsKey('qty'));
+
+/// Dòng topping trên phiếu bếp in giấy (màn Phiếu bếp, máy chủ in): "+Trân châu" khi đúng 1 mỗi phần,
+/// "+Trân châu ×3" (tổng của dòng) khi khác. Không phải topping → null.
+String? kitchenToppingLabel(Object? m, num lineQty) {
+  if (m is! Map || !isToppingModifier(m)) return null;
+  final total = toppingTotal(m, lineQty);
+  final name = '${m['name'] ?? ''}';
+  return total != lineQty ? '+$name ×${qtyText(total)}' : '+$name';
+}
+
+/// Tổng số phần một topping của cả dòng món: món gọi ở bàn ghi `qty` = tổng cả dòng ("2 ly + 1 trân
+/// châu" → 1); đơn QR ghi `quantity` = số mỗi phần → nhân số món. Máy chủ trừ kho theo cùng cách.
+num toppingTotal(Map m, num lineQty) =>
+    _num(m['qty']) ?? (_num(m['quantity']) ?? 1) * lineQty;
+
+num? _num(Object? v) => v is num ? v : num.tryParse('${v ?? ''}');
+
+String qtyText(num n) => n % 1 == 0 ? '${n.toInt()}' : '$n';
+
+/// Topping / tuỳ chọn từ `modifiers_json` (chuỗi JSON hoặc danh sách) để in dưới tên món: topping ghi
+/// tổng của dòng "Trân châu x3"; đúng 1 mỗi phần thì chỉ ghi tên ("Trà x2 / + Trân châu" = mỗi ly 1).
+/// Dùng cho chi tiết bill, hoá đơn in (giá dòng đã gồm topping) và phiếu bếp in giấy ở màn Bàn.
+List<String> billItemExtras(Object? modifiersJson, {num lineQty = 1}) {
+  return [
+    for (final e in _jsonList(modifiersJson))
+      if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
+        isToppingModifier(e) && toppingTotal(e, lineQty) != lineQty
+            ? '${e['name']} x${qtyText(toppingTotal(e, lineQty))}'
+            : '${e['name']}',
+  ];
+}
+
+List _jsonList(Object? raw) {
+  if (raw is String) {
+    if (raw.trim().isEmpty) return const [];
+    try {
+      raw = jsonDecode(raw);
+    } catch (_) {
+      return const [];
+    }
+  }
+  return raw is List ? raw : const [];
+}
+
+/// Topping chọn ở "Tùy chọn" nằm trong `modifiers_json` của dòng món, không thành dòng đơn riêng — báo cáo
+/// tách ra món riêng: số phần theo [toppingTotal], tiền = giá × số phần (trừ khỏi tiền món chính).
+/// Máy chủ tính cùng cách (20261104_topping_bao_cao_v1).
+List<({String id, String name, double qty, double revenue})> toppingSales(
+  Object? modifiersJson,
+  num lineQty,
+) {
+  final out = <({String id, String name, double qty, double revenue})>[];
+  if (lineQty <= 0) return out;
+  for (final e in _jsonList(modifiersJson)) {
+    if (e is! Map || !isToppingModifier(e)) continue;
+    final id = '${e['id'] ?? ''}'.trim();
+    if (id.isEmpty) continue;
+    final qty = toppingTotal(e, lineQty).toDouble();
+    out.add((
+      id: id,
+      name: '${e['name'] ?? ''}'.trim(),
+      qty: qty,
+      revenue: qty * (_num(e['price']) ?? 0),
+    ));
+  }
+  return out;
+}
+
+/// Dòng có topping ghi số tổng ("Trân châu x2") không gộp với dòng giống hệt: cộng số món mà giữ
+/// "x2" sẽ đọc sai tổng topping.
+bool extrasHaveCount(List<String> extras) => extras.any(_extraCountRe.hasMatch);
+
+final _extraCountRe = RegExp(r' x\d+(?:\.\d+)?$');
+
+/// Ghi chú món kèm dòng topping "+ Trân châu" ở đầu — mẫu phiếu bếp in dòng "+ …" thành topping.
+String? noteWithExtras(String? note, Object? modifiersJson, {num lineQty = 1}) {
+  final extras = billItemExtras(modifiersJson, lineQty: lineQty);
+  final parts = [
+    if (extras.isNotEmpty) '+ ${extras.join(', ')}',
+    if (note != null && note.trim().isNotEmpty) note.trim(),
+  ];
+  return parts.isEmpty ? null : parts.join('\n');
+}
+
+final _nameVariantRe = RegExp(r'^(.*\S)\s*(?:\[\s*([^\[\]]*?)\s*\]|\(\s*([^()]*?)\s*\))$');
+
+/// Thẻ món Bán hàng chỉ đủ 2 dòng tên: tách phần trong ngoặc ở cuối ("Cá Viên Chiên Sốt Me [ phần nhỏ ]",
+/// "Trà Sữa … (Đá/Nóng)") để hiện riêng cạnh giá — trước bị cắt mất, hai cỡ món chỉ còn khác nhau ở giá.
+({String base, String? variant}) splitNameVariant(String name) {
+  final m = _nameVariantRe.firstMatch(name.trim());
+  final variant = m == null ? null : (m[2] ?? m[3]);
+  return variant == null || variant.isEmpty
+      ? (base: name, variant: null)
+      : (base: m![1]!, variant: variant);
 }

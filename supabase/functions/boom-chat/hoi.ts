@@ -1,0 +1,49 @@
+// Chế độ 'ask' (03/11/2026, thiết kế .docs/thiet-ke-boom-may-chu-lay-so.md): app chỉ gửi câu hỏi; máy chủ đọc kỳ bằng luật
+// (ky.ts), đọc ĐỦ số người hỏi được xem bằng vé của chính họ (lay_so.ts, RLS), đệm theo (người hỏi, quán, kỳ).
+// Đo 03/11: gửi đủ 5 mục không làm Boom kém đi (12,50 → 12,45 / 16), câu app không gửi số 9,2 → 11,6.
+import { docKy, type Ky } from './ky.ts';
+import { docBanHang } from './ban_hang.ts';
+import { type Ctx, docMuc, docQuyen, xemDuocBanHang } from './lay_so.ts';
+import { type ModuleFacts, parseFacts, parseModules, type ShopFacts } from './logic.ts';
+
+export type SoCuaCau = { ky: Ky; facts: ShopFacts | null; modules: ModuleFacts | null; khongXem: string[]; laChu: boolean; loi: string[]; dem: boolean };
+
+const DEM = new Map<string, { het: number; v: Omit<SoCuaCau, 'dem'> }>();
+const DEM_TOI_DA = 500;
+
+/** Kỳ đang chạy đệm 10 phút, kỳ đã qua 6 giờ (số không đổi nữa). */
+function hanDem(ky: Ky, now: number): number {
+  return now + (Date.parse(ky.den) < now - 60_000 ? 6 * 3600_000 : 10 * 60_000);
+}
+
+export async function laySoChoCau(ctx: Ctx, question: string, now = new Date(), cauTruoc?: string | null): Promise<SoCuaCau> {
+  const ky = docKy(question, now, cauTruoc);
+  // khoá theo NGÀY của mốc cuối với kỳ đang chạy (now đổi từng giây) để câu hỏi tiếp cùng kỳ trúng đệm
+  const khoa = `${ctx.userId}|${ctx.storeId}|${ky.tu}|${ky.den.slice(0, 13)}|${ky.truocTu}|${ky.truocDen.slice(0, 13)}`;
+  const t = now.getTime();
+  const c = DEM.get(khoa);
+  if (c && c.het > t) return { ...c.v, dem: true };
+  const q = await docQuyen(ctx);
+  const [muc, ban] = await Promise.all([
+    q ? docMuc(ctx, ky, q) : Promise.resolve({ modules: {}, khongXem: [], loi: ['Quyền'] }),
+    q && xemDuocBanHang(q) ? docBanHang(ctx, ky) : Promise.resolve(null),
+  ]);
+  const v = {
+    ky,
+    facts: ban ? parseFacts(ban) : null,
+    modules: Object.keys(muc.modules).length ? parseModules(muc.modules) : null,
+    khongXem: q && !xemDuocBanHang(q) ? ['Bán hàng', ...muc.khongXem] : muc.khongXem,
+    laChu: !!q && (q.isOwner || q.canonicalRole === 'owner'),
+    // bán hàng đọc lỗi → không đệm, lần hỏi sau đọc lại
+    loi: [...muc.loi, ...(q && xemDuocBanHang(q) && !ban ? ['Bán hàng'] : [])],
+  };
+  if (DEM.size >= DEM_TOI_DA) DEM.delete(DEM.keys().next().value!);
+  if (!v.loi.length) DEM.set(khoa, { het: hanDem(ky, t), v });
+  return { ...v, dem: false };
+}
+
+/** Chỉ để test: xoá đệm. */
+export function xoaDem() {
+  DEM.clear();
+}
+

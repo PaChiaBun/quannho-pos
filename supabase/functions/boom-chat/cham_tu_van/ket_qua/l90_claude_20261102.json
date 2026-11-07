@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D50_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nối nguyên liệu +28% với doanh thu chỉ +2% và thu − chi giảm còn 37,2tr; việc chưa nêu món/con số cụ thể."
+  },
+  {
+   "id": "D50_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu tỉ lệ 43,7% vượt mốc và không nối với doanh thu chỉ +2%; việc chưa nêu món cụ thể."
+  },
+  {
+   "id": "D50_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc chỉ theo dõi/đối chiếu, thiếu tăng giá món giá vốn cao; chưa nối doanh thu chỉ +2%."
+  },
+  {
+   "id": "D50_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc chỉ đối chiếu và theo dõi giá, thiếu hướng chỉnh giá món giá vốn cao; chưa nối doanh thu chỉ +2%."
+  },
+  {
+   "id": "D50_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nối nguyên liệu +28% với doanh thu +2% và thu − chi giảm; việc chưa nêu món/con số."
+  },
+  {
+   "id": "D50_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu tỉ lệ 43,7% vượt mốc, không nối doanh thu chỉ +2%; việc chưa nêu món cụ thể."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D50_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu mốc 58tr nếu giá giữ; việc chung chung, khuyên giảm định lượng không hợp quán bình dân khách công trình."
+  },
+  {
+   "id": "D50_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa dự báo 70tr (+12tr 'mức tăng trung bình'), '20% so tháng trước' sai (70 so 45,3 là +54%), trái chỉ dẫn không tự đặt số."
+  },
+  {
+   "id": "D50_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tự mâu thuẫn: nói tăng 12,7tr rồi lại 'tức là 58tr', số 28% gán sai; việc chung chung."
+  },
+  {
+   "id": "D50_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa dự báo 70tr và 'thêm 20%', mâu thuẫn (cao hơn tháng trước 20% là sai), không thận trọng."
+  },
+  {
+   "id": "D50_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa dự báo 68tr, '+28% so tháng trước' sai (68 so 45,3 là +50%); khuyên giảm lượng nhập dễ thiếu hàng."
+  },
+  {
+   "id": "D50_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không đưa mốc 58tr nếu giá giữ, trả lời vòng 'có thể tăng'; việc chung chung."
+  }
+ ]
+}

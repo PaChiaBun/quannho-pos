@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'session_provider.dart';
+import '../services/staff_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/core_product_repository.dart';
 import '../repositories/core_customer_repository.dart';
@@ -19,7 +21,7 @@ import '../../modules/loyalty/repository/loyalty_repository.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 final productRepositoryProvider = Provider<CoreProductRepository>((ref) {
-  return CoreProductRepository();
+  return CoreProductRepository.instance;
 });
 
 final customerRepositoryProvider = Provider<CoreCustomerRepository>((ref) {
@@ -44,17 +46,15 @@ final moduleRepositoryProvider = Provider<ModuleRepository>((ref) {
 });
 
 final posRepositoryProvider = Provider<PosRepository>((ref) {
-  final productRepo  = ref.watch(productRepositoryProvider);
+  final productRepo = ref.watch(productRepositoryProvider);
   final customerRepo = ref.watch(customerRepositoryProvider);
-  final khoProRepo   = ref.watch(khoProRepositoryProvider);
+  final khoProRepo = ref.watch(khoProRepositoryProvider);
   return PosRepository(productRepo, customerRepo, khoProRepo);
 });
 
 final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
   return FinanceRepository();
 });
-
-
 
 final loyaltyRepositoryProvider = Provider<LoyaltyRepository>((ref) {
   return LoyaltyRepository();
@@ -69,40 +69,63 @@ final banRepositoryProvider = Provider<BanRepository>((ref) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Tất cả sản phẩm (reactive)
-final allProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+final allProductsProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
-/// Sản phẩm cho POS (chỉ active + available)
-final posProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
-  return ref.watch(allProductsProvider).whenData((products) => products
-      .where((p) =>
-          p.isActive &&
-          p.isAvailable &&
-          p.category != 'Nguyên liệu' &&
-          p.productType != 'ingredient')
-      .toList());
+/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần không bán lẻ)
+final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>((ref) {
+  return ref
+      .watch(allProductsProvider)
+      .whenData(
+        (products) => products
+            .where(
+              (p) =>
+                  p.isActive &&
+                  (p.sellPrice > 0 ||
+                      (p.category != 'Nguyên liệu' &&
+                          p.productType != 'ingredient')),
+            )
+            .toList(),
+      );
 });
 
 /// Tất cả khách hàng (reactive)
-final allCustomersProvider = StreamProvider<List<CustomerModel>>((ref) {
+final allCustomersProvider = StreamProvider.autoDispose<List<CustomerModel>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(customerRepositoryProvider).watchAll();
 });
 
 /// Tất cả modules (refresh khi session thay đổi)
-final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) async* {
+final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  yield await ref.read(moduleRepositoryProvider).getAll();
+  return _modulesWithRetry(ref);
 });
 
 /// Chỉ active modules (refresh khi session thay đổi)
-final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) async* {
+final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  final all = await ref.read(moduleRepositoryProvider).getAll();
-  yield all.where((m) => m.isActive).toList();
+  return _modulesWithRetry(ref).map(
+    (all) => all.where((m) => m.isActive).toList(),
+  );
 });
+
+/// Mở app lúc mất mạng thì danh sách chỉ là tạm: đọc lại tới khi được, không bắt nhân viên
+/// tắt mở app. Lúc đang lỗi không phát gì nên phải tự dừng theo [alive], không chờ huỷ luồng.
+Stream<List<ModuleConfig>> _modulesWithRetry(Ref ref) async* {
+  final repo = ref.read(moduleRepositoryProvider);
+  var alive = true;
+  ref.onDispose(() => alive = false);
+  var result = await repo.load();
+  yield result.modules;
+  for (var attempt = 0; alive && !result.ok; attempt++) {
+    await Future.delayed(moduleRetryDelay(attempt));
+    if (!alive) return;
+    result = await repo.load();
+    if (result.ok) yield result.modules;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS PROVIDERS
@@ -136,64 +159,197 @@ class _NavTabNotifier extends Notifier<int> {
 }
 
 final navTabProvider = NotifierProvider<_NavTabNotifier, int>(
-  _NavTabNotifier.new);
+  _NavTabNotifier.new,
+);
 
 class NavTab {
-  static const home      = 0;
-  static const pos       = 1;
+  static const home = 0;
+  static const pos = 1;
   static const inventory = 2;
-  static const finance   = 3;
-  static const loyalty   = 4;
-  static const report    = 5;
-  static const settings  = 6;
-  static const table     = 7;
-  static const kitchen   = 8;
-  static const staff     = 9;
-  static const chamcong  = 10;
-  static const khoPro    = 11;
+  static const finance = 3;
+  static const loyalty = 4;
+  static const report = 5;
+  static const settings = 6;
+  static const table = 7;
+  static const kitchen = 8;
+  static const staff = 9;
+  static const chamcong = 10;
+  static const khoPro = 11;
   static const tinhLuong = 12;
-  static const kayOps    = 13; // Module Vận Hành (KAY Ops)
+  static const kayOps = 13; // Module Vận Hành (KAY Ops)
+}
+
+/// Các tab vai trò được mở — tính từ store_roles.modules hoặc phân quyền nhân viên. Thanh dưới (MainShell) và
+/// nút mở Báo cáo ở Bán hàng › Đơn gần đây dùng chung (trước nút chỉ hiện cho chủ / vai trò tên đúng "Quản lý").
+Set<int> navTabsForRole(
+  String? role,
+  List<dynamic> storeRoles,
+  bool isOwner, [
+  Set<String>? actionPerms,
+]) {
+  final canonical = StaffService.canonicalRole(role ?? '');
+  if (isOwner || canonical == 'owner' || canonical == 'manager') {
+    return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+  }
+
+  // Map module ID → tab index
+  const moduleToTab = {
+    'pos': 1,
+    'kho': 2,
+    'finance': 3,
+    'loyalty': 4,
+    'report': 5,
+    'ban': 7,
+    'table': 7,
+    'kitchen': 8,
+    'staff': 9,
+    'chamcong': 10,
+    'kho_pro': 11,
+    'tinhluong': 12,
+    'kay_ops': 13,
+    'log_viewer': 14,
+  };
+
+  // Luôn có tab Home + Cài đặt
+  final tabs = <int>{0, 6};
+
+  // Tìm role trong store_roles (khớp trực tiếp tên hoặc qua canonicalRole)
+  debugPrint(
+    '[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner',
+  );
+  if (role != null && storeRoles.isNotEmpty) {
+    for (final r in storeRoles) {
+      final rName = r.name.toString();
+      if (rName == role || StaffService.canonicalRole(rName) == canonical) {
+        for (final mod in r.modules) {
+          final tab = moduleToTab[mod.toString()];
+          if (tab != null) tabs.add(tab);
+        }
+        tabs.add(13); // ⭐ Vận Hành — mọi nhân viên đều có quyền truy cập
+        if (actionPerms != null && actionPerms.contains('report.view')) {
+          tabs.add(5);
+        }
+        if (canonical == 'cashier') {
+          tabs.add(5); // Fail-safe: Thu ngân luôn có quyền xem báo cáo
+        }
+        debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
+        return tabs;
+      }
+    }
+    debugPrint('[NavTabs] no match for role=$role in storeRoles');
+  }
+
+  // Fallback: role cũ hardcoded
+  switch (canonical) {
+    case 'kitchen':
+      tabs.addAll({0, 8, 6, 1, 13});
+      break;
+    case 'cashier':
+      tabs.addAll({0, 1, 5, 7, 6, 13, 14});
+      break;
+    case 'waiter':
+      tabs.addAll({0, 7, 8, 6, 13});
+      break;
+    case 'stock':
+      tabs.addAll({0, 2, 1, 6, 13});
+      break;
+    default:
+      tabs.addAll({0, 1, 2, 6, 13});
+      break;
+  }
+  if (actionPerms != null && actionPerms.contains('report.view')) {
+    tabs.add(5);
+  }
+  tabs.add(13);
+  return tabs;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAV SLOTS PROVIDER — 4 slot tuỳ chỉnh, lưu SharedPreferences
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Máy chưa tự chọn thanh dưới: ghim 4 mục đầu tiên trong danh sách này mà vai trò được dùng
+/// (Trang chủ, Bán hàng, Bàn, Kho, Bếp, Thu Chi, Báo cáo…) — quán có Bàn thì có Bàn.
+const kAutoNavPriority = [0, 1, 7, 2, 8, 3, 5, 11, 4, 9, 10, 12, 13, 14, 6];
+
+/// Mục thanh dưới → mã module ở Trang chủ ([activeModulesProvider]); Trang chủ (0) và Cài đặt (6)
+/// luôn có. Tự ghim chỉ lấy mục mà module đang bật (quán không bật Kho thì không ghim Kho).
+const kTabModuleIds = {
+  1: 'pos', 2: 'kho', 3: 'finance', 4: 'loyalty', 5: 'report', 7: 'table',
+  8: 'kitchen', 9: 'staff', 10: 'chamcong', 11: 'kho_pro', 12: 'tinhluong',
+  13: 'kay_ops', 14: 'log_viewer',
+};
+
+/// Đủ 4 ô thanh dưới: thêm mục trong [allowed] chưa có, rồi tới [fallback]; chỉ khi hết mục mới lặp
+/// mục đầu.
+List<int> padNavSlots(List<int> slots, Set<int> allowed, [Set<int> fallback = const {}]) {
+  final result = List<int>.from(slots);
+  for (final pool in [allowed, fallback]) {
+    for (final t in pool.toList()..sort()) {
+      if (result.length >= 4) break;
+      if (!result.contains(t)) result.add(t);
+    }
+  }
+  while (result.length < 4) result.add(result.first);
+  return result.take(4).toList();
+}
+
 class NavSlotsNotifier extends AsyncNotifier<List<int>> {
-  static const _prefKey  = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
+  static const _prefKey = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
   static const _defaults = [0, 1, 2, 11]; // Home, Bán hàng, Kho, Kho Pro
+
+  /// false = chưa giữ-để-đổi lần nào → khung chính tự ghim theo [kAutoNavPriority].
+  bool isCustom = false;
 
   @override
   Future<List<int>> build() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefKey);
     if (saved != null) {
-      final parsed = saved.split(',').map(int.tryParse).whereType<int>().toList();
-      if (parsed.length == 4) return parsed;
+      final parsed = saved
+          .split(',')
+          .map(int.tryParse)
+          .whereType<int>()
+          .toList();
+      if (parsed.length == 4) {
+        isCustom = true;
+        return parsed;
+      }
     }
     return List<int>.from(_defaults);
   }
 
-  Future<void> updateSlot(int slotIndex, int tabIndex) async {
-    final current = state.value ?? List<int>.from(_defaults);
+  /// [shown] = 4 mục đang hiện; lần đổi đầu tiên lấy chúng làm gốc thay cho mặc định cũ.
+  Future<void> updateSlot(int slotIndex, int tabIndex, {List<int>? shown}) async {
+    final current = (isCustom ? null : shown) ??
+        state.value ??
+        List<int>.from(_defaults);
     final updated = List<int>.from(current);
     updated[slotIndex] = tabIndex;
+    isCustom = true;
     state = AsyncData(updated);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefKey, updated.join(','));
   }
 }
 
-final navSlotsProvider =
-    AsyncNotifierProvider<NavSlotsNotifier, List<int>>(NavSlotsNotifier.new);
+final navSlotsProvider = AsyncNotifierProvider<NavSlotsNotifier, List<int>>(
+  NavSlotsNotifier.new,
+);
 
-final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
+  ref,
+) async {
   final s = ref.watch(sessionProvider);
-  if (s == null) return null;
-  try {
-    return await Supabase.instance.client
-        .from('staff_shifts').select('id,clock_in')
-        .eq('user_id', s.userId).eq('store_id', s.storeId ?? '')
-        .isFilter('clock_out', null).maybeSingle();
-  } catch (_) { return null; }
+  if (s == null || s.userId.isEmpty) return null;
+  final res = await Supabase.instance.client
+      .from('staff_shifts')
+      .select('id,clock_in')
+      .eq('user_id', s.userId)
+      .eq('store_id', s.storeId ?? '')
+      .isFilter('clock_out', null)
+      .order('clock_in', ascending: false)
+      .limit(1)
+      .maybeSingle();
+  return res;
 });

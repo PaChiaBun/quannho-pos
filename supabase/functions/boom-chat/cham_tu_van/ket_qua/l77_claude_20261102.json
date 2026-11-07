@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h), không nêu số tiền tuần này/tuần trước và mức giảm 7h, 8h, Bánh mì."
+  },
+  {
+   "id": "D33_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h), không nêu số tiền tuần này/tuần trước và mức giảm 7h, 8h, Bánh mì."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Hiểu sai mốc 1.475.000đ/ngày thành 'trở về mức cũ', trộn tổng tháng với số/ngày; bỏ combo đắt hơn lẻ và giờ chiều 14–16h."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 hướng (7h–8h), bỏ combo cà phê sữa + bánh mì thịt đắt hơn lẻ và giờ chiều vắng 14–16h."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, 'theo dõi sát sao' chung chung; không có số, bỏ combo và giờ chiều."
+  },
+  {
+   "id": "D01_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nói giá trị mỗi đơn giữ nguyên (+0,6%) để khẳng định là mất lượt khách; không nêu Cà phê/Bánh mì giảm."
+  },
+  {
+   "id": "D01_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Thiếu 14,2% và giá trị mỗi đơn giữ nguyên; bảo chủ 'kiểm tra số liệu theo thứ' dù số đó đã có."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu giá trị mỗi đơn giữ nguyên; đẩy việc 'kiểm tra theo thứ' dù số đã có."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 hướng 7h–8h, bỏ combo đắt hơn lẻ và giờ chiều 14–16h."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc duy nhất không có mốc giữ/bỏ; không nêu số tiền tuần và mức giảm 7h, 8h."
+  },
+  {
+   "id": "D33_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h), không nêu số tiền tuần này/tuần trước và mức giảm 7h, 8h, Bánh mì."
+  },
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h); chưa nhắc nhóm Cà phê/Bánh mì giảm."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h), không nêu số tiền tuần này/tuần trước và mức giảm 7h, 8h, Bánh mì."
+  },
+  {
+   "id": "D33_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc duy nhất thiếu mức ưu đãi cụ thể; không nêu số tiền tuần và mức giảm 7h, 8h."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Hiểu sai mốc 1.475.000đ/ngày (nửa đường) thành 'quay về mức cũ', trộn tổng tháng với số/ngày; bỏ combo đắt hơn lẻ và giờ chiều 14–16h."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dài, dàn trải 4 mục; 'tạo combo rẻ hơn' mà không biết combo hiện có đắt hơn lẻ 2.000đ; bỏ giờ chiều 14–16h."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đề xuất 'tạo' combo rẻ hơn lẻ nhưng không chỉ ra combo hiện tại 52.000đ đắt hơn lẻ; bỏ giờ chiều 14–16h; quảng bá chung chung."
+  },
+  {
+   "id": "D01_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu mức giảm 14,2% và giá trị mỗi đơn giữ nguyên; khẳng định 'khách không quay lại' hơi vội."
+  },
+  {
+   "id": "D01_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Thiếu 14,2% và giá trị mỗi đơn giữ nguyên; bảo chủ 'kiểm tra số liệu theo thứ' dù số đó đã có."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu giá trị mỗi đơn giữ nguyên; đẩy việc 'kiểm tra theo thứ' dù số đã có."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Tách tích ly và giảm 2.000đ thành 2 việc cùng một hướng; không có số, bỏ combo đắt hơn lẻ và giờ chiều 14–16h."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'ưu đãi khách quen hoặc món chủ lực' còn mơ hồ dù có mốc 1.794.000đ/ngày; không nêu số tiền tuần."
+  },
+  {
+   "id": "D33_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc (tích ly 7h–8h), không nêu số tiền tuần này/tuần trước và mức giảm 7h, 8h, Bánh mì."
+  },
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu giá trị mỗi đơn giữ nguyên; việc khảo sát khách còn chung chung."
+  }
+ ]
+}
