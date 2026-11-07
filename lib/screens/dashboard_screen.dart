@@ -35,6 +35,7 @@ import '../core/services/app_update_manager.dart';
 import '../core/widgets/app_version_label.dart';
 import '../core/utils/app_logger.dart';
 import '../core/widgets/status_bar_scrim.dart';
+import '../features/thoi_tiet/thoi_tiet_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
@@ -1017,6 +1018,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     ],
                                   ),
                                 ),
+                                const ThoiTietThe(),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -1096,6 +1098,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ),
                               // Quick badge
+                              const ThoiTietThe(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,

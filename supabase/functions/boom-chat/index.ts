@@ -19,6 +19,8 @@
 //   JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (có sẵn trong dịch vụ hàm của Supabase tự host)
 import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
+import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
+import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
   ghiKy,
@@ -173,6 +175,81 @@ async function rest(path: string, init?: RequestInit) {
   const r = await fetch(`${SB_URL}/rest/v1/${path}`, { ...init, headers: svcHeaders() });
   if (!r.ok) throw new Error(`REST_${r.status}`);
   return await r.json();
+}
+
+const THOI_TIET = cauHinhThoiTiet((k) => Deno.env.get(k));
+
+// Bộ nhớ riêng từng quán (07/11, NHÁP): mặc định TẮT; bật bằng BOOM_BO_NHO=1 sau khi Chủ Quán duyệt và đã áp migration
+// 20261107_boom_bo_nho_quan_v1. BOOM_BO_NHO_BO_QUA: mã quán không dùng bộ nhớ (quán Demo nhiều người dùng chung).
+const BO_NHO = Deno.env.get('BOOM_BO_NHO') === '1';
+const BO_NHO_BO_QUA = new Set((Deno.env.get('BOOM_BO_NHO_BO_QUA') ?? '').split(',').map((x) => x.trim()).filter(Boolean));
+
+/** Ghi nhớ còn hiệu lực của quán; null = không dùng bộ nhớ (tắt, quán bỏ qua, chủ quán tắt, lỗi đọc). */
+async function docBoNho(storeId: string): Promise<GhiNho[] | null> {
+  if (!BO_NHO || BO_NHO_BO_QUA.has(storeId)) return null;
+  try {
+    const sig = AbortSignal.timeout(1200);
+    const [hs, ds] = await Promise.all([
+      rest(`boom_quan_ho_so?select=tat&store_id=eq.${storeId}&limit=1`, { signal: sig }),
+      rest(`boom_quan_ghi_nho?select=id,noi_dung,loai,nguon,trang_thai,muc_xem&store_id=eq.${storeId}&trang_thai=neq.het_hieu_luc&order=cap_nhat.desc&limit=200`, { signal: sig }),
+    ]);
+    if (Array.isArray(hs) && hs[0]?.tat === true) return null;
+    return Array.isArray(ds) ? ds as GhiNho[] : [];
+  } catch {
+    return null;
+  }
+}
+
+/** Chủ quán: chủ trên bảng stores hoặc thành viên is_owner (như hàm _boom_la_chu). */
+async function laChuQuan(storeId: string, userId: string): Promise<boolean> {
+  const [o, m] = await Promise.all([
+    rest(`stores?select=id&id=eq.${storeId}&owner_user_id=eq.${userId}&limit=1`).catch(() => []),
+    rest(`store_members?select=user_id&store_id=eq.${storeId}&user_id=eq.${userId}&is_owner=is.true&limit=1`).catch(() => []),
+  ]);
+  return (Array.isArray(o) && o.length > 0) || (Array.isArray(m) && m.length > 0);
+}
+
+/** Sau khi đã trả lời: rút điều lâu dài về quán từ câu hỏi, lọc, rồi ghi. Lỗi thì bỏ qua, không ảnh hưởng câu trả lời. */
+async function ghiBoNho(storeId: string, userId: string, laChu: boolean, question: string, cu: GhiNho[]): Promise<void> {
+  if (!coTheRut(question)) return;
+  try {
+    const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        ...(DOI_MOI ? { max_completion_tokens: 400, reasoning_effort: REASONING } : { temperature: 0, max_tokens: 300 }),
+        messages: [{ role: 'user', content: loiDanRutGhiNho(question) }],
+      }),
+    });
+    if (!res.ok) return void (await res.body?.cancel());
+    const d = await res.json();
+    const kq = keHoachGhi(locUngVien(docRutGhiNho(String(d?.choices?.[0]?.message?.content ?? '')), laChu), cu);
+    const ghi = (path: string, method: string, body: unknown) =>
+      fetch(`${SB_URL}/rest/v1/${path}`, { method, headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify(body), signal: AbortSignal.timeout(3000) })
+        .then((x) => x.body?.cancel());
+    const homNay = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+    if (kq.het_hieu_luc.length) await ghi(`boom_quan_ghi_nho?id=in.(${kq.het_hieu_luc.join(',')})`, 'PATCH', { trang_thai: 'het_hieu_luc', den_ngay: homNay });
+    const moi = [...kq.them, ...(kq.can_hoi ? [kq.can_hoi] : [])].map((g) => ({ ...g, store_id: storeId, nguoi_noi: userId }));
+    if (moi.length) await ghi('boom_quan_ghi_nho', 'POST', moi);
+  } catch {
+    // ghi nhớ là phần thêm; lỗi không được làm hỏng gì
+  }
+}
+
+/** Việc chạy sau khi đã trả lời (máy chủ Supabase giữ tiến trình tới khi xong). */
+function chayNen(p: Promise<void>) {
+  const er = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+  if (er?.waitUntil) er.waitUntil(p);
+  else p.catch(() => {});
+}
+
+/** Khu vực quán chủ quán đã chọn (app_settings 'thoi_tiet_vi_tri'); chưa chọn hoặc lỗi → null. */
+async function viTriQuan(storeId: string): Promise<ViTri | null> {
+  if (!THOI_TIET) return null;
+  const rows = await rest(`app_settings?select=value&store_id=eq.${storeId}&key=eq.thoi_tiet_vi_tri&limit=1`, { signal: AbortSignal.timeout(1000) }).catch(() => null);
+  return Array.isArray(rows) && rows[0] ? parseViTri(rows[0].value) : null;
 }
 
 async function isMember(storeId: string, userId: string): Promise<boolean> {
@@ -389,6 +466,22 @@ Deno.serve(async (req) => {
   const user = await callerId(req);
   if (!user) return json(401, { error: 'UNAUTHORIZED' });
 
+  // Thẻ thời tiết trên Trang chủ (07/11): không gọi GPT, không ghi sổ. Máy chủ đệm theo khu vực tối đa 3 tiếng.
+  if ((body as Record<string, unknown> | null)?.mode === 'thoi_tiet') {
+    const sid = (body as Record<string, unknown>).store_id;
+    if (!isUuid(sid)) return json(400, { error: 'BAD_STORE' });
+    try {
+      if (!(await isMember(sid, user))) return json(403, { error: 'NOT_STORE_MEMBER' });
+    } catch {
+      return json(503, { error: 'SERVER_BUSY' });
+    }
+    if (!THOI_TIET) return json(200, { bat: false });
+    const vt = await viTriQuan(sid);
+    if (!vt) return json(200, { bat: true, vi_tri: null });
+    const [w, nguon] = await Promise.all([layThoiTiet(vt, THOI_TIET), layNguon()]);
+    return json(200, { bat: true, vi_tri: vt, thoi_tiet: w, nguon });
+  }
+
 
   const parsed = parseRequest(body);
   if (!parsed.ok) return json(400, { error: parsed.error });
@@ -538,7 +631,19 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
+  // Thời tiết chỉ cho câu tư vấn có liên quan; lỗi thì bỏ, không làm chậm câu trả lời quá 4 giây
+  let thoiTiet = '';
+  if (r.mode === 'advice' && THOI_TIET && HOI_THOI_TIET.test(r.question)) {
+    const vt = await viTriQuan(r.store_id);
+    thoiTiet = vt ? thoiTietChoBoom(r.question, await layThoiTiet(vt, THOI_TIET), vt) : '';
+    if (thoiTiet) kind += '+thoi_tiet';
+  }
+  // Bộ nhớ quán chỉ cho câu tư vấn; nhân viên chỉ thấy điều "cả quán"
+  const boNhoDs = r.mode === 'advice' ? await docBoNho(r.store_id) : null;
+  const laChuBN = boNhoDs ? (askTag ? laChu : await laChuQuan(r.store_id, user)) : false;
+  const boNho = boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : '';
+  if (boNho) kind += '+bo_nho';
+  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -601,7 +706,7 @@ Deno.serve(async (req) => {
     const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
       // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
-      ? kiemTraLoi(answer, `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${huongDan.map((c) => c.text).join('\n')}`)
+      ? kiemTraLoi(answer, `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${thoiTiet}\n${boNho}\n${huongDan.map((c) => c.text).join('\n')}`)
       : [];
     if (bad.length) {
       const ac3 = new AbortController();
@@ -635,13 +740,14 @@ Deno.serve(async (req) => {
       await finish(logId, { model: kind, status: 'error', latency_ms: latency, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, answer: 'EMPTY' });
       return json(502, { error: 'AI_EMPTY_ANSWER' });
     }
-    answer = ghiKy(answer, kyHoi, r.question);
+    answer = ghiNguonThoiTiet(ghiKy(answer, kyHoi, r.question), !!thoiTiet);
     await finish(logId, { model: kind, status: 'ok', answer: r.chain ? CHAIN_LOG_NOTE : r.modules ? MODULE_LOG_NOTE : answer, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, latency_ms: latency });
     const refused = modelRefused(answer);
     await writeFull({ log_id: logId, store_id: r.store_id, user_id: user, source: 'gpt',
       tool: refused ? 'boom_tu_choi:model' : `${r.mode}:${kind}`,
       question: r.question, answer: refused ? refusalFor('programming') : answer, chunk_ids: r.chunk_ids });
     if (refused) return json(200, { answer: refusalFor('programming'), blocked: 'model', log_id: logId });
+    if (boNhoDs) chayNen(ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs));
     return json(200, { answer, log_id: logId, model: MODEL, ky: kyHoi });
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === 'AbortError';

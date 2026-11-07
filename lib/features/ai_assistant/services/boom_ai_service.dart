@@ -82,6 +82,10 @@ class BoomAiService {
     }
   }
 
+  /// Thời tiết khu vực quán cho thẻ Trang chủ (máy chủ đệm tối đa 3 tiếng, không gọi GPT). null = lỗi mạng.
+  Future<Map<String, dynamic>?> thoiTiet(String storeId) =>
+      _invoke({'mode': 'thoi_tiet', 'store_id': storeId, 'question': 'thoi_tiet'}, wait: const Duration(seconds: 8));
+
   /// GPT trả lời dựa trên [chunks] (tối đa 8). null = dùng câu trả lời nguyên văn.
   Future<BoomAiReply?> ask({
     required String storeId,

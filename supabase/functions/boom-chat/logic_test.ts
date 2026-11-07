@@ -1112,12 +1112,12 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   const fc = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((v, i) => (i === 15 ? 280 : v)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }, { name: 'Bánh mì', qty: 10 }], [], [{ name: 'Trà tắc', qty: 7 }, { name: 'Bạc xỉu', qty: 6 }, { name: 'Trà đào', qty: 5 }], []],
     groups: [{ name: 'Cà phê', revenue: 800, prev_revenue: 1100, qty: 30, items: 3, unsold: 0, top: [{ name: 'Bạc xỉu', qty: 6, revenue: 180, price: 30, cost: 15 }], slow: [], unsold_names: [] }] })!;
   const tc = formatFacts(fc, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko');
-  assert(tc.includes('Việc nên nhắm cho buổi chiều (tính sẵn): khung 14–17h') && tc.includes('món bán chạy ĐÚNG khung này: Trà tắc, Trà đào') && tc.includes('KHÔNG dùng món / combo bán chạy buổi sáng (Cà phê sữa đá, Bánh mì)'), tc);
+  assert(tc.includes('Việc nên nhắm cho buổi chiều (tính sẵn): khung 15–16h') && tc.includes('món bán chạy ĐÚNG khung này: Trà tắc, Trà đào') && tc.includes('KHÔNG dùng món / combo bán chạy buổi sáng (Cà phê sữa đá, Bánh mì)'), tc);
   assert(!formatFacts(fc, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm cho buổi'));
   assert(!formatFacts(fc, new Date(), 'Có nên bỏ combo sáng không Boom?').includes('Việc nên nhắm cho buổi'));
   // lần 88: hỏi có nên đóng một buổi → tính sẵn cách quyết (không phải ưu đãi); quán không bán đồ uống → ví dụ theo phần
   const td = formatFacts(fc, new Date(), 'ca chieu co nen dong luon ko, ban it qua');
-  assert(td.includes('Quyết định đóng buổi chiều (tính sẵn): khung 14–17h') && td.includes('CHƯA nên đóng ngay') && !td.includes('Việc nên nhắm cho buổi'), td);
+  assert(td.includes('Quyết định đóng buổi chiều (tính sẵn): khung 15–16h') && td.includes('CHƯA nên đóng ngay') && !td.includes('Việc nên nhắm cho buổi'), td);
   // lần 70: hỏi món giảm → việc cho chính món giảm nhiều nhất (giữ giá, khung bán chạy, mốc phần / tuần), thay việc theo giờ
   const fm = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }], [], [], []] })!;
   const tm = formatFacts(fm, new Date(), 'so với tháng trước thì món nào giảm nhiều nhất');
@@ -1742,4 +1742,45 @@ Deno.test('hướng theo tiền: tính hồi nửa phần mất, số phải đ�
   assertEquals(L.soHuongSaiGio('Nên kéo khung 8h–9h, thêm khoảng 2.100.000đ.', ref).length, 0);
   assertEquals(L.soHuongSaiGio('Nên kéo khung 14–16h, thêm khoảng 800.000đ.', ref).length, 0);
   assertEquals(L.soHuongSaiGio('Có thể thêm khoảng 800.000đ.', ref).length, 0);
+});
+
+Deno.test('QC 07/11: buổi theo vế câu, kênh bán, kiểm câu trả lời', () => {
+  assertEquals(L.buoiTrongCau('chiều quán vắng hoe, sáng thì làm k kịp'), { bq: 2, quaTai: 0 });
+  assertEquals(L.buoiTrongCau('buổi sáng vắng quá'), { bq: 0, quaTai: -1 });
+  assertEquals(L.buoiTrongCau('toi uu gia the nao'), { bq: -1, quaTai: -1 });
+  assertStringIncludes(L.choXemSo('tháng này bán qua shopeefood với grabfood được bao nhiêu đơn'), 'THEO KÊNH BÁN');
+  const moc = 'SỐ NGÀY KỲ: 28\nCơm tấm sườn bì chả (608 phần, giá 45.000đ';
+  assertEquals(L.mocCaKy('Trong 2 tuần, thử giá 52.000đ; giữ giá nếu còn trên khoảng 547 phần.', moc), ['547 phần là của 28 ngày, 14 ngày thử chỉ tương đương khoảng 274 phần']);
+  assertEquals(L.mocCaKy('Thử tắt mã 2 tuần, so với mốc 420 lần dùng trong kỳ.', 'SỐ NGÀY KỲ: 28\n420 lần').length, 1);
+  assertEquals(L.mocCaKy('Trong 2 tuần, đối chiếu mốc chiết khấu 10.600.000đ trong kỳ này.', 'SỐ NGÀY KỲ: 28\nchiết khấu 10.600.000đ').length, 1);
+  assertEquals(L.mocCaKy('Thử 2 tuần, giữ nếu đạt 3.239.000đ/ngày.', 'SỐ NGÀY KỲ: 28\n3.239.000đ').length, 0);
+  assertEquals(L.mocCaKy('Ghi hao bún 7 ngày, so với 26 kg của kỳ.', 'SỐ NGÀY KỲ: 28\n26 kg').length, 1);
+  assertEquals(L.mocCaKy('Thử 14 ngày thì lấy khoảng 355 phần làm mốc, tương đương 25 phần/ngày.', moc).length, 0);
+  assertEquals(L.mocCaKy('Thử tăng giá trong 14 ngày; so số phần bán với mốc khoảng 304 phần.', moc).length, 0);
+  assertEquals(L.mocCaKy('Vì sao: món bán 608 phần.\nViệc tuần này: nhắn khách cũ.', moc).length, 0);
+  assertEquals(L.mocCaKy('Trong 2 tuần, thử giá 52.000đ; giữ giá nếu còn trên khoảng 274 phần.', moc), []);
+  assertEquals(L.mocCaKy('Trong 2 tuần, giữ giá nếu còn trên 547 phần.', 'SỐ NGÀY KỲ: 14\n608 phần'), []);
+  const bai = 'ƯU ĐÃI TRONG BÀI: x\nCombo tính sẵn: A + B: lẻ 50.000đ → 45.000đ–48.000đ';
+  assertEquals(L.baiInGiaDeXuat('Giá combo 45.000đ–48.000đ.', bai).length, 2);
+  assertEquals(L.baiInGiaDeXuat('Combo 52.000đ.\nĐề xuất: hạ xuống 45.000đ.', bai).length, 0);
+  const kho = 'Sắp hết / hết: Gas còn 1 bình (tối thiểu 2); Gạo còn 8 kg (tối thiểu 20).';
+  assertEquals(L.tonKhoSai('Bún tươi cũng đang dưới mức tồn tối thiểu nên nhớ nhập.', kho).length, 1);
+  assertEquals(L.tonKhoSai('Gạo đang dưới mức tối thiểu.', kho).length, 0);
+  const gia = 'Trà đá (900 phần, giá 3.000đ, 2.700.000đ)';
+  assertEquals(L.giamQuaGia('Thử ưu đãi Trà đá, chẳng hạn giảm 5.000đ/phần.', gia).length, 1);
+  assertEquals(L.giamQuaGia('Giảm 5.000đ cho đơn từ 80.000đ có Trà đá.', gia).length, 0);
+  assertEquals(L.lacMon('Trà ổi hồng bán ít nhất.', 'MÓN ĐANG HỎI: Trà vải'), 'Trà vải');
+  assertEquals(L.lacMon('Trà vải bán 323 phần.', 'MÓN ĐANG HỎI: Trà vải'), '');
+});
+
+Deno.test('QC 07/11: mua tặng và combo hai món có phép tính', () => {
+  const f = { revenue: 1000000, orders: 100, period: 'x', from: '2026-10-01', to: '2026-10-28', by_hour: [], by_weekday: [1, 1, 1, 1, 1, 1, 1], groups: [{ name: 'Món', revenue: 1, qty: 1, items: 2, unsold: 0, unsold_names: [], slow: [], top: [{ name: 'Cơm sườn', qty: 50, revenue: 1, price: 45000, cost: 22000 }, { name: 'Nước sâm', qty: 20, revenue: 1, price: 10000 }] }] };
+  const mt = L.baiToanTiepThi(f as never, null, 'mua 1 tặng 1 trà sữa có lỗ không');
+  assertStringIncludes(mt, 'Mua 1 tặng 1 = giảm 50%');
+  assertStringIncludes(mt, 'GIẢ SỬ 35%');
+  const cb = L.baiToanTiepThi(f as never, null, 'combo cơm sườn với nước sâm để giá bao nhiêu');
+  // lẻ 55.000đ, giá thử 50.000–52.000đ (làm tròn), vốn 22.000 + 4.000
+  assertStringIncludes(cb, 'lẻ 55.000đ, giá thử 50.000đ–52.000đ; giá vốn khoảng 26.000đ');
+  assertStringIncludes(cb, 'GIẢ SỬ Nước sâm');
+  assertEquals(L.monTrongCau(f as never, 'nuoc sam ban it qua'), 'Nước sâm');
 });

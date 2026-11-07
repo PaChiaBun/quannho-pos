@@ -1,0 +1,1026 @@
+[
+ {
+  "id": "C01#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C01#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C02#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C02#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C03#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Bỏ Trà đá 900 phần (nhiều nhất) mà không nói đang xếp theo doanh thu"
+ },
+ {
+  "id": "C03#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 0,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Ghi theo số phần mà bỏ Trà đá 900 phần, top 3 sai theo chính thước đo đã nêu"
+ },
+ {
+  "id": "C04#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Thành thật là thiếu số, nhưng không chỉ xem app đối tác của sàn; mục báo cáo trong app chưa kiểm được"
+ },
+ {
+  "id": "C04#1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Mở đầu bằng 420 đơn dùng mã dễ hiểu nhầm là đơn sàn; không có cách lấy số"
+ },
+ {
+  "id": "C05#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Giá 45–48k đề xuất khi chưa có giá vốn hai món"
+ },
+ {
+  "id": "C05#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Giá 45–48k đề xuất khi chưa có giá vốn hai món"
+ },
+ {
+  "id": "C06#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C06#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không nêu chi tăng 8,8% là nguyên nhân chính; việc nhập ly lạc mạch"
+ },
+ {
+  "id": "C07#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 0,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Ưu đãi 14–17h khi quán đóng 14–16h; nói sai là 17–20h chưa có số từng giờ; mốc +22k/ngày nhỏ hơn tiền bớt"
+ },
+ {
+  "id": "C07#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Ưu đãi 14–17h khi quán đóng 14–16h; mốc +22k/ngày nhỏ hơn tiền bớt; không ước ca chiều có bù nổi công"
+ },
+ {
+  "id": "C08#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không tính một đơn sàn còn gì sau giá vốn 52–54% và chiết khấu; so 1–2 tuần với số cả kỳ; nguyên liệu +8 triệu bị đẩy xuống cuối"
+ },
+ {
+  "id": "C08#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Có gợi tính phần thu sau chiết khấu nhưng không làm phép tính mẫu; bỏ sót nguyên liệu +8 triệu"
+ },
+ {
+  "id": "C09#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Đề nghị ưu đãi kéo thêm khách buổi sáng đúng lúc quán đang làm không kịp; không xử lý chính chỗ nghẽn"
+ },
+ {
+  "id": "C09#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Việc đầu là ưu đãi buổi sáng đang quá tải, ngược với việc chồng ca; nêu cả Thứ 7, tiền điện lạc đề"
+ },
+ {
+  "id": "C10#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không xếp ưu tiên; gợi mời thêm trân châu cho món đã có trân châu"
+ },
+ {
+  "id": "C10#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Chưa lượng hoá khoản nào nặng nhất"
+ },
+ {
+  "id": "C11#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Chỉ có ưu đãi chung, không có cách tiếp cận dân văn phòng; việc chỉnh SANGVUI lạc đề; mốc +56k/ngày quá nhỏ"
+ },
+ {
+  "id": "C11#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Việc cụ thể nhưng chỉ là bớt giá; không có cách tiếp cận dân văn phòng; Thứ 7 lạc đề"
+ },
+ {
+  "id": "C12#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không báo combo đang đắt hơn mua lẻ; bài chung chung, không giá, giờ, địa chỉ"
+ },
+ {
+  "id": "C12#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 0,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Đăng giá 45–48k trong khi quán đang thu 52k, và khoảng giá không đăng được"
+ },
+ {
+  "id": "C13#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Né kết luận dù tặng 1 là giảm 50% và nguyên liệu 37%; 9–10h, 14h học sinh đang ở trường; không nhắc HSSV10"
+ },
+ {
+  "id": "C13#1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Có nói bằng giảm 50% nhưng không làm phép tính; khung giờ không hợp học sinh; không nhắc HSSV10"
+ },
+ {
+  "id": "C14#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không hỏi khách sáng ngày thường là ai, học sinh đang học; chỉ có bớt 5k"
+ },
+ {
+  "id": "C14#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Ưu đãi 5–11h khi quán mở 9h; lấy mốc thử làm chuẩn so sánh"
+ },
+ {
+  "id": "C15#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Combo bớt 3.000đ khi chưa có giá vốn"
+ },
+ {
+  "id": "C15#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Mời trứng ốp la với bún bò khó hợp; khó ghi riêng khách công trình; combo bớt chưa có giá vốn"
+ },
+ {
+  "id": "C16#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không gợi tích điểm cho khách quen; bỏ qua Thứ 4 tụt mạnh; câu tính 3.000đ rối"
+ },
+ {
+  "id": "C16#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không gợi tích điểm cho khách quen; bỏ qua Thứ 4 tụt mạnh; ý ẩn món cuối lạc đề"
+ },
+ {
+  "id": "C17#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không có ý riêng cho học sinh THCS (suất nhỏ giá mềm, giờ tan trường); phần Vì sao lạc đề"
+ },
+ {
+  "id": "C17#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 0,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 0,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Giảm 5.000đ/phần Trà đá giá 3.000đ; khung 11–14h khi quán đóng 13h"
+ },
+ {
+  "id": "C18#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Mẫu kêu gọi gọi điện mà thiếu chỗ ghi số điện thoại; khách không có lý do đổi; mã nhắc chưa rõ áp dụng cho đơn gọi trực tiếp"
+ },
+ {
+  "id": "C18#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Mẫu lời không cho khách lợi ích nào; chưa so chiết khấu sàn với mức ưu đãi quán có thể bỏ ra"
+ },
+ {
+  "id": "C19#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không ước tăng 2.000đ đáng bao nhiêu tiền; không nhắc combo có bánh mì trứng"
+ },
+ {
+  "id": "C19#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "\"Nếu giá vốn cao\" không có mốc"
+ },
+ {
+  "id": "C20#0",
+  "diem": {
+   "thang": 0,
+   "dung_so": 0,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "hong",
+  "bang_co_van": false,
+  "loi": "Hỏi Trà vải mà trả lời Trà ổi hồng, không nói gì về Trà vải 323 phần"
+ },
+ {
+  "id": "C20#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C21#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không đưa giá nào, kể cả công thức theo giá vốn giả định; bắt nhập 6 món trong khi chỉ thiếu nước sâm"
+ },
+ {
+  "id": "C21#1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không đưa giá hay khoảng thử; bắt nhập 6 món trong khi chỉ thiếu nước sâm"
+ },
+ {
+  "id": "C22#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Chỉ nói cân nhắc tăng giá, không có mức; việc nhập than ngoài luồng"
+ },
+ {
+  "id": "C22#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Chưa tính 2.000đ đáng bao nhiêu tiền"
+ },
+ {
+  "id": "C23#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không nghiêng về phía nào dù khách văn phòng và Thứ 7 chỉ 40%; không nhắc Lan đã 54 giờ/tuần"
+ },
+ {
+  "id": "C23#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Nghiêng đúng nhưng không nêu lý do mạnh nhất: khách văn phòng nghỉ Chủ nhật; không nhắc Lan đã 54 giờ/tuần"
+ },
+ {
+  "id": "C24#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không so vốn cần với 24 triệu/tháng; dự phòng 1–2 tháng là mỏng"
+ },
+ {
+  "id": "C24#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không so vốn cần với 24 triệu/tháng; dự phòng 1–2 tháng là mỏng"
+ },
+ {
+  "id": "C25#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không làm phép tính trả góp mẫu; không hỏi có thật thiếu chỗ không"
+ },
+ {
+  "id": "C25#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Không làm phép tính trả góp mẫu"
+ },
+ {
+  "id": "C26#0",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không trả lời rõ; không chỉ ra lương đang trong mốc còn chi tăng do nguyên liệu"
+ },
+ {
+  "id": "C26#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không chỉ ra lương đang trong mốc, cắt người không chạm chỗ chi tăng"
+ },
+ {
+  "id": "C27#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Thiếu việc chuẩn bị sẵn trước giờ cao điểm"
+ },
+ {
+  "id": "C27#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": "Gọi 7–9h là ba khung, hơi lệch"
+ },
+ {
+  "id": "C28#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không có thông số nấu trân châu; đoạn nhập giá vốn lạc đề"
+ },
+ {
+  "id": "C28#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Không có thông số nấu trân châu"
+ },
+ {
+  "id": "C29#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Gần như chỉ ghi chép, hỏi cách bớt hao mà có rất ít cách"
+ },
+ {
+  "id": "C29#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Nói sai bún tươi dưới mức tồn tối thiểu và nhắc nhập đủ, ngược với việc bớt hao"
+ },
+ {
+  "id": "C30#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C30#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ },
+ {
+  "id": "C31#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": false,
+  "loi": "Việc làm nhắm hao hụt 0,9 triệu trong khi nguyên liệu tăng 12,7 triệu"
+ },
+ {
+  "id": "C31#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Không một câu cảm thông với người đang nản; không tính công chủ quán; việc làm nhắm khoản nhỏ"
+ },
+ {
+  "id": "C32#0",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "tam",
+  "bang_co_van": false,
+  "loi": "Gợi ý chung; câu \"cần Bé Boom phụ\" lạ"
+ },
+ {
+  "id": "C32#1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "ket_luan": "dung_duoc",
+  "bang_co_van": true,
+  "loi": ""
+ }
+]
