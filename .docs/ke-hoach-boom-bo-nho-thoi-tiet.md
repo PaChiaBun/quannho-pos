@@ -151,7 +151,9 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - `supabase/functions/boom-chat/bo_nho_quan.ts` + kiểm thử 5/5: lọc ứng viên (bỏ nhất thời, số bán hàng, số điện thoại, tài khoản), nguồn và mức xem, gộp trùng ý, dời quán thì điều cũ hết hiệu lực, Boom đoán trái điều đã xác nhận thì sinh một câu hỏi lại, khối đưa Boom tối đa 12 dòng.
 - **Đã nối vào `index.ts` 07/11 (chưa áp):** đọc ghi nhớ trước khi trả lời câu tư vấn (nhân viên chỉ thấy điều "cả quán"), rút ghi nhớ SAU khi đã trả lời (chạy nền, không làm khách chờ; chỉ khi câu có nói về quán, khoảng một nửa câu), lọc rồi ghi bảng. Công tắc toàn hệ thống `BOOM_BO_NHO=1` (mặc định tắt); `BOOM_BO_NHO_BO_QUA` = mã quán bỏ qua, đặt mã quán Demo khi bật.
 - Đo lượt rút ghi nhớ bằng gpt-6-luna, 20 câu mẫu viết sẵn đáp án, 2 lượt (`tool/boom_do/bo_nho_07_11/`): nhớ đúng 16/20 → sau khi sửa 19/20 (2 lần chạy); nhớ bậy 0/20; điều riêng lộ cho cả quán 0. Dời quán: chủ quán nói thì điều cũ hết hiệu lực; nhân viên nói thì không đè, sinh câu hỏi lại. Câu còn hay sót: mục tiêu có số ("tăng 20% doanh thu"). Bộ câu do Claude viết, nhỏ, chưa phải câu người thật; đã nới đáp án câu giờ mở từ "6h" thành "6" vì mô hình viết "6 giờ".
-- Chưa làm: màn chủ quán xem, sửa, xoá bộ nhớ trong app (hàm SQL đã có); đo Boom có dùng bộ nhớ đúng khi trả lời (không hỏi lại điều đã biết, không khoe); bảng lời khuyên và tự đo (giai đoạn 5).
+- **Đo Boom dùng bộ nhớ khi trả lời (07/11, `tool/boom_do/bo_nho_07_11/dung.ts`):** quán mẫu A, 6 câu, có và không có bộ nhớ, 2 lượt. Lỗi thật tìm ra: chủ quán nói combo sáng đã thử không hiệu quả, Boom vẫn khuyên sửa combo đó mà không nhắc. Đã thêm mã kiểm `khuyenLaiDaThu`; sau đó cả 2 lượt đều nhắc chuyện đã thử (một lượt nêu lý do mới là combo đang đắt hơn mua lẻ, một lượt khuyên chưa nên thử lại). Không lộ chuyện riêng cho nhân viên 0/2; không khuyên ưu đãi Chủ nhật quán nghỉ; nhắc bộ nhớ kiểu khoe 1/12 cả hai bên (ngang nhau). Bộ đếm bằng mẫu chữ khá thô, đã đọc lại tay các câu chính.
+- **Màn chủ quán (07/11):** `lib/features/ai_assistant/bo_nho/bo_nho_quan_screen.dart`, ô "Bé Boom nhớ gì về quán" trong Cài đặt (chỉ chủ quán, tự ẩn khi máy chủ chưa có hàm). Xem theo nhóm, nút "Đúng rồi" cho điều đoán, sửa, xoá (hỏi lại trước khi xoá), công tắc tắt. Kiểm thử `test/features/bo_nho_quan_test.dart` 3/3, chưa thử với máy chủ thật vì migration chưa áp.
+- Chưa làm: bảng lời khuyên và tự đo (giai đoạn 5); thử cả luồng trên máy chủ thật sau khi áp.
 - Bản giả lập khác máy chủ thật ở `store_members` (chỉ các cột cần) và `auth.uid()`; khi áp phải chạy kiểm thử ngay trên máy chủ trong giao dịch rồi hoàn tác, như các migration khác.
 
 **3 bảng** (🔒 đổi cơ sở dữ liệu, viết kèm cách hoàn tác)
@@ -205,41 +207,37 @@ Xong khi: bộ thử đạt và câu tiếp thị trong bộ 32 câu khá lên s
 
 ## Giai đoạn 5: Ghi lời khuyên và tự đo kết quả
 
-- [ ] Ghi: khuyên gì, ngày nào, đo bằng số nào, số lúc đầu.
-- [ ] Sau khoảng 2 tuần tự đọc số, báo lại và hỏi chủ quán có làm không.
+**Nháp đã viết 07/11 (chưa commit, chưa áp; dùng chung công tắc `BOOM_BO_NHO`, mặc định tắt):**
+- `supabase/functions/boom-chat/loi_khuyen.ts` + kiểm thử 3/3: rút tối đa 2 việc đo được từ phần "Việc tuần này" (khung giờ, một thứ, số phần một món, giá trị mỗi đơn, số đơn, doanh thu), mốc là trung bình mỗi ngày mở bán lúc khuyên, ngày đo theo "N tuần / N ngày" (mặc định 14, trong 7–60).
+- `index.ts`: sau khi trả lời, ghi việc vào `boom_quan_loi_khuyen` (bỏ việc trùng chỉ số đang chờ đo); trước khi trả lời câu của **chủ quán**, đọc việc tới ngày đo, đọc số đúng khoảng thử bằng vé của chủ quán, ghi kết quả, đưa khối "KẾT QUẢ VIỆC BÉ BOOM ĐÃ KHUYÊN" để Boom báo 1–2 câu cuối và hỏi chủ quán có làm không; quá 3 giây thì bỏ.
+- Đo phần rút trên 64 câu trả lời thật của bộ QC (`tool/boom_do/bo_nho_07_11/do_loi_khuyen.ts`): lần đầu khoảng 6/14 gán đúng; sửa 6 kiểu lỗi (lấy dòng "Cần xem lại", việc bị dặn không làm, nhầm món, khung giờ đè món, việc đo thứ app không có số, "thử 2 tuần" đọc thành Thứ 2); lần cuối rút 33 việc ở 27/64 câu, Claude đọc lại thấy còn khoảng 2–3 việc gán sai. Đây là Claude tự chấm, không chấm mù.
+- Chưa làm: chủ quán báo "có làm / không làm" (cột `chu_quan_lam` đã có, chưa có chỗ ghi); dùng kết quả để học "việc nào hiệu quả với loại quán nào" (cần nhiều quán dùng thật); chưa chạy thử luồng đo trên máy chủ thật.
+
+- [x] Ghi: khuyên gì, ngày nào, đo bằng số nào, số lúc đầu. (nháp, chưa áp)
+- [x] Sau khoảng 2 tuần tự đọc số, báo lại và hỏi chủ quán có làm không. (nháp, chưa áp)
 - [ ] Không kết luận từ một quán, một lần; loại trừ thời tiết, mùa, ngày lễ khi so.
 - [ ] Số gộp giữa các quán phải ẩn danh, có chính sách rõ với chủ quán.
 - [ ] Bài học mới phải có người duyệt, không cho AI tự sửa luật của mình.
 
 ## Giai đoạn 6: Thử công cụ và sổ tay
 
-Chỉ làm khi đã có đo so sánh. Có thể không vượt được cách hiện tại.
+**Kết quả thử 07/11 (thử nghiệm, KHÔNG đổi Boom đang chạy; chưa commit):**
+- Sổ tay `supabase/functions/boom-chat/so_tay.ts`: 14 bài (học sinh, văn phòng, khu dân cư, chợ / công trình, quán ít đơn, đơn tụt, giờ vắng, giữ khách, giá trị đơn, mã giảm, mang về / sàn, ngày lễ, bài đăng, cuối tuần), chọn tối đa 2 bài theo câu hỏi rồi hồ sơ; kiểm thử 2/2.
+- So 3 cách trên 8 câu tiếp thị của bộ QC × 2 lượt, cả 3 đều có hồ sơ quán (`tool/boom_do/giai_doan_6/thu_3_cach.ts`), một người chấm mù xếp hạng cả 3:
 
-- [ ] Thử gpt-6-luna gọi công cụ trên mảng tiếp thị, đo chất lượng, độ trễ, chi phí.
-- [ ] Viết 10–15 bài sổ tay theo tình huống thật: học sinh, văn phòng, quán mới ít đơn, đơn đang tụt...
-- [ ] Mã tính số hiện có giữ nguyên, chuyển thành công cụ.
-- [ ] Thua thì bỏ, không chuyển.
+| Cách | Điểm TB /16 | Dùng được / tạm / hỏng | Thời gian trung vị | Chữ tốn TB |
+|---|---|---|---|---|
+| A: đang chạy | 11,81 | 6 / 7 / 3 | 5,1 giây | 20.051 |
+| B: A + sổ tay | 12,38 (B − A = +0,56 ± 1,39) | 9 / 6 / 1 | 8,2 giây | 21.741 |
+| C: tự gọi công cụ | 10,62 (C − A = −1,19 ± 2,15) | 8 / 5 / 3 | 6,2 giây | 28.108 (+40%) |
 
-## Giai đoạn 7: Người dùng thật
-
-- [ ] Xem lại sổ hỏi đáp theo định kỳ, mỗi lần đọc phải hỏi Chủ Quán.
-- [ ] Thúc nhập giá vốn (06/11 chỉ 8,9% món có giá vốn).
-- [ ] Theo dõi: chủ quán có quay lại hỏi không, có làm theo không.
-- [ ] Câu sai từ người dùng thật đưa vào bộ đo, không đưa nguyên văn hay tên quán.
-
-## Lỗi đã biết, chưa xếp vào đợt nào
-
-- Việc tạo mã ở câu chọn ngày ưu đãi chưa có mức giảm, vì phép tính ngưỡng mã chưa bật khi câu chỉ nói "ưu đãi".
-- Boom tự chen "thay vì tăng giá" dù không ai hỏi (tác dụng phụ của kiểm tăng giá).
-- Tiếp thị ra một khuôn, không theo nhóm khách: chờ giai đoạn 4 và 6.
-- Khuyên ghép combo món giá vốn cao, khuyên tặng món khi chưa có giá vốn.
-- "Tăng đơn" bị đổi thành mời thêm món.
-- Mẫu trả lời cứng với người đang nản.
-
-## Quy tắc xuyên suốt
-
-- Hỏi trước khi áp lên máy chủ thật, kể cả khi đã "sửa đi".
-- Chỉ chat tiếng Việt. Không lưu khoá trong mã, tài liệu hay chat.
-- Mỗi lần áp thêm một dòng `boom_changelog`, có lệnh hoàn tác.
-- Bộ kín chỉ người chấm đọc. Không đưa câu hỏi thật hay tên quán vào mã, bộ đo, commit.
-- Muốn nói app có tính năng gì thì lần tới màn gọi nó trước.
+- **C thua: bỏ, không chuyển sang công cụ** (đúng điều đã ghi "thua thì bỏ"). C còn 1/16 câu rỗng vì gọi công cụ hết 5 lượt; tìm vấn đề tụt 1,00 → 0,69 vì chỉ thấy phần số tự xin.
+- **B nhỉnh hơn nhưng chưa chắc**: khoảng tin cậy chứa 0, chỉ 16 cặp. Đúng quán 1,12 → 1,38, hỏng 3 → 1. Thời gian trung bình của B bị kéo lên bởi một lượt chờ OpenAI 1.546 giây (lỗi mạng / hàng chờ), trung vị 8,2 giây.
+- Người chấm: cả 3 cách vẫn chép khung việc tính sẵn mà không xét khách là ai (ưu đãi học sinh lúc các em đang học), bỏ sót điểm đáng tiền nhất trong khối (Thứ 4 yếu, chiết khấu sàn tăng), gợi ý 2 mã chồng nhau.
+- **Đo thêm 08/11** (`tool/boom_do/giai_doan_6/do_so_tay.ts`, kết quả ở `do_them/`): A đang chạy vs B thêm sổ tay, cả hai có hồ sơ quán, 2 lượt, chấm mù.
+  - Bộ QC 32 câu, mọi loại: +0,23 ± 0,36 (64 cặp). Riêng **tiếp thị +1,25 ± 0,58 (16 cặp, rõ)**; giá món −0,62 ± 1,04, phân tích −0,30 ± 1,10, còn lại quanh 0.
+  - Bộ cũ + bộ kín 60 câu: +0,03 ± 0,32 (120 cặp); bộ cũ −0,15 ± 0,37, bộ kín +0,38 ± 0,61; so sánh +1,00, kế hoạch −0,31, dự báo −0,27, chẩn đoán −0,17 (đều chứa 0).
+  - Lần đo này sổ tay mở bài cho MỌI câu vì chọn cả theo hồ sơ quán. Kết luận: sổ tay giúp rõ ở câu tiếp thị, không giúp (có thể hơi hại) ở câu khác.
+  - **Đề xuất:** chỉ mở sổ tay khi CÂU HỎI là câu tiếp thị (khớp bài theo câu hỏi), không mở theo hồ sơ cho câu khác; câu không khớp thì lời nhắc giống hệt bản đang chạy nên không thể tụt. Cần đo lại riêng câu tiếp thị với cách chọn này trước khi áp.
+- **Đo lại 08/11 với cách chọn mới** (chỉ câu tiếp thị; sửa từ khoá bỏ dấu lọt nhau như "hẻm" trong "thêm", "sàn" trong "sáng"): sổ tay mở cho 21/92 câu (QC 12/32, bộ cũ 5/40, bộ kín 4/20); 71 câu còn lại lời nhắc giống hệt bản đang chạy. 3 lượt, một người chấm mù, 63 cặp: **+0,48 ± 0,42** (khoảng không chứa 0); QC +0,47, bộ cũ +0,67, bộ kín +0,25; không nhóm nào âm. Việc làm 1,46 → 1,63, đúng quán 1,84 → 1,95.
+- Đã nối vào `index.ts` sau công tắc `BOOM_SO_TAY=1` (mặc định tắt); hồ sơ để chọn bài lấy từ bộ nhớ quán (bộ nhớ tắt thì chỉ chọn theo câu hỏi). Phép đo trên giả định có hồ sơ quán; khi bộ nhớ tắt, bài vị trí / khách chính sẽ ít được mở hơn, chưa đo riêng trường hợp đó.

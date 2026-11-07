@@ -1784,3 +1784,11 @@ Deno.test('QC 07/11: mua tặng và combo hai món có phép tính', () => {
   assertStringIncludes(cb, 'GIẢ SỬ Nước sâm');
   assertEquals(L.monTrongCau(f as never, 'nuoc sam ban it qua'), 'Nước sâm');
 });
+
+Deno.test('bộ nhớ: khuyên lại việc đã thử thì phải nhắc', () => {
+  const ref = 'ĐIỀU BÉ BOOM ĐÃ BIẾT VỀ QUÁN:\n- Combo sáng cà phê + bánh mì đã thử, khách không chuộng (đã thử)\nCách dùng: x';
+  assertEquals(L.khuyenLaiDaThu('Dạ, nên sửa combo.\nViệc tuần này:\n- Đổi combo cà phê sữa đá + bánh mì thịt thành 45.000đ.', ref).length, 1);
+  assertEquals(L.khuyenLaiDaThu('Dạ, combo sáng anh/chị đã thử, nhưng giá đang đắt hơn mua lẻ.\nViệc tuần này:\n- Đổi combo cà phê + bánh mì thành 45.000đ.', ref).length, 0);
+  assertEquals(L.khuyenLaiDaThu('Việc tuần này:\n- Mời thêm trà tắc buổi chiều.', ref).length, 0);
+  assertEquals(L.khuyenLaiDaThu('Việc tuần này:\n- Đổi combo cà phê + bánh mì.', 'khác'), []);
+});

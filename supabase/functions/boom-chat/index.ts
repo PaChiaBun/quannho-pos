@@ -19,6 +19,9 @@
 //   JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (có sẵn trong dịch vụ hàm của Supabase tự host)
 import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
+import { chonBai, soTayChoBoom } from './so_tay.ts';
+import { docBanHang } from './ban_hang.ts';
+import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen } from './loi_khuyen.ts';
 import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
@@ -67,6 +70,7 @@ import {
   noteKiem,
   soLieuGoc,
 } from './logic.ts';
+import { parseFacts, type ShopFacts } from './logic.ts';
 
 const env = (k: string, d = '') => Deno.env.get(k) ?? d;
 const num = (k: string, d: number) => {
@@ -182,6 +186,8 @@ const THOI_TIET = cauHinhThoiTiet((k) => Deno.env.get(k));
 // Bộ nhớ riêng từng quán (07/11, NHÁP): mặc định TẮT; bật bằng BOOM_BO_NHO=1 sau khi Chủ Quán duyệt và đã áp migration
 // 20261107_boom_bo_nho_quan_v1. BOOM_BO_NHO_BO_QUA: mã quán không dùng bộ nhớ (quán Demo nhiều người dùng chung).
 const BO_NHO = Deno.env.get('BOOM_BO_NHO') === '1';
+// Sổ tay tiếp thị (08/11, chỉ câu tiếp thị; đo chấm mù trước khi bật): mặc định TẮT, bật bằng BOOM_SO_TAY=1
+const SO_TAY = Deno.env.get('BOOM_SO_TAY') === '1';
 const BO_NHO_BO_QUA = new Set((Deno.env.get('BOOM_BO_NHO_BO_QUA') ?? '').split(',').map((x) => x.trim()).filter(Boolean));
 
 /** Ghi nhớ còn hiệu lực của quán; null = không dùng bộ nhớ (tắt, quán bỏ qua, chủ quán tắt, lỗi đọc). */
@@ -235,6 +241,49 @@ async function ghiBoNho(storeId: string, userId: string, laChu: boolean, questio
     if (moi.length) await ghi('boom_quan_ghi_nho', 'POST', moi);
   } catch {
     // ghi nhớ là phần thêm; lỗi không được làm hỏng gì
+  }
+}
+
+/**
+ * Lời khuyên tới ngày đo: đọc số đúng khoảng thử bằng vé của người hỏi (RLS), ghi kết quả, trả khối báo cho Boom.
+ * Người hỏi không xem được số bán hàng → không đo, để lần sau chủ quán hỏi. Tối đa 2 việc, quá 3 giây thì bỏ.
+ */
+async function doLoiKhuyen(storeId: string, userId: string, jwt: string): Promise<string> {
+  try {
+    const den = await rest(`boom_quan_loi_khuyen?select=id,noi_dung,chi_so,moc_dau,ngay_bat_dau,ngay_do,ket_qua,chu_quan_lam&store_id=eq.${storeId}&ket_qua=is.null&ngay_do=lte.${ngayVN(Date.now())}&order=ngay_do.asc&limit=2`, { signal: AbortSignal.timeout(1000) });
+    if (!Array.isArray(den) || !den.length) return '';
+    const xong: { l: LoiKhuyenDaLuu; sau: number }[] = [];
+    await Promise.race([
+      Promise.all((den as LoiKhuyenDaLuu[]).map(async (l) => {
+        const raw = await docBanHang({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId, userId }, kyDo(l));
+        const sau = raw ? giaTriChiSo(l.chi_so, parseFacts(raw)) : null;
+        if (sau === null) return;
+        await fetch(`${SB_URL}/rest/v1/boom_quan_loi_khuyen?id=eq.${l.id}`, { method: 'PATCH', headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify({ ket_qua: Math.round(sau * 100) / 100 }) })
+          .then((x) => x.body?.cancel());
+        xong.push({ l, sau });
+      })),
+      new Promise((ok) => setTimeout(ok, 3000)),
+    ]);
+    return ketQuaChoBoom(xong);
+  } catch {
+    return '';
+  }
+}
+
+/** Sau khi trả lời: ghi việc đo được (tối đa 2), bỏ việc trùng chỉ số đang chờ đo. */
+async function ghiLoiKhuyen(storeId: string, answer: string, facts: ShopFacts | null | undefined): Promise<void> {
+  try {
+    const moi = rutLoiKhuyen(answer, facts, Date.now());
+    if (!moi.length) return;
+    const dang = await rest(`boom_quan_loi_khuyen?select=chi_so&store_id=eq.${storeId}&ket_qua=is.null`, { signal: AbortSignal.timeout(1500) });
+    const co = new Set(Array.isArray(dang) ? dang.map((x: { chi_so: string }) => x.chi_so) : []);
+    const ghi = moi.filter((x) => !co.has(x.chi_so)).map((x) => ({ ...x, store_id: storeId }));
+    if (ghi.length) {
+      await fetch(`${SB_URL}/rest/v1/boom_quan_loi_khuyen`, { method: 'POST', headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify(ghi), signal: AbortSignal.timeout(3000) })
+        .then((x) => x.body?.cancel());
+    }
+  } catch {
+    // phần thêm, lỗi thì bỏ
   }
 }
 
@@ -641,9 +690,17 @@ Deno.serve(async (req) => {
   // Bộ nhớ quán chỉ cho câu tư vấn; nhân viên chỉ thấy điều "cả quán"
   const boNhoDs = r.mode === 'advice' ? await docBoNho(r.store_id) : null;
   const laChuBN = boNhoDs ? (askTag ? laChu : await laChuQuan(r.store_id, user)) : false;
-  const boNho = boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : '';
+  // Lời khuyên tới ngày đo: chỉ chủ quán nhận báo kết quả (nhân viên thường không xem được số bán hàng)
+  const ketQua = boNhoDs && laChuBN ? await doLoiKhuyen(r.store_id, user, (req.headers.get('authorization') ?? '').slice(7).trim()) : '';
+  if (ketQua) kind += '+do_ket_qua';
+  const boNho = [boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : '', ketQua].filter(Boolean).join('\n\n');
   if (boNho) kind += '+bo_nho';
-  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho });
+  // hồ sơ để chọn bài theo vị trí / khách chính: điều chủ quán đã nói trong bộ nhớ (bộ nhớ tắt thì chỉ chọn theo câu hỏi)
+  const soTay = SO_TAY && r.mode === 'advice'
+    ? soTayChoBoom(chonBai(r.question, (boNhoDs ?? []).filter((g) => g.loai === 'su_that' && g.trang_thai === 'xac_nhan').map((g) => g.noi_dung).join('. ')))
+    : '';
+  if (soTay) kind += '+so_tay';
+  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -747,7 +804,7 @@ Deno.serve(async (req) => {
       tool: refused ? 'boom_tu_choi:model' : `${r.mode}:${kind}`,
       question: r.question, answer: refused ? refusalFor('programming') : answer, chunk_ids: r.chunk_ids });
     if (refused) return json(200, { answer: refusalFor('programming'), blocked: 'model', log_id: logId });
-    if (boNhoDs) chayNen(ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs));
+    if (boNhoDs) chayNen(Promise.all([ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs), ghiLoiKhuyen(r.store_id, answer, r.facts)]).then(() => {}));
     return json(200, { answer, log_id: logId, model: MODEL, ky: kyHoi });
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === 'AbortError';

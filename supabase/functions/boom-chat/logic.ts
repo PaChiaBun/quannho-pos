@@ -2267,7 +2267,7 @@ export function buildMessages(
   question: string,
   chunks: HelpChunk[],
   persona?: Persona | null,
-  extra?: { tenQuan?: string | null; khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; thoiTiet?: string; boNho?: string; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
+  extra?: { tenQuan?: string | null; khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; thoiTiet?: string; boNho?: string; soTay?: string; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
 ): { role: 'system' | 'user'; content: string }[] {
   // Lượt trước + số liệu đặt TRƯỚC câu hỏi, trong tin nhắn người dùng (câu dặn giữ nguyên → vẫn được giảm giá).
   // Trí nhớ (sổ hỏi đáp) + lượt app gửi kèm (lượt số liệu không qua GPT, không có trong sổ) → một khối, cũ → mới
@@ -2288,6 +2288,7 @@ export function buildMessages(
         'Cách dùng: nhắc ĐÚNG 1 câu NGẮN (≤ 25 chữ) ở cuối, theo mẫu "Ngày <ngày> Bé Boom có gợi ý <tóm việc trong 5–8 chữ>, Anh/Chị đã thử chưa ạ?" — chép đúng ý việc cũ, KHÔNG gán cho món / nội dung khác, KHÔNG kể lại chi tiết / số của việc cũ, KHÔNG thêm đoạn riêng. Kỳ số liệu có thể gồm cả ngày TRƯỚC khi gợi ý → KHÔNG nói "vẫn", "đã tăng / giảm sau khi…", "đã hiệu quả / không hiệu quả". KHÔNG đưa lại y việc cũ như việc mới. Không đúng chủ đề → bỏ qua hẳn.'
       : '',
     extra?.boNho ?? '',
+    extra?.soTay ?? '',
     extra?.facts
       ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question, luotTruoc(extra))}`
       : '',
@@ -2891,6 +2892,21 @@ export function lacMon(answer: string, ref: string): string {
   return m && !boDauVc(answer).includes(boDauVc(m[1]).trim()) ? m[1] : '';
 }
 
+/** 07/11: chủ quán nói combo sáng đã thử không hiệu quả, Boom vẫn khuyên sửa combo đó mà không nhắc. Khuyên lại thì phải nói vì sao lần này khác. */
+export function khuyenLaiDaThu(answer: string, ref: string): string[] {
+  const sai: string[] = [];
+  const bd = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+  const viec = bd(phanViec(answer)), ca = bd(answer);
+  if (/da thu|tung thu|lan truoc|truoc day|da noi|khong chuong|khong hieu qua/.test(ca)) return [];
+  for (const m of ref.matchAll(/^- (.+) \(đã thử\)$/gmu)) {
+    // từ khoá: các từ dài của việc đã thử, bỏ từ chung
+    const tu = bd(m[1]).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !/^(?:khach|khong|chuong|hieu|nhung|thu|roi|quan|nhieu|duoc)$/.test(w));
+    const trung = tu.filter((w) => viec.includes(w));
+    if (tu.length && trung.length >= Math.min(2, tu.length)) sai.push(m[1]);
+  }
+  return sai;
+}
+
 /** Phần việc làm của câu trả lời; không có tiêu đề thì cả câu. */
 const phanViec = (answer: string) => {
   const i = answer.search(/việc (?:tuần này|làm|nên làm|cần làm)/iu);
@@ -2988,6 +3004,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const thuNgoai = ngoaiThuBan(answer, ref);
   const kyIt = khuyenTheoKyIt(answer, ref);
   const tangGia = tangGiaKhiTut(answer, ref);
+  const daThu = khuyenLaiDaThu(answer, ref);
   const huongGio = soHuongSaiGio(answer, ref);
   const mocKy = mocCaKy(answer, ref), giaBai = baiInGiaDeXuat(answer, ref), tonSai = tonKhoSai(answer, ref), quaGia = giamQuaGia(answer, ref), monLac = lacMon(answer, ref);
   const dauCau = dauKhongViec(answer, ref);
@@ -3011,6 +3028,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(tonSai.length ? [`gọi là dưới mức tồn tối thiểu mà dòng kho không ghi (${tonSai.join(', ')}) → bỏ ý đó`] : []),
     ...(quaGia.length ? [`mức giảm lớn hơn giá món (${quaGia.join('; ')}) → đổi mức giảm hoặc đổi món`] : []),
     ...(huongGio.length ? [`gắn số tiền ước vào sai giờ: ${huongGio.join('; ')} → dùng đúng cặp giờ và số tiền trong các hướng xếp theo tiền`] : []),
+    ...(daThu.length ? [`khuyên lại việc chủ quán đã thử (${daThu.join('; ')}) mà không nhắc → nói rõ đã thử lần trước, và vì sao lần này khác (dẫn số); không có lý do mới thì đổi việc khác`] : []),
     ...(tangGia ? ['số đơn đang tụt mà khuyên tăng giá → bỏ việc tăng giá, thay bằng việc kéo đơn lại'] : []),
     ...(dauCau ? ['câu đầu mới nêu số, chưa nói nên làm gì → viết lại câu đầu nói ngay việc nên làm trước, số để sau'] : []),
     ...(cbGia.length ? [`đề xuất combo mà chưa có giá combo (${cbGia.join('; ')}) → ghi rõ giá combo, dùng dòng combo tính sẵn nếu có`] : []),

@@ -20,6 +20,7 @@ import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import 'role_manager_screen.dart';
 import 'billing_screen.dart';
+import '../features/ai_assistant/bo_nho/bo_nho_quan_screen.dart';
 import '../core/utils/billing_platform.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,6 +134,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                // Bộ nhớ Bé Boom: chỉ chủ quán; ô tự ẩn khi máy chủ chưa có tính năng
+                if (session?.isOwner == true && session?.storeId != null)
+                  BoNhoQuanTile(storeId: session!.storeId!),
                 _SettingsTile(
                   icon: Icons.bug_report_rounded,
                   label: 'Gửi phản hồi',
