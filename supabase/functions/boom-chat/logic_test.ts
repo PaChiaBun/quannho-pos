@@ -1259,6 +1259,10 @@ Deno.test('lô D: ngày được hỏi là thứ mấy, quán nghỉ ngày đó;
   assertStringIncludes(todayBlock(NOW), '20/11 (Thứ Sáu) Nhà giáo');
   assertStringIncludes(caBan(d, 'ca tối có đáng mở không'), '6–13h 98.550.000đ = 83,5%; 17–21h 19.451.000đ = 16,5%');
   assertEquals(caBan(d, 'món nào lời nhất'), '');
+  // 08/11 Demo: vài đơn lẻ 2–5h (0,7%) không thành ca
+  const hl = Array(24).fill(0); hl[2] = 250_000; for (let i = 6; i < 23; i++) hl[i] = 2_000_000;
+  const ca = caBan({ ...d!, by_hour: hl }, 'doanh thu theo ca thế nào');
+  assert(!ca.includes('DOANH THU THEO CA') && ca.includes('Đơn lẻ ngoài giờ chính') && ca.includes('2–3h 250.000đ'), ca);
 });
 
 Deno.test('lô E: điểm cần chú ý theo chủ đề, việc vào ngày nghỉ / giờ đóng, câu cửa miệng', () => {
@@ -1796,4 +1800,16 @@ Deno.test('bộ nhớ: khuyên lại việc đã thử thì phải nhắc', () =
   assertEquals(L.khuyenLaiDaThu('Dạ, combo sáng anh/chị đã thử, nhưng giá đang đắt hơn mua lẻ.\nViệc tuần này:\n- Đổi combo cà phê + bánh mì thành 45.000đ.', ref).length, 0);
   assertEquals(L.khuyenLaiDaThu('Việc tuần này:\n- Mời thêm trà tắc buổi chiều.', ref).length, 0);
   assertEquals(L.khuyenLaiDaThu('Việc tuần này:\n- Đổi combo cà phê + bánh mì.', 'khác'), []);
+});
+
+Deno.test('thứ của hôm nay: dòng theo thứ và dòng so kỳ trước cùng một trung bình (bỏ ngày dở)', () => {
+  // 1/10–4/11/2026, hôm nay Thứ 4 4/11 mới bán 100.000đ; 5 Thứ 4, 4 ngày trọn = 800.000đ → 200.000đ/ngày
+  const f = L.parseFacts({ period: '35 ngày qua', revenue: 5_000_000, orders: 200, top: [], slow: [], from: '2026-10-01', to: '2026-11-04',
+    by_weekday: [1_000_000, 1_000_000, 900_000, 700_000, 700_000, 700_000, 0], by_day: [{ d: '2026-11-04', revenue: 100_000, orders: 2 }],
+    prev_period: '35 ngày trước', prev_revenue: 5_000_000, prev_orders: 200, prev_from: '2026-08-27', prev_to: '2026-09-30',
+    prev_by_weekday: [1_000_000, 1_000_000, 2_000_000, 700_000, 700_000, 700_000, 0] })!;
+  const t = L.formatFacts(f, new Date('2026-11-04T10:00:00+07:00'), 'doanh thu sao giảm');
+  assertStringIncludes(t, 'Thứ 4 900.000đ (5 ngày, trung bình 4 ngày đã trọn 200.000đ/ngày, chưa tính hôm nay)');
+  assertStringIncludes(t, 'Thứ 4 kỳ trước');
+  assert(/Thứ 4 kỳ trước [\d.]+đ → nay 200\.000đ/.test(t), t);
 });

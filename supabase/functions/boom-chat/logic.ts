@@ -834,7 +834,9 @@ export function changeLine(f: ShopFacts, todayD = -1): string {
     // Không bỏ hẳn thứ đó: bỏ thì giấu mất ngày yếu thật khi hôm nay đúng là thứ yếu (chấm mù 05/11)
     const thuCatKyTruoc = todayD >= 0 && f.prev_to ? (new Date(`${f.prev_to}T00:00:00Z`).getUTCDay() + 6) % 7 : -1;
     const tb = (v: number, n: number, dang: boolean) => { const m = n - (dang ? 1 : 0); return m > 0 ? v / m : 0; };
-    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k], c1[k], k === todayD), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
+    // có số từng ngày thì bỏ tiền hôm nay (ngày dở) như dòng "Doanh thu theo thứ"
+    const tienHomNay = todayD >= 0 ? f.by_day?.find((y) => y.d === f.to)?.revenue ?? 0 : 0;
+    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k] - (k === todayD ? tienHomNay : 0), c1[k], k === todayD), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
       .filter((x) => x.a > 0 && x.b > 0).map((x) => ({ ...x, r: (x.a - x.b) / x.b })).sort((a, b) => a.r - b.r);
     if (ds.length >= 2) {
       const lo = ds[0], hi = ds[ds.length - 1];
@@ -934,9 +936,11 @@ export function shopProfile(f: ShopFacts): string {
   // khung giờ có bán liền nhau ("6h–14h, 16h–20h": quán nghỉ trưa)
   const spans: string[] = [];
   let st = -1;
+  // khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó
+  const tongGio = (f.by_hour ?? []).reduce((a, v) => a + Math.max(0, v), 0);
   (f.by_hour ?? []).concat(0).forEach((v, h) => {
     if (v > 0 && st < 0) st = h;
-    if (v <= 0 && st >= 0) { spans.push(`${st}h–${h}h`); st = -1; }
+    if (v <= 0 && st >= 0) { if (f.by_hour!.slice(st, h).reduce((a, x) => a + x, 0) >= tongGio * 0.03) spans.push(`${st}h–${h}h`); st = -1; }
   });
   // lần 53: kỳ hôm nay chưa hết ngày → giờ cuối chỉ là "tới giờ này", không phải giờ đóng cửa (D48: GPT bỏ qua ca tối)
   // 06/11: kỳ ngắn, ít đơn thì đây chỉ là giờ có đơn: Boom từng ghi "quán bán từ 14h–15h" vào bài đăng, mã kiểm giờ cũng dựa dòng này
@@ -1112,7 +1116,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const xep = open.filter((x) => tbXep(x) >= 0);
     const low = [...xep].sort((a, b) => tbXep(a) - tbXep(b))[0], high = [...xep].sort((a, b) => tbCao(b) - tbCao(a))[0];
     lines.push(
-      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)` : ''}`).join('; ')}. ` +
+      // 08/11: Thứ của hôm nay từng có 2 trung bình (dòng này chia n gồm ngày dở, dòng so kỳ trước chia n−1) → bỏ hẳn hôm nay ở cả hai
+      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? (todayD >= 0 && x.d === days[todayD].d && tienHomNay !== undefined && x.n > 1 ? ` (${x.n} ngày, trung bình ${x.n - 1} ngày đã trọn ${vnd((x.v - tienHomNay) / (x.n - 1))}/ngày, chưa tính hôm nay)` : ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)`) : ''}`).join('; ')}. ` +
         [xep.length >= 2 ? `${cnt ? 'So theo trung bình / ngày — ' : ''}Cao nhất: ${high.d}; thấp nhất: ${low.d}` : '',
           closed.length ? `${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán)` : '',
           motNgay.length ? `${motNgay.map((x) => x.d).join(', ')}: không có đơn (kỳ mới có 1 ngày này, chưa chắc nghỉ)` : '',
@@ -2198,13 +2203,16 @@ export function caBan(f: ShopFacts | null | undefined, question: string): string
   if (!h || !/(?<!\p{L})ca(?!\p{L})|bu[oổ]i|s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khung gi[oờ]/iu.test(question)) return '';
   const tong = h.reduce((a, v) => a + v, 0);
   if (tong <= 0) return '';
-  const khoi: [number, number, number][] = [];
-  for (let i = 0; i < 24; i++) if (h[i] > 0) { const k = khoi[khoi.length - 1]; if (k && k[1] === i) { k[1] = i + 1; k[2] += h[i]; } else khoi.push([i, i + 1, h[i]]); }
+  const tatCa: [number, number, number][] = [];
+  for (let i = 0; i < 24; i++) if (h[i] > 0) { const k = tatCa[tatCa.length - 1]; if (k && k[1] === i) { k[1] = i + 1; k[2] += h[i]; } else tatCa.push([i, i + 1, h[i]]); }
+  // 08/11 web Demo: vài đơn lẻ 2–5h (0,7% doanh thu) thành "ca 2–5h"; khối dưới 3% là đơn lẻ, không phải ca
+  const khoi = tatCa.filter((k) => k[2] >= tong * 0.03), le = tatCa.filter((k) => k[2] < tong * 0.03);
   const p = (v: number) => `${pctTxt((v / tong) * 100)}%`;
-  if (khoi.length >= 2) return `DOANH THU THEO CA (tính sẵn theo khối giờ có bán liền nhau; so ca thì dùng ĐÚNG các khung này, không cắt bớt giờ): ${khoi.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}${khoi.length === 2 ? (([lon, nho]) => ` → ca ${lon[0]}–${lon[1]}h gấp ${pctTxt(lon[2] / nho[2])} lần ca ${nho[0]}–${nho[1]}h`)(khoi[0][2] >= khoi[1][2] ? [khoi[0], khoi[1]] : [khoi[1], khoi[0]]) : ''}; ${(weekdayCounts(f!.from, f!.to) ?? []).reduce((a, b) => a + b, 0) >= 7 ? 'giờ giữa các khung quán KHÔNG bán (đóng) — không gọi là "vắng"' : 'kỳ ngắn: giờ giữa các khung không có đơn trong kỳ này, chưa chắc quán đóng'}.`;
+  const leTxt = le.length ? ` Đơn lẻ ngoài giờ chính (KHÔNG phải ca, không khuyên gì theo giờ này): ${le.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}.` : '';
+  if (khoi.length >= 2) return `DOANH THU THEO CA (tính sẵn theo khối giờ có bán liền nhau; so ca thì dùng ĐÚNG các khung này, không cắt bớt giờ): ${khoi.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}${khoi.length === 2 ? (([lon, nho]) => ` → ca ${lon[0]}–${lon[1]}h gấp ${pctTxt(lon[2] / nho[2])} lần ca ${nho[0]}–${nho[1]}h`)(khoi[0][2] >= khoi[1][2] ? [khoi[0], khoi[1]] : [khoi[1], khoi[0]]) : ''}; ${(weekdayCounts(f!.from, f!.to) ?? []).reduce((a, b) => a + b, 0) >= 7 ? 'giờ giữa các khung quán KHÔNG bán (đóng) — không gọi là "vắng"' : 'kỳ ngắn: giờ giữa các khung không có đơn trong kỳ này, chưa chắc quán đóng'}.${leTxt}`;
   const bq: [string, number, number][] = [['sáng', 0, 11], ['trưa', 11, 14], ['chiều', 14, 17], ['tối', 17, 24]];
   const ds = bq.map(([t, a, b]) => [t, a, b, h.slice(a, b).reduce((x, v) => x + v, 0)] as const).filter((x) => x[3] > 0);
-  return ds.length >= 2 ? `DOANH THU THEO BUỔI (tính sẵn, trong giờ có bán ${khoi[0][0]}–${khoi[0][1]}h): ${ds.map(([t, a, b, v]) => `${t} ${Math.max(a, khoi[0][0])}–${Math.min(b, khoi[0][1])}h ${vnd(v)} = ${p(v)}`).join('; ')}.` : '';
+  return ds.length >= 2 ? `DOANH THU THEO BUỔI (tính sẵn, trong giờ có bán ${khoi[0][0]}–${khoi[0][1]}h): ${ds.map(([t, a, b, v]) => `${t} ${Math.max(a, khoi[0][0])}–${Math.min(b, khoi[0][1])}h ${vnd(v)} = ${p(v)}`).join('; ')}.${leTxt}` : '';
 }
 
 // Cố vấn app (04/11) — thử dòng "CÀI ĐẶT NÊN LÀM TRONG APP" + code gắn "Trong app: …" vào câu tư vấn: chấm kín 80 cặp −0,18;

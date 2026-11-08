@@ -73,12 +73,15 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Bộ cũ và bộ kín 26 cặp: −0,31 ± 0,71 (kín 10 cặp −0,50). Khoảng chứa 0, chưa rõ có tụt thật không.
 - Người chấm lần này cho bản cũ dùng được 38/64, còn người chấm QC lần đầu cho 27/64: người chấm khác nhau lệch nhiều, nên chỉ so trong cùng một lần chấm, không so với bảng điểm xuất phát ở trên.
 - Lượt đo cuối với mã cuối: lỗi so mốc còn 3/64 sau khi viết lại; không còn khuyên ưu đãi buổi đang quá tải, giảm quá giá món, trả lời sai món, top món bỏ sót. Lượt này chỉ đếm bằng máy, chưa chấm mù lại.
-- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay; khối số liệu có Thứ 4 hai số khác nhau (trung bình tháng và trung bình so kỳ trước).
+- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay. (Thứ 4 hai số khác nhau: đã sửa 08/11, chưa áp.)
 
 **Sửa thêm 08/11 sau khi thử web (chưa áp):**
 - Kỳ ít đơn (dưới 30) mà câu xin lời khuyên không phải câu tiếp thị ("tháng này thế nào, nên làm gì") thì thiếu dòng ít đơn, Boom vẫn khuyên ưu đãi 14–17h. Nay `baiToanTiepThi` vẫn đưa dòng ít đơn cho câu xin lời khuyên, nên mã kiểm `khuyenTheoKyIt` bắt được; câu chỉ hỏi số thì không.
 - "Đồ uống tăng 25.000đ → 580.000đ" khi doanh thu giảm 97%: doanh thu nhóm kỳ trước chỉ cộng món còn trên menu hiện tại, món đã xoá / tạo lại rơi mất. Nay (`ban_hang.ts`) nếu cộng món kỳ trước dưới 80% tiền đơn kỳ trước thì bỏ so theo nhóm và theo món. Chưa đọc dữ liệu thật của Demo để chắc đây đúng là nguyên nhân; "ca 2–5h" trên Demo chưa xem.
 - Kiểm thử hàm 132/132.
+- Đã áp lần 153 (9d334bd). Web Demo 7 đơn: không khuyên giờ, gợi ý xem 30 ngày.
+- "Ca 2–5h" trên Demo: hỏi thử thấy chỉ 250.000đ = 0,7% doanh thu 30 ngày, là vài đơn lẻ lúc khuya bị gom thành ca. Nay khối giờ dưới 3% doanh thu ghi là "đơn lẻ ngoài giờ chính", không tính là ca, không vào dòng "có bán" (mã kiểm giờ ngoài bán vẫn bắt ưu đãi đặt vào giờ đó). Chưa áp.
+- Thứ của hôm nay có 2 trung bình (dòng theo thứ chia đủ n gồm ngày dở; dòng so kỳ trước chia n−1 mà tiền vẫn gồm hôm nay). Nay cả hai bỏ tiền hôm nay khi có số từng ngày. Chưa áp.
 
 ## Giai đoạn 2: Thời tiết
 
