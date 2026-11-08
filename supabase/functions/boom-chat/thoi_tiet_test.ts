@@ -1,7 +1,7 @@
 import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 import * as T from './thoi_tiet.ts';
 
-// Mẫu theo cấu trúc tài liệu WeatherKit REST; chưa đối chiếu với câu trả lời thật (chờ khoá).
+// Mẫu theo cấu trúc WeatherKit REST; 08/11 đã đối chiếu với câu trả lời thật (tên trường khớp, nhiệt độ có số lẻ).
 const NOW = Date.parse('2026-11-07T07:00:00Z'); // 14h giờ Việt Nam
 const MAU = {
   currentWeather: { temperature: 31.6, conditionCode: 'PartlyCloudy' },
@@ -19,7 +19,7 @@ const MAU = {
 
 Deno.test('thời tiết: rút gọn theo giờ Việt Nam, đọc phòng thủ', () => {
   const w = T.rutGon(MAU, NOW)!;
-  assertEquals(w.nhiet, 31.6);
+  assertEquals(w.nhiet, 32);
   assertEquals(w.troi, 'mây rải rác');
   assertEquals(w.gio.map((h) => h.gio), [14, 16, 17]);
   assertEquals(w.gio[1], { gio: 16, nhiet: 28, mua: 70, troi: 'dông' });
@@ -79,4 +79,11 @@ Deno.test('thời tiết: chỉ đưa Boom khi câu hỏi liên quan, có ghi ng
   assertStringIncludes(T.ghiNguonThoiTiet('Chiều nay khả năng mưa 70%.', true), 'Apple Weather');
   assertEquals(T.ghiNguonThoiTiet('Doanh thu 1.000.000đ.', true), 'Doanh thu 1.000.000đ.');
   assertEquals(T.ghiNguonThoiTiet('Chiều nay mưa.', false), 'Chiều nay mưa.');
+});
+
+Deno.test('thời tiết: ghi nguồn đọc đúng dạng Apple trả thật (08/11)', async () => {
+  const f = (async () => new Response(JSON.stringify({ 'logoLight@2x': '/assets/branding/vi/Apple_Weather_blk_vi_2X_090122.png', 'logoDark@2x': '/assets/branding/vi/Apple_Weather_wht_vi_2X_090122.png', serviceName: 'Apple Weather' }))) as unknown as typeof fetch;
+  T.xoaDemThoiTiet();
+  const n = await T.layNguon(NOW + 1, f);
+  assertEquals(n, { ten: 'Apple Weather', logo_sang: 'https://weatherkit.apple.com/assets/branding/vi/Apple_Weather_blk_vi_2X_090122.png', logo_toi: 'https://weatherkit.apple.com/assets/branding/vi/Apple_Weather_wht_vi_2X_090122.png', link: T.NGUON_LINK });
 });

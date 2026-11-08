@@ -70,9 +70,10 @@ export function troiViet(code: unknown): string {
   return '';
 }
 
-const so = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+// 08/11 gọi thật: Apple trả 33.96 → làm tròn độ cho thẻ và cho Boom
+const so = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
 const phanTram = (v: unknown): number | null => {
-  const x = so(v);
+  const x = typeof v === 'number' && Number.isFinite(v) ? v : null;
   return x === null ? null : Math.round(Math.max(0, Math.min(1, x)) * 100);
 };
 const vnNgay = (iso: unknown) => (typeof iso === 'string' && !isNaN(Date.parse(iso)) ? new Date(Date.parse(iso) + VN_MS).toISOString().slice(0, 10) : '');
@@ -143,11 +144,12 @@ export async function layNguon(now = Date.now(), f: Fetch = fetch): Promise<Nguo
     const res = await f('https://weatherkit.apple.com/attribution/vi', { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const j = await res.json();
-      const url = (x: unknown) => (typeof x === 'string' && /^https:\/\//.test(x) ? x : null);
+      // 08/11 gọi thật: khoá là "logoLight@2x", đường dẫn tương đối "/assets/…", serviceName đã là "Apple Weather", không có legalPageURL
+      const url = (x: unknown) => (typeof x !== 'string' ? null : /^https:\/\//.test(x) ? x : /^\/[\w/@.-]+$/.test(x) ? `https://weatherkit.apple.com${x}` : null);
       v = {
-        ten: typeof j?.serviceName === 'string' ? `Apple ${j.serviceName}` : v.ten,
-        logo_sang: url(j?.logoLight2x) ?? url(j?.logoLight1x),
-        logo_toi: url(j?.logoDark2x) ?? url(j?.logoDark1x),
+        ten: typeof j?.serviceName === 'string' && j.serviceName.trim() ? j.serviceName.trim().slice(0, 40) : v.ten,
+        logo_sang: url(j?.['logoLight@2x']) ?? url(j?.['logoLight@1x']),
+        logo_toi: url(j?.['logoDark@2x']) ?? url(j?.['logoDark@1x']),
         link: url(j?.legalPageURL) ?? NGUON_LINK,
       };
     }
