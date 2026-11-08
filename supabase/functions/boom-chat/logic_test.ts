@@ -1262,7 +1262,7 @@ Deno.test('lô D: ngày được hỏi là thứ mấy, quán nghỉ ngày đó;
   // 08/11 Demo: vài đơn lẻ 2–5h (0,7%) không thành ca
   const hl = Array(24).fill(0); hl[2] = 250_000; for (let i = 6; i < 23; i++) hl[i] = 2_000_000;
   const ca = caBan({ ...d!, by_hour: hl }, 'doanh thu theo ca thế nào');
-  assert(!ca.includes('DOANH THU THEO CA') && ca.includes('Đơn lẻ ngoài giờ chính') && ca.includes('2–3h 250.000đ'), ca);
+  assert(!ca.includes('DOANH THU THEO CA') && ca.includes('Đơn lẻ ngoài giờ chính') && ca.includes('2–3h 250.000đ') && ca.includes('sáng 6–11h 10.000.000đ'), ca);
 });
 
 Deno.test('lô E: điểm cần chú ý theo chủ đề, việc vào ngày nghỉ / giờ đóng, câu cửa miệng', () => {
@@ -1812,4 +1812,15 @@ Deno.test('thứ của hôm nay: dòng theo thứ và dòng so kỳ trước cù
   assertStringIncludes(t, 'Thứ 4 900.000đ (5 ngày, trung bình 4 ngày đã trọn 200.000đ/ngày, chưa tính hôm nay)');
   assertStringIncludes(t, 'Thứ 4 kỳ trước');
   assert(/Thứ 4 kỳ trước [\d.]+đ → nay 200\.000đ/.test(t), t);
+});
+
+Deno.test('ghiApTay: ưu đãi theo giờ chưa nói cách áp thì gắn 1 câu vào dòng đầu dính', () => {
+  const a = 'Dạ, chiều vắng.\n\nViệc tuần này:\n- Thử ưu đãi 14–17h cho Trà tắc trong 2 tuần; giữ nếu đạt 336.000đ/ngày.\n- Ưu đãi 17–19h cho Bánh mì.\n\nCần xem lại: ưu đãi 14–17h.';
+  const r = L.ghiApTay(a);
+  assertStringIncludes(r, 'giữ nếu đạt 336.000đ/ngày. App không tự giới hạn ưu đãi theo giờ: dặn nhân viên áp tay đúng khung giờ này.\n- Ưu đãi 17–19h cho Bánh mì.\n');
+  assertEquals(r.split('App không tự giới hạn').length, 2);
+  assertEquals(L.ghiApTay('Việc tuần này:\n- Ưu đãi 14–17h, dặn nhân viên áp đúng giờ.'), 'Việc tuần này:\n- Ưu đãi 14–17h, dặn nhân viên áp đúng giờ.');
+  assertEquals(L.ghiApTay('Việc tuần này:\n- 14–17h chưa nên giảm giá.'), 'Việc tuần này:\n- 14–17h chưa nên giảm giá.');
+  assertEquals(L.ghiApTay('Việc tuần này:\n- Chuẩn bị trước 7–9h.'), 'Việc tuần này:\n- Chuẩn bị trước 7–9h.');
+  assertEquals(L.ghiApTay('Không có phần việc. Ưu đãi 14–17h.'), 'Không có phần việc. Ưu đãi 14–17h.');
 });

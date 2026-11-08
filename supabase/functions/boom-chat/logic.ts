@@ -1389,6 +1389,24 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
 /** Câu trả lời hiển thị dạng chữ thường: bỏ ký hiệu định dạng (**đậm**, # tiêu đề) GPT hay chèn. */
 /** Người hỏi không nêu kỳ mà câu trả lời có số bán hàng, chưa nói kỳ thì mã ghi thêm một câu.
  *  06/11: chỉ 28/96 câu nói kỳ; bắt mô hình nói kỳ làm tư vấn tụt (chấm mù 45 câu −0,38 ± 0,33) nên không dặn trong lời nhắc. */
+/** 08/11 (QC 07/11 còn sót): việc "ưu đãi 14–17h" không nói cách áp, mà mã giảm của app không giới hạn theo giờ.
+ *  Đo trên câu đã lưu: 33/368 và 27/126 câu dính. Hình thức nên sửa bằng mã (gắn 1 câu vào dòng đầu dính), không bắt viết lại. */
+export function ghiApTay(answer: string): string {
+  const i = answer.search(/việc (?:tuần này|làm|nên làm|cần làm)/iu);
+  if (i < 0) return answer;
+  const het = answer.slice(i).search(/\n\s*(?:cần xem lại|lưu ý|ghi chú)/iu);
+  const phan = het > 0 ? answer.slice(i, i + het) : answer.slice(i);
+  if (/áp tay|nhân viên (?:tự )?(?:áp|bấm|giảm|nhập|trừ|chọn)|thu ngân|dặn (?:nhân viên|ca|quầy)|(?:khi|lúc) tính tiền|giảm tay|sửa giá tay|app (?:không|chưa) (?:tự|giới hạn|khoá|chặn)|không tự (?:áp|giới hạn)/iu.test(phan)) return answer;
+  // "giảm người / ca / cơm dư", "mức giảm", "thay vì giảm giá" không phải ưu đãi (soát 60 dòng trên câu đã lưu)
+  const dinh = phan.split('\n').filter((d) =>
+    /(?<![\d/.,])\d{1,2}\s*h?\s*[–-]\s*\d{1,2}\s*h(?!\p{L})|khung (?:giờ|sáng|trưa|chiều|tối)|giờ vắng/iu.test(d) &&
+    /ưu đãi|giảm giá|(?:bớt|giảm) [\d.]+\s*(?:đ|k|%|nghìn)|combo|(?:^|\s)mã(?:\s|$)|tặng|khuyến mãi|voucher/iu.test(d) && !/không (?:chạy|giảm|làm|nên|áp dụng ưu đãi)|chưa nên|đừng|thay vì/iu.test(d));
+  const dong = dinh.find((d) => /thử|chạy|áp dụng/iu.test(d)) ?? dinh[0];
+  if (!dong) return answer;
+  const them = `${/[.!?;]\s*$/.test(dong) ? '' : '.'} App không tự giới hạn ưu đãi theo giờ: dặn nhân viên áp tay đúng khung giờ này.`;
+  return answer.slice(0, i) + phan.replace(dong, dong.replace(/\s*$/, '') + them) + answer.slice(i + phan.length);
+}
+
 export function ghiKy(answer: string, nhan: string | undefined, question: string, now: Date = new Date()): string {
   if (!nhan || coNeuKy(question, now)) return answer;
   // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
@@ -2211,7 +2229,9 @@ export function caBan(f: ShopFacts | null | undefined, question: string): string
   const leTxt = le.length ? ` Đơn lẻ ngoài giờ chính (KHÔNG phải ca, không khuyên gì theo giờ này): ${le.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}.` : '';
   if (khoi.length >= 2) return `DOANH THU THEO CA (tính sẵn theo khối giờ có bán liền nhau; so ca thì dùng ĐÚNG các khung này, không cắt bớt giờ): ${khoi.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}${khoi.length === 2 ? (([lon, nho]) => ` → ca ${lon[0]}–${lon[1]}h gấp ${pctTxt(lon[2] / nho[2])} lần ca ${nho[0]}–${nho[1]}h`)(khoi[0][2] >= khoi[1][2] ? [khoi[0], khoi[1]] : [khoi[1], khoi[0]]) : ''}; ${(weekdayCounts(f!.from, f!.to) ?? []).reduce((a, b) => a + b, 0) >= 7 ? 'giờ giữa các khung quán KHÔNG bán (đóng) — không gọi là "vắng"' : 'kỳ ngắn: giờ giữa các khung không có đơn trong kỳ này, chưa chắc quán đóng'}.${leTxt}`;
   const bq: [string, number, number][] = [['sáng', 0, 11], ['trưa', 11, 14], ['chiều', 14, 17], ['tối', 17, 24]];
-  const ds = bq.map(([t, a, b]) => [t, a, b, h.slice(a, b).reduce((x, v) => x + v, 0)] as const).filter((x) => x[3] > 0);
+  // đơn lẻ không cộng vào buổi (Demo: sáng ghi 6–11h mà gồm cả 250.000đ lúc 2–5h)
+  const laLe = (i: number) => le.some(([a, b]) => i >= a && i < b);
+  const ds = bq.map(([t, a, b]) => [t, a, b, h.slice(a, b).reduce((x, v, j) => x + (laLe(a + j) ? 0 : v), 0)] as const).filter((x) => x[3] > 0);
   return ds.length >= 2 ? `DOANH THU THEO BUỔI (tính sẵn, trong giờ có bán ${khoi[0][0]}–${khoi[0][1]}h): ${ds.map(([t, a, b, v]) => `${t} ${Math.max(a, khoi[0][0])}–${Math.min(b, khoi[0][1])}h ${vnd(v)} = ${p(v)}`).join('; ')}.${leTxt}` : '';
 }
 

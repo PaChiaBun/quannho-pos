@@ -26,6 +26,7 @@ import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, locUngVi
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
+  ghiApTay,
   ghiKy,
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
@@ -800,7 +801,7 @@ Deno.serve(async (req) => {
       await finish(logId, { model: kind, status: 'error', latency_ms: latency, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, answer: 'EMPTY' });
       return json(502, { error: 'AI_EMPTY_ANSWER' });
     }
-    answer = ghiNguonThoiTiet(ghiKy(answer, kyHoi, r.question), !!thoiTiet);
+    answer = ghiNguonThoiTiet(ghiApTay(ghiKy(answer, kyHoi, r.question)), !!thoiTiet);
     await finish(logId, { model: kind, status: 'ok', answer: r.chain ? CHAIN_LOG_NOTE : r.modules ? MODULE_LOG_NOTE : answer, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, latency_ms: latency });
     const refused = modelRefused(answer);
     await writeFull({ log_id: logId, store_id: r.store_id, user_id: user, source: 'gpt',

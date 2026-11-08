@@ -73,7 +73,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Bộ cũ và bộ kín 26 cặp: −0,31 ± 0,71 (kín 10 cặp −0,50). Khoảng chứa 0, chưa rõ có tụt thật không.
 - Người chấm lần này cho bản cũ dùng được 38/64, còn người chấm QC lần đầu cho 27/64: người chấm khác nhau lệch nhiều, nên chỉ so trong cùng một lần chấm, không so với bảng điểm xuất phát ở trên.
 - Lượt đo cuối với mã cuối: lỗi so mốc còn 3/64 sau khi viết lại; không còn khuyên ưu đãi buổi đang quá tải, giảm quá giá món, trả lời sai món, top món bỏ sót. Lượt này chỉ đếm bằng máy, chưa chấm mù lại.
-- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay. (Thứ 4 hai số khác nhau: đã sửa 08/11, chưa áp.)
+- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay (đã sửa bằng mã 08/11, chưa áp). (Thứ 4 hai số khác nhau: đã áp lần 154.)
 
 **Sửa thêm 08/11 sau khi thử web (chưa áp):**
 - Kỳ ít đơn (dưới 30) mà câu xin lời khuyên không phải câu tiếp thị ("tháng này thế nào, nên làm gì") thì thiếu dòng ít đơn, Boom vẫn khuyên ưu đãi 14–17h. Nay `baiToanTiepThi` vẫn đưa dòng ít đơn cho câu xin lời khuyên, nên mã kiểm `khuyenTheoKyIt` bắt được; câu chỉ hỏi số thì không.
@@ -82,6 +82,9 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Đã áp lần 153 (9d334bd). Web Demo 7 đơn: không khuyên giờ, gợi ý xem 30 ngày.
 - "Ca 2–5h" trên Demo: hỏi thử thấy chỉ 250.000đ = 0,7% doanh thu 30 ngày, là vài đơn lẻ lúc khuya bị gom thành ca. Nay khối giờ dưới 3% doanh thu ghi là "đơn lẻ ngoài giờ chính", không tính là ca, không vào dòng "có bán" (mã kiểm giờ ngoài bán vẫn bắt ưu đãi đặt vào giờ đó). Chưa áp.
 - Thứ của hôm nay có 2 trung bình (dòng theo thứ chia đủ n gồm ngày dở; dòng so kỳ trước chia n−1 mà tiền vẫn gồm hôm nay). Nay cả hai bỏ tiền hôm nay khi có số từng ngày. Chưa áp.
+- Đã áp lần 154 (d4ad958). Web Demo hỏi ca: không còn "ca 2–5h".
+- Buổi sáng vẫn cộng tiền đơn lẻ 2–5h dù nhãn 6–11h: nay buổi không cộng khối đơn lẻ. Chưa áp.
+- Ưu đãi theo khung giờ không nói cách áp (mã giảm của app không giới hạn theo giờ): `ghiApTay` gắn 1 câu "App không tự giới hạn ưu đãi theo giờ: dặn nhân viên áp tay đúng khung giờ này." vào dòng việc đầu tiên dính, bằng mã, không bắt viết lại. Trên 494 câu đã lưu (lượt đo giai đoạn 6): gắn 51 câu; đã soát hết các dòng bị gắn, sau khi bỏ "giảm người / ca / cơm dư", "mức giảm", "thay vì giảm giá" thì đều là ưu đãi theo giờ thật. Chưa áp.
 
 ## Giai đoạn 2: Thời tiết
 
