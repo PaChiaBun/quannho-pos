@@ -41,7 +41,10 @@ function ngayKy(tu: string, den: string): [string, string] {
 /** Gói facts như app gửi (kỳ trước chỉ khi kỳ trước có đơn). */
 export function dungFacts(ky: Ky, cur: Tho, prev: Tho, mons: Mon[]): Record<string, unknown> {
   const all = doMon(cur, mons);
-  const prevAll = prev.orders > 0 ? doMon(prev, mons) : null;
+  // 08/11 web Demo: món kỳ trước đã xoá / tạo lại không còn trên menu nên rơi khỏi tổng nhóm → "Đồ uống tăng" khi doanh thu giảm 97%.
+  // Cộng món kỳ trước thấp hơn hẳn tiền đơn (giảm giá chỉ làm tiền đơn THẤP hơn) thì không so nhóm, so món.
+  const prevMon = prev.orders > 0 ? doMon(prev, mons) : null;
+  const prevAll = prevMon && prevMon.reduce((s, t) => s + t.revenue, 0) >= 0.8 * n(prev.revenue) ? prevMon : null;
   const sold = [...all].sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity).filter((t) => t.quantity > 0).slice(0, 5);
   // Combo: tách tên "Combo mì cay + trà đào" → khớp đúng 1 món đang bán mỗi phần → tổng giá mua lẻ; khớp không đủ → bỏ
   const comboRetail = (t: Do): number | null => {

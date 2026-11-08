@@ -1988,7 +1988,12 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const hoiMa = /(?:^|\s)m[aã](?: gi[aả]m| khuy[eế]n m[aã]i|\s*$| \p{Lu})|voucher|khuy[eế]n m[aã]i/u.test(q);
   const hoiNgay = /ng[aà]y n[aà]o|th[uứ] (?:m[aấ]y|n[aà]o)|cu[oố]i tu[aầ]n/.test(q) && /ưu đãi|khuy[eế]n m[aã]i|gi[aả]m|combo|(?:^|\s)m[aã](?:\s|$)/.test(q);
   const muaTang = /mua (\d) t[aặ]ng (\d)/.exec(q);
-  if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang) return '';
+  if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang) {
+    // 08/11 web Demo 12 đơn: câu "tháng này thế nào, nên làm gì" không phải câu tiếp thị nên thiếu dòng ít đơn, vẫn khuyên ưu đãi 14–17h
+    return f.orders < IT_DON && /n[eê]n (?:l[aà]m|thay|c[aả]i|t[aậ]p)|l[aà]m (?:sao|g[iì])|c[aá]ch n[aà]o|g[oợ]i [yý]|t[uư] v[aấ]n|khuy[eê]n|c[aả]i thi[eệ]n|kh[aắ]c ph[uụ]c/.test(q)
+      ? `BÀI TOÁN TIỀN: Kỳ này mới có ${qty(f.orders)} đơn, chưa đủ để nói giờ, thứ hay món nào yếu: KHÔNG khuyên theo giờ vắng, thứ yếu hay món bán chậm của kỳ này. Nói thẳng điều này, gợi ý xem kỳ dài hơn (vd "30 ngày qua").`
+      : '';
+  }
   const cnt = weekdayCounts(f.from, f.to), bw = f.by_weekday;
   const ngay = cnt && bw?.some((v) => v > 0) ? cnt.reduce((a, c, i) => a + (nn(bw[i]) > 0 ? c : 0), 0) : soNgay(f.period);
   if (ngay < 1) return '';

@@ -8,12 +8,12 @@ Lập ngày 07/11/2026. Mốc mã lúc lập: commit `f53ccb9` (máy chủ Boom 
 
 | Giai đoạn | Việc | Ước tính làm | Trạng thái |
 |---|---|---|---|
-| 1 | Sửa lỗi gốc QC | khoảng 1 ngày | Chưa làm |
-| 2 | Thời tiết trên Trang chủ và Boom | 3–4 ngày | Chờ khoá Apple |
-| 3 | Bật đường mới cho app | 2–4 ngày, cộng thời gian Apple duyệt | Chưa làm |
-| 4 | Bộ nhớ riêng từng quán | 3–5 ngày | Chưa làm |
-| 5 | Ghi lời khuyên và tự đo kết quả | 3–5 ngày | Chưa làm |
-| 6 | Thử công cụ và sổ tay trên mảng tiếp thị | khoảng 1 tuần | Chưa làm |
+| 1 | Sửa lỗi gốc QC | khoảng 1 ngày | Đã áp (lần 152, 08/11); 2 lỗi web 08/11 đã sửa, chưa áp |
+| 2 | Thời tiết trên Trang chủ và Boom | 3–4 ngày | Mã xong, đã lên máy chủ nhưng tự tắt; chờ khoá Apple |
+| 3 | Bật đường mới cho app | 2–4 ngày, cộng thời gian Apple duyệt | Mã xong (4e25a91); chờ thử máy có đăng nhập rồi phát hành |
+| 4 | Bộ nhớ riêng từng quán | 3–5 ngày | Mã xong, đang tắt; chờ duyệt áp migration và bật |
+| 5 | Ghi lời khuyên và tự đo kết quả | 3–5 ngày | Nháp xong, đang tắt (cùng công tắc bộ nhớ) |
+| 6 | Thử công cụ và sổ tay trên mảng tiếp thị | khoảng 1 tuần | Công cụ bỏ; sổ tay +0,48 ± 0,42, đang tắt chờ bật |
 | 7 | Người dùng thật và dữ liệu | làm dần | Chưa làm |
 
 Các con số là ước đoán, chưa phải cam kết. Giai đoạn 1 và 2 làm song song được. Thứ tự chưa được Chủ Quán chốt.
@@ -74,6 +74,11 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Người chấm lần này cho bản cũ dùng được 38/64, còn người chấm QC lần đầu cho 27/64: người chấm khác nhau lệch nhiều, nên chỉ so trong cùng một lần chấm, không so với bảng điểm xuất phát ở trên.
 - Lượt đo cuối với mã cuối: lỗi so mốc còn 3/64 sau khi viết lại; không còn khuyên ưu đãi buổi đang quá tải, giảm quá giá món, trả lời sai món, top món bỏ sót. Lượt này chỉ đếm bằng máy, chưa chấm mù lại.
 - Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay; khối số liệu có Thứ 4 hai số khác nhau (trung bình tháng và trung bình so kỳ trước).
+
+**Sửa thêm 08/11 sau khi thử web (chưa áp):**
+- Kỳ ít đơn (dưới 30) mà câu xin lời khuyên không phải câu tiếp thị ("tháng này thế nào, nên làm gì") thì thiếu dòng ít đơn, Boom vẫn khuyên ưu đãi 14–17h. Nay `baiToanTiepThi` vẫn đưa dòng ít đơn cho câu xin lời khuyên, nên mã kiểm `khuyenTheoKyIt` bắt được; câu chỉ hỏi số thì không.
+- "Đồ uống tăng 25.000đ → 580.000đ" khi doanh thu giảm 97%: doanh thu nhóm kỳ trước chỉ cộng món còn trên menu hiện tại, món đã xoá / tạo lại rơi mất. Nay (`ban_hang.ts`) nếu cộng món kỳ trước dưới 80% tiền đơn kỳ trước thì bỏ so theo nhóm và theo món. Chưa đọc dữ liệu thật của Demo để chắc đây đúng là nguyên nhân; "ca 2–5h" trên Demo chưa xem.
+- Kiểm thử hàm 132/132.
 
 ## Giai đoạn 2: Thời tiết
 
@@ -147,7 +152,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Kiểm thử Boom của app 127/127. CHƯA thử trên máy thật hay máy ảo: không có máy ảo đang chạy, và app cần đăng nhập tài khoản thật (Claude không nhập mật khẩu).
 - Thứ tự an toàn: áp máy chủ lần 152 trước (có chốt tắt), rồi mới phát hành app. Máy chủ cũ bỏ qua `nen_tang` nên thứ tự ngược cũng không lỗi, chỉ thiếu chốt tắt.
 
-- [ ] Kiểm đường cũ của app có dính lỗi số/so không.
+- [x] Kiểm đường cũ của app có dính lỗi số/so không. 08/11 chạy 12 câu có chữ "số" qua `IntentClassifier`: đọc kỳ đúng hết ("số đơn tháng trước" → tháng trước, "doanh số tháng 10" → tháng 10); mẫu so sánh ở app cần "so với / so tháng…" nên không dính.
 - [ ] Thử đường mới trên bản dựng thử, tài khoản chủ và tài khoản nhân viên (cần Chủ Quán đăng nhập sẵn trên máy ảo hoặc máy thử).
 - [ ] 🔒 Phát hành theo quy trình `/qn`. Android từ build 23 trở xuống phải cập nhật tay; hỏi trước khi ghi `app_versions`.
 

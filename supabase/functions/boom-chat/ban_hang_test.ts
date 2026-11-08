@@ -37,6 +37,13 @@ Deno.test('ban_hang: dựng facts như app — parseFacts nhận, formatFacts c�
   assert(t.includes('Doanh thu 1.000.000đ từ 40 đơn') && t.includes('GIẢM 16,7%'), t);
 });
 
+Deno.test('ban_hang: món kỳ trước đã xoá khỏi menu → không so nhóm, so món (không báo nhóm tăng khi doanh thu giảm)', () => {
+  const p = { ...PREV, revenue: 20_000_000, items: [...PREV.items, { id: 'da-xoa', qty: 500, revenue: 18_800_000, cost: 0, cost_qty: 0 }] };
+  const f = dungFacts(KY, CUR, p, MONS);
+  assert('prev_period' in f && !('moves' in f));
+  assert((f.groups as Record<string, unknown>[]).every((g) => !('prev_revenue' in g)));
+});
+
 Deno.test('ban_hang: kỳ trước không có đơn → không gửi phần so; đọc bằng vé người hỏi; lỗi → null', async () => {
   const f = dungFacts(KY, CUR, { ...PREV, orders: 0, items: [] }, MONS);
   assert(!('prev_period' in f) && !('moves' in f));

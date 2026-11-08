@@ -1676,6 +1676,11 @@ Deno.test('baiToanTiepThi: ít đơn không xếp hướng; mã có ngưỡng v�
   assertEquals(it.includes('chưa đủ để nói'), true);
   assertEquals(it.includes('Tăng 10%'), false);
   assertEquals(L.baiToanTiepThi(co as never, null, 'làm sao kéo thêm khách').includes('chưa đủ để nói'), true);
+  // 08/11: câu xin lời khuyên không phải tiếp thị cũng phải có dòng ít đơn (khuyenTheoKyIt mới bắt được); câu hỏi số thì không
+  const kq = L.baiToanTiepThi(co as never, null, 'tháng này bán thế nào, nên làm gì');
+  assertEquals(L.khuyenTheoKyIt('Việc tuần này: ưu đãi 14h–17h.', kq).length > 0, true);
+  assertEquals(L.baiToanTiepThi(co as never, null, 'tháng này bán bao nhiêu'), '');
+  assertEquals(L.baiToanTiepThi({ ...co, orders: 100 } as never, null, 'tháng này bán thế nào, nên làm gì'), '');
   const nhieu = { ...co, revenue: 7000000, orders: 100, to: '2026-11-30' };
   const ma = L.baiToanTiepThi(nhieu as never, null, 'nên tạo mã giảm thế nào');
   // đơn 70.000đ → ngưỡng 85.000đ, thêm 15.000đ, giả sử còn 60% = 9.000đ
