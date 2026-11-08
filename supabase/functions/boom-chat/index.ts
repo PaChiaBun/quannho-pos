@@ -188,6 +188,7 @@ const THOI_TIET = cauHinhThoiTiet((k) => Deno.env.get(k));
 const BO_NHO = Deno.env.get('BOOM_BO_NHO') === '1';
 // Sổ tay tiếp thị (08/11, chỉ câu tiếp thị; đo chấm mù trước khi bật): mặc định TẮT, bật bằng BOOM_SO_TAY=1
 const SO_TAY = Deno.env.get('BOOM_SO_TAY') === '1';
+const ASK_TAT_APP = Deno.env.get('BOOM_ASK_TAT_APP') === '1';
 const BO_NHO_BO_QUA = new Set((Deno.env.get('BOOM_BO_NHO_BO_QUA') ?? '').split(',').map((x) => x.trim()).filter(Boolean));
 
 /** Ghi nhớ còn hiệu lực của quán; null = không dùng bộ nhớ (tắt, quán bỏ qua, chủ quán tắt, lỗi đọc). */
@@ -545,6 +546,8 @@ Deno.serve(async (req) => {
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
   let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false, tenQuan: string | null = null;
   let huongDan: HelpChunk[] = [];
+  // 08/11: app (không phải web) đi đường ask; tắt riêng bằng BOOM_ASK_TAT_APP=1 → 503, app tự quay về đường cũ
+  if (r.mode === 'ask' && ASK_TAT_APP && (body as Record<string, unknown>).nen_tang !== 'web') return json(503, { error: 'ASK_OFF' });
   if (r.mode === 'ask') {
     if (r.chunk_ids.length) {
       // lệch bản hướng dẫn hoặc lỗi đọc: vẫn trả lời được, chỉ thiếu đoạn

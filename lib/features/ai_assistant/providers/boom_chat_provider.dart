@@ -1055,8 +1055,10 @@ List<HelpChunk> boomHelpChoMayChu(
 HelpResult boomHelpNoiTiep(HelpResult rieng, HelpResult Function() ghep) =>
     rieng.decision != HelpDecision.none ? rieng : ghep();
 
-/// Chặng 1.3 (03/11): bản web hỏi máy chủ tự lấy số (mode 'ask'); ổn 1–2 tuần trên web mới bật cho app.
-const kBoomServerRoute = kIsWeb;
+/// Chặng 1.3 (03/11): bản web hỏi máy chủ tự lấy số (mode 'ask'). 08/11 (giai đoạn 3 .docs/ke-hoach-boom-bo-nho-thoi-tiet.md):
+/// bật cho cả app sau 5 ngày chạy trên web. Máy chủ tắt riêng cho app được bằng BOOM_ASK_TAT_APP=1 (trả lỗi → app đi đường cũ
+/// bên dưới như trước), không cần phát hành lại.
+const kBoomServerRoute = true;
 
 // ── Số liệu các module (Chủ Quán 25/10: "cho Boom đọc và không cho thêm số liệu vào") ─────────────────────
 // Từ chủ đề CHẶT (QC 25/10: "lãi suất ngân hàng", "nguyên liệu cà phê muối", "lương phục vụ thường bao nhiêu",

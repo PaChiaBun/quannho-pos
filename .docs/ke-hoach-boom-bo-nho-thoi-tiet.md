@@ -49,6 +49,8 @@ QC độc lập ngày 07/11. Dữ liệu ở `tool/boom_do/qc_doc_lap_07_11/`: `
 
 ## Giai đoạn 1: Sửa lỗi gốc QC
 
+**Script áp lần 152 (08/11):** `db-fix/boom_l152_ap_dung.sh` chép `index.ts`, `logic.ts` và 4 tệp mới; có sao lưu, hoàn tác, chế độ chỉ kiểm `KHO=1`. Chạy chỉ kiểm 08/11: test qua, 6 tệp trên máy chủ khớp f53ccb9, 4 tệp mới chưa có. Script đòi mọi tệp chép đã commit, nên phải commit phần sửa đường ask trước khi áp.
+
 - [x] Dòng "Việc nên nhắm cho buổi X" bật theo chữ trong câu: "sáng thì làm k kịp" ra khuyên ưu đãi buổi sáng.
 - [x] Việc thử ngắn so với mốc cả kỳ: thử 2 tuần so 608 phần của 28 ngày. Mốc phải quy về đúng số ngày thử.
 - [x] Bài đăng in giá combo đề xuất như giá thật, trong khi quán đang thu giá khác.
@@ -139,8 +141,14 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 
 Đính chính 07/11 sau khi đọc `index.ts`: app điện thoại và Windows đi đường `advice`, gửi số app tự đọc lên, nhưng **vẫn dùng chung** `buildMessages` và `kiemTraLoi` trên máy chủ. Vậy phần lớn sửa trong `logic.ts` (tính sẵn, mã kiểm, bài toán tiền) **đã đến app** khi áp máy chủ. Phần app **chưa có**: máy chủ tự đọc kỳ (`ky.ts`: gõ tắt, "tới h"…), máy chủ đọc số theo quyền (`lay_so.ts`: chủ quán đọc mục Khách hàng dù module tắt, mã voucher trong ghi chú đơn), tên quán, câu "tài khoản chưa xem được", và các trường app không gửi (không thấy `by_day` trong mã Dart nên số từng ngày, bỏ tiền hôm nay khi xếp thứ không chạy trên app). App tự đọc kỳ bằng `intent_classifier.dart`, mẫu "so với" ở đó cần chữ "voi" đi kèm, nên có lẽ không dính lỗi số/so của máy chủ; mới đọc mã, chưa chạy thử.
 
+**Đã làm 08/11 (chưa commit, chưa áp, chưa phát hành):**
+- `kBoomServerRoute = true`: app (Android, iOS, Windows) đi đường ask như web; lỗi hoặc máy chủ từ chối thì tự quay về đường cũ như trước.
+- App gửi `nen_tang`; máy chủ có chốt `BOOM_ASK_TAT_APP=1` trả 503 cho câu ask không phải từ web → app đi đường cũ, tắt được mà không cần phát hành lại.
+- Kiểm thử Boom của app 127/127. CHƯA thử trên máy thật hay máy ảo: không có máy ảo đang chạy, và app cần đăng nhập tài khoản thật (Claude không nhập mật khẩu).
+- Thứ tự an toàn: áp máy chủ lần 152 trước (có chốt tắt), rồi mới phát hành app. Máy chủ cũ bỏ qua `nen_tang` nên thứ tự ngược cũng không lỗi, chỉ thiếu chốt tắt.
+
 - [ ] Kiểm đường cũ của app có dính lỗi số/so không.
-- [ ] Thử đường mới trên bản dựng thử, tài khoản chủ và tài khoản nhân viên.
+- [ ] Thử đường mới trên bản dựng thử, tài khoản chủ và tài khoản nhân viên (cần Chủ Quán đăng nhập sẵn trên máy ảo hoặc máy thử).
 - [ ] 🔒 Phát hành theo quy trình `/qn`. Android từ build 23 trở xuống phải cập nhật tay; hỏi trước khi ghi `app_versions`.
 
 ## Giai đoạn 4: Bộ nhớ riêng từng quán

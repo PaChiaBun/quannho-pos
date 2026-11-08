@@ -161,6 +161,8 @@ class BoomAiService {
       'store_id': storeId,
       'question': question.length > 500 ? question.substring(0, 500) : question,
       'mode': 'ask',
+      // máy chủ tắt riêng đường mới cho app được (BOOM_ASK_TAT_APP) mà không cần phát hành lại
+      'nen_tang': kIsWeb ? 'web' : defaultTargetPlatform.name,
       'chunk_ids': [for (final c in chunks.take(8)) c.id],
       if (chunks.isNotEmpty && packVersion > 0) 'pack_version': packVersion,
     }, wait: const Duration(seconds: 30));
