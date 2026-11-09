@@ -1044,7 +1044,10 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const thuongCo = !lichNs.length ? '' : coMat.length
         ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)${gioTrong(ds, coMat, donGio)}`
         : `; chấm công trong kỳ chưa thấy ai thường làm khung này vào ${THU_DAI[wdI]}`;
-      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${canNguoi}${thuongCo} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
+      // lần 189 (chấm mù 188: Boom có "tương đương ~4,6 người" và "thường có 1 người" mà không so): phép so tính sẵn.
+      // lần 190 (189 thêm vế thì mất điểm gọn): có phép so thì THAY vế "tương đương ~X người", dòng không dài thêm
+      const soLich = canNguoi && lichNs.length ? soVoiLich(tb, ds.reduce((a, h) => a + coMat.filter((p) => h >= Number(p.vao) && h < Number(p.ra)).length, 0) / ds.length, nangSuat) : '';
+      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${soLich ? '' : canNguoi}${thuongCo}${soLich} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
@@ -1066,6 +1069,12 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
 }
 
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+// lần 189: đơn mỗi người trong lịch phải lo so với mức cả kỳ; không quy ra "thiếu N người" (lúc đông người làm nhanh hơn, lần 184)
+export function soVoiLich(donGioCa: number, lich: number, nangSuat: number): string {
+  if (lich < 0.5) return '; SO VỚI LỊCH: khung này gần như không ai thường làm';
+  const k = donGioCa / lich / nangSuat;
+  return `; SO VỚI LỊCH: ~${pctTxt(lich)} người thường làm cùng lúc → mỗi người ~${pctTxt(donGioCa / lich)} đơn/giờ, gấp ~${pctTxt(k)} lần mức cả kỳ (~${pctTxt(nangSuat)} đơn/giờ công) → ${k >= 1.5 ? 'NẶNG HƠN THƯỜNG' : k <= 0.67 ? 'nhẹ hơn thường' : 'ngang mức thường'}`;
+}
 // lần 187 (Demo sau 186: Boom nêu "Tâm đến 15h, Hà từ 17h" mà không nói 15–17h trống): giờ bán trong khung không ai thường làm, gộp thành đoạn liền
 export function gioTrong(ds: number[], coMat: Record<string, unknown>[], donGio: (h: number) => number): string {
   const trong = ds.filter((h) => !coMat.some((p) => h >= Number(p.vao) && h < Number(p.ra)));

@@ -2069,7 +2069,13 @@ Deno.test('lần 184: số người làm cùng lúc theo chấm công, quy đổ
   const NOW = new Date('2026-10-28T09:00:00+07:00');
   const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_c.json', import.meta.url)));
   const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
-  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m), 'quán thường có ~2,9 người làm cùng lúc, mỗi giờ công ~2,5 đơn (2450 đơn / 980 giờ công) → mức đơn của ca này tương đương ~1,4 người');
+  // lần 190: có lịch thường lệ thì phép so THAY vế "tương đương ~X người"; không lịch thì giữ vế cũ
+  const coLich = L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m);
+  assertStringIncludes(coLich, 'SO VỚI LỊCH:');
+  assert(!coLich.includes('tương đương ~'));
+  const { lich: _bo, ...nsKhongLich } = s.modules.thang_nay.nhan_su;
+  const mKhongLich = L.parseModules({ ...s.modules.thang_nay, nhan_su: nsKhongLich });
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, mKhongLich), 'quán thường có ~2,9 người làm cùng lúc, mỗi giờ công ~2,5 đơn (2450 đơn / 980 giờ công) → mức đơn của ca này tương đương ~1,4 người');
   // nhân viên hỏi (chỉ thấy chấm công của chính mình) → không quy đổi
   const mSelf = L.parseModules({ ...s.modules.thang_nay, nhan_su: { ...s.modules.thang_nay.nhan_su, self: true } });
   assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, mSelf).includes('người làm cùng lúc'));
@@ -2093,4 +2099,11 @@ Deno.test('lần 187: giờ bán trong khung không ai thường làm, gộp đo
   assertEquals(L.gioTrong([14, 15, 16, 17], [{ vao: 7, ra: 15 }, { vao: 17, ra: 22 }], don), '; KHOẢNG TRỐNG: 15–17h chưa thấy ai thường làm (~15,5 đơn/giờ)');
   assertEquals(L.gioTrong([6, 7, 8, 9, 10], [{ vao: 7, ra: 8 }, { vao: 9, ra: 10 }], don), '; KHOẢNG TRỐNG: 6–7h, 8–9h, 10–11h chưa thấy ai thường làm (~8 đơn/giờ)');
   assertEquals(L.gioTrong([16, 17, 18, 19], [{ vao: 15, ra: 20 }], don), '');
+});
+
+Deno.test('lần 189: so đơn mỗi người trong lịch với mức cả kỳ', () => {
+  assertEquals(L.soVoiLich(11.5, 1, 2.5), '; SO VỚI LỊCH: ~1 người thường làm cùng lúc → mỗi người ~11,5 đơn/giờ, gấp ~4,6 lần mức cả kỳ (~2,5 đơn/giờ công) → NẶNG HƠN THƯỜNG');
+  assertEquals(L.soVoiLich(2, 1, 2.5), '; SO VỚI LỊCH: ~1 người thường làm cùng lúc → mỗi người ~2 đơn/giờ, gấp ~0,8 lần mức cả kỳ (~2,5 đơn/giờ công) → ngang mức thường');
+  assertEquals(L.soVoiLich(2, 2.5, 2.5), '; SO VỚI LỊCH: ~2,5 người thường làm cùng lúc → mỗi người ~0,8 đơn/giờ, gấp ~0,3 lần mức cả kỳ (~2,5 đơn/giờ công) → nhẹ hơn thường');
+  assertEquals(L.soVoiLich(2, 0.25, 2.5), '; SO VỚI LỊCH: khung này gần như không ai thường làm');
 });

@@ -151,3 +151,23 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - `gioTrong` (logic.ts): giờ bán của khung không thuộc giờ vào–ra thường lệ của ai → "KHOẢNG TRỐNG: a–bh chưa thấy ai thường làm (~X đơn/giờ)", đoạn liền gộp lại. Chỉ ghi khi có người thường làm thứ đó.
 - Bộ cũ (41 mở + 20 kín) không câu nào có giờ trống → thêm 4 câu mở TD12–TD15 (quán B, ca chiều Thứ Năm: Ngọc 9–15h, Thảo 16–22h, trống 15–16h). Chấm mù 12 cặp vs 186: **+2,00 ± 0,80**; tìm vấn đề 0,83 → 2,00; dùng được 3 → 8 / 12. Chỉ một quán, một tình huống.
 - Demo: Boom nêu khoảng trống 15–17h. Còn: "14–15h có 2 người" (chỉ Tâm), chưa nối giờ đông nhất 15h nằm trong khoảng trống, gán 6,5 đơn/giờ của ca cho khung mưa 15–20h (cả hai bản).
+
+## Lần 188 (09/11, Chủ Quán "dạy tiếp đi"; KHÔNG ÁP — chấm mù không hơn)
+
+- Thử 3 dòng tính sẵn: người phủ một phần ca ghi "phủ a–bh của khung"; khoảng trống chứa giờ đông nhất thì ghi thẳng; khung mưa trùng ca ghi đoạn trùng + đơn/giờ riêng.
+- Chấm mù 26 cặp (13 câu đổi khối × 2) vs 187: **−0,19 ± 0,63**. Đúng số 1,73 → 1,88 nhưng việc làm 1,58 → 1,38, lý lẽ 1,65 → 1,54 (dòng dài hơn, Boom trả lời dàn trải). Bỏ, trả mã về 187.
+- Người chấm thấy điểm chung cả hai bản bỏ sót: lịch chỉ 1 người lúc giờ đông (ki-ốt 6–10h chỉ Lan, 7h ~26 đơn; trà sữa ca tối 1 người, tải ~4,6 người) — Boom có cả hai số nhưng không so. Hướng tiếp: một phép so tính sẵn "tải ~M người, lịch thường có N → thiếu ~M−N".
+- ⚠️ Câu kín K17: ý chính người ra đề viết lệch khối số liệu (theo hai người chấm); Claude không xem bộ kín nên chưa sửa.
+
+## Lần 189 (09/11, Chủ Quán "Làm lần 189"; KHÔNG ÁP — chấm mù không hơn)
+
+- Thử vế "SO VỚI LỊCH: ~N người thường làm cùng lúc → mỗi người ~X đơn/giờ, gấp ~K lần mức cả kỳ → NẶNG HƠN THƯỜNG / ngang / nhẹ". Bản đầu "mức đơn ~M người → THIẾU ~M−N người" bỏ trước khi đo: ra "thiếu 5,2 người", lặp lỗi chia thẳng của lần 184.
+- Chấm mù 30 cặp (15 câu đổi khối × 2) vs 187: **+0,07 ± 0,77**. Tìm vấn đề 1,30 → 1,67, lý lẽ 1,40 → 1,67, nhưng gọn 1,77 → 1,37, đúng số 1,97 → 1,80. Bỏ, trả mã về 187.
+- Hai lần liền (188, 189): thêm vế tính sẵn vào dòng người làm thì cái được ở tìm vấn đề bị trả lại ở độ gọn. Dòng người làm đã dài; muốn thêm phép so phải THAY vế khác (vd. vế "tương đương ~X người" của 184), không cộng thêm.
+
+## Lần 190 (09/11, Chủ Quán "Thử lần 190"; ĐÃ ÁP TS `20261109_185152`)
+
+- Phép so của 189 nhưng THAY vế "tương đương ~X người" của 184 khi quán có lịch thường lệ (không lịch thì giữ vế cũ). Dòng người làm ngắn hơn bản 189.
+- Chấm mù 30 cặp vs 187, khối gộp hai bản (bản mới bỏ một vế): **+0,63 ± 0,69**; câu người làm **+1,25 ± 0,92**; tìm vấn đề 1,47 → 1,77, gọn 1,63 → 1,77; dùng được bộ mở 19 → 22 / 26.
+- Demo: Boom nêu khoảng trống 15–17h ngay câu đầu, không còn đếm sai "14–15h có 2 người". Còn: khuyên "2 người cùng lúc" khi ca ~1,9 đơn/giờ — NẶNG HƠN THƯỜNG ở đây do lịch chỉ phủ ~nửa khung; lần sau tách "phủ thiếu giờ" khỏi "thiếu người".
+
