@@ -100,12 +100,16 @@ void main() {
       ));
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
-      expect(find.text('Thời tiết · TP. Hồ Chí Minh'), findsOneWidget);
+      // 09/11: tiêu đề 2 dòng (tên khu vực dưới chữ Thời tiết, không bị nút Đổi khu vực cắt)
+      expect(find.text('Thời tiết'), findsOneWidget);
+      expect(find.text('TP. Hồ Chí Minh'), findsOneWidget);
+      expect(find.text('Hôm nay'), findsOneWidget);
       // ghi nguồn ở cuối danh sách: cuộn tới mới được dựng
       await t.scrollUntilVisible(find.text('Nguồn dữ liệu'), 300, scrollable: find.byType(Scrollable).first);
       expect(t.takeException(), isNull);
       expect(find.text('Apple Weather'), findsOneWidget);
       expect(find.text('Nguồn dữ liệu'), findsOneWidget);
+      expect(find.text('Hỏi Bé Boom'), findsOneWidget);
     }
     await t.binding.setSurfaceSize(null);
   });
