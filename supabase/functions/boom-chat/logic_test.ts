@@ -2063,3 +2063,15 @@ Deno.test('lần 183: hỏi ca nào tính đơn mỗi giờ của đúng ca đó
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('c'), 'mai mua chieu, ca chieu can may nhan vien?', NOW), 'ca chiều (quán bán 16–20h) quán thường ~3,6 đơn/giờ, đông nhất 18h ~5,1 đơn (TB 28 ngày mở bán, 54k/đơn); khung dễ mưa 15–20h TRÙNG ca này');
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('a'), 'mai mưa, ca tối cần mấy người?', NOW), 'ca tối quán gần như không có đơn trong kỳ');
 });
+
+Deno.test('lần 184: số người làm cùng lúc theo chấm công, quy đổi mức đơn của ca', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_c.json', import.meta.url)));
+  const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m), 'quán thường có ~2,9 người làm cùng lúc, mỗi giờ công ~2,5 đơn (2450 đơn / 980 giờ công) → mức đơn của ca này tương đương ~1,4 người');
+  // nhân viên hỏi (chỉ thấy chấm công của chính mình) → không quy đổi
+  const mSelf = L.parseModules({ ...s.modules.thang_nay, nhan_su: { ...s.modules.thang_nay.nhan_su, self: true } });
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, mSelf).includes('người làm cùng lúc'));
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Tối mai mưa, có nên nấu thêm canh không?', NOW, m).includes('người làm'));
+});

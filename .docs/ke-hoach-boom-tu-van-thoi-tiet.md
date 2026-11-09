@@ -128,3 +128,9 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Hỏi ca nào tính đơn mỗi giờ của đúng ca đó. Bản đầu dùng giờ ca cố định (chiều 14–18h, tối 18–22h) → chấm mù 30 cặp −0,90 ± 0,69: lệch giờ bán thật (quán bán chiều 16–20h, tối 17–21h). Bỏ.
 - Bản sửa: khối giờ quán thật sự bán (liền nhau, > 1% doanh thu) giao nhiều nhất với ca; khối ≤ 6 tiếng lấy cả khối, dài hơn cắt theo ca; ghi "ca chiều (quán bán 16–20h)"; khung mưa có trùng ca không. Chấm mù 30 cặp vs 182 (khối gộp dòng hai bản): +0,37 ± 0,71; đúng quán 1,70 → 1,97, gọn 1,50 → 1,70, lý lẽ 1,77 → 1,63.
 - Kịch bản áp: `db-fix/boom_l183_ap_dung.sh` (chỉ kiểm đạt; đối chiếu mã băm lần 182 vì lô D chưa commit).
+
+## Lần 184 (09/11, Chủ Quán "dạy tiếp đi"; chưa áp)
+
+- Chấm mù 183 cho thấy Boom có đơn/giờ của ca nhưng chưa nối ra "cần mấy người" (lý lẽ 1,63). Nay dòng người làm thêm số người làm cùng lúc theo chấm công (giờ công ÷ giờ mở × ngày mở), đơn mỗi giờ công, mức đơn của ca tương đương mấy người. Không quy đổi giờ đông nhất (chia thẳng ra quá nhiều: quán trà sữa ra 6 người = cả quán). Nhân viên hỏi (chấm công của riêng mình) thì không quy đổi. Sửa nhận nhầm "thêm canh" là "thêm ca".
+- Chấm mù 39 cặp vs 183 (khối gộp dòng hai bản): **+0,67 ± 0,60**; lý lẽ 1,23 → 1,56, tìm vấn đề 1,74 → 1,95, đúng quán 1,87 → 1,97, đúng số 1,90 → 1,82 (Boom chen số không liên quan, lỗi có từ trước).
+- Kịch bản áp: `db-fix/boom_l184_ap_dung.sh` (chép logic.ts, index.ts; chỉ kiểm đạt).

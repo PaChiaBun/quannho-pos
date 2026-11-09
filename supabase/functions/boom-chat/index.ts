@@ -715,7 +715,7 @@ Deno.serve(async (req) => {
     const w = vt ? await layThoiTiet(vt, THOI_TIET) : null;
     thoiTiet = vt ? thoiTietChoBoom(r.question, w, vt) : '';
     // lô A (lần 169–172): dòng tính sẵn ghép dự báo với số của quán
-    const voiSo = thoiTiet ? thoiTietVoiSoQuan(w, r.facts ?? null, r.question) : '';
+    const voiSo = thoiTiet ? thoiTietVoiSoQuan(w, r.facts ?? null, r.question, new Date(), r.modules ?? null) : '';
     if (voiSo) { thoiTiet += `\n${voiSo}`; kind += '+tt_so'; }
     // lô C (lần 176): "mưa thì quán bán sao" → lượng mưa 60 ngày qua (Apple, chỉ đệm trong bộ nhớ) × doanh thu từng ngày.
     // Chỉ khi người hỏi đã đọc được số bán hàng (r.facts), bằng vé của chính họ.

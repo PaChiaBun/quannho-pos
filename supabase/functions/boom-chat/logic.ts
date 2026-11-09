@@ -890,7 +890,7 @@ const ngayMoBan = (f: ShopFacts) => (weekdayCounts(f.from, f.to) ?? []).reduce((
 
 /** Lô A thời tiết (lần 169–172, kế hoạch .docs/ke-hoach-boom-tu-van-thoi-tiet.md): dòng TÍNH SẴN ghép dự báo với số quán,
  *  để lời khuyên đúng quán thay vì "chuẩn bị mái che" chung chung. Thiếu số nào thì bỏ dòng đó, không đoán. */
-export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, question: string, now: Date = new Date()): string {
+export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, question: string, now: Date = new Date(), modules: ModuleFacts | null = null): string {
   if (!w || !f || !w.ngay.length) return '';
   const q = boDau(question.normalize('NFC')).toLowerCase();
   // lô D chấm mù: "sao thứ 4 nào cũng bán kém, có phải tại mưa" (hỏi chuyện đã qua) mà gắn dòng dự báo hôm nay → Boom nói "mưa có thể ảnh hưởng".
@@ -992,7 +992,7 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
     }
   }
   // 179 (lô D): hỏi người làm / ca → số đơn mỗi giờ trong khung mưa (hoặc giờ đông khi không mưa), từ doanh thu theo giờ ÷ giá trị TB một đơn
-  const NGUOI = /nguoi|nhan vien|\bnv\b|\bca (?:sang|trua|chieu|toi)|thue|phuc vu|giao hang|shipper|tang ca|them ca/;
+  const NGUOI = /nguoi|nhan vien|\bnv\b|\bca (?:sang|trua|chieu|toi)|thue|phuc vu|giao hang|shipper|tang ca\b|them ca\b/; // \b: "thêm canh" không phải "thêm ca"
   const moBan = ngayMoBan(f);
   if (NGUOI.test(q) && f.by_hour && f.orders > 0 && f.revenue > 0 && moBan > 0) {
     const tbDon = f.revenue / f.orders;
@@ -1026,7 +1026,17 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const dinh = ds.reduce((a, h) => (donGio(h) > donGio(a) ? h : a), ds[0]);
       const tb = ds.reduce((a, h) => a + donGio(h), 0) / ds.length;
       const trungMua = caHoi && mua ? (ds.some((h) => h >= mua.tu && h < mua.den) ? `; khung dễ mưa ${mua.tu}–${mua.den}h TRÙNG ca này` : `; khung dễ mưa ${mua.tu}–${mua.den}h không trùng ca này`) : caHoi && k ? '; giờ buôn bán ít khả năng mưa' : '';
-      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
+      // lần 184 (chấm mù 183: có đơn/giờ nhưng chưa nối ra "cần mấy người"): mức quán vẫn làm = đơn ÷ giờ công cả kỳ (chấm công)
+      const ns = modules?.nhan_su as Record<string, unknown> | undefined;
+      const gioCong = Number(ns?.total_hours) || 0;
+      const nangSuat = ns && !ns.self && gioCong > 0 && f.orders > 0 ? f.orders / gioCong : 0;
+      // mốc là số người quán VẪN có cùng lúc (giờ công ÷ giờ mở); không quy đổi giờ đông nhất ra người (lúc đông người làm chạy nhanh hơn, chia thẳng ra quá nhiều)
+      const gioMoNgay = f.by_hour!.filter((v) => v > tongGio * 0.01).length;
+      const cungLuc = gioMoNgay && moBan ? gioCong / (gioMoNgay * moBan) : 0;
+      const canNguoi = nangSuat >= 0.3 && cungLuc > 0
+        ? `; theo chấm công cả kỳ quán thường có ~${pctTxt(cungLuc)} người làm cùng lúc, mỗi giờ công ~${pctTxt(nangSuat)} đơn (${f.orders} đơn / ${Math.round(gioCong)} giờ công) → mức đơn của ca này tương đương ~${pctTxt(tb / nangSuat)} người (ước theo trung bình, chưa tính chuẩn bị / bếp)`
+        : '';
+      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${canNguoi} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày

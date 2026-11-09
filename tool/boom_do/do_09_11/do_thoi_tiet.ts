@@ -28,7 +28,7 @@ const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.bo}:${c.id}`)
   const facts = L.parseFacts(JSON.parse(JSON.stringify(s.facts.thang_nay))), modules = L.parseModules({ ...s.modules.thang_nay });
   const w = TROI[c.troi];
   let thoiTiet = T.HOI_THOI_TIET.test(c.q) ? T.thoiTietChoBoom(c.q, w, VT) : '';
-  if (thoiTiet && L.thoiTietVoiSoQuan) { const v = L.thoiTietVoiSoQuan(w, facts, c.q, NOW); if (v) thoiTiet += '\n' + v; }
+  if (thoiTiet && L.thoiTietVoiSoQuan) { const v = L.thoiTietVoiSoQuan(w, facts, c.q, NOW, modules); if (v) thoiTiet += '\n' + v; }
   const msgs = L.buildMessages(c.q, [], null, { huongDan: [], facts, modules, now: NOW, thoiTiet });
   let a = ''; let viet_lai = false;
   try { a = await goi(L, c.q, msgs); } catch { a = ''; }

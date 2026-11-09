@@ -70,6 +70,11 @@ Thời tiết (lần 167–175): `thoiTietChoBoom` (dự báo + khung giờ mưa
 QUÁN: khung mưa đè bao nhiêu % doanh thu ngày, mức bán thường của thứ làm mốc nhập hàng, nắng nóng ≥ 35° → % nhóm đồ uống, ngày
 đáng chuẩn bị nhất; nhãn sổ `+tt_so`). Câu hướng dẫn chỉ có dự báo khi có chữ rõ (`HOI_THOI_TIET_RO`); câu chỉ hỏi thời tiết không
 gắn lời dặn kỳ chưa có đơn (`chiHoiThoiTiet`). Kế hoạch: `.docs/ke-hoach-boom-tu-van-thoi-tiet.md`.
+Lần 176–184 thêm vào `thoiTietVoiSoQuan` (bỏ hẳn khi câu hỏi là nguyên nhân chuyện đã qua): món nước ngày mưa (chỉ khi hỏi chung món gì),
+người làm theo đúng ca (khối giờ bán thật) + số người làm cùng lúc theo chấm công (`modules.nhan_su`), mốc nhập cả đợt, nắng gắt
+trùng giờ đông; giờ đông ghi theo thứ hạng doanh thu. `thoiTietChoBoom` ghi tầm dự báo. Lô C: câu mưa × bán (`HOI_MUA_BAN`) →
+`layMuaDaQua` (Apple ngày đã qua, khung 9 ngày, chỉ đệm bộ nhớ tới nửa đêm) × `docDoanhThuNgay` (ban_hang.ts) → `muaLonVaDoanhThu`
+(≥ 10 mm so ngày cùng thứ ít mưa, < 4 ngày thì chưa đủ số; nhãn sổ `+mua_ls`).
 
 Cách viết một dòng tính sẵn: tính bằng mã, ghi số cụ thể, **nói rõ thước đo đúng** (bài học K18: ghi "lời nhiều nhất cả kỳ" như đáp
 án làm Boom kết luận sai), chỉ bật khi câu hỏi cần (từ khoá), có kiểm thử trong `logic_test.ts`.
