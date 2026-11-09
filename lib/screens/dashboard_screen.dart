@@ -1018,7 +1018,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     ],
                                   ),
                                 ),
-                                const ThoiTietThe(),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -1052,6 +1051,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Align(
+                              alignment: Alignment.centerRight,
+                              child: ThoiTietThe(),
                             ),
                           ],
                         );
@@ -1098,7 +1102,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ),
                               // Quick badge
-                              const ThoiTietThe(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -1152,6 +1155,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     icon: Icons.people_rounded,
                                     label: 'khách',
                                     value: '$customers',
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: ThoiTietThe(),
+                                    ),
                                   ),
                                 ],
                               );

@@ -96,71 +96,60 @@ class ThoiTietThe extends ConsumerWidget {
         : cb.mua
         ? const Color(0xFFB7D3FF)
         : const Color(0xFFFFC28A);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Semantics(
-        button: true,
-        label: chuaChon
-            ? 'Thời tiết, chọn khu vực quán'
-            : 'Thời tiết ${_do(v.nhiet)}${cb != null ? ', ${cb.dai}' : ', ${v.troi}'}',
-        child: Material(
-          color: nen,
-          // 09/11 máy ảo: một dòng "34° · Mai mưa 65%" đẩy chữ DOANH THU xuống hàng → hai dòng hẹp
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: vien),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const ThoiTietScreen())),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 118),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(9, 6, 11, 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, color: mauIcon, size: 20),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            chuaChon ? 'Thời tiết' : _do(v.nhiet),
-                            maxLines: 1,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              height: 1.1,
+    // 09/11 Chủ Quán: nằm cùng hàng chip "đơn / khách", dưới "Sẵn sàng", cao bằng chip đó (padding v9, chữ 14/12)
+    return Semantics(
+      button: true,
+      label: chuaChon
+          ? 'Thời tiết, chọn khu vực quán'
+          : 'Thời tiết ${_do(v.nhiet)}${cb != null ? ', ${cb.dai}' : ', ${v.troi}'}',
+      child: Material(
+        color: nen,
+        shape: StadiumBorder(side: BorderSide(color: vien)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ThoiTietScreen())),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: mauIcon, size: 15),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: chuaChon ? 'Thời tiết' : _do(v.nhiet),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (chuaChon || cb != null || v.troi.isNotEmpty)
+                          TextSpan(
+                            text:
+                                '  ${chuaChon ? 'Chọn khu vực' : cb?.ngan ?? v.troi}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: cb != null
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                              color: cb != null
+                                  ? Colors.white
+                                  : const Color(0xCCFFFFFF),
                             ),
                           ),
-                          if (chuaChon || cb != null || v.troi.isNotEmpty)
-                            Text(
-                              chuaChon ? 'Chọn khu vực' : cb?.ngan ?? v.troi,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                height: 1.2,
-                                fontWeight: cb != null
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: cb != null
-                                    ? Colors.white
-                                    : const Color(0xCCFFFFFF),
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),

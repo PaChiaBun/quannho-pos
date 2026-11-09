@@ -81,7 +81,10 @@ void main() {
     await _ve(t, const ThoiTietData(bat: false));
     expect(find.byType(InkWell), findsNothing);
     await _ve(t, const ThoiTietData(bat: true));
-    expect(find.text('Chọn khu vực'), findsOneWidget);
+    expect(
+      find.textContaining('Chọn khu vực', findRichText: true),
+      findsOneWidget,
+    );
     await _ve(
       t,
       const ThoiTietData(
@@ -104,8 +107,11 @@ void main() {
         gio: [GioThoiTiet(16, 28, 70, 'dông')],
       ),
     );
-    expect(find.text('32°'), findsOneWidget);
-    expect(find.text('Sắp mưa ~16h'), findsOneWidget);
+    expect(find.textContaining('32°', findRichText: true), findsOneWidget);
+    expect(
+      find.textContaining('Sắp mưa ~16h', findRichText: true),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
