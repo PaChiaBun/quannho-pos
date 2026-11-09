@@ -27,6 +27,7 @@ import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, 
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
   ghiApTay,
+  gonKhiKhongDon,
   ghiKy,
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
@@ -788,10 +789,10 @@ Deno.serve(async (req) => {
     // Tự kiểm (lần 41–42): số không có trong khối / không tính ra được, khuyên giảm giá món giá vốn cao, lộ tên dòng nội bộ
     // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
     const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
-    const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
-      // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
-      ? kiemTraLoi(answer, `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${thoiTiet}\n${boNho}\n${huongDan.map((c) => c.text).join('\n')}`)
-      : [];
+    const coSo = r.mode === 'advice' && !!(r.facts || r.modules || r.chain);
+    // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
+    const refKiem = coSo ? `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${thoiTiet}\n${boNho}\n${huongDan.map((c) => c.text).join('\n')}` : '';
+    const bad = coSo && left2 >= 4000 ? kiemTraLoi(answer, refKiem) : [];
     if (bad.length) {
       const ac3 = new AbortController();
       const timer3 = setTimeout(() => ac3.abort(), Math.min(left2, 8000));
@@ -814,6 +815,8 @@ Deno.serve(async (req) => {
       kind += '+kiem_so';
       latency = Date.now() - t0;
     }
+    // 09/11 lần 163: kỳ chưa có đơn mà viết lại vẫn dài / "giảm 100%" → chốt bằng mã
+    if (refKiem) answer = gonKhiKhongDon(answer, refKiem);
     // Câu hướng dẫn app mà GPT đoán nút / chức năng "(nếu có…)" → không đưa bước bịa ra, nói thẳng chưa có hướng dẫn (QC 24/10)
     if (r.mode === 'answer' && guessesAppFeature(answer)) {
       answer = `Dạ ${goiNguoiHoi(who)} ơi, Bé Boom chưa thấy hướng dẫn cho việc này trong app ạ. ${goiNguoiHoi(who)} xem thử các mục hướng dẫn gần nhất hoặc gọi Hotline 0927 55 8888 nhé.`;

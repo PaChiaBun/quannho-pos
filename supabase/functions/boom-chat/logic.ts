@@ -3107,6 +3107,20 @@ export function ngoaiGioBan(answer: string, ref: string): string[] {
 
 /** 09/11 (QC 07/11 còn sót): có phép tính "Mua X tặng Y = giảm Z%" mà câu trả lời không dùng số nào của nó → vẫn nói chung chung "chưa kết luận được". */
 /** 09/11 lô dạy: có dòng "GIÁ TRONG CÂU KHÁC MENU" mà câu trả lời không nhắc giá menu (bỏ qua, hoặc lặng lẽ dùng giá chủ quán nói). */
+/** 09/11 lần 163: kỳ chưa có đơn (ngày / tuần / tháng đang chạy) mà vẫn "giảm 100%" và đủ Vì sao / Việc tuần này dù lời nhắc dặn 1–2 câu. */
+const KHONG_DON = /KỲ NÀY CHƯA CÓ ĐƠN NÀO|NGÀY NÀY KHÔNG CÓ ĐƠN/;
+const DAI_KHONG_DON = /giảm 100\s*%|\n\s*(?:\*\*)?(?:Vì sao|Việc tuần này|Việc làm|Cần xem lại)\s*(?:\*\*)?:/iu;
+export function kyKhongDonDai(answer: string, ref: string): string {
+  return KHONG_DON.test(ref) && DAI_KHONG_DON.test(answer) ? 'kỳ này chưa có đơn nào: chỉ trả lời 1–2 câu (chưa có đơn tới giờ này, số trung bình mỗi ngày của kỳ so sánh, hỏi quán đã mở bán chưa); KHÔNG nói "giảm 100%", KHÔNG viết Vì sao / Việc tuần này / Cần xem lại' : '';
+}
+/** Chốt bằng mã sau lần viết lại: vẫn dài thì giữ đoạn đầu, bỏ câu "giảm 100%", thêm câu hỏi đã mở bán chưa. */
+export function gonKhiKhongDon(answer: string, ref: string): string {
+  if (!kyKhongDonDai(answer, ref)) return answer;
+  let dau = answer.split(/\n\s*\n/)[0].replace(/[,;]?\s*(?:nên\s+)?[^.,;]*giảm 100\s*%[^.;]*/giu, '').trim();
+  if (!/[.!?]$/.test(dau)) dau += '.';
+  return /m[ởo] b[áa]n|b[áa]n ngo[àa]i app/iu.test(dau) ? dau : `${dau} Quán đã mở bán chưa, hay đang bán ngoài app ạ?`;
+}
+
 export function boQuaGiaMenu(answer: string, ref: string): string {
   const m = /GIÁ TRONG CÂU KHÁC MENU \(tính sẵn\): ([^\n]*?)\. Nói ra/.exec(ref);
   if (!m) return '';
@@ -3140,6 +3154,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const maGiong = maTrung(answer, ref);
   const mtChua = muaTangChuaDung(answer, ref);
   const giaBo = boQuaGiaMenu(answer, ref);
+  const khongDon = kyKhongDonDai(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -3165,6 +3180,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(maGiong.length ? [`đề xuất mã mới trùng mã đang chạy (${maGiong.join(', ')}) → nói về mã đó, hoặc đề xuất mức khác`] : []),
     ...(mtChua ? [mtChua] : []),
     ...(giaBo ? [giaBo] : []),
+    ...(khongDon ? [khongDon] : []),
     ...(kyIt.length ? [`kỳ này quá ít đơn nên không khuyên theo giờ, theo thứ (${kyIt.join('; ')}) → bỏ việc theo giờ, thứ, không đặt mốc tiền theo giờ, thay bằng việc kéo khách quay lại; nói rõ nên xem "30 ngày qua" để có đủ số`] : []),
     ...(thuNgoai.length ? [`đề xuất ưu đãi vào ngày quán nghỉ (${thuNgoai.join(', ')}) → chỉ đề xuất ngày quán có bán`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),

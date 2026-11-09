@@ -1940,3 +1940,15 @@ Deno.test('09/11: tuần này chưa có đơn thì trả lời ngắn, không kh
     prev_period: 'trọn tuần trước (2/11–8/11)', prev_revenue: 560_000, prev_orders: 7 })!;
   assertStringIncludes(L.formatFacts(f, new Date('2026-11-09T12:00:00+07:00'), 'Tuần này so với tuần trước thế nào?'), 'KỲ NÀY CHƯA CÓ ĐƠN NÀO');
 });
+
+Deno.test('09/11 lần 163: kỳ chưa có đơn — mã kiểm và chốt gọn', () => {
+  const ref = 'KỲ NÀY CHƯA CÓ ĐƠN NÀO (tới giờ này): chỉ trả lời 1–2 câu';
+  const dai = 'Dạ Anh/Chị, tuần này đang có 0đ từ 0 đơn; tuần trước trung bình 80.000đ/ngày, nên doanh thu trung bình mỗi ngày giảm 100%.\n\nVì sao: tuần này mới có 1 ngày.\n\nViệc tuần này:\n- Kiểm tra món.';
+  assertEquals(L.kyKhongDonDai(dai, ref).length > 0, true);
+  const g = L.gonKhiKhongDon(dai, ref);
+  assertEquals(g, 'Dạ Anh/Chị, tuần này đang có 0đ từ 0 đơn; tuần trước trung bình 80.000đ/ngày. Quán đã mở bán chưa, hay đang bán ngoài app ạ?');
+  const ngan = 'Dạ, tuần này chưa có đơn nào tới giờ này; tuần trước trung bình 80.000đ/ngày. Quán đã mở bán chưa ạ?';
+  assertEquals(L.kyKhongDonDai(ngan, ref), '');
+  assertEquals(L.gonKhiKhongDon(ngan, ref), ngan);
+  assertEquals(L.gonKhiKhongDon(dai, 'khác'), dai);
+});
