@@ -73,7 +73,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Bộ cũ và bộ kín 26 cặp: −0,31 ± 0,71 (kín 10 cặp −0,50). Khoảng chứa 0, chưa rõ có tụt thật không.
 - Người chấm lần này cho bản cũ dùng được 38/64, còn người chấm QC lần đầu cho 27/64: người chấm khác nhau lệch nhiều, nên chỉ so trong cùng một lần chấm, không so với bảng điểm xuất phát ở trên.
 - Lượt đo cuối với mã cuối: lỗi so mốc còn 3/64 sau khi viết lại; không còn khuyên ưu đãi buổi đang quá tải, giảm quá giá món, trả lời sai món, top món bỏ sót. Lượt này chỉ đếm bằng máy, chưa chấm mù lại.
-- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng; ưu đãi theo khung giờ chưa nói phải áp tay (đã sửa bằng mã 08/11, chưa áp). (Thứ 4 hai số khác nhau: đã áp lần 154.)
+- Còn: phép tính "mua 1 tặng 1" đã có nhưng người chấm thấy Boom chưa dùng (09/11: thêm cách đọc và mã kiểm, chưa áp); ưu đãi theo khung giờ chưa nói phải áp tay (đã sửa bằng mã 08/11, chưa áp). (Thứ 4 hai số khác nhau: đã áp lần 154.)
 
 **Sửa thêm 08/11 sau khi thử web (chưa áp):**
 - Kỳ ít đơn (dưới 30) mà câu xin lời khuyên không phải câu tiếp thị ("tháng này thế nào, nên làm gì") thì thiếu dòng ít đơn, Boom vẫn khuyên ưu đãi 14–17h. Nay `baiToanTiepThi` vẫn đưa dòng ít đơn cho câu xin lời khuyên, nên mã kiểm `khuyenTheoKyIt` bắt được; câu chỉ hỏi số thì không.
@@ -85,6 +85,11 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Đã áp lần 154 (d4ad958). Web Demo hỏi ca: không còn "ca 2–5h".
 - Buổi sáng vẫn cộng tiền đơn lẻ 2–5h dù nhãn 6–11h: nay buổi không cộng khối đơn lẻ. Chưa áp.
 - Ưu đãi theo khung giờ không nói cách áp (mã giảm của app không giới hạn theo giờ): `ghiApTay` gắn 1 câu "App không tự giới hạn ưu đãi theo giờ: dặn nhân viên áp tay đúng khung giờ này." vào dòng việc đầu tiên dính, bằng mã, không bắt viết lại. Trên 494 câu đã lưu (lượt đo giai đoạn 6): gắn 51 câu; đã soát hết các dòng bị gắn, sau khi bỏ "giảm người / ca / cơm dư", "mức giảm", "thay vì giảm giá" thì đều là ưu đãi theo giờ thật. Chưa áp.
+- Đã áp lần 155 (2bcd8ca). Thời tiết bật lần 156 (9e2c5c1), thử trọn luồng trên Demo 09/11 đạt.
+- 09/11, chưa áp:
+  - Thứ của hôm nay chưa xong mà kỳ có 2 ngày thứ đó 0đ thì từng ghi "quán NGHỈ" (Demo: "quán đang nghỉ Thứ Hai" đúng hôm Thứ 2). Nay chỉ tính ngày trọn.
+  - Hỏi "buổi chiều vắng" mà dòng xếp hướng theo tiền đứng đầu là "8h và 9h hồi nửa phần mất", Boom mở đầu bằng buổi sáng. Nay câu hỏi nói đúng một buổi thì bỏ hướng giờ ngoài buổi đó, dặn trả lời buổi đó trước.
+  - Mua tặng: chỉ nhận "mua 1 tặng 1" bằng số; nay nhận "mua một tặng một", "1 tặng 1", "1+1" (khi câu nói mua / tặng / khuyến mãi). Thêm mã kiểm `muaTangChuaDung`: có phép tính mà câu trả lời không dùng số nào của nó thì viết lại. Chưa đo trên câu trả lời thật.
 
 ## Giai đoạn 2: Thời tiết
 

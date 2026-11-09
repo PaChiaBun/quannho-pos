@@ -1824,3 +1824,39 @@ Deno.test('ghiApTay: ưu đãi theo giờ chưa nói cách áp thì gắn 1 câu
   assertEquals(L.ghiApTay('Việc tuần này:\n- Chuẩn bị trước 7–9h.'), 'Việc tuần này:\n- Chuẩn bị trước 7–9h.');
   assertEquals(L.ghiApTay('Không có phần việc. Ưu đãi 14–17h.'), 'Không có phần việc. Ưu đãi 14–17h.');
 });
+
+Deno.test('thứ của hôm nay chưa xong: 2 ngày trong kỳ nhưng mới 1 ngày trọn thì không gọi quán NGHỈ (09/11)', () => {
+  // 1–9/11/2026, hôm nay Thứ 2 9/11 chưa có đơn, Thứ 2 2/11 cũng 0đ
+  const f = L.parseFacts({ period: 'Tháng này', revenue: 2_000_000, orders: 40, top: [], slow: [], from: '2026-11-01', to: '2026-11-09',
+    by_weekday: [0, 485_000, 300_000, 300_000, 300_000, 300_000, 315_000] })!;
+  const t = L.formatFacts(f, new Date('2026-11-09T09:00:00+07:00'), 'tháng này bán sao');
+  assert(!/Thứ 2[^.;]*: quán NGHỈ/.test(t), t);
+  assertStringIncludes(t, 'Thứ 2: không có đơn (kỳ mới có 1 ngày này, chưa chắc nghỉ)');
+  // hôm qua là Chủ nhật: Thứ 2 có 2 ngày trọn đều 0đ thì vẫn là nghỉ
+  const g = L.parseFacts({ ...f, to: '2026-11-09' } as never)!;
+  assert(/Thứ 2: quán NGHỈ/.test(L.formatFacts(g, new Date('2026-11-10T09:00:00+07:00'), 'tháng này bán sao')));
+});
+
+Deno.test('baiToanTiepThi: hỏi đúng một buổi thì không xếp hướng giờ của buổi khác lên đầu (08/11)', () => {
+  const h = Array(24).fill(0), p = Array(24).fill(0);
+  for (let i = 6; i < 22; i++) { h[i] = 1_000_000; p[i] = 1_000_000; }
+  h[8] = 200_000; h[9] = 200_000; h[15] = 600_000; p[15] = 900_000;
+  const f = { period: '30 ngày qua', revenue: 15_000_000, orders: 300, prev_orders: 500, top: [], slow: [], groups: [], from: '2026-10-10', to: '2026-11-08',
+    by_hour: h, prev_by_hour: p, by_weekday: [1e6, 2e6, 2e6, 2e6, 2e6, 2e6, 3e6] };
+  const chieu = L.baiToanTiepThi(f as never, null, '30 ngày qua buổi chiều vắng, nên chạy ưu đãi gì để kéo khách?');
+  assert(!/8h và 9h/.test(chieu), chieu);
+  assertStringIncludes(chieu, 'Câu hỏi nói về buổi chiều');
+  const chung = L.baiToanTiepThi(f as never, null, 'làm sao kéo thêm khách');
+  assertStringIncludes(chung, '8h và 9h');
+});
+
+Deno.test('mua tặng: đọc "mua một tặng một", "1+1"; câu trả lời không dùng phép tính thì bắt (09/11)', () => {
+  const f = { period: '30 ngày qua', revenue: 15_000_000, orders: 300, top: [], slow: [], groups: [], from: '2026-10-10', to: '2026-11-08', by_weekday: [2e6, 2e6, 2e6, 2e6, 2e6, 2e6, 3e6] };
+  const ref = L.baiToanTiepThi(f as never, null, 'chạy mua một tặng một có lỗ không');
+  assertStringIncludes(ref, 'Mua 1 tặng 1 = giảm 50%');
+  assertStringIncludes(L.baiToanTiepThi(f as never, null, 'khuyến mãi 1+1 có nên không'), 'Mua 1 tặng 1 = giảm 50%');
+  assertEquals(L.baiToanTiepThi(f as never, null, 'doanh thu 1+1 tháng').includes('Mua 1 tặng 1'), false);
+  assertEquals(L.muaTangChuaDung('Dạ, chưa đủ số để kết luận mua 1 tặng 1 có lỗ không.', ref).length > 0, true);
+  assertEquals(L.muaTangChuaDung('Dạ, mua 1 tặng 1 là giảm 50%, giá vốn 35% thì thu không đủ tiền nguyên liệu.', ref), '');
+  assertEquals(L.muaTangChuaDung('Dạ, chưa đủ số.', 'khác'), '');
+});

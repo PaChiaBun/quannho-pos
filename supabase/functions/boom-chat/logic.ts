@@ -1102,9 +1102,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     // Kỳ chưa trọn tuần ("tuần này" giữa tuần): thứ chưa tới KHÔNG phải ngày nghỉ (giai đoạn 2)
     const days = f.by_weekday.map((v, d) => ({ d: names[d], v, n: cnt ? cnt[d] : null }));
     const open = days.filter((x) => x.v > 0);
-    const closed = days.filter((x, d) => x.v === 0 && x.n !== 0 && x.n !== 1 && !(d === todayD && x.n === 1));
-    const motNgay = days.filter((x, d) => x.v === 0 && x.n === 1 && d !== todayD);
-    const notYet = days.filter((x, d) => x.v === 0 && (x.n === 0 || (d === todayD && x.n === 1)));
+    // 09/11 web Demo: Thứ 2 ngày 9, kỳ 1–9/11 có 2 Thứ 2 nhưng hôm nay chưa xong → mới 1 ngày trọn, không được gọi "quán NGHỈ"
+    const tron = (x: { n: number | null }, d: number) => (x.n ?? 0) - (d === todayD ? 1 : 0);
+    const closed = days.filter((x, d) => x.v === 0 && (x.n === null || tron(x, d) >= 2));
+    const motNgay = days.filter((x, d) => x.v === 0 && tron(x, d) === 1);
+    const notYet = days.filter((x, d) => x.v === 0 && x.n !== null && tron(x, d) <= 0);
     // 05/11: so theo trung bình / ngày — tháng có thứ 4 ngày, có thứ 5 ngày; so tổng gọi sai Thứ 2 (4 ngày) là thấp nhất
     const tbNgay = (x: { v: number; n: number | null }) => (x.n ? x.v / x.n : x.v);
     // hôm nay chưa hết ngày → không đếm ngày dở vào số ngày; thứ chỉ có đúng ngày dở thì chưa xếp hạng được
@@ -2010,7 +2012,11 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const toanMenu = /(?:c[aả]|to[aà]n|t[aấ]t c[aả]|đ[oồ]ng lo[aạ]t)(?: \S+)? (?:menu|m[oó]n|qu[aá]n)|gi[aả]m gi[aá] (?:chung|đ[oồ]ng lo[aạ]t)/.test(q) && /gi[aả]m/.test(q);
   const hoiMa = /(?:^|\s)m[aã](?: gi[aả]m| khuy[eế]n m[aã]i|\s*$| \p{Lu})|voucher|khuy[eế]n m[aã]i/u.test(q);
   const hoiNgay = /ng[aà]y n[aà]o|th[uứ] (?:m[aấ]y|n[aà]o)|cu[oố]i tu[aầ]n/.test(q) && /ưu đãi|khuy[eế]n m[aã]i|gi[aả]m|combo|(?:^|\s)m[aã](?:\s|$)/.test(q);
-  const muaTang = /mua (\d) t[aặ]ng (\d)/.exec(q);
+  // 09/11: chỉ bắt "mua 1 tặng 1" bằng số nên "mua một tặng một", "1 tặng 1", "1+1" không có phép tính
+  const SO_CHU: Record<string, string> = { 'một': '1', 'mot': '1', 'hai': '2', 'ba': '3', 'bốn': '4', 'bon': '4' };
+  const mt = /(?:mua )?(\d|một|mot|hai|ba|bốn|bon) (?:ly |phần |suất |món |cái )?t[aặ]ng (\d|một|mot|hai)(?!\d)|(?<![\d.,])(\d)\s*\+\s*(\d)(?![\d.,%])/.exec(q);
+  const muaTang = mt && (mt[1] ? /mua|t[aặ]ng/.test(mt[0]) : /mua|t[aặ]ng|khuy[eế]n m[aã]i|ch[uư][oơ]ng tr[iì]nh|ưu đãi/.test(q))
+    ? [mt[0], SO_CHU[mt[1] ?? ''] ?? mt[1] ?? mt[3], SO_CHU[mt[2] ?? ''] ?? mt[2] ?? mt[4]] : null;
   if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang) {
     // 08/11 web Demo 12 đơn: câu "tháng này thế nào, nên làm gì" không phải câu tiếp thị nên thiếu dòng ít đơn, vẫn khuyên ưu đãi 14–17h
     return f.orders < IT_DON && /n[eê]n (?:l[aà]m|thay|c[aả]i|t[aậ]p)|l[aà]m (?:sao|g[iì])|c[aá]ch n[aà]o|g[oợ]i [yý]|t[uư] v[aấ]n|khuy[eê]n|c[aả]i thi[eệ]n|kh[aắ]c ph[uụ]c/.test(q)
@@ -2088,6 +2094,9 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   if (canTang && !itDon) {
     const co: { t: string; v: number }[] = [];
     const tenThu = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+    // 08/11 web Demo: hỏi "buổi chiều vắng" mà hướng đầu là "8h và 9h hồi nửa phần mất" → câu đầu khuyên buổi sáng. Hỏi đúng một buổi thì bỏ hướng giờ ngoài buổi đó.
+    const { bq } = buoiTrongCau(question), KHUNG = [[0, 11], [11, 14], [14, 17], [17, 24]], TEN_BUOI = ['sáng', 'trưa', 'chiều', 'tối'];
+    const ngoaiBuoi = (i: number) => bq >= 0 && (i < KHUNG[bq][0] || i >= KHUNG[bq][1]);
     if (cnt && bw) {
       const tb = bw.map((v, i) => ({ i, a: nn(v) > 0 && cnt[i] > 0 ? nn(v) / cnt[i] : 0 })).filter((x) => x.a > 0 && !(mauTuan?.cuoiThap && x.i >= 5)).sort((x, y) => x.a - y.a);
       if (tb.length >= 3) {
@@ -2099,20 +2108,20 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     if (mo.length >= 6) {
       const trong = mo.slice(1, -1).filter((i) => h[i + 1] > 0).map((i) => ({ i, a: h[i] + h[i + 1] })).sort((x, y) => x.a - y.a)[0];
       const giua = [...mo.map((i) => h[i])].sort((x, y) => x - y)[Math.floor(mo.length / 2)];
-      if (trong && trong.a < 2 * giua * 0.8) co.push({ t: `khung ${trong.i}–${trong.i + 2}h (${vnd(trong.a)}/kỳ) lên nửa khoảng cách với 2 giờ thường`, v: (2 * giua - trong.a) / 2 });
+      if (trong && trong.a < 2 * giua * 0.8 && !ngoaiBuoi(trong.i)) co.push({ t: `khung ${trong.i}–${trong.i + 2}h (${vnd(trong.a)}/kỳ) lên nửa khoảng cách với 2 giờ thường`, v: (2 * giua - trong.a) / 2 });
     }
     const uong = (f.groups ?? []).filter((g) => /u[oố]ng|n[uư][oớ]c|tr[aà]\b|c[aà] ph[eê]|sinh t[oố]/iu.test(g.name));
     const qUong = uong.reduce((a, g) => a + g.qty, 0), rUong = uong.reduce((a, g) => a + g.revenue, 0);
     if (qUong > 0 && rUong < f.revenue * 0.3 && qUong / f.orders < 0.8) co.push({ t: `đồ uống từ ${qty(Math.round((qUong / f.orders) * 100) / 100)} lên ${qty(Math.round((qUong / f.orders + 0.1) * 100) / 100)} phần mỗi đơn`, v: f.orders * 0.1 * (rUong / qUong) });
     // 06/11: web Demo: dòng phân tích bảo kéo lại 8h, 9h, còn số tiền ước của khung khác; Boom ghép thành "8h–9h hồi nửa khoảng cách = 2.270.000đ" (đúng phải là 9.251.500đ)
     if (f.prev_orders && f.orders / f.prev_orders <= 0.9 && f.prev_by_hour) {
-      const mat = h.map((v, i) => ({ i, v, p: nn(f.prev_by_hour![i]) })).filter((x) => x.v < x.p).sort((x, y) => x.v - x.p - (y.v - y.p)).slice(0, 2).sort((x, y) => x.i - y.i);
+      const mat = h.map((v, i) => ({ i, v, p: nn(f.prev_by_hour![i]) })).filter((x) => x.v < x.p && !ngoaiBuoi(x.i)).sort((x, y) => x.v - x.p - (y.v - y.p)).slice(0, 2).sort((x, y) => x.i - y.i);
       if (mat.length) {
         const v = mat.reduce((a, x) => a + x.v, 0), p = mat.reduce((a, x) => a + x.p, 0);
         co.push({ t: `${mat.map((x) => `${x.i}h`).join(' và ')} (kỳ trước ${vnd(p)}, nay ${vnd(v)}) hồi nửa phần mất`, v: (p - v) / 2 });
       }
     }
-    if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. Câu đầu nêu hướng đứng đầu kèm số tiền ước, việc làm bám hướng đó trước; nói rõ là ước.`);
+    if (co.length >= 2) out.push(`Các hướng xếp theo tiền (ước trong kỳ, đạt hay không phải thử mới biết): ${co.sort((x, y) => y.v - x.v).map((x) => `${x.t} = thêm khoảng ${vnd(Math.round(x.v / 1000) * 1000)}`).join('; ')}. ${bq >= 0 ? `Câu hỏi nói về buổi ${TEN_BUOI[bq]}: câu đầu trả lời buổi ${TEN_BUOI[bq]} trước; hướng khác chỉ nhắc sau, ngắn` : 'Câu đầu nêu hướng đứng đầu kèm số tiền ước, việc làm bám hướng đó trước'}; nói rõ là ước.`);
   }
   // người chấm: Boom hay mời đúng món giá vốn 45–54% trong khi quán có món lời hơn
   const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.qty > 0);
@@ -3030,6 +3039,15 @@ export function ngoaiGioBan(answer: string, ref: string): string[] {
   return [...new Set(sai)];
 }
 
+/** 09/11 (QC 07/11 còn sót): có phép tính "Mua X tặng Y = giảm Z%" mà câu trả lời không dùng số nào của nó → vẫn nói chung chung "chưa kết luận được". */
+export function muaTangChuaDung(answer: string, ref: string): string {
+  const m = /Mua (\d) tặng (\d) = giảm (\d+)%\. ([^\n]*?)Chưa tính lương/.exec(ref);
+  if (!m) return '';
+  const so = [`${m[3]}%`, ...[...m[4].matchAll(/gấp khoảng ([\d,]+) lần|(\d+)% doanh thu/g)].map((x) => x[1] ?? `${x[2]}%`)];
+  if (so.some((x) => answer.includes(x)) || /không đủ tiền nguyên liệu/iu.test(answer)) return '';
+  return `chưa dùng phép tính mua ${m[1]} tặng ${m[2]} (giảm ${m[3]}%; ${m[4].trim()}) → câu đầu kết luận có lỗ / phải bán thêm bao nhiêu theo đúng phép tính đó`;
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
@@ -3043,6 +3061,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const dauCau = dauKhongViec(answer, ref);
   const cbGia = comboThieuGia(answer, ref);
   const maGiong = maTrung(answer, ref);
+  const mtChua = muaTangChuaDung(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -3066,6 +3085,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(dauCau ? ['câu đầu mới nêu số, chưa nói nên làm gì → viết lại câu đầu nói ngay việc nên làm trước, số để sau'] : []),
     ...(cbGia.length ? [`đề xuất combo mà chưa có giá combo (${cbGia.join('; ')}) → ghi rõ giá combo, dùng dòng combo tính sẵn nếu có`] : []),
     ...(maGiong.length ? [`đề xuất mã mới trùng mã đang chạy (${maGiong.join(', ')}) → nói về mã đó, hoặc đề xuất mức khác`] : []),
+    ...(mtChua ? [mtChua] : []),
     ...(kyIt.length ? [`kỳ này quá ít đơn nên không khuyên theo giờ, theo thứ (${kyIt.join('; ')}) → bỏ việc theo giờ, thứ, không đặt mốc tiền theo giờ, thay bằng việc kéo khách quay lại; nói rõ nên xem "30 ngày qua" để có đủ số`] : []),
     ...(thuNgoai.length ? [`đề xuất ưu đãi vào ngày quán nghỉ (${thuNgoai.join(', ')}) → chỉ đề xuất ngày quán có bán`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
