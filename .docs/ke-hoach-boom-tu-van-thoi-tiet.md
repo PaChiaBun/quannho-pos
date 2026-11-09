@@ -240,3 +240,10 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 
 - Bản chạy: lần 199 (commit 4456b60, TS `20261109_202635`). Đọc sổ thật (một lần, Chủ Quán cho phép): 0 lượt hỏi thật từ 06/11 — loạt 166–199 chưa có người thật dùng. Dạy tiếp trên bộ đề giả chỉ còn bắt lỗi hiếm; việc tiếp theo nên là đưa Boom tới quán thật (lối vào Boom cạnh chip thời tiết, gợi ý câu theo thời tiết, phát hành APK / Windows build 31, nhờ quán quen thử) rồi đọc lại sổ.
 
+## Kiểm tổng 09/11 tối (Chủ Quán "đã thông minh hơn chưa?"): bản 168 → 199
+
+- Bản 168 (`bf281aa`, đọc được thời tiết, chưa dạy tư vấn) vs bản 199 (đang chạy). Bộ kín `de_kin3` (Claude chưa đọc đề) + bộ kín mới `de_kin4` (trợ lý độc lập viết lúc kiểm, chưa dùng lần nào), 20 câu × 2 lượt mỗi bộ, 4 người chấm mù.
+- **Tổng 80 cặp: +0,59 ± 0,57** (vừa qua ngưỡng). Bộ mới hẳn de_kin4: **+0,90 ± 0,88**; de_kin3: +0,28 ± 0,72. Câu dùng được 36 → 46 / 80; hỏng 5 → 7.
+- Theo loại: chuẩn bị +2,50 ± 2,19, nhập hàng +1,07 ± 1,02, giờ bán +1,50, đóng / nghỉ +0,70; người làm −0,20, món −0,33, bẫy −0,12 (ngang). Tiêu chí: lý lẽ 1,48 → 1,71, đúng quán 1,56 → 1,68, tìm vấn đề 1,29 → 1,41; đúng số 1,89 → 1,81.
+- Kết luận: Boom có khá hơn nhưng ÍT (~+0,6 / 16), chủ yếu ở câu chuẩn bị / nhập hàng; xa so với các số đo trên bộ tự viết (lô A +1,34, lần 193 +4,60…). Lỗi còn thấy: câu không dấu "mua sang ca tuan" vẫn đọc thành "mua" (sửa ở lần 198 chưa áp), "dông" đọc thành "đông khách", tự chia số cả kỳ sai số ngày, chèn chuyện kho không liên quan.
+
