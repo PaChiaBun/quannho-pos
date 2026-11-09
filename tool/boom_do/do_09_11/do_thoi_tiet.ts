@@ -15,13 +15,13 @@ const CA = [
   ...JSON.parse(await Deno.readTextFile(Deno.env.get('KIN') ?? R + 'cham_tu_van/thoi_tiet/de_kin.json')).map((c: any) => ({ ...c, bo: 'kin' })),
 ];
 const VT = { lat: 10.8, lon: 106.7, ten: 'TP. Hồ Chí Minh' };
-// NL_B=low: mức suy nghĩ riêng cho bản B (đo 09/11 lần 211); TOK cộng token ra để ước chi phí
-const NL_B = Deno.env.get('NL_B') ?? 'none'; const TOK: Record<string, number> = { A: 0, B: 0 };
+// NL_A / NL_B: mức suy nghĩ lần trả lời đầu của bản A / B (lần 211–212); lần viết lại dùng none như máy chủ; TOK cộng token ra
+const NL_B = Deno.env.get('NL_B') ?? 'none', NL_A = Deno.env.get('NL_A') ?? 'none'; const TOK: Record<string, number> = { A: 0, B: 0 };
 const goi = async (L: any, q: string, m: any, ban = 'A') => {
   const n = L.loaiCau(q, false) === 'ke_hoach' ? 900 : 600;
   const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', signal: AbortSignal.timeout(120_000), headers: { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-6-luna', messages: m, max_completion_tokens: n * 2, reasoning_effort: ban === 'B' ? NL_B : 'none' }) });
-  const j = await r.json(); TOK[ban] += Number(j.usage?.completion_tokens ?? 0); return L.plainAnswer(String(j.choices?.[0]?.message?.content ?? ''));
+    body: JSON.stringify({ model: 'gpt-6-luna', messages: m, max_completion_tokens: n * 2, reasoning_effort: ban === 'B' ? NL_B : ban === 'A' ? NL_A : 'none' }) });
+  const j = await r.json(); TOK[ban] = (TOK[ban] ?? 0) + Number(j.usage?.completion_tokens ?? 0); return L.plainAnswer(String(j.choices?.[0]?.message?.content ?? ''));
 };
 const out: any[] = [];
 // IDS="mo:T02 kin:K03…" chỉ chạy các câu đó; CHI_B=1 chỉ sinh bản B (ghép với câu trả lời bản cũ đã có)
@@ -38,7 +38,7 @@ const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.bo}:${c.id}`)
   const goc = `${L.soLieuGoc(c.q, { facts, modules, now: NOW })}\n${thoiTiet}`;
   const loi = a ? L.kiemTraLoi(a, goc) : [];
   const loi_kiem = loi.map((x: string) => x.slice(0, 60)); // 09/11 lô D: xem kiểm số bắt gì
-  if (loi.length) { try { const b = await goi(L, c.q, [...msgs, { role: 'assistant', content: a }, { role: 'user', content: L.noteKiem(loi) }], ban); if (b) { a = b; viet_lai = true; } } catch { /* giữ */ } }
+  if (loi.length) { try { const b = await goi(L, c.q, [...msgs, { role: 'assistant', content: a }, { role: 'user', content: L.noteKiem(loi) }], 'viet_lai'); if (b) { a = b; viet_lai = true; } } catch { /* giữ */ } }
   if (a) a = L.ghiApTay(L.gonKhiKhongDon ? L.gonKhiKhongDon(a, goc) : a);
   out.push({ id: c.id, bo: c.bo, ban, r, loai: c.loai, quan: c.quan, q: c.q, ho_so: s.mo_ta, cau_truoc: '', van_de: [`Trời (dự báo giả để đo): ${c.troi}`],
     y_chinh: c.y_chinh, can_tranh: c.can_tranh, kh: goc, a, viet_lai, loi_kiem, co_tt: !!thoiTiet });
