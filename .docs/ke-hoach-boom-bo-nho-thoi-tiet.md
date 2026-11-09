@@ -313,3 +313,18 @@ Xong khi: bộ thử đạt và câu tiếp thị trong bộ 32 câu khá lên s
 - Sửa thêm sau đo: `boQuaGiaMenu` (có dòng giá khác menu mà câu trả lời không nhắc giá menu → viết lại); thứ của hôm nay khi KHÔNG có số từng ngày: dòng so kỳ trước chia đủ n như bảng theo thứ (hết Thứ 4 hai số). Test 150/150.
 - **Đã áp lần 162 (a2844b2, 09/11 12:02).** Thử web Demo: tăng giá cà phê dùng 30 ngày qua (395 đơn) thay 12 đơn; "30 ngày tới" dùng 30 ngày qua, việc theo tuần; mua 1 tặng 1 trà đào: còn 11.000đ/lượt so 23.000đ, gấp 2,1 lần; "nhớ gì" nói thẳng chưa ghi nhớ; bài đăng không còn câu kỳ. Lỗi mới: "tuần này so tuần trước" lúc Thứ 2 trưa 0 đơn → "giảm 100%" và khuyên ẩn hết món chưa bán. Đã sửa (kỳ tuần / tháng đang chạy chưa có đơn → trả lời ngắn như ngày không đơn), test 151/151, chưa commit, chưa áp.
 - Áp lần 163 (a5081fe): chỉ lời nhắc → Boom vẫn "giảm 100%" + đủ mục (hết khuyên ẩn món). Áp lần 164 (29102a0, 09/11 12:12): mã kiểm `kyKhongDonDai` + chốt `gonKhiKhongDon`. Web Demo: "Tuần này so với tuần trước" → 1 câu: chưa có đơn tới giờ này, tuần trước 80.000đ/ngày, hỏi đã mở bán chưa. Câu "30 ngày qua bán thế nào" vẫn đủ mục.
+
+### Đo lại 09/11 chiều: lần 151 vs lần 164 (đang chạy)
+Khối số đưa người chấm lấy của bản mới (sửa lỗi lần đo trước). Bộ: mới (09/11), mới thứ hai (`cau_moi2.json`, trợ lý khác viết, chưa dùng để dạy, không hỏi số hôm nay / hôm qua), kín. 168 cặp, 8 người chấm, cùng một lượt.
+
+| Bộ | n | Cũ | Mới | Mới − cũ | Dùng được / tạm / hỏng (cũ → mới) |
+|---|---|---|---|---|---|
+| Mới 09/11 | 64 | 11,78 | 12,52 | +0,73 ± 0,48 | 25/33/6 → 35/27/2 |
+| Mới thứ hai | 64 | 12,64 | 13,09 | +0,45 ± 0,54 | 35/25/4 → 37/24/3 |
+| Kín | 40 | 12,70 | 12,85 | +0,15 ± 0,56 | 23/14/3 → 18/22/0 |
+| Tất cả | 168 | 12,33 | 12,82 | **+0,49 ± 0,30** | |
+
+- Kết luận: Boom ĐÃ khá lên, khoảng tin cậy không chứa 0. Rõ nhất: giá món +1,88 ± 0,86, quyết định +1,04 ± 0,91, so sánh +1,83 ± 1,38. Tụt (n nhỏ, chưa chắc): kế hoạch −1,50 ± 1,41, chẩn đoán −0,83 ± 0,94. Tiếp thị chỉ +0,09.
+- Tiêu chí: trả lời thẳng 1,65 → 1,75, tìm vấn đề 1,12 → 1,27, đúng số 1,78 → 1,84; lý lẽ vẫn thấp nhất (1,23).
+- Người chấm vẫn thấy (cả hai bản): né phép tính then chốt dù đủ số (hoà vốn thuê quầy / quảng cáo / thuê người, giá cần đặt trên sàn = giá ÷ (1 − phí), tiền mất khi giảm % giờ cuối), gán số một giờ cho cả khung giờ, chèn số lạc đề (thu − chi, mã giảm), bỏ sót ý thực tế (thu tiền gói ăn trước, 3 người không chia nổi 2 điểm, bún nước giao xa).
+- Sửa sau đo (chưa commit, chưa áp): giá khác menu nhận chữ chen "mình đang bán 25k"; thứ của hôm nay khi không có số từng ngày: mọi dòng chia n−1 (lần 162 làm bảng chia n còn dòng "MỚI tụt" chia n−1 → Thứ 4 −19,9% và −39,9%). Test 153/153.

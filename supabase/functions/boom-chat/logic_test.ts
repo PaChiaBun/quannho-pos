@@ -1923,8 +1923,8 @@ Deno.test('09/11: không có số từng ngày thì thứ của hôm nay vẫn m
     prev_period: '35 ngày trước', prev_revenue: 5_000_000, prev_orders: 200, prev_from: '2026-08-27', prev_to: '2026-09-30',
     prev_by_weekday: [1_000_000, 1_000_000, 2_000_000, 700_000, 700_000, 700_000, 0] })!;
   const t = L.formatFacts(f, new Date('2026-11-04T10:00:00+07:00'), 'doanh thu sao giảm');
-  assertStringIncludes(t, 'Thứ 4 900.000đ (5 ngày, trung bình 180.000đ/ngày)');
-  assert(/Thứ 4 kỳ trước [\d.]+đ → nay 180\.000đ/.test(t), t);
+  assertStringIncludes(t, 'Thứ 4 900.000đ (5 ngày, trung bình 225.000đ/ngày tính 4 ngày trọn');
+  assert(/Thứ 4 kỳ trước [\d.]+đ → nay 225\.000đ/.test(t), t);
 });
 
 Deno.test('09/11: mã kiểm bắt câu bỏ qua giá khác menu', () => {
@@ -1951,4 +1951,11 @@ Deno.test('09/11 lần 163: kỳ chưa có đơn — mã kiểm và chốt gọn
   assertEquals(L.kyKhongDonDai(ngan, ref), '');
   assertEquals(L.gonKhiKhongDon(ngan, ref), ngan);
   assertEquals(L.gonKhiKhongDon(dai, 'khác'), dai);
+});
+
+Deno.test('09/11: giá khác menu với chữ chen "mình đang bán"', () => {
+  const f = L.parseFacts({ period: 'Tháng này', revenue: 9e6, orders: 300, top: [], slow: [], from: '2026-11-01', to: '2026-11-28',
+    groups: [{ name: 'Uống', revenue: 9e6, qty: 350, items: 1, unsold: 0, unsold_names: [], slow: [], top: [{ name: 'Cà phê muối', qty: 200, revenue: 5e6, price: 32000, cost: 12000 }] }] })!;
+  assertStringIncludes(L.giaKhacMenu(f, 'Cà phê muối mình đang bán 25k, vậy mỗi ly lời được bao nhiêu em?'), 'câu hỏi nói 25.000đ, menu trong app đang ghi 32.000đ');
+  assertEquals(L.giaKhacMenu(f, 'Cà phê muối mình bán 200 ly rồi'), '');
 });

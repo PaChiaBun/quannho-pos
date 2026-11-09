@@ -836,9 +836,7 @@ export function changeLine(f: ShopFacts, todayD = -1): string {
     const tb = (v: number, n: number, dang: boolean) => { const m = n - (dang ? 1 : 0); return m > 0 ? v / m : 0; };
     // có số từng ngày thì bỏ tiền hôm nay (ngày dở) như dòng "Doanh thu theo thứ"
     const tienHomNay = todayD >= 0 ? f.by_day?.find((y) => y.d === f.to)?.revenue ?? 0 : 0;
-    // 09/11 chấm mù: không có số từng ngày thì không bỏ được tiền ngày dở → chia đủ n như dòng "Doanh thu theo thứ" (trước đó Thứ 4 hai số)
-    const coSoNgay = !!f.by_day?.length;
-    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k] - (k === todayD ? tienHomNay : 0), c1[k], k === todayD && coSoNgay), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
+    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k] - (k === todayD ? tienHomNay : 0), c1[k], k === todayD), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
       .filter((x) => x.a > 0 && x.b > 0).map((x) => ({ ...x, r: (x.a - x.b) / x.b })).sort((a, b) => a.r - b.r);
     if (ds.length >= 2) {
       const lo = ds[0], hi = ds[ds.length - 1];
@@ -1125,7 +1123,12 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const low = [...xep].sort((a, b) => tbXep(a) - tbXep(b))[0], high = [...xep].sort((a, b) => tbCao(b) - tbCao(a))[0];
     lines.push(
       // 08/11: Thứ của hôm nay từng có 2 trung bình (dòng này chia n gồm ngày dở, dòng so kỳ trước chia n−1) → bỏ hẳn hôm nay ở cả hai
-      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? (todayD >= 0 && x.d === days[todayD].d && tienHomNay !== undefined && x.n > 1 ? ` (${x.n} ngày, trung bình ${x.n - 1} ngày đã trọn ${vnd((x.v - tienHomNay) / (x.n - 1))}/ngày, chưa tính hôm nay)` : ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)`) : ''}`).join('; ')}. ` +
+      // 09/11 lần 164 chấm mù: không có số từng ngày mà bảng chia n, dòng xếp / "MỚI tụt" chia n−1 → Thứ 4 −19,9% và −39,9%. Mọi dòng chia n−1 cho thứ của hôm nay.
+      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? (todayD >= 0 && x.d === days[todayD].d && x.n > 1
+        ? (tienHomNay !== undefined
+          ? ` (${x.n} ngày, trung bình ${x.n - 1} ngày đã trọn ${vnd((x.v - tienHomNay) / (x.n - 1))}/ngày, chưa tính hôm nay)`
+          : ` (${x.n} ngày, trung bình ${vnd(x.v / (x.n - 1))}/ngày tính ${x.n - 1} ngày trọn; tổng có cả hôm nay chưa hết ngày)`)
+        : ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)`) : ''}`).join('; ')}. ` +
         [xep.length >= 2 ? `${cnt ? 'So theo trung bình / ngày — ' : ''}Cao nhất: ${high.d}; thấp nhất: ${low.d}` : '',
           closed.length ? `${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán)` : '',
           motNgay.length ? `${motNgay.map((x) => x.d).join(', ')}: không có đơn (kỳ mới có 1 ngày này, chưa chắc nghỉ)` : '',
@@ -2275,7 +2278,8 @@ export function giaKhacMenu(f: ShopFacts | null | undefined, question: string): 
   const lech: string[] = [];
   for (const { t, het, tat } of monKhop(f, question)) {
     if (!t.price) continue;
-    const m = /^ (?:(?:gia|ban|dang ban|dang|co|chi|la) ){0,3}(\d{1,3})(?: ?k\b| ?(?:nghin|ngan|n)\b| 000\b)/.exec(q.slice(het, het + 30));
+    // 09/11: "Cà phê muối mình đang bán 25k" — chữ chen giữa tên món và giá
+    const m = /^ (?:(?:gia|ban|dang|co|chi|la|minh|em|anh|quan|toi|tui|hien|tai|nay|thi|o) ){0,4}(\d{1,3})(?: ?k\b| ?(?:nghin|ngan|n)\b| 000\b)/.exec(q.slice(het, het + 40));
     if (!m) continue;
     const noi = +m[1] * 1000;
     if (Math.abs(noi - t.price) >= 1000 && !lech.some((x) => x.includes(t.name))) lech.push(`${t.name}${tat ? ' (khớp theo tên gọi tắt)' : ''}: câu hỏi nói ${vnd(noi)}, menu trong app đang ghi ${vnd(t.price)}`);
