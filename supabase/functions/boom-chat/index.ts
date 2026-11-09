@@ -98,6 +98,9 @@ const QUOTA = {
 // chấm kín +3,3 / 16 so gpt-4o-mini, rẻ hơn, ~3,4 giây — .docs/lo-trinh-boom-co-van.md)
 const DOI_MOI = !/^gpt-(?:3|4)/.test(MODEL);
 const REASONING = env('BOOM_REASONING', 'none');
+// lần 211 (09/11, 72 cặp chấm mù trên 3 bộ kín độc lập: tư vấn 'low' hơn 'none' +0,65 ± 0,45, gọn hơn; chậm thêm ~3 giây, token ra ×1,7):
+// chỉ câu trả lời tư vấn suy nghĩ 'low'; rút ghi nhớ chạy ngầm và chế độ hướng dẫn giữ BOOM_REASONING
+const REASONING_TU_VAN = env('BOOM_REASONING_ADVICE', 'low');
 const PRICES = {
   inPerM: num('BOOM_PRICE_IN_PER_M', MODEL === 'gpt-6-luna' ? 0.1 : 0.15),
   outPerM: num('BOOM_PRICE_OUT_PER_M', MODEL === 'gpt-6-luna' ? 0.5 : 0.6),
@@ -706,8 +709,10 @@ Deno.serve(async (req) => {
   const memory = mem.turns;
   if (memory.length) kind += `+nho${mem.hasData && !kind.includes('so_lieu') ? '+so_lieu' : ''}`;
   const t0 = Date.now();
+  // lần 211: câu tư vấn suy nghĩ 'low' (~7 giây) → chờ 16 giây (app chờ 20 giây); câu khác giữ 12 giây
+  const choToiDa = r.mode === 'advice' ? 16_000 : UPSTREAM_TIMEOUT_MS;
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
+  const timer = setTimeout(() => ac.abort(), choToiDa);
   // Thời tiết cho câu tư vấn có liên quan, và câu hướng dẫn có chữ rõ về thời tiết (09/11); lỗi thì bỏ, không chậm quá 4 giây
   let thoiTiet = '';
   if (THOI_TIET && ((r.mode === 'advice' && HOI_THOI_TIET.test(r.question)) || (r.mode === 'answer' && HOI_THOI_TIET_RO.test(r.question)))) {
@@ -749,7 +754,8 @@ Deno.serve(async (req) => {
     : '';
   if (soTay) kind += '+so_tay';
   const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
-  const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
+  // lần viết lại / hỏi lại dùng mức thường (nhanh): chỉ lần trả lời đầu của câu tư vấn suy nghĩ 'low'
+  const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = r.mode === 'advice' ? REASONING_TU_VAN : REASONING) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
       signal,
@@ -757,7 +763,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         // hướng dẫn 450 → 650: chép đủ bước (26/10)
-        ...((n: number) => DOI_MOI ? { max_completion_tokens: n * 2, reasoning_effort: REASONING } : { temperature: 0.2, max_tokens: n })(
+        ...((n: number) => DOI_MOI ? { max_completion_tokens: n * 2, reasoning_effort: nghi } : { temperature: 0.2, max_tokens: n })(
           r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650,
         ),
         messages: msgs,
@@ -779,7 +785,7 @@ Deno.serve(async (req) => {
     // GPT tự từ chối câu tư vấn mà bộ lọc luật không chặn (vd "đàm phán đại lý", "chủ nhà tăng tiền thuê") → hỏi lại
     // MỘT lần kèm nhắc phạm vi; câu thật sự ngoài phạm vi thì GPT vẫn giữ câu từ chối (chấm cố vấn 24/10).
     // Chỉ câu có từ khoá kinh doanh, còn ≥ 4 giây; lần hỏi lại có hẹn giờ riêng, lỗi thì giữ câu trả lời + token lần 1.
-    const left = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
+    const left = choToiDa - (Date.now() - t0);
     if (isScopeRefusal(answer) && looksBusiness(r.question) && left >= 4000) {
       const ac2 = new AbortController();
       const timer2 = setTimeout(() => ac2.abort(), Math.min(left, 8000));
@@ -788,7 +794,7 @@ Deno.serve(async (req) => {
           ...messages.slice(0, 1),
           { role: 'system', content: RETRY_SCOPE_NOTE },
           ...messages.slice(1),
-        ], ac2.signal);
+        ], ac2.signal, REASONING);
         if (again.ok) {
           const d2 = await again.json();
           const a2 = clipAnswer(plainAnswer(String(d2?.choices?.[0]?.message?.content ?? '')));
@@ -808,7 +814,7 @@ Deno.serve(async (req) => {
     }
     // Tự kiểm (lần 41–42): số không có trong khối / không tính ra được, khuyên giảm giá món giá vốn cao, lộ tên dòng nội bộ
     // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
-    const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
+    const left2 = choToiDa - (Date.now() - t0);
     const coSo = r.mode === 'advice' && !!(r.facts || r.modules || r.chain);
     // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
     const refKiem = coSo ? `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${thoiTiet}\n${boNho}\n${huongDan.map((c) => c.text).join('\n')}` : '';
@@ -817,7 +823,7 @@ Deno.serve(async (req) => {
       const ac3 = new AbortController();
       const timer3 = setTimeout(() => ac3.abort(), Math.min(left2, 8000));
       try {
-        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], ac3.signal);
+        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], ac3.signal, REASONING);
         if (again.ok) {
           const d3 = await again.json();
           const a3 = clipAnswer(plainAnswer(String(d3?.choices?.[0]?.message?.content ?? '')));

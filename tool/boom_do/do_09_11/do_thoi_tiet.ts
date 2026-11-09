@@ -15,11 +15,13 @@ const CA = [
   ...JSON.parse(await Deno.readTextFile(Deno.env.get('KIN') ?? R + 'cham_tu_van/thoi_tiet/de_kin.json')).map((c: any) => ({ ...c, bo: 'kin' })),
 ];
 const VT = { lat: 10.8, lon: 106.7, ten: 'TP. Hồ Chí Minh' };
-const goi = async (L: any, q: string, m: any) => {
+// NL_B=low: mức suy nghĩ riêng cho bản B (đo 09/11 lần 211); TOK cộng token ra để ước chi phí
+const NL_B = Deno.env.get('NL_B') ?? 'none'; const TOK: Record<string, number> = { A: 0, B: 0 };
+const goi = async (L: any, q: string, m: any, ban = 'A') => {
   const n = L.loaiCau(q, false) === 'ke_hoach' ? 900 : 600;
   const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', signal: AbortSignal.timeout(120_000), headers: { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-6-luna', messages: m, max_completion_tokens: n * 2, reasoning_effort: 'none' }) });
-  const j = await r.json(); return L.plainAnswer(String(j.choices?.[0]?.message?.content ?? ''));
+    body: JSON.stringify({ model: 'gpt-6-luna', messages: m, max_completion_tokens: n * 2, reasoning_effort: ban === 'B' ? NL_B : 'none' }) });
+  const j = await r.json(); TOK[ban] += Number(j.usage?.completion_tokens ?? 0); return L.plainAnswer(String(j.choices?.[0]?.message?.content ?? ''));
 };
 const out: any[] = [];
 // IDS="mo:T02 kin:K03…" chỉ chạy các câu đó; CHI_B=1 chỉ sinh bản B (ghép với câu trả lời bản cũ đã có)
@@ -32,11 +34,11 @@ const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.bo}:${c.id}`)
   if (thoiTiet && L.thoiTietVoiSoQuan) { const v = L.thoiTietVoiSoQuan(w, facts, c.q, NOW, modules); if (v) thoiTiet += '\n' + v; }
   const msgs = L.buildMessages(c.q, [], null, { huongDan: [], facts, modules, now: NOW, thoiTiet });
   let a = ''; let viet_lai = false;
-  try { a = await goi(L, c.q, msgs); } catch { a = ''; }
+  try { a = await goi(L, c.q, msgs, ban); } catch { a = ''; }
   const goc = `${L.soLieuGoc(c.q, { facts, modules, now: NOW })}\n${thoiTiet}`;
   const loi = a ? L.kiemTraLoi(a, goc) : [];
   const loi_kiem = loi.map((x: string) => x.slice(0, 60)); // 09/11 lô D: xem kiểm số bắt gì
-  if (loi.length) { try { const b = await goi(L, c.q, [...msgs, { role: 'assistant', content: a }, { role: 'user', content: L.noteKiem(loi) }]); if (b) { a = b; viet_lai = true; } } catch { /* giữ */ } }
+  if (loi.length) { try { const b = await goi(L, c.q, [...msgs, { role: 'assistant', content: a }, { role: 'user', content: L.noteKiem(loi) }], ban); if (b) { a = b; viet_lai = true; } } catch { /* giữ */ } }
   if (a) a = L.ghiApTay(L.gonKhiKhongDon ? L.gonKhiKhongDon(a, goc) : a);
   out.push({ id: c.id, bo: c.bo, ban, r, loai: c.loai, quan: c.quan, q: c.q, ho_so: s.mo_ta, cau_truoc: '', van_de: [`Trời (dự báo giả để đo): ${c.troi}`],
     y_chinh: c.y_chinh, can_tranh: c.can_tranh, kh: goc, a, viet_lai, loi_kiem, co_tt: !!thoiTiet });
@@ -44,4 +46,4 @@ const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.bo}:${c.id}`)
 for (let i = 0; i < job.length; i += 12) await Promise.all(job.slice(i, i + 12).map((f: any) => f()));
 await Deno.writeTextFile(Deno.args[1], JSON.stringify(out));
 const dem: any = {}; for (const x of out) { const k = `${x.bo}:${x.ban}`; dem[k] = dem[k] ?? { cau: 0, rong: 0, viet_lai: 0, co_tt: 0 }; dem[k].cau++; if (!x.a) dem[k].rong++; if (x.viet_lai) dem[k].viet_lai++; if (x.co_tt) dem[k].co_tt++; }
-console.log(JSON.stringify(dem));
+console.log(JSON.stringify(dem), 'token ra A/B:', JSON.stringify(TOK));
