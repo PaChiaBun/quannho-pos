@@ -47,6 +47,16 @@ class BoomTurn {
   };
 }
 
+/// Câu báo khi máy chủ chặn vì hết lượt ([BoomAiService.lastLimit]); null = không hết lượt.
+String? boomLimitText(String? code, String goi) => switch (code) {
+  'RATE_LIMITED' =>
+    '$goi hỏi Bé Boom hơi nhiều trong giờ này nên Bé Boom cần nghỉ một chút. '
+        '$goi hỏi lại sau ít phút nhé!',
+  'BUDGET_EXCEEDED' =>
+    'Hôm nay quán đã dùng hết lượt hỏi Bé Boom phân tích. $goi hỏi lại vào ngày mai nhé!',
+  _ => null,
+};
+
 class BoomAiService {
   final SupabaseClient client;
   final Duration timeout;
@@ -63,10 +73,23 @@ class BoomAiService {
   /// Máy đang đăng nhập bằng vé thật (gửi được tới hàm boom-chat).
   bool get canSend => _authHeader != null;
 
+  /// Lần gọi gần nhất bị máy chủ chặn vì hết lượt: 'RATE_LIMITED' (quá số câu / giờ) hoặc 'BUDGET_EXCEEDED'
+  /// (hết hạn mức hôm nay); null = không phải lỗi hết lượt.
+  String? lastLimit;
+
+  /// Mã hết lượt trong lỗi trả về (429 + {error: …}); null nếu là lỗi khác.
+  static String? limitOf(Object e) {
+    if (e is! FunctionException || e.status != 429) return null;
+    final d = e.details;
+    final code = d is Map ? d['error'] : null;
+    return code == 'BUDGET_EXCEEDED' ? code : 'RATE_LIMITED';
+  }
+
   Future<Map<String, dynamic>?> _invoke(
     Map<String, dynamic> body, {
     Duration? wait,
   }) async {
+    lastLimit = null;
     final auth = _authHeader;
     if (auth == null) return null;
     try {
@@ -78,13 +101,17 @@ class BoomAiService {
     } catch (e) {
       // FunctionException (503 chưa bật, 429 hết lượt…), mạng, quá giờ — không làm vỡ Boom.
       if (kDebugMode) debugPrint('[BoomAi] $e');
+      lastLimit = limitOf(e);
       return null;
     }
   }
 
   /// Thời tiết khu vực quán cho thẻ Trang chủ (máy chủ đệm tối đa 3 tiếng, không gọi GPT). null = lỗi mạng.
-  Future<Map<String, dynamic>?> thoiTiet(String storeId) =>
-      _invoke({'mode': 'thoi_tiet', 'store_id': storeId, 'question': 'thoi_tiet'}, wait: const Duration(seconds: 8));
+  Future<Map<String, dynamic>?> thoiTiet(String storeId) => _invoke({
+    'mode': 'thoi_tiet',
+    'store_id': storeId,
+    'question': 'thoi_tiet',
+  }, wait: const Duration(seconds: 8));
 
   /// GPT trả lời dựa trên [chunks] (tối đa 8). null = dùng câu trả lời nguyên văn.
   Future<BoomAiReply?> ask({

@@ -1778,10 +1778,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         serverWrote = true;
         helpTool = 'boom_tu_choi';
       } else {
-        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        final han = boomLimitText(aiForAdvice.lastLimit, _goi);
+        if (han == null) {
+          aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        }
         helpTool = 'boom_so_lieu_chuoi_du_phong';
         fullReply =
-            '${_chainText(chainFacts)}\nBé Boom chưa phân tích được câu này lúc này ạ.';
+            '${_chainText(chainFacts)}\n${han ?? 'Bé Boom chưa phân tích được câu này lúc này ạ.'}';
       }
       suggestions = [
         'Chi nhánh nào cần cải thiện?',
@@ -1863,14 +1866,18 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         serverWrote = true;
         helpTool = 'boom_tu_choi';
       } else {
-        // GPT chưa bật / hết lượt / lỗi → hiện số đã đọc + ghi hàng chờ cải thiện
-        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        // GPT chưa bật / lỗi → hiện số đã đọc + ghi hàng chờ cải thiện; hết lượt → nói rõ, không ghi hàng chờ
+        final han = boomLimitText(aiForAdvice.lastLimit, _goi);
+        if (han == null) {
+          aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        }
         helpTool = 'boom_so_lieu_du_phong';
         fullReply = facts == null
-            ? (salesPerms != null && !boomCanSeeSales(salesPerms)
-                  ? 'Bé Boom chưa trả lời được câu này lúc này. $_goi thử lại sau một chút nhé!'
-                  : 'Bé Boom chưa đọc được số liệu của quán lúc này. $_goi thử lại sau một chút nhé!')
-            : '${_factsText(facts)}\nBé Boom chưa phân tích được câu này lúc này ạ.';
+            ? han ??
+                  (salesPerms != null && !boomCanSeeSales(salesPerms)
+                      ? 'Bé Boom chưa trả lời được câu này lúc này. $_goi thử lại sau một chút nhé!'
+                      : 'Bé Boom chưa đọc được số liệu của quán lúc này. $_goi thử lại sau một chút nhé!')
+            : '${_factsText(facts)}\n${han ?? 'Bé Boom chưa phân tích được câu này lúc này ạ.'}';
       }
       suggestions = ['Món nào bán ế?', 'Doanh thu tháng này?'];
     } else if (modFacts != null) {
@@ -1893,10 +1900,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         serverWrote = true;
         helpTool = 'boom_tu_choi';
       } else {
-        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        final han = boomLimitText(aiForAdvice.lastLimit, _goi);
+        if (han == null) {
+          aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
+        }
         helpTool = 'boom_so_lieu_module_du_phong';
         fullReply =
-            '${boomModulesText(modFacts, _formatCurrency)}\nBé Boom chưa phân tích được câu này lúc này ạ.';
+            '${boomModulesText(modFacts, _formatCurrency)}\n${han ?? 'Bé Boom chưa phân tích được câu này lúc này ạ.'}';
       }
       if (mod!.denied.isNotEmpty) {
         fullReply +=
