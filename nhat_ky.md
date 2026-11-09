@@ -7,6 +7,20 @@
 
 
 
+## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày (Boom lần 166 ĐÃ ÁP; app 1.0.7 build 30 đã build, CHƯA đưa lên)
+
+Chủ Quán xem app thật trên máy ảo (quán Demo) và góp ý từng vòng; mỗi vòng cài đè bản thử lên máy ảo, chụp lại. Mã: `lib/features/thoi_tiet/`, `supabase/functions/boom-chat/thoi_tiet.ts`.
+
+- ✅ **Màn thời tiết**: tiêu đề "Thời tiết" và mũi tên chìm (theme ép chữ trắng trên nền kem) → thanh tiêu đề xanh đậm chữ trắng như mọi màn. Thẻ đầu đổi màu theo tình hình (mưa xanh, nắng nóng cam, thường xanh đậm), cảnh báo + việc nên chuẩn bị nằm trong thẻ; các giờ gom một khung, ô "Bây giờ"; chấm nhiệt độ hiện tại trên thanh "Hôm nay".
+- ✅ **Thẻ Trang chủ**: một dòng ở hàng chip "đơn / khách", dưới "Sẵn sàng" (trước nằm cạnh doanh thu làm chữ DOANH THU xuống hàng). Cảnh báo ưu tiên: sắp mưa trong vài giờ (≥ 40%) > hôm nay mưa (≥ 50%) > mai mưa (≥ 60%) > nắng nóng (≥ 35°) — `canhBaoThoiTiet`.
+- ✅ **Xem từng ngày** (Chủ Quán: "sao không xem được các ngày khác"; học app Thời tiết của Apple): bấm một dòng ngày → dải chọn 7 ngày (vuốt ngang đổi ngày), thẻ màu cao / thấp / mưa + câu tóm tắt cho quán, 4 buổi Sáng / Trưa / Chiều / Tối, một dải giờ gộp nhiệt độ + cột mưa trên cùng cột. Bản đầu 2 biểu đồ rời bị chê "chưa trực quan" → bỏ.
+- ✅ **Máy chủ lần 166** (Chủ Quán "Cho phép áp", TS `20261109_135914`, `db-fix/boom_l166_ap_dung.sh`): xin Apple `hourlyEnd` tới hết ngày thứ 7 trong CÙNG một lần gọi (không thêm lượt gọi Apple, vẫn đệm ≤ 3 giờ trong bộ nhớ), trả thêm `gio_tuan`; Boom vẫn chỉ đọc 12 giờ tới. Apple nhận tham số, đã thấy số thật trên Demo. Test hàm 153/153. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l166_ap_dung.sh 20261109_135914`. Lúc áp tệp chưa commit (Chủ Quán chưa bảo) → kịch bản ghi mã băm `49164cd4…`; đã commit đúng bản đó ở `0486d6f`.
+- ⚠️ **% mưa cả ngày của Apple cao hơn từng giờ** (Thứ Ba 10/11: ngày 65%, giờ cao nhất 39%) → câu tóm tắt cũ ghi "Ít khả năng mưa" trái số ngày. Nay `tomTatNgay` dùng khung tương đối: "Nếu mưa thường rơi 15–20h (mỗi giờ tối đa 39%)".
+- ✅ **Bản dựng** (worktree sạch `quan_nho_phat_hanh`): build 27 → 30 theo từng vòng góp ý, **chỉ dùng build 30** (commit `0486d6f`, đã push): web + APK (versionCode 30, chứng chỉ `5583d121…`) ở `quan_nho_phat_hanh/build/`, Windows workflow `42578724084`. Build 26–29 bỏ, không đưa lên.
+- ✅ Test: `test/features/thoi_tiet_test.dart` 7/7 (đọc giờ cả tuần, câu tóm tắt, bấm mở ngày + vuốt, màn 360 và 1280 không tràn chữ).
+- ⚠️ Chạy test hàm Boom phải có `-A` (thiếu quyền đọc tệp thì 7 bài báo hỏng giả).
+- 🔲 Chưa đưa web / APK / Windows lên, chưa ghi `app_versions`, chưa gửi App Store / Play. Màn "Hôm nay" của màn xem ngày và tài khoản nhân viên chưa xem trên máy ảo (chỉ có test). Máy màn hẹp (Sunmi) chữ cảnh báo dài trên thẻ Trang chủ có thể bị cắt "…".
+
 ## 2026-11-07 → 09 — AI Boom: QC độc lập, thời tiết, bộ nhớ quán, sổ tay, lô dạy (lần 152 → 165 ĐÃ ÁP; app 1.0.7 đã build, CHƯA đưa lên)
 
 Cấu trúc hiện tại: `.docs/kien-truc-boom-chat.md`. Kế hoạch + từng lần sửa / đo: `.docs/ke-hoach-boom-bo-nho-thoi-tiet.md`. Từng lần áp: `boom_changelog` (/admin).
@@ -18,7 +32,7 @@ Cấu trúc hiện tại: `.docs/kien-truc-boom-chat.md`. Kế hoạch + từng 
 - ✅ **Lô dạy 09/11** (lần 162–165): kỳ ít đơn tự lấy 30 ngày qua, "30 ngày tới", tuần mới so trọn tuần trước, kỳ chưa có đơn trả lời ngắn; xếp món theo lời mỗi phần, lời qua sàn, mua tặng theo giá vốn món, giá chủ quán nói khác menu; lỗi bỏ dấu mua/mưa, bao/bão.
 - ✅ **Đo chấm mù 09/11** (`tool/boom_do/do_09_11/`): lần 151 vs lần 164, 168 cặp trên bộ chưa dạy + kín: **+0,49 ± 0,30** (12,33 → 12,82 / 16); giá món +1,88, quyết định +1,04; tiếp thị +0,09; kế hoạch −1,50 (n nhỏ).
 - ⚠️ Lần đo trước đó (151 vs 161: +0,10) đưa người chấm khối số liệu của bản cũ → có thể trừ oan bản mới; đã sửa `tron.py`.
-- 🔲 App 1.0.7+26 (commit `5c4fa40`, worktree sạch `quan_nho_phat_hanh`): web + APK đã build, Windows chạy workflow; đưa web / APK lên máy chủ bị hệ thống quyền chặn → Chủ Quán tự đưa. Chưa ghi `app_versions`, chưa gửi App Store / Play. Tệp `AuthKey_JS4U2BFQZW.p8` còn trong Tải về: sao lưu rồi xoá.
+- 🔲 App 1.0.7+26 (commit `5c4fa40`, worktree sạch `quan_nho_phat_hanh`; nay thay bằng build 30, xem mục 09/11 thời tiết ở trên): web + APK đã build, Windows chạy workflow; đưa web / APK lên máy chủ bị hệ thống quyền chặn → Chủ Quán tự đưa. Chưa ghi `app_versions`, chưa gửi App Store / Play. Tệp `AuthKey_JS4U2BFQZW.p8` còn trong Tải về: sao lưu rồi xoá.
 - ➡️ Tiếp theo: dòng tính sẵn hoà vốn (thuê người / quảng cáo / thuê quầy), giá cần đặt trên sàn; tiếp thị; sau 1–2 tuần đọc số đếm dùng thật (câu hỏi, 👍/👎, số ghi nhớ quán).
 
 ## 2026-11-05 — /admin: quán cần gọi sớm (Chủ Quán "Làm tiếp phần quản lý"; ĐÃ ÁP production 05/11, chưa commit)

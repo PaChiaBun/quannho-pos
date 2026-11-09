@@ -32,7 +32,7 @@ Nguyên tắc đã đo nhiều lần: **thêm lời dặn cho AI gần như khô
 | `ky.ts` | Đọc kỳ trong câu hỏi bằng luật (giờ VN): hôm nay, tuần, tháng, quý, "30 ngày qua / tới", so với… |
 | `hoi.ts` | Đường ask: đọc kỳ → lấy số đúng quyền người hỏi, đệm; kỳ mặc định ít đơn thì đọc lại 30 ngày qua |
 | `lay_so.ts`, `ban_hang.ts` | Đọc số các mục (thu chi, kho, nhân viên, khách, khuyến mãi…) và bán hàng (RPC `boom_sales_raw_v1`) bằng vé người hỏi (RLS) |
-| `thoi_tiet.ts` | Apple WeatherKit: vé ES256, đệm theo khu vực ≤ 3 giờ trong bộ nhớ (điều khoản Apple: KHÔNG lưu lâu), khối dự báo, ghi nguồn |
+| `thoi_tiet.ts` | Apple WeatherKit: vé ES256, đệm theo khu vực ≤ 3 giờ trong bộ nhớ (điều khoản Apple: KHÔNG lưu lâu), khối dự báo, ghi nguồn. Trả `gio` (12 giờ tới — Boom chỉ đọc phần này), `ngay` (7 ngày), `gio_tuan` (mọi giờ tới hết ngày thứ 7, cho màn xem từng ngày của app; lần 166, cùng một lần gọi Apple nhờ `hourlyEnd`) |
 | `bo_nho_quan.ts` | Bộ nhớ riêng từng quán: lọc điều nên nhớ, chủ đề (vị trí, giờ, ngày nghỉ, khách chính), hỏi lại khi trái nhau, khối đưa Boom, câu "nhớ gì" |
 | `loi_khuyen.ts` | Rút việc đo được từ "Việc tuần này", đo lại sau ~2 tuần, đọc "có / chưa làm" |
 | `so_tay.ts` | Sổ tay tiếp thị 14 bài, chỉ mở cho câu tiếp thị, tối đa 2 bài |
@@ -107,4 +107,4 @@ chữ bỏ dấu phải thử với các từ trùng; chữ không dấu chỉ t
 2. Tiếp thị: đo vì sao sổ tay chưa đẩy được câu tiếp thị trên bộ mới.
 3. Bộ nhớ quán: theo dõi số ghi nhớ, tỉ lệ nhớ sai (đọc nội dung sổ thật phải hỏi Chủ Quán).
 4. Lời khuyên đã đo (sau ~2 tuần): xem việc nào có kết quả tốt với loại quán nào (cần nhiều quán, ẩn danh, người duyệt).
-5. App 1.0.7: đường ask, thẻ thời tiết, màn "Bé Boom nhớ gì về quán" (đã build, chờ đưa lên).
+5. App 1.0.7: đường ask, thẻ thời tiết + màn xem từng ngày, màn "Bé Boom nhớ gì về quán" (build 30 `0486d6f` đã build, chờ đưa lên).
