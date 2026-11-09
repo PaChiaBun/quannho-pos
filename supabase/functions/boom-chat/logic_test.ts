@@ -2175,3 +2175,13 @@ Deno.test('lần 197: số đơn/giờ của ca gán cho khung giờ khác', () 
   assertEquals(L.donGioSaiKhung('Khung 14–18h khoảng 6,5 đơn/giờ, riêng 15–16h khoảng 5,7 đơn/giờ.', ref), []);
 });
 
+Deno.test('lần 199: nói chưa có số bán mỗi ngày khi khối có số phần cả kỳ', () => {
+  const ref = 'Bún bò Huế (820 phần, giá 45.000đ); - Mai 29/10 (Thứ Năm, quán thường bán ~4.525.000đ/ngày, TB 4 ngày) … (TB 28 ngày mở bán, 54k/đơn)';
+  assertEquals(L.chuaCoSoNgay('Cần xem lại: chưa có số bán riêng của Bún bò Huế theo ngày Thứ Năm.', ref).length, 1);
+  assertEquals(L.chuaCoSoNgay('Trà đá bán 900 phần trong kỳ, nhưng quán chưa có số bán riêng theo ngày để tính.', ref)[0].nNgay, 28);
+  // đúng: hàng dùng, nguyên liệu, mưa, khung giờ
+  assertEquals(L.chuaCoSoNgay('Chưa có số lượng đá dùng mỗi ngày để tính mức nhập.', ref), []);
+  assertEquals(L.chuaCoSoNgay('Chưa có số lượng thịt bán riêng theo ngày.', ref), []);
+  assertEquals(L.chuaCoSoNgay('Chưa có số doanh thu riêng 11–13h theo từng ngày mưa.', ref), []);
+});
+

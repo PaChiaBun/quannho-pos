@@ -3475,6 +3475,22 @@ export function donGioSaiKhung(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** Lần 199 (2 bộ kín độc lập 09/11: "Trà đá bán 900 phần trong kỳ, nhưng chưa có số riêng theo ngày" — số cả kỳ chia ngày mở bán là ra):
+ * câu nói chưa có số BÁN / PHẦN theo ngày / mỗi ngày; câu về hàng dùng, tồn, nhập, hao hụt, mưa, khung giờ là đúng (khối không có) nên không bắt. */
+export function chuaCoSoNgay(answer: string, ref: string): { cau: string; nNgay: number | null }[] {
+  if (!/\d+ phần/.test(ref)) return [];
+  const mo = /(?:TB|÷) (\d+) ngày mở bán/.exec(ref);
+  const tu = [...ref.matchAll(/Thứ [2-7] [\d.]+đ \((\d+) ngày/g), ...ref.matchAll(/Chủ nhật [\d.]+đ \((\d+) ngày/g)].reduce((a, m) => a + +m[1], 0);
+  const nNgay = mo ? +mo[1] : tu || null;
+  return answer.split(/(?<=[.;\n])\s+/).filter((c) =>
+    /chưa (?:có|đủ|thấy) (?:số|dữ liệu|số liệu)|chưa (?:tính|biết|ước) được|không có (?:số|dữ liệu)/i.test(c) &&
+    /(?:số|lượng) (?:phần |ly |tô |dĩa |ổ )?(?:bán|phần)|bán (?:riêng |ra )?(?:theo|mỗi|từng) ngày|số (?:phần|ly|tô|dĩa|ổ)/i.test(c) &&
+    /theo (?:từng )?ngày|mỗi ngày|từng ngày|một ngày|\/ngày|hằng ngày|hàng ngày/i.test(c) &&
+    // nguyên liệu (thịt, bún tươi theo kg, số đặt / số dư) khối không có số → nói chưa có là đúng
+    !/dùng|tồn|nhập|hao hụt|nấu dư|mưa|thời tiết|nắng|khung|\d{1,2}h|\d{1,2}–\d{1,2}|giờ|ship|giao|quảng cáo|chi phí|điện|nguyên liệu|\bkg\b|thịt|rau|gạo|đặt|\bdư\b/i.test(c),
+  ).map((c) => ({ cau: c.slice(0, 80), nNgay }));
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
@@ -3503,10 +3519,12 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const ttSai = soTroiSai(answer, ref), ttChi = chiTienViTroi(answer, ref), ttLoi = doLoiTroi(answer, ref);
   const ngayBuoi = tienNgayGoiBuoi(answer, ref);
   const dgKhung = donGioSaiKhung(answer, ref);
+  const csNgay = chuaCoSoNgay(answer, ref);
   return [
     ...(ttSai.length ? [`số thời tiết không có trong dự báo (${ttSai.join(', ')}) → chỉ dùng đúng nhiệt độ / % trong khối dự báo; quán CHƯA có số ngày mưa nên KHÔNG nói mưa / nắng làm tăng giảm bao nhiêu %`] : []),
     ...(ttChi.length ? [`khuyên chi tiền chỉ vì dự báo ("${ttChi.join('"; "')}") → đổi thành chuẩn bị nhẹ / thử nhỏ có hạn mức và theo dõi; nói rõ dự báo có thể sai`] : []),
     ...(ttLoi ? ['đổ doanh thu giảm cho thời tiết mà không có số thời tiết nào → bỏ ý đó, giải thích bằng số bán hàng (giờ, thứ, món, số đơn)'] : []),
+    ...(csNgay.length ? [`nói chưa có số bán / phần mỗi ngày ("${csNgay.map((x) => x.cau).join('"; "')}") nhưng khối có số phần cả kỳ → lấy số phần cả kỳ của món ÷ ${csNgay[0].nNgay ? `${csNgay[0].nNgay} ngày` : 'số ngày'} trong kỳ ra ~mỗi ngày, ghi rõ là ước; chỉ sửa câu đó, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(dgKhung.length ? [`gắn số đơn/giờ vào sai khung giờ (${dgKhung.join('; ')}) → mỗi số đơn/giờ đi với đúng khung của nó trong dòng THỜI TIẾT × SỐ QUÁN (vd ca 14–18h); khung mưa chỉ có % doanh thu, không có số đơn/giờ riêng — chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(ngayBuoi.length ? [`gọi số trung bình CẢ NGÀY (${ngayBuoi.join(', ')}) là doanh thu của một buổi / ca / khung → sửa câu đó thành "cả ngày" (hoặc dùng % khung giờ / số phần buổi trong khối); chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),

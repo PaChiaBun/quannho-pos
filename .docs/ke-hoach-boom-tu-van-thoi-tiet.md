@@ -211,3 +211,22 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Kiểm bằng mã `donGioSaiKhung` (không thêm lời dặn): từ khối lấy cặp (khung a–bh, X đơn/giờ); trong câu trả lời, mỗi "X đơn/giờ" xét khung giờ gần nhất phía trước trong cùng vế (tách , . không cắt số thập phân, ; : xuống dòng). Khung đó không nằm gọn trong khung của X → bắt. Bỏ qua khi có "ca sáng/trưa/chiều/tối", "ca này" chen giữa, hoặc khung đúng đứng ngay sau số ("6,5 đơn/giờ từ 14–18h").
 - Trên 500 câu trả lời đo hôm nay: 5 / 5 là lỗi thật, 0 bắt nhầm; sót kiểu "khung này thường khoảng 6,5". Chạy lại TD12, TD05 × 6: 1 lượt mắc, bị bắt, câu cuối hết lỗi. Không chấm mù (lỗi ~1%).
 
+## QC độc lập 09/11 (sau lần 197; đo, không sửa mã)
+
+- Trợ lý độc lập viết bộ kín mới 20 câu `cham_tu_van/thoi_tiet/de_kin2.json` (4 quán × 3 kiểu trời, 4 câu bẫy; Claude không đọc đề). Bản 182 (logic.ts lấy từ sao lưu máy chủ `boom-chat_20261109_170931`) vs bản 197, 2 lượt, khối gộp, 3 người chấm mù.
+- **+0,17 ± 0,60 (40 cặp) — không đo được hơn.** Dùng được 20 → 22 / 40; hỏng 0 → 2. Chi tiền +1,75 ± 0,49 (4 cặp); nhập hàng −1,17 ± 1,85.
+- Kết luận: các lần 183–197 đo được hơn trên bộ do Claude viết / bộ cũ, nhưng câu hỏi lạ không thấy khác. Phần lớn dòng tính sẵn mới chỉ chạm câu hỏi đúng dạng (ca có giờ trống, "nấu bao nhiêu", hàng dưới nửa tối thiểu) — bộ mới ít câu như vậy.
+- Bộ mới lộ lỗi khác: 2 / 20 câu (N02, N18) KHÔNG được gắn khối dự báo (nhận diện câu thời tiết sót); câu "đóng / nghỉ ca được không" cả hai bản nghiêng giữ mà không tính số tiền khung đó; bỏ sót mặt hàng kho thứ ba, phép tính lời qua sàn.
+- Đề nghị: dừng dạy vụn theo từng lần chấm; muốn dạy tiếp thì chọn theo lỗi của bộ độc lập (nhận diện câu thời tiết, câu đóng / nghỉ ca tính tiền khung) và đo lại bằng một bộ độc lập KHÁC (de_kin2 đã dùng để chọn hướng thì không còn kín).
+
+## Lần 198 (09/11, Chủ Quán "Sửa lỗi bộ độc lập"; KHÔNG ÁP — đo bằng bộ độc lập thứ hai không hơn)
+
+- Thử theo lỗi bộ de_kin2: (1) nhận "mua sang hoai", "mua sang ca tuan" (mưa không dấu + buổi / kéo dài) là câu thời tiết, loại "khách mua sáng", "mua tối đa"; (2) câu đóng / nghỉ ca / "mở hay nghỉ" có giờ hoặc "ca …" → "Đóng / nghỉ (tính sẵn, ƯỚC): <ngày> khung a–bh thường mang về ~Zđ (P% doanh thu ngày <thứ>)"; dò giờ trên câu gốc ("16-20h"), thêm "t5".
+- Bộ độc lập thứ hai `de_kin3.json` (20 câu, trợ lý khác viết, Claude không đọc): 197 vs 198, 40 cặp, 3 người chấm: **−0,25 ± 0,50**. Đóng / nghỉ +0,33 ± 1,20 (6 cặp), người làm +2,25 ± 1,47 (4), nhập hàng −1,17, món −1,25. Bản mới nhận thêm 1 câu thời tiết (M09), vẫn sót M14, M20 (đề có mưa). Bỏ, trả mã về 197; bản thử ở scratchpad `l198_bo.patch`.
+- Hai bộ độc lập liên tiếp (182→197: +0,17 ± 0,60; 197→198: −0,25 ± 0,50): mảng tư vấn thời tiết đã chững. Lỗi người chấm bộ độc lập nêu nhiều nhất KHÔNG riêng thời tiết: không tự quy số cả kỳ ra mỗi ngày (~30 ổ bánh mì / ngày, ~780k / ca tối), bỏ sót hàng kho ngoài câu hỏi, chiết khấu sàn, khuyên trái số (giảm giá khi giảm giá đã 9%, đẩy món giá vốn 52–54%), gán số sai khung / sai món.
+
+## Lần 199 (09/11, Chủ Quán "Dạy tiếp"; ĐÃ ÁP TS `20261109_202635`) — chuyển sang lỗi chung
+
+- Hai bộ độc lập cùng nêu: Boom nói "chưa có số bán theo ngày" khi khối có số phần cả kỳ. Kiểm bằng mã `chuaCoSoNgay` trong `kiemTraLoi`: câu có "chưa có / không có số …" + số bán / phần + theo ngày / mỗi ngày, KHÔNG có dùng / tồn / nhập / hao hụt / nguyên liệu / kg / thịt / rau / gạo / đặt / dư / mưa / khung / giờ / giao / quảng cáo → viết lại, kèm số ngày trong kỳ (TB N ngày mở bán, hoặc cộng số ngày từng thứ).
+- Cụm "chưa có số … theo ngày" có ở 155 / 1.934 câu, phần lớn là đúng (hàng dùng, nguyên liệu). Bản cuối bắt 15, đọc qua đều là lỗi thật. Chạy lại 4 câu × 4 lượt: 1 mắc, bị bắt, câu viết lại tự chia. Giới hạn: câu viết lại vì lỗi khác có thể sinh lại cụm này (chỉ viết lại 1 lần).
+

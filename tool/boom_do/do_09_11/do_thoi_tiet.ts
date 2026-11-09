@@ -9,9 +9,10 @@ const LA = await import(A + 'logic.ts'), TA = await import(A + 'thoi_tiet.ts');
 const { TROI } = await import(R + 'cham_tu_van/thoi_tiet/troi_gia.ts');
 const KEY = Deno.env.get('OPENAI_API_KEY')!; const NOW = new Date('2026-10-28T09:00:00+07:00');
 const st: any = {}; for (const k of ['a', 'b', 'c', 'd']) st[k] = JSON.parse(await Deno.readTextFile(R + 'cham_tu_van/quan_' + k + '.json'));
+// KIN=<tệp bộ kín khác> (QC độc lập 09/11 lần 198); CHI_KIN=1 bỏ bộ mở
 const CA = [
-  ...JSON.parse(await Deno.readTextFile(decodeURIComponent(new URL('./cau_thoi_tiet.json', import.meta.url).pathname))).map((c: any) => ({ ...c, bo: 'mo' })),
-  ...JSON.parse(await Deno.readTextFile(R + 'cham_tu_van/thoi_tiet/de_kin.json')).map((c: any) => ({ ...c, bo: 'kin' })),
+  ...(Deno.env.get('CHI_KIN') === '1' ? [] : JSON.parse(await Deno.readTextFile(decodeURIComponent(new URL('./cau_thoi_tiet.json', import.meta.url).pathname))).map((c: any) => ({ ...c, bo: 'mo' }))),
+  ...JSON.parse(await Deno.readTextFile(Deno.env.get('KIN') ?? R + 'cham_tu_van/thoi_tiet/de_kin.json')).map((c: any) => ({ ...c, bo: 'kin' })),
 ];
 const VT = { lat: 10.8, lon: 106.7, ten: 'TP. Hồ Chí Minh' };
 const goi = async (L: any, q: string, m: any) => {
