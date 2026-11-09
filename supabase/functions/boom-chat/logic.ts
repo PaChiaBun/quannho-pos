@@ -1067,7 +1067,9 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
     const i = ngay.find((j) => !tbThu(wdOf(w.ngay[j].ngay))?.nghi);
     const tbNgay = f.revenue / moBan, tb = i !== undefined ? tbThu(wdOf(w.ngay[i].ngay)) : null;
     const heSo = tb?.tien && tb.n >= 2 && tbNgay > 0 ? tb.tien / tbNgay : 1;
-    const dong = i !== undefined ? mocSoPhan(f, question, moBan, heSo, THU_DAI[wdOf(w.ngay[i].ngay)], nhan(i), 'dự báo chỉ chỉnh nhẹ') : '';
+    // lần 207 (Demo 09/11: kỳ 1–9/11 mới 1 Thứ Bảy → mốc là trung bình mọi ngày mà Boom nói "thứ 7 quán bán ~40 ly"): ghi rõ chưa tính riêng
+    const chuaDu = i !== undefined && tb && tb.n < 2 ? ` (kỳ mới có ${tb.n} ${THU_DAI[wdOf(w.ngay[i].ngay)]} — chưa đủ để tính riêng, dùng trung bình mọi ngày)` : '';
+    const dong = i !== undefined ? mocSoPhan(f, question, moBan, heSo, THU_DAI[wdOf(w.ngay[i].ngay)], nhan(i) + chuaDu, 'dự báo chỉ chỉnh nhẹ') : '';
     if (dong) lines.push(dong);
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
@@ -1251,7 +1253,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const cnt = weekdayCounts(f.from, f.to);
     const nghi = wd >= 0 && f.by_weekday && cnt && !f.by_weekday[wd] && cnt[wd] >= 2;
     const heSo = wd >= 0 && wd !== homNay && f.by_weekday && cnt && cnt[wd] >= 2 && f.revenue > 0 ? (f.by_weekday[wd] / cnt[wd]) / (f.revenue / moBanF) : 1;
-    const dong = nghi ? '' : mocSoPhan(f, question, moBanF, heSo, wd >= 0 ? THU[wd] : '', wd >= 0 ? THU[wd] : 'Mỗi ngày mở bán', '');
+    const chuaDu = wd >= 0 && wd !== homNay && cnt && cnt[wd] < 2 ? ` (kỳ mới có ${cnt[wd]} ${THU[wd]} — chưa đủ để tính riêng, dùng trung bình mọi ngày)` : '';
+    const dong = nghi ? '' : mocSoPhan(f, question, moBanF, heSo, wd >= 0 ? THU[wd] : '', wd >= 0 ? THU[wd] + chuaDu : 'Mỗi ngày mở bán', '');
     if (nghi) lines.push(`${THU[wd]} quán thường NGHỈ (0đ cả ${cnt![wd]} lần trong kỳ) → không cần chuẩn bị số phần cho ngày này.`);
     else if (dong) lines.push(dong);
   }

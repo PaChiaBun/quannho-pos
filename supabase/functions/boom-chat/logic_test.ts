@@ -2213,3 +2213,11 @@ Deno.test('lần 204: câu hỏi lượng không nói trời cũng có mốc s�
   // lần 205: nhắc tên nhóm món → cộng cả nhóm
   assertStringIncludes(await ff('a', 'dat bao nhieu o banh mi moi sang'), 'cả nhóm "Bánh mì" (3 món, cả ngày) ~30 phần / ngày (720 phần cả kỳ)');
 });
+
+Deno.test('lần 207: kỳ chưa đủ 2 ngày cùng thứ thì mốc ghi rõ dùng trung bình mọi ngày', async () => {
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_a.json', import.meta.url)));
+  // kỳ ngắn 1–9/11: chỉ 1 Thứ Bảy
+  const f = { ...L.parseFacts(s.facts.thang_nay)!, from: '2026-11-01', to: '2026-11-09' };
+  const t = L.formatFacts(f, new Date('2026-11-09T22:00:00+07:00'), 't7 pha bao nhieu ly ca phe sua da');
+  assertStringIncludes(t, 'Thứ Bảy (kỳ mới có 1 Thứ Bảy — chưa đủ để tính riêng, dùng trung bình mọi ngày)');
+});
