@@ -230,3 +230,13 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Hai bộ độc lập cùng nêu: Boom nói "chưa có số bán theo ngày" khi khối có số phần cả kỳ. Kiểm bằng mã `chuaCoSoNgay` trong `kiemTraLoi`: câu có "chưa có / không có số …" + số bán / phần + theo ngày / mỗi ngày, KHÔNG có dùng / tồn / nhập / hao hụt / nguyên liệu / kg / thịt / rau / gạo / đặt / dư / mưa / khung / giờ / giao / quảng cáo → viết lại, kèm số ngày trong kỳ (TB N ngày mở bán, hoặc cộng số ngày từng thứ).
 - Cụm "chưa có số … theo ngày" có ở 155 / 1.934 câu, phần lớn là đúng (hàng dùng, nguyên liệu). Bản cuối bắt 15, đọc qua đều là lỗi thật. Chạy lại 4 câu × 4 lượt: 1 mắc, bị bắt, câu viết lại tự chia. Giới hạn: câu viết lại vì lỗi khác có thể sinh lại cụm này (chỉ viết lại 1 lần).
 
+## Lần 200 (09/11, Chủ Quán "Dạy tiếp"; BỎ — lỗi không có thật)
+
+- Người chấm bộ độc lập nêu "khuyên tạo thêm mã giảm giá khi giảm giá đã chiếm 9%". Thử kiểm bằng mã `themGiamKhiCao` (khối có cảnh báo "trên 8% là cao" + câu khuyên thêm / tăng giảm giá không rào): trên 1.950 câu đo hôm nay (192 câu có cảnh báo) bắt 0. Đọc lại M10: cả 4 lượt đều "chưa nên chạy thêm mã 20%", dẫn đúng 9% vs 8%; câu bị nêu là gợi ý có rào ("nếu muốn thử, mã riêng tối đa 6.000đ, dừng nếu không tăng đơn"). Bỏ, không áp; bản thử ở scratchpad `l200_bo.patch`.
+- Bài học: lời người chấm là gợi ý, phải đếm trên câu trả lời thật trước khi viết mã.
+- Cùng ngày, đếm thêm lỗi "bỏ sót hàng kho hết / thiếu nặng" người chấm hay nêu: trên câu chuẩn bị / nhập đã có dòng "Kho trước …" (lần 192) chỉ 7 / 142 câu bỏ sót (~5%, có câu ngày quán nghỉ); con số 897 / 1.292 là của các lần đo trước 192. Không viết mã thêm.
+
+## Dừng dạy (09/11, Chủ Quán "Commit, dừng dạy")
+
+- Bản chạy: lần 199 (commit 4456b60, TS `20261109_202635`). Đọc sổ thật (một lần, Chủ Quán cho phép): 0 lượt hỏi thật từ 06/11 — loạt 166–199 chưa có người thật dùng. Dạy tiếp trên bộ đề giả chỉ còn bắt lỗi hiếm; việc tiếp theo nên là đưa Boom tới quán thật (lối vào Boom cạnh chip thời tiết, gợi ý câu theo thời tiết, phát hành APK / Windows build 31, nhờ quán quen thử) rồi đọc lại sổ.
+
