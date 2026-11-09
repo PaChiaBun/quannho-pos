@@ -182,3 +182,9 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Chấm mù 56 cặp (28 câu × 2) vs 191: **+0,89 ± 0,46** (mở +0,78 ± 0,54, kín +1,19 ± 0,88); tìm vấn đề 1,46 → 1,88, việc làm 1,54 → 1,80, đúng quán 1,73 → 1,95; gọn 1,77 → 1,52; dùng được kín 5 → 12 / 16, mở 30 → 35 / 40.
 - Còn (người chấm): "nấu bao nhiêu" chưa ra số phần mỗi ngày (chia số tháng / số ngày mở); gán số khung này cho khung khác; kín K13 / K17 / K20 ý chính lệch dự báo trong khối.
 
+## Lần 193 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_192158`)
+
+- Câu nấu / pha / ướp / chuẩn bị bao nhiêu (`HOI_PHAN`, không tính câu người làm) → "Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ngày mở bán × hệ số thứ đó)": top 3 món của buổi được hỏi (`by_band`), không có buổi thì cả ngày (`groups`). Buổi lấy ở vế hỏi số phần, không có thì cả câu; buổi < 5 phần / ngày gộp buổi kế ("chiều – tối"); món hỏi đích danh lên đầu; ngày quán nghỉ bỏ.
+- Bộ cũ chỉ T11, T26 (T26 là ngày nghỉ) → thêm TD16–TD19. Chấm mù 15 cặp vs 192: **+4,60 ± 0,93**; thẳng 0,73 → 2,00, việc làm 0,93 → 1,73, đúng quán 1,20 → 2,00, gọn 1,07 → 1,73; dùng được 2 → 13 / 15. Bộ thiên về tính năng (ý chính đòi số phần), bộ kín không có câu loại này.
+- Demo: "~8 tô bún bò buổi sáng" đúng, nhưng Boom dẫn 245 phần (cả ngày) làm căn cứ → lần sau ghi số cả kỳ của buổi trong dòng. Dòng kho (192) chưa bắt "ướp".
+

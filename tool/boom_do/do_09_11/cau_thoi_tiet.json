@@ -403,5 +403,41 @@
 "q": "Chiều mai mưa, có cần gọi thêm người phục vụ không?",
 "y_chinh": "Thứ Năm ca chiều quán bán 14–18h, Ngọc làm tới 15h, Thảo vào 16h → 15–16h chưa ai thường làm (~5,7 đơn/giờ); cần người phủ khung đó (kéo Ngọc thêm 1 tiếng hoặc Thảo vào sớm); số người theo số đơn, không thêm chỉ vì mưa",
 "can_tranh": "Chỉ nêu tên mà không thấy giờ trống; thêm người chỉ vì mưa; bịa số"
+},
+{
+"id": "TD16",
+"quan": "a",
+"troi": "nang_nong",
+"loai": "nhap_hang",
+"q": "Mai nắng nóng, sáng mai pha sẵn bao nhiêu ly cà phê?",
+"y_chinh": "Nêu số phần cụ thể cho ngày / buổi được hỏi theo mức thường bán của thứ đó (số cả kỳ ÷ ngày mở bán, chỉnh theo thứ); dự báo chỉ chỉnh nhẹ quanh mốc",
+"can_tranh": "Nói chưa có số bán theo ngày; không nêu số phần; tăng / giảm mạnh chỉ vì dự báo; bịa số"
+},
+{
+"id": "TD17",
+"quan": "b",
+"troi": "mua_chieu",
+"loai": "nhap_hang",
+"q": "Mai mưa tối, nên chuẩn bị mấy ly trà sữa?",
+"y_chinh": "Nêu số phần cụ thể cho ngày / buổi được hỏi theo mức thường bán của thứ đó (số cả kỳ ÷ ngày mở bán, chỉnh theo thứ); dự báo chỉ chỉnh nhẹ quanh mốc",
+"can_tranh": "Nói chưa có số bán theo ngày; không nêu số phần; tăng / giảm mạnh chỉ vì dự báo; bịa số"
+},
+{
+"id": "TD18",
+"quan": "d",
+"troi": "mua_chieu",
+"loai": "nhap_hang",
+"q": "Tối mai mưa, ướp bao nhiêu sườn cho buổi tối?",
+"y_chinh": "Nêu số phần cụ thể cho ngày / buổi được hỏi theo mức thường bán của thứ đó (số cả kỳ ÷ ngày mở bán, chỉnh theo thứ); dự báo chỉ chỉnh nhẹ quanh mốc",
+"can_tranh": "Nói chưa có số bán theo ngày; không nêu số phần; tăng / giảm mạnh chỉ vì dự báo; bịa số"
+},
+{
+"id": "TD19",
+"quan": "c",
+"troi": "mua_sang",
+"loai": "nhap_hang",
+"q": "Mai mưa sáng, nấu mấy tô bún bò?",
+"y_chinh": "Nêu số phần cụ thể cho ngày / buổi được hỏi theo mức thường bán của thứ đó (số cả kỳ ÷ ngày mở bán, chỉnh theo thứ); dự báo chỉ chỉnh nhẹ quanh mốc",
+"can_tranh": "Nói chưa có số bán theo ngày; không nêu số phần; tăng / giảm mạnh chỉ vì dự báo; bịa số"
 }
 ]

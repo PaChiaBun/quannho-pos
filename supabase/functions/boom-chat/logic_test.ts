@@ -2131,3 +2131,19 @@ Deno.test('lần 192: câu chuẩn bị theo thời tiết kèm hàng đã hết
   assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m).includes('Kho trước'));
   assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Mai trời thế nào?', NOW, m).includes('Kho trước'));
 });
+
+Deno.test('lần 193: hỏi nấu / chuẩn bị bao nhiêu → mốc số phần ngày được hỏi', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const tt = async (k: string, q: string) => {
+    const s = JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url)));
+    return L.thoiTietVoiSoQuan(TROI.mua_chieu, L.parseFacts(s.facts.thang_nay)!, q, NOW, L.parseModules({ ...s.modules.thang_nay }));
+  };
+  // quán C chiều 14–17h gần như không bán → gộp tối
+  assertStringIncludes(await tt('c', 'Mai trời mưa chiều tối, nấu bao nhiêu cho ca chiều?'), 'Mai 29/10 buổi chiều – tối (buổi chiều quán bán rất ít) Bún thịt nướng ~9, Cơm sườn ~7, Bún bò Huế ~5 phần');
+  // "tối" ở vế tả trời vẫn lấy được buổi
+  assertStringIncludes(await tt('d', 'Tối mai mưa, ướp bao nhiêu sườn?'), 'Mai 29/10 buổi tối Cơm tấm sườn ~5');
+  // hỏi người làm, hỏi ngày quán nghỉ: không gắn
+  assert(!(await tt('b', 'Mai mưa tối, ca tối cần mấy nhân viên?')).includes('Mốc số phần'));
+  assert(!(await tt('d', 'Chủ nhật này trời mưa, nên nấu bao nhiêu?')).includes('Mốc số phần'));
+});
