@@ -1994,3 +1994,23 @@ Deno.test('lô B thời tiết (lần 173–175): kiểm bằng mã sau khi tr�
   assert(!L.doLoiTroi('Doanh thu giảm có thể do trời mưa nhiều.', ref));
   assert(L.kiemTraLoi('Dạ, mai nóng tới 37°.', ref).some((x: string) => x.startsWith('số thời tiết không có trong dự báo')));
 });
+
+Deno.test('lô C (lần 176): ngày mưa lớn so ngày cùng thứ ít mưa, chỉ khi đủ số', () => {
+  const NOW = new Date('2026-11-09T09:00:00+07:00');
+  // 8 tuần Thứ Hai … Chủ nhật từ 14/9; mưa lớn mỗi Thứ Ba và Thứ Năm của 4 tuần đầu
+  const mua: { ngay: string; mm: number }[] = [], ban: { d: string; revenue: number }[] = [];
+  for (let i = 0; i < 56; i++) {
+    const d = new Date(Date.UTC(2026, 8, 14 + i)).toISOString().slice(0, 10), wd = i % 7;
+    const lon = i < 28 && (wd === 1 || wd === 3);
+    mua.push({ ngay: d, mm: lon ? 25 : 3 });
+    ban.push({ d, revenue: lon ? 800_000 : 1_000_000 });
+  }
+  const s = L.muaLonVaDoanhThu(mua, ban, NOW);
+  assertStringIncludes(s, '8 ngày mưa lớn (≥ 10 mm) quán bán TRUNG BÌNH thấp hơn 20% so với ngày cùng thứ ít mưa hơn');
+  assertStringIncludes(s, '8 ngày thấp hơn, 0 ngày cao hơn');
+  // ít ngày mưa lớn → không nói %
+  assertStringIncludes(L.muaLonVaDoanhThu(mua.map((x, i) => ({ ...x, mm: i < 7 && x.mm > 10 ? 25 : 3 })), ban, NOW), 'CHƯA ĐỦ số');
+  // mùa mưa: gần như ngày nào cũng mưa lớn → không so được
+  assertStringIncludes(L.muaLonVaDoanhThu(mua.map((x) => ({ ...x, mm: 30 })), ban, NOW), 'chưa có đủ ngày ít mưa để so');
+  assertEquals(L.muaLonVaDoanhThu(null, ban, NOW), '');
+});

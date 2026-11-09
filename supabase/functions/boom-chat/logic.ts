@@ -3227,6 +3227,29 @@ export function muaTangChuaDung(answer: string, ref: string): string {
   return `chưa dùng phép tính mua ${m[1]} tặng ${m[2]} (giảm ${m[3]}%; ${m[4].trim()}) → câu đầu kết luận có lỗ / phải bán thêm bao nhiêu theo đúng phép tính đó`;
 }
 
+/** Lô C (lần 176): ngày mưa lớn (≥ 10 mm) quán bán so với ngày cùng thứ ít mưa hơn, 60 ngày qua. Tính bằng mã, chỉ khi đủ số.
+ *  Chỉ là tương quan (mùa mưa gần như ngày nào cũng mưa: so mưa lớn, không so có / không mưa). */
+export function muaLonVaDoanhThu(mua: { ngay: string; mm: number }[] | null, ban: { d: string; revenue: number }[] | null, now: Date = new Date()): string {
+  if (!mua?.length || !ban?.length) return '';
+  const homNay = new Date(vnDay(now)).toISOString().slice(0, 10);
+  const tien = new Map(ban.filter((x) => x.d < homNay && x.revenue > 0).map((x) => [x.d, x.revenue]));
+  const wd = (d: string) => (new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const LON = 10;
+  const coBan = mua.filter((x) => tien.has(x.ngay));
+  const lon = coBan.filter((x) => x.mm >= LON), it = coBan.filter((x) => x.mm < LON);
+  const dau = `MƯA LỚN × DOANH THU (tính sẵn: lượng mưa Apple Weather ${mua.length} ngày qua + doanh thu từng ngày của quán; chỉ là tương quan, có thể do lý do khác)`;
+  if (lon.length > coBan.length * 0.7) return `${dau}: ${lon.length}/${coBan.length} ngày có bán đều mưa lớn (≥ ${LON} mm) → chưa có đủ ngày ít mưa để so; KHÔNG nói mưa làm quán giảm bao nhiêu %.`;
+  const ss = lon.map((x) => {
+    const cung = it.filter((y) => wd(y.ngay) === wd(x.ngay)).map((y) => tien.get(y.ngay)!);
+    return cung.length ? { r: tien.get(x.ngay)! / (cung.reduce((a, b) => a + b, 0) / cung.length) - 1, m: cung.length } : null;
+  }).filter((x): x is { r: number; m: number } => !!x);
+  if (ss.length < 4) return `${dau}: chỉ có ${ss.length} ngày mưa lớn (≥ ${LON} mm) có số bán và có ngày cùng thứ để so → CHƯA ĐỦ số để nói mưa làm quán tăng / giảm bao nhiêu; KHÔNG đoán %.`;
+  const tb = ss.reduce((a, b) => a + b.r, 0) / ss.length;
+  const giam = ss.filter((x) => x.r < -0.05).length, tang = ss.filter((x) => x.r > 0.05).length;
+  const pct = Math.round(Math.abs(tb) * 100);
+  return `${dau}: ${ss.length} ngày mưa lớn (≥ ${LON} mm) quán bán TRUNG BÌNH ${Math.abs(tb) < 0.05 ? 'gần như bằng (chênh dưới 5%)' : `${tb < 0 ? 'thấp' : 'cao'} hơn ${pct}%`} so với ngày cùng thứ ít mưa hơn (${it.length} ngày ít mưa); ${giam} ngày thấp hơn, ${tang} ngày cao hơn.${ss.length < 8 ? ' Số ngày còn ít, nói là "thường", không chắc.' : ''}`;
+}
+
 // Lô B tư vấn thời tiết (lần 173–175): kiểm bằng mã sau khi trả lời, không thêm lời dặn.
 const CAU = (a: string) => a.split(/(?<=[.!?;\n])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
 const TROI_CHU = /mưa|nắng|nóng|thời tiết|trời|dự báo|bão|dông/i;

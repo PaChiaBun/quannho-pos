@@ -97,3 +97,12 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Không chấm mù lại: không câu nào của bộ đo đổi, lô B là lưới an toàn cho lỗi hiếm.
 - Chưa làm: Boom chen "Cần xem lại: Thứ Bảy 8.750đ" (từ số bán hàng, không phải thời tiết).
 - Kịch bản áp: `db-fix/boom_l175_ap_dung.sh` (chỉ kiểm đạt).
+
+## Lô C (09/11, Chủ Quán "Làm lô C"; chưa áp)
+
+- Kiểm trước: Apple trả thời tiết ngày đã qua cho TP.HCM (≤ ~10 ngày mỗi lần gọi), có lượng mưa mm. Mùa mưa gần như ngày nào cũng mưa → so **mưa lớn (≥ 10 mm)** với ngày cùng thứ ít mưa hơn. Apple thật 60 ngày (10/9–8/11): 28 ngày ≥ 10 mm, 32 ngày ít hơn.
+- Mã: `layMuaDaQua` (thoi_tiet.ts: 7 lần gọi song song, chỉ đệm trong bộ nhớ tới nửa đêm theo khu vực, không ghi cơ sở dữ liệu), `HOI_MUA_BAN` (câu mưa × chuyện bán, không nhầm "mua bán"), `docDoanhThuNgay` (ban_hang.ts, cùng RPC màn Báo cáo, vé người hỏi), `muaLonVaDoanhThu` (logic.ts), nối ở index.ts (nhãn sổ `+mua_ls`, chỉ khi người hỏi đọc được số bán hàng). Kiểm thử hàm 160/160.
+- < 4 ngày mưa lớn có số bán, hoặc > 70% ngày đều mưa lớn → dòng nói "chưa đủ số, không đoán %". Dòng ghi rõ "chỉ là tương quan".
+- Khác kế hoạch: KHÔNG lưu con số kết luận vào bộ nhớ quán (177) — tính lại mỗi lần rẻ (Apple đệm theo khu vực trong ngày, doanh thu 1 lần đọc), khỏi lo điều khoản dữ liệu phái sinh. 178 (gắn con số vào mọi câu thời tiết) chưa làm: chỉ câu hỏi mưa × bán.
+- Không chấm mù: cần lịch sử giả cho cả 4 quán mẫu; thử thật trên quán Demo sau khi áp.
+- Kịch bản áp: `db-fix/boom_l176_ap_dung.sh` (chỉ kiểm đạt).

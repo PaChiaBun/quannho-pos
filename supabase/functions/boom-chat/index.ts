@@ -20,14 +20,15 @@
 import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
 import { chonBai, soTayChoBoom } from './so_tay.ts';
-import { docBanHang } from './ban_hang.ts';
+import { docBanHang, docDoanhThuNgay } from './ban_hang.ts';
 import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
 import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, laHoiNho, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
-import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, HOI_THOI_TIET_RO, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
+import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_MUA_BAN, HOI_THOI_TIET, HOI_THOI_TIET_RO, layMuaDaQua, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
   ghiApTay,
   gonKhiKhongDon,
+  muaLonVaDoanhThu,
   thoiTietVoiSoQuan,
   ghiKy,
   ADVICE_PROMPT,
@@ -568,6 +569,7 @@ Deno.serve(async (req) => {
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
   let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false, tenQuan: string | null = null;
   let huongDan: HelpChunk[] = [];
+  let jwtHoi = ''; // lô C: đọc doanh thu từng ngày bằng vé của chính người hỏi
   // 08/11: app (không phải web) đi đường ask; tắt riêng bằng BOOM_ASK_TAT_APP=1 → 503, app tự quay về đường cũ
   if (r.mode === 'ask' && ASK_TAT_APP && (body as Record<string, unknown>).nen_tang !== 'web') return json(503, { error: 'ASK_OFF' });
   if (r.mode === 'ask') {
@@ -577,6 +579,7 @@ Deno.serve(async (req) => {
       r.chunk_ids = []; // sổ và hạn mức tính như câu tư vấn
     }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
+    jwtHoi = jwt;
     try {
       const hq = r.history?.q ?? null;
       const cauTruoc = !canGiuKy(r.question) ? hq : cauGiuKy(hq ? [hq] : []) ?? cauGiuKy(await cauVuaHoi(r.store_id, user, r.memory_age_s));
@@ -714,6 +717,18 @@ Deno.serve(async (req) => {
     // lô A (lần 169–172): dòng tính sẵn ghép dự báo với số của quán
     const voiSo = thoiTiet ? thoiTietVoiSoQuan(w, r.facts ?? null, r.question) : '';
     if (voiSo) { thoiTiet += `\n${voiSo}`; kind += '+tt_so'; }
+    // lô C (lần 176): "mưa thì quán bán sao" → lượng mưa 60 ngày qua (Apple, chỉ đệm trong bộ nhớ) × doanh thu từng ngày.
+    // Chỉ khi người hỏi đã đọc được số bán hàng (r.facts), bằng vé của chính họ.
+    if (thoiTiet && vt && jwtHoi && r.facts && HOI_MUA_BAN.test(r.question)) {
+      const vn = new Date(Date.now() + 7 * 3600_000), d = (t: Date) => t.toISOString().slice(0, 10);
+      const den = d(vn), tu = d(new Date(vn.getTime() - 60 * 86_400_000));
+      const [mua, ban] = await Promise.all([
+        layMuaDaQua(vt, THOI_TIET),
+        docDoanhThuNgay({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt: jwtHoi, storeId: r.store_id, userId: user }, `${tu}T00:00:00+07:00`, `${den}T00:00:00+07:00`),
+      ]);
+      const ls = muaLonVaDoanhThu(mua, ban);
+      if (ls) { thoiTiet += `\n${ls}`; kind += '+mua_ls'; }
+    }
     if (thoiTiet) kind += '+thoi_tiet';
   }
   // Bộ nhớ quán chỉ cho câu tư vấn; nhân viên chỉ thấy điều "cả quán"

@@ -169,9 +169,49 @@ export async function layNguon(now = Date.now(), f: Fetch = fetch): Promise<Nguo
   return v;
 }
 
+// Lô C (lần 176, Chủ Quán 09/11 "Làm lô C"): lượng mưa NHỮNG NGÀY ĐÃ QUA, chỉ hỏi khi câu hỏi cần ("mưa thì quán bán sao").
+// Điều khoản Apple 1.5 / 1.6: chỉ đệm TẠM trong bộ nhớ máy chủ tới nửa đêm, theo khu vực; KHÔNG ghi cơ sở dữ liệu.
+// Apple nhận ≤ ~10 ngày mỗi lần (thử 09/11: 60 ngày → 400) → chia khung 9 ngày, gọi song song.
+export type MuaNgay = { ngay: string; mm: number };
+const DEM_LS = new Map<string, { het: number; v: MuaNgay[] | null }>();
+const NGAY_MS = 86_400_000;
+export async function layMuaDaQua(vt: ViTri, c: CauHinh | null, soNgay = 60, now = Date.now(), f: Fetch = fetch): Promise<MuaNgay[] | null> {
+  if (!c) return null;
+  const khoa = `${vt.lat},${vt.lon}`;
+  const dem = DEM_LS.get(khoa);
+  if (dem && dem.het > now) return dem.v;
+  const vn = now + VN_MS, homNay = vn - (vn % NGAY_MS) - VN_MS; // 0h hôm nay giờ VN, tính bằng mốc UTC
+  const iso = (t: number) => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const khung: [number, number][] = [];
+  for (let den = homNay; den > homNay - soNgay * NGAY_MS; den -= 9 * NGAY_MS) khung.push([Math.max(den - 9 * NGAY_MS, homNay - soNgay * NGAY_MS), den]);
+  let v: MuaNgay[] | null = null;
+  try {
+    const ve = await taoVe(c, now);
+    const ds = await Promise.all(khung.map(async ([a, b]) => {
+      const r = await f(`https://weatherkit.apple.com/api/v1/weather/vi/${vt.lat}/${vt.lon}?dataSets=forecastDaily&dailyStart=${iso(a)}&dailyEnd=${iso(b)}&timezone=Asia/Ho_Chi_Minh&countryCode=VN`,
+        { headers: { Authorization: `Bearer ${ve}` }, signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error(`APPLE_${r.status}`);
+      const j = await r.json();
+      return (Array.isArray(j?.forecastDaily?.days) ? j.forecastDaily.days : []).map((d: any) => ({ ngay: vnNgay(d?.forecastStart), mm: typeof d?.precipitationAmount === 'number' ? d.precipitationAmount : NaN }));
+    }));
+    const m = new Map<string, number>();
+    for (const x of ds.flat()) if (x.ngay && Number.isFinite(x.mm) && Date.parse(`${x.ngay}T00:00:00+07:00`) < homNay) m.set(x.ngay, x.mm);
+    v = [...m].map(([ngay, mm]) => ({ ngay, mm })).sort((a, b) => a.ngay.localeCompare(b.ngay));
+  } catch {
+    v = null;
+  }
+  if (DEM_LS.size >= DEM_TOI_DA) DEM_LS.delete(DEM_LS.keys().next().value!);
+  DEM_LS.set(khoa, { het: v ? homNay + NGAY_MS : now + 600_000, v });
+  return v;
+}
+
+/** Câu hỏi về mưa ảnh hưởng chuyện bán ("mưa thì quán giảm nhiều không"). "mua" không dấu chỉ tính khi chắc là mưa (mua bán). */
+export const HOI_MUA_BAN = /(?:mưa|tr[oờ]i mua|ng[aà]y mua|\bmua (?:to|l[oớ]n|nhi[eề]u)\b).{0,40}(?:giảm|giam|ảnh hưởng|anh huong|ế|vắng|vang|bán|\bban\b|doanh thu|khách|khach|mất|ít|\bit\b|đơn|\bdon\b)|(?:doanh thu|bán|\bban\b|khách|khach|vắng|đơn|\bdon\b).{0,40}(?:mưa|tr[oờ]i mua|ng[aà]y mua)/i;
+
 /** Chỉ để test: xoá đệm. */
 export function xoaDemThoiTiet() {
   DEM.clear();
+  DEM_LS.clear();
   nguonDem = null;
 }
 

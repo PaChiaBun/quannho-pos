@@ -183,6 +183,16 @@ export function soBaoCao(bao: Record<string, unknown> | null, ngay: Record<strin
 }
 
 /** Đọc số bán hàng của kỳ hỏi; lỗi / chưa có RPC → null (Boom vẫn trả lời bằng 5 mục). */
+/** Lô C: doanh thu từng ngày của khoảng bất kỳ (cùng RPC màn Báo cáo, vé của chính người hỏi); lỗi → null. */
+export async function docDoanhThuNgay(ctx: Ctx, tu: string, den: string): Promise<{ d: string; revenue: number }[] | null> {
+  try {
+    const ngay = await goi(ctx, 'rpc/get_daily_revenue_for_range_v1', { method: 'POST', body: JSON.stringify({ p_store_id: ctx.storeId, p_from: tu, p_to: den }) }) as Record<string, unknown>[];
+    return Array.isArray(ngay) ? ngay.map((x) => ({ d: String(x.report_date ?? '').slice(0, 10), revenue: n(x.total_revenue) })).filter((x) => x.d && x.revenue > 0) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unknown> | null> {
   const raw = (tu: string, den: string) =>
     goi(ctx, 'rpc/boom_sales_raw_v1', { method: 'POST', body: JSON.stringify({ p_store: ctx.storeId, p_from: tu, p_to: den }) }) as Promise<Tho>;

@@ -124,3 +124,26 @@ Deno.test('thời tiết: câu chỉ hỏi thời tiết không bị chen "chưa
   for (const q of ['ngay mai may gio thi de mua nhat?', 'mai mưa không', 'cuối tuần thời tiết thế nào']) assert(T.chiHoiThoiTiet(q), q);
   for (const q of ['mai mưa thì doanh thu giảm không', 'cuoi tuan nay thoi tiet the nao, nen nhap hang ra sao?', 'trời mưa bán món gì', 'tuần này bao nhiêu đơn']) assert(!T.chiHoiThoiTiet(q), q);
 });
+
+Deno.test('lô C: lượng mưa ngày đã qua theo khung 9 ngày, đệm tới nửa đêm, câu hỏi mưa × bán (09/11)', async () => {
+  const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const der = new Uint8Array(await crypto.subtle.exportKey('pkcs8', kp.privateKey));
+  const c = { team: 'T', key: 'K', service: 'S', pem: `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----` };
+  T.xoaDemThoiTiet();
+  let goi = 0;
+  const f = (async (url: string) => {
+    goi++;
+    const a = Date.parse(new URL(url).searchParams.get('dailyStart')!), b = Date.parse(new URL(url).searchParams.get('dailyEnd')!);
+    const days = []; for (let t = a; t < b; t += 86_400_000) days.push({ forecastStart: new Date(t).toISOString(), precipitationAmount: 12.5 }); // như Apple: 0h giờ VN = 17:00Z hôm trước
+    return new Response(JSON.stringify({ forecastDaily: { days } }), { status: 200 });
+  }) as unknown as typeof fetch;
+  const now = Date.parse('2026-11-09T02:00:00Z');
+  const v = (await T.layMuaDaQua({ lat: 10.8, lon: 106.7, ten: '' }, c, 60, now, f))!;
+  assertEquals(goi, 7);
+  assertEquals(v.length, 60);
+  assertEquals(v.at(-1)!.ngay, '2026-11-08'); // không có hôm nay
+  await T.layMuaDaQua({ lat: 10.8, lon: 106.7, ten: '' }, c, 60, now + 3600_000, f);
+  assertEquals(goi, 7, 'đệm trong bộ nhớ, không gọi lại');
+  for (const q of ['mưa thì quán bán giảm nhiều không', 'ngày mưa doanh thu thế nào', 'troi mua khach co vang khong', 'khách có vắng khi mưa không']) assert(T.HOI_MUA_BAN.test(q), q);
+  for (const q of ['mua 1 tặng 1 bán chạy không', 'mai mưa không', 'doanh thu tháng này']) assert(!T.HOI_MUA_BAN.test(q), q);
+});
