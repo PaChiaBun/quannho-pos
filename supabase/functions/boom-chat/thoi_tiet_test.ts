@@ -87,3 +87,9 @@ Deno.test('thời tiết: ghi nguồn đọc đúng dạng Apple trả thật (0
   const n = await T.layNguon(NOW + 1, f);
   assertEquals(n, { ten: 'Apple Weather', logo_sang: 'https://weatherkit.apple.com/assets/branding/vi/Apple_Weather_blk_vi_2X_090122.png', logo_toi: 'https://weatherkit.apple.com/assets/branding/vi/Apple_Weather_wht_vi_2X_090122.png', link: T.NGUON_LINK });
 });
+
+Deno.test('thời tiết: chữ "mua" (mua bán) không phải "mưa" (09/11)', () => {
+  for (const q of ['Chạy khuyến mãi mua một tặng một có lỗ không?', 'nên mua thêm máy pha không', 'khách mua nhiều món gì']) assertEquals(T.HOI_THOI_TIET.test(q), false, q);
+  for (const q of ['mai có mưa không', 'troi mua thi ban sao', 'mua to thì nên làm gì', 'cuối tuần này nắng không']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
+  assertEquals(T.ghiNguonThoiTiet('Mua 1 tặng 1 là giảm 50%.', true), 'Mua 1 tặng 1 là giảm 50%.');
+});

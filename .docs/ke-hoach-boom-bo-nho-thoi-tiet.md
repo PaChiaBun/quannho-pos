@@ -90,6 +90,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
   - Thứ của hôm nay chưa xong mà kỳ có 2 ngày thứ đó 0đ thì từng ghi "quán NGHỈ" (Demo: "quán đang nghỉ Thứ Hai" đúng hôm Thứ 2). Nay chỉ tính ngày trọn.
   - Hỏi "buổi chiều vắng" mà dòng xếp hướng theo tiền đứng đầu là "8h và 9h hồi nửa phần mất", Boom mở đầu bằng buổi sáng. Nay câu hỏi nói đúng một buổi thì bỏ hướng giờ ngoài buổi đó, dặn trả lời buổi đó trước.
   - Mua tặng: chỉ nhận "mua 1 tặng 1" bằng số; nay nhận "mua một tặng một", "1 tặng 1", "1+1" (khi câu nói mua / tặng / khuyến mãi). Thêm mã kiểm `muaTangChuaDung`: có phép tính mà câu trả lời không dùng số nào của nó thì viết lại. Chưa đo trên câu trả lời thật.
+- Đã áp lần 157 (c1844bc). Web Demo "mua một tặng một có lỗ không": Boom dùng đúng phép tính (giảm 50%, gấp 2,2 / 5,5 lần). Lộ lỗi lần 156: "mua" bỏ dấu khớp "mưa" → lấy thời tiết và gắn nguồn Apple cho câu mua bán. Đã sửa (chỉ "mưa" có dấu hoặc "trời mua", "mua to"…), chưa áp.
 
 ## Giai đoạn 2: Thời tiết
 
