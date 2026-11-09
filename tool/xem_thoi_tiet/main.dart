@@ -45,9 +45,31 @@ const _json = {
   },
 };
 
+/// GIẢ (09/11): giờ của các ngày sau dựng từ cao / thấp / % mưa của ngày thật, chỉ để xem bố cục màn xem từng ngày
+/// trước khi máy chủ gửi gio_tuan thật.
+List<Map<String, Object>> _gioTuanGia() {
+  final ds = (_json['thoi_tiet'] as Map)['ngay'] as List;
+  return [
+    for (final d in ds.cast<Map>())
+      for (var g = 0; g < 24; g++)
+        {
+          'ngay': d['ngay'] as String,
+          'gio': g,
+          'nhiet': (d['thap'] as int) +
+              ((d['cao'] as int) - (d['thap'] as int)) *
+                  (g < 5 || g > 21 ? 0 : (g <= 14 ? (g - 5) / 9 : (21 - g) / 7)),
+          'mua': g >= 14 && g <= 18 ? (d['mua'] as int) - (g - 16).abs() * 15 : 5,
+          'troi': g >= 15 && g <= 17 && (d['mua'] as int) >= 50 ? 'mưa' : 'nhiều mây',
+        },
+  ];
+}
+
 class _CoDinh extends ThoiTietNotifier {
   @override
-  Future<ThoiTietData?> build() async => ThoiTietData.fromJson(_json);
+  Future<ThoiTietData?> build() async => ThoiTietData.fromJson({
+        ..._json,
+        'thoi_tiet': {...(_json['thoi_tiet'] as Map), 'gio_tuan': _gioTuanGia()},
+      });
 }
 
 void main() => runApp(ProviderScope(

@@ -24,6 +24,8 @@ Deno.test('thời tiết: rút gọn theo giờ Việt Nam, đọc phòng thủ'
   assertEquals(w.gio.map((h) => h.gio), [14, 16, 17]);
   assertEquals(w.gio[1], { gio: 16, nhiet: 28, mua: 70, troi: 'dông' });
   assertEquals(w.ngay.map((d) => d.ngay), ['2026-11-07', '2026-11-08']);
+  assertEquals(w.gio_tuan.map((h) => `${h.ngay} ${h.gio}`), ['2026-11-07 14', '2026-11-07 16', '2026-11-07 17']);
+  assertEquals(T.cuoiTuan(NOW), '2026-11-13T17:00:00Z'); // 0h ngày 14/11 giờ Việt Nam: đủ 7 ngày từ 07/11
   assertEquals(T.rutGon({}, NOW), null);
   assertEquals(T.rutGon({ currentWeather: { temperature: 'x' }, forecastDaily: { days: [{}] } }, NOW), null);
   assertEquals(T.troiViet('HeavyRain'), 'mưa to');
@@ -60,6 +62,7 @@ Deno.test('thời tiết: chưa có khoá thì tắt, có đệm thì không g�
   const f = (async (url: string) => {
     goi++;
     assertStringIncludes(url, '/10.8/106.7?');
+    assertStringIncludes(url, '&hourlyEnd=2026-11-13T17:00:00Z&');
     return new Response(JSON.stringify(MAU), { status: 200 });
   }) as unknown as typeof fetch;
   assert(await T.layThoiTiet(vt, c, NOW, f));

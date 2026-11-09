@@ -222,27 +222,15 @@ class ThoiTietScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
                 _HienTai(v),
-                if (canhBaoThoiTiet(v) case final cb?) ...[
-                  const SizedBox(height: 12),
-                  _DaiCanhBao(cb),
-                ],
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
                 if (v.gio.isNotEmpty) ...[
-                  const _TieuDe('Các giờ tới'),
-                  SizedBox(
-                    height: 100,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: v.gio.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (_, i) => _OGio(v.gio[i]),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  const _TieuDe('Các giờ tới', Icons.schedule_rounded),
+                  _CacGio(v.gio),
+                  const SizedBox(height: 22),
                 ],
                 if (v.ngay.isNotEmpty) ...[
-                  const _TieuDe('Các ngày tới'),
-                  _CacNgay(v.ngay),
+                  const _TieuDe('7 ngày tới', Icons.calendar_month_rounded),
+                  _CacNgay(v),
                   const SizedBox(height: 16),
                 ],
                 _HoiBoom(v),
@@ -256,128 +244,189 @@ class ThoiTietScreen extends ConsumerWidget {
 
 const _kNen = Color(0xFFF7F4EE);
 
-/// Dải cảnh báo dưới phần "bây giờ": mưa thì gợi ý chuẩn bị chỗ ngồi, đồ mang đi; nắng nóng thì đồ uống lạnh, đá.
-class _DaiCanhBao extends StatelessWidget {
-  final ({String ngan, String dai, bool mua}) cb;
-  const _DaiCanhBao(this.cb);
-  @override
-  Widget build(BuildContext context) {
-    final mau = cb.mua ? _kMua : _kCam;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cb.mua ? const Color(0xFFE6EEFC) : const Color(0xFFFFEEDF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: mau.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            cb.mua ? Icons.water_drop_rounded : Icons.wb_sunny_rounded,
-            color: mau,
-            size: 26,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  cb.dai,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: mau,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  cb.mua
-                      ? 'Chuẩn bị mái che, khăn lau sàn chống trơn, túi đựng đồ mang đi; nhập hàng tươi vừa đủ.'
-                      : 'Chuẩn bị thêm đá, đồ uống lạnh; để ý chỗ ngồi có bóng mát.',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 const _kMua = Color(0xFF2F6FDE);
 const _kNguongMua = 30;
 
 class _TieuDe extends StatelessWidget {
   final String chu;
-  const _TieuDe(this.chu);
+  final IconData icon;
+  const _TieuDe(this.chu, this.icon);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      chu,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 15,
-        color: _kNavy,
-      ),
+    padding: const EdgeInsets.only(left: 4, bottom: 10),
+    child: Row(
+      children: [
+        Icon(icon, size: 17, color: _kCam),
+        const SizedBox(width: 6),
+        Text(
+          chu,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: _kNavy,
+          ),
+        ),
+      ],
     ),
   );
 }
 
+/// 09/11 Chủ Quán "chưa bắt mắt": thẻ đầu nền màu theo tình hình (mưa xanh, nắng nóng cam, thường xanh đậm),
+/// nhiệt độ lớn, cao / thấp hôm nay, cảnh báo + việc nên chuẩn bị nằm ngay trong thẻ.
 class _HienTai extends StatelessWidget {
   final ThoiTietData v;
   const _HienTai(this.v);
   @override
   Widget build(BuildContext context) {
-    final mua = v.muaSapToi;
+    final cb = canhBaoThoiTiet(v);
+    final nay = v.ngay.isNotEmpty ? v.ngay.first : null;
+    final mau = cb == null
+        ? const [Color(0xFF3B3896), Color(0xFF1E1B4B)]
+        : cb.mua
+        ? const [Color(0xFF4A8BF0), Color(0xFF1E3F99)]
+        : const [Color(0xFFFFA24C), Color(0xFFE0531A)];
     return Container(
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: mau,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: mau.last.withValues(alpha: 0.30),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Icon(iconTroi(v.troi), size: 48, color: _kCam),
-          const SizedBox(width: 14),
-          Text(
-            _do(v.nhiet),
-            style: const TextStyle(
-              fontSize: 44,
-              fontWeight: FontWeight.w800,
-              color: _kNavy,
-              height: 1,
+          Positioned(
+            right: -18,
+            top: -14,
+            child: Icon(
+              iconTroi(v.troi),
+              size: 150,
+              color: Colors.white.withValues(alpha: 0.16),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  v.troi.isEmpty ? 'Bây giờ' : v.troi,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _kNavy,
+                const Text(
+                  'BÂY GIỜ',
+                  style: TextStyle(
+                    color: Color(0xB3FFFFFF),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.4,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  mua != null
-                      ? 'Có thể mưa khoảng ${mua.gio}h (${mua.mua}%)'
-                      : 'Vài giờ tới khả năng mưa thấp',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: mua != null ? _kMua : Colors.black54,
-                    fontWeight: mua != null ? FontWeight.w700 : FontWeight.w400,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      _do(v.nhiet),
+                      style: const TextStyle(
+                        fontSize: 60,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            v.troi.isEmpty
+                                ? ''
+                                : v.troi[0].toUpperCase() + v.troi.substring(1),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (nay != null)
+                            Text(
+                              'Cao ${_do(nay.cao)} · Thấp ${_do(nay.thap)}${nay.mua == null ? '' : ' · Mưa ${nay.mua}%'}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xD9FFFFFF),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          cb == null
+                              ? Icons.check_rounded
+                              : cb.mua
+                              ? Icons.water_drop_rounded
+                              : Icons.wb_sunny_rounded,
+                          size: 18,
+                          color: mau.last,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cb?.dai ?? 'Vài giờ tới ít khả năng mưa',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              cb == null
+                                  ? 'Buôn bán bình thường.'
+                                  : cb.mua
+                                  ? 'Chuẩn bị mái che, khăn lau sàn chống trơn, túi đựng đồ mang đi; nhập hàng tươi vừa đủ.'
+                                  : 'Chuẩn bị thêm đá, đồ uống lạnh; để ý chỗ ngồi có bóng mát.',
+                              style: const TextStyle(
+                                color: Color(0xE6FFFFFF),
+                                fontSize: 13,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -389,47 +438,83 @@ class _HienTai extends StatelessWidget {
   }
 }
 
-class _OGio extends StatelessWidget {
-  final GioThoiTiet h;
-  const _OGio(this.h);
+/// Các giờ trong một khung trắng; giờ mưa ≥ 30% tô xanh, giờ hiện tại ghi "Bây giờ".
+class _CacGio extends StatelessWidget {
+  final List<GioThoiTiet> ds;
+  const _CacGio(this.ds);
   @override
   Widget build(BuildContext context) {
-    final mua = (h.mua ?? 0) >= _kNguongMua;
+    final bayGio = DateTime.now().hour;
     return Container(
-      width: 64,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      height: 128,
       decoration: BoxDecoration(
-        color: mua ? const Color(0xFFE6EEFC) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: mua ? const Color(0xFF9DB8F2) : const Color(0x14000000),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${h.gio}h',
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          Icon(
-            mua ? Icons.water_drop_rounded : iconTroi(h.troi),
-            size: 20,
-            color: mua ? _kMua : _kNavy,
-          ),
-          Text(
-            _do(h.nhiet),
-            style: const TextStyle(fontWeight: FontWeight.w800, color: _kNavy),
-          ),
-          Text(
-            h.mua == null ? '' : '${h.mua}%',
-            style: TextStyle(
-              fontSize: 11,
-              color: mua ? _kMua : Colors.black45,
-              fontWeight: mua ? FontWeight.w800 : FontWeight.w400,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        itemCount: ds.length,
+        itemBuilder: (_, i) {
+          final h = ds[i];
+          final mua = (h.mua ?? 0) >= _kNguongMua;
+          final dau = h.gio == bayGio;
+          return Container(
+            width: 58,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: dau
+                  ? _kNavy
+                  : mua
+                  ? const Color(0xFFE6EEFC)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
             ),
-          ),
-        ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dau ? 'Bây giờ' : '${h.gio}h',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: dau ? FontWeight.w700 : FontWeight.w500,
+                    color: dau ? Colors.white : Colors.black54,
+                  ),
+                ),
+                Icon(
+                  mua ? Icons.water_drop_rounded : iconTroi(h.troi),
+                  size: 22,
+                  color: dau
+                      ? Colors.white
+                      : mua
+                      ? _kMua
+                      : const Color(0xFFF59E0B),
+                ),
+                Text(
+                  _do(h.nhiet),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: dau ? Colors.white : _kNavy,
+                  ),
+                ),
+                Text(
+                  h.mua == null ? '' : '${h.mua}%',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: mua ? FontWeight.w800 : FontWeight.w500,
+                    color: dau
+                        ? const Color(0xCCFFFFFF)
+                        : mua
+                        ? _kMua
+                        : Colors.black38,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -437,25 +522,44 @@ class _OGio extends StatelessWidget {
 
 /// Mỗi ngày: thứ, thanh khả năng mưa (đậm dần theo %), thanh nhiệt độ đặt trên thang thấp nhất – cao nhất của cả tuần.
 class _CacNgay extends StatelessWidget {
-  final List<NgayThoiTiet> ds;
-  const _CacNgay(this.ds);
+  final ThoiTietData v;
+  const _CacNgay(this.v);
   @override
   Widget build(BuildContext context) {
-    final thap = ds.map((d) => d.thap).whereType<double>(),
-        cao = ds.map((d) => d.cao).whereType<double>();
-    final lo = thap.isEmpty ? 0.0 : thap.reduce((a, b) => a < b ? a : b),
-        hi = cao.isEmpty ? 1.0 : cao.reduce((a, b) => a > b ? a : b);
+    final ds = v.ngay;
+    final (lo, hi) = _thang(ds);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
           for (var i = 0; i < ds.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: Color(0x11000000)),
-            _DongNgay(ds[i], lo, hi, homNay: i == 0),
+            if (i > 0)
+              const Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: Color(0x11000000),
+              ),
+            InkWell(
+              // 09/11 Chủ Quán: "sao không xem được các ngày khác" → bấm mở xem theo giờ, như app Thời tiết của Apple
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => ManNgayThoiTiet(v, i))),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _DongNgay(
+                  ds[i],
+                  lo,
+                  hi,
+                  homNay: i == 0,
+                  bayGio: i == 0 ? v.nhiet : null,
+                ),
+              ),
+            ),
           ],
         ],
       ),
@@ -463,11 +567,24 @@ class _CacNgay extends StatelessWidget {
   }
 }
 
+/// Thang nhiệt độ chung của cả tuần cho các thanh cao / thấp.
+(double, double) _thang(List<NgayThoiTiet> ds) {
+  final thap = ds.map((d) => d.thap).whereType<double>(),
+      cao = ds.map((d) => d.cao).whereType<double>();
+  return (
+    thap.isEmpty ? 0.0 : thap.reduce((a, b) => a < b ? a : b),
+    cao.isEmpty ? 1.0 : cao.reduce((a, b) => a > b ? a : b),
+  );
+}
+
 class _DongNgay extends StatelessWidget {
   final NgayThoiTiet d;
   final double lo, hi;
   final bool homNay;
-  const _DongNgay(this.d, this.lo, this.hi, {this.homNay = false});
+
+  /// Nhiệt độ lúc này: chấm trắng trên thanh hôm nay (như Apple).
+  final double? bayGio;
+  const _DongNgay(this.d, this.lo, this.hi, {this.homNay = false, this.bayGio});
   @override
   Widget build(BuildContext context) {
     final p = d.mua ?? 0;
@@ -484,7 +601,7 @@ class _DongNgay extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 58,
+            width: 74,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -504,8 +621,8 @@ class _DongNgay extends StatelessWidget {
           ),
           Icon(
             p >= _kNguongMua ? Icons.water_drop_rounded : iconTroi(d.troi),
-            size: 20,
-            color: p >= _kNguongMua ? mau : _kNavy,
+            size: 22,
+            color: p >= _kNguongMua ? mau : const Color(0xFFF59E0B),
           ),
           const SizedBox(width: 6),
           SizedBox(
@@ -549,6 +666,21 @@ class _DongNgay extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (bayGio != null)
+                    Positioned(
+                      left:
+                          (c.maxWidth * ((bayGio! - lo) / span).clamp(0, 1) - 5)
+                              .clamp(0.0, c.maxWidth - 10),
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _kNavy, width: 2),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -562,10 +694,645 @@ class _DongNgay extends StatelessWidget {
               color: _kNavy,
             ),
           ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: Colors.black26,
+          ),
         ],
       ),
     );
   }
+}
+
+/// Câu tóm tắt một ngày cho chủ quán: khung giờ dễ mưa, giờ nóng nhất. Giờ < 6 hoặc > 22 bỏ qua (quán thường đóng).
+String tomTatNgay(List<GioThoiTiet> ds) {
+  final mo = ds.where((h) => h.gio >= 6 && h.gio <= 22).toList();
+  if (mo.isEmpty) return 'Chưa có dự báo theo giờ cho ngày này.';
+  final nong = mo
+      .where((h) => h.nhiet != null)
+      .fold<GioThoiTiet?>(
+        null,
+        (a, h) => a == null || h.nhiet! > a.nhiet! ? h : a,
+      );
+  final dinh = mo.reduce((a, b) => (b.mua ?? 0) > (a.mua ?? 0) ? b : a);
+  final p = dinh.mua ?? 0;
+  // 09/11 số thật: ngày 65% nhưng từng giờ chỉ tới 38% (Apple tính cả ngày cao hơn từng giờ) → vẫn chỉ khung dễ mưa nhất
+  final khung = mo
+      .where((h) => (h.mua ?? 0) >= (p * 0.6).clamp(20, 40))
+      .toList();
+  final cau = <String>[];
+  if (p < 20) {
+    cau.add('Ít khả năng mưa trong giờ buôn bán');
+  } else {
+    final tu = khung.first.gio, den = khung.last.gio + 1;
+    final gio = khung.length == 1 ? 'khoảng ${dinh.gio}h' : '$tu–${den}h';
+    cau.add(
+      p >= 40
+          ? khung.length == 1
+                ? 'Dễ mưa $gio ($p%)'
+                : 'Dễ mưa $gio, cao nhất $p% lúc ${dinh.gio}h'
+          : 'Nếu mưa thường rơi $gio (mỗi giờ tối đa $p%)',
+    );
+  }
+  if (nong != null) cau.add('nóng nhất ${_do(nong.nhiet)} lúc ${nong.gio}h');
+  return '${cau.join('; ')}.';
+}
+
+/// Xem một ngày theo giờ, học theo app Thời tiết của Apple: dải chọn ngày ở trên, vuốt ngang đổi ngày,
+/// câu tóm tắt, biểu đồ nhiệt độ, biểu đồ khả năng mưa, rồi từng giờ.
+class ManNgayThoiTiet extends StatefulWidget {
+  final ThoiTietData v;
+  final int dau;
+  const ManNgayThoiTiet(this.v, this.dau, {super.key});
+  @override
+  State<ManNgayThoiTiet> createState() => _ManNgayThoiTietState();
+}
+
+class _ManNgayThoiTietState extends State<ManNgayThoiTiet> {
+  late int chon = widget.dau;
+  late final PageController trang = PageController(initialPage: widget.dau);
+
+  @override
+  void dispose() {
+    trang.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = widget.v.ngay;
+    return Scaffold(
+      backgroundColor: _kNen,
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Text(
+          widget.v.viTri?.ten.isNotEmpty == true
+              ? 'Dự báo · ${widget.v.viTri!.ten}'
+              : 'Dự báo theo ngày',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: _kNavy,
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 14),
+            child: Row(
+              children: [
+                for (var i = 0; i < ds.length; i++)
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => trang.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            i == 0
+                                ? 'Nay'
+                                : ThoiTietScreen._thu[ds[i].ngay.weekday],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: i == chon
+                                  ? Colors.white
+                                  : const Color(0x99FFFFFF),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 34,
+                            height: 34,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: i == chon ? Colors.white : null,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${ds[i].ngay.day}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: i == chon ? _kNavy : Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Icon(
+                            (ds[i].mua ?? 0) >= _kNguongMua
+                                ? Icons.water_drop_rounded
+                                : iconTroi(ds[i].troi),
+                            size: 15,
+                            color: (ds[i].mua ?? 0) >= _kNguongMua
+                                ? const Color(0xFF8DB6FF)
+                                : const Color(0xFFFFC56B),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PageView.builder(
+              controller: trang,
+              itemCount: ds.length,
+              onPageChanged: (i) => setState(() => chon = i),
+              itemBuilder: (_, i) => _TrangNgay(widget.v, i),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 09/11 Chủ Quán "chưa trực quan": thẻ màu đầu trang, 4 buổi (sáng / trưa / chiều / tối), một dải giờ
+/// gộp nhiệt độ + mưa trên cùng cột (đọc số ngay tại giờ, không phải dò trục như 2 biểu đồ rời).
+class _TrangNgay extends StatelessWidget {
+  final ThoiTietData v;
+  final int i;
+  const _TrangNgay(this.v, this.i);
+
+  static const _thuDai = [
+    '',
+    'Thứ Hai',
+    'Thứ Ba',
+    'Thứ Tư',
+    'Thứ Năm',
+    'Thứ Sáu',
+    'Thứ Bảy',
+    'Chủ Nhật',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final d = v.ngay[i];
+    final gio = v.gioCuaNgay(d.ngay);
+    final mua = (d.mua ?? 0) >= 50, nong = (d.cao ?? 0) >= 35;
+    final mau = mua
+        ? const [Color(0xFF4A8BF0), Color(0xFF1E3F99)]
+        : nong
+        ? const [Color(0xFFFFA24C), Color(0xFFE0531A)]
+        : const [Color(0xFF3B3896), Color(0xFF1E1B4B)];
+    final tomTat = tomTatNgay(gio);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      children: [
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: mau,
+            ),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -14,
+                top: -10,
+                child: Icon(
+                  (d.mua ?? 0) >= _kNguongMua
+                      ? Icons.water_drop_rounded
+                      : iconTroi(d.troi),
+                  size: 120,
+                  color: Colors.white.withValues(alpha: 0.16),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${i == 0 ? 'Hôm nay' : _thuDai[d.ngay.weekday]}, ${d.ngay.day}/${d.ngay.month}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xD9FFFFFF),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _do(d.cao),
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontSize: 44,
+                            height: 1,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          ' / ${_do(d.thap)}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xB3FFFFFF),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (d.mua != null)
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.water_drop_rounded,
+                                        size: 15,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Mưa ${d.mua}%',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.storefront_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            i == 0
+                                ? 'Từ giờ tới tối: ${tomTat[0].toLowerCase()}${tomTat.substring(1)}'
+                                : tomTat,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.35,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (gio.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          const _TieuDe('Theo buổi', Icons.wb_twilight_rounded),
+          _CacBuoi(gio),
+          const SizedBox(height: 20),
+          const _TieuDe('Từng giờ', Icons.schedule_rounded),
+          _DaiGio(gio, homNay: i == 0),
+          const Padding(
+            padding: EdgeInsets.only(top: 8, left: 4),
+            child: Text(
+              'Vuốt ngang để xem thêm giờ · cột xanh: khả năng mưa',
+              style: TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// 4 buổi theo giờ buôn bán. Buổi đã qua (hôm nay) không có giờ → ghi "Đã qua".
+class _CacBuoi extends StatelessWidget {
+  final List<GioThoiTiet> ds;
+  const _CacBuoi(this.ds);
+
+  static const _buoi = [
+    ('Sáng', 6, 10),
+    ('Trưa', 11, 13),
+    ('Chiều', 14, 17),
+    ('Tối', 18, 22),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      for (final (ten, tu, den) in _buoi) ...[
+        if (ten != 'Sáng') const SizedBox(width: 8),
+        Expanded(
+          child: _OBuoi(
+            ten,
+            '$tu–${den + 1}h',
+            ds.where((h) => h.gio >= tu && h.gio <= den).toList(),
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+class _OBuoi extends StatelessWidget {
+  final String ten, khung;
+  final List<GioThoiTiet> ds;
+  const _OBuoi(this.ten, this.khung, this.ds);
+  @override
+  Widget build(BuildContext context) {
+    final t = ds.map((h) => h.nhiet).whereType<double>().toList();
+    final p = ds.fold<int>(0, (a, h) => (h.mua ?? 0) > a ? h.mua! : a);
+    final hi = t.isEmpty ? null : t.reduce((a, b) => a > b ? a : b);
+    final lo = t.isEmpty ? null : t.reduce((a, b) => a < b ? a : b);
+    final mua = p >= _kNguongMua, nong = (hi ?? 0) >= 34;
+    final troi = ds.isEmpty ? '' : ds[ds.length ~/ 2].troi;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      decoration: BoxDecoration(
+        color: ds.isEmpty
+            ? const Color(0x08000000)
+            : mua
+            ? const Color(0xFFE6EEFC)
+            : nong
+            ? const Color(0xFFFFEEDF)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: mua
+              ? const Color(0xFF9DB8F2)
+              : nong
+              ? const Color(0xFFFFC9A3)
+              : const Color(0x0F000000),
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            ten,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: _kNavy,
+              fontSize: 14,
+            ),
+          ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              khung,
+              style: const TextStyle(fontSize: 10.5, color: Colors.black45),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (ds.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                'Đã qua',
+                style: TextStyle(fontSize: 12, color: Colors.black38),
+              ),
+            )
+          else ...[
+            Icon(
+              mua ? Icons.water_drop_rounded : iconTroi(troi),
+              size: 26,
+              color: mua ? _kMua : const Color(0xFFF59E0B),
+            ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                lo == hi ? _do(hi) : '${lo?.round()}–${_do(hi)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Mưa $p%',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: mua ? FontWeight.w800 : FontWeight.w500,
+                  color: mua ? _kMua : Colors.black45,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Dải giờ trượt ngang: mỗi cột 56 điểm ảnh gồm giờ, biểu tượng, nhiệt độ trên đường cong, cột mưa + %.
+class _DaiGio extends StatefulWidget {
+  final List<GioThoiTiet> ds;
+  final bool homNay;
+  const _DaiGio(this.ds, {required this.homNay});
+  static const cot = 56.0;
+  @override
+  State<_DaiGio> createState() => _DaiGioState();
+}
+
+class _DaiGioState extends State<_DaiGio> {
+  // ngày sau: mở ở 6h (quán thường đóng đêm), vẫn vuốt về được 0h
+  late final ScrollController cuon = ScrollController(
+    initialScrollOffset: widget.homNay
+        ? 0
+        : widget.ds.indexWhere((h) => h.gio >= 6).clamp(0, 1 << 20) *
+              _DaiGio.cot,
+  );
+
+  @override
+  void dispose() {
+    cuon.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 222,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      controller: cuon,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: CustomPaint(
+        size: Size(widget.ds.length * _DaiGio.cot, 222),
+        painter: _VeDaiGio(widget.ds, widget.homNay ? DateTime.now().hour : -1),
+      ),
+    ),
+  );
+}
+
+class _VeDaiGio extends CustomPainter {
+  final List<GioThoiTiet> ds;
+  final int bayGio;
+  _VeDaiGio(this.ds, this.bayGio);
+
+  void _chu(Canvas c, String t, Offset o, TextStyle st) {
+    final tp = TextPainter(
+      text: TextSpan(text: t, style: st),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(c, o - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  @override
+  void paint(Canvas c, Size s) {
+    const w = _DaiGio.cot;
+    final n = ds.length;
+    double x(int i) => w * i + w / 2;
+    // vùng: giờ 18 · biểu tượng 46 · đường nhiệt 84–132 · cột mưa 150–190 · % 204
+    const tTren = 88.0, tDuoi = 132.0, mDay = 190.0, mCao = 38.0;
+    for (var i = 0; i < n; i++) {
+      final h = ds[i];
+      final la = h.gio == bayGio;
+      if (la) {
+        c.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(w * i + 3, 6, w - 6, s.height - 12),
+            const Radius.circular(14),
+          ),
+          Paint()..color = const Color(0xFFEDEBFA),
+        );
+      }
+      _chu(
+        c,
+        la ? 'Bây giờ' : '${h.gio}h',
+        Offset(x(i), 20),
+        TextStyle(
+          fontSize: 12,
+          fontWeight: la ? FontWeight.w800 : FontWeight.w500,
+          color: la ? _kNavy : Colors.black54,
+        ),
+      );
+      final p = (h.mua ?? 0);
+      final ic = p >= _kNguongMua ? Icons.water_drop_rounded : iconTroi(h.troi);
+      _chu(
+        c,
+        String.fromCharCode(ic.codePoint),
+        Offset(x(i), 48),
+        TextStyle(
+          fontSize: 22,
+          fontFamily: ic.fontFamily,
+          package: ic.fontPackage,
+          color: p >= _kNguongMua ? _kMua : const Color(0xFFF59E0B),
+        ),
+      );
+      final q = (p / 100).clamp(0.0, 1.0);
+      c.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x(i) - 9, mDay - mCao, 18, mCao),
+          const Radius.circular(5),
+        ),
+        Paint()..color = const Color(0x0D000000),
+      );
+      if (q > 0) {
+        c.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(x(i) - 9, mDay - mCao * q, 18, mCao * q),
+            const Radius.circular(5),
+          ),
+          Paint()..color = Color.lerp(const Color(0xFFB9CDF6), _kMua, q)!,
+        );
+      }
+      _chu(
+        c,
+        '$p%',
+        Offset(x(i), 205),
+        TextStyle(
+          fontSize: 11,
+          fontWeight: p >= _kNguongMua ? FontWeight.w800 : FontWeight.w500,
+          color: p >= _kNguongMua ? _kMua : Colors.black38,
+        ),
+      );
+    }
+    final t = ds.map((g) => g.nhiet).whereType<double>().toList();
+    if (t.isEmpty) return;
+    final lo = t.reduce((a, b) => a < b ? a : b),
+        hi = t.reduce((a, b) => a > b ? a : b);
+    double y(double v) => hi == lo
+        ? (tTren + tDuoi) / 2
+        : tDuoi - (tDuoi - tTren) * (v - lo) / (hi - lo);
+    final pts = [
+      for (var i = 0; i < n; i++)
+        if (ds[i].nhiet != null) (i, Offset(x(i), y(ds[i].nhiet!))),
+    ];
+    final duong = Path()..moveTo(pts.first.$2.dx, pts.first.$2.dy);
+    for (var k = 1; k < pts.length; k++) {
+      final p0 = pts[k > 1 ? k - 2 : 0].$2, p1 = pts[k - 1].$2, p2 = pts[k].$2;
+      final p3 = pts[k + 1 < pts.length ? k + 1 : k].$2;
+      final c1 = p1 + (p2 - p0) / 6, c2 = p2 - (p3 - p1) / 6;
+      duong.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p2.dx, p2.dy);
+    }
+    c.drawPath(
+      duong,
+      Paint()
+        ..color = _kCam
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+    for (final (i, o) in pts) {
+      c.drawCircle(o, 3.5, Paint()..color = _kCam);
+      _chu(
+        c,
+        _do(ds[i].nhiet),
+        o - const Offset(0, 13),
+        const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: _kNavy,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_VeDaiGio o) => o.ds != ds || o.bayGio != bayGio;
 }
 
 /// Nút hỏi Bé Boom: gửi sẵn câu hỏi theo dự báo rồi mở khung Boom; Boom trả lời bằng dự báo thật và số bán của quán.

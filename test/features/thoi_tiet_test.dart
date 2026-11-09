@@ -166,4 +166,117 @@ void main() {
       await t.binding.setSurfaceSize(null);
     },
   );
+
+  test(
+    '09/11 giờ cả tuần: đọc theo ngày; máy chủ cũ thì hôm nay dùng 12 giờ tới',
+    () {
+      final d = ThoiTietData.fromJson({
+        'bat': true,
+        'thoi_tiet': {
+          'gio': [
+            {'gio': 14, 'nhiet': 31, 'mua': 20, 'troi': 'mây rải rác'},
+          ],
+          'ngay': [
+            {'ngay': '2026-11-09', 'cao': 34},
+            {'ngay': '2026-11-10', 'cao': 33},
+          ],
+          'gio_tuan': [
+            {'ngay': '2026-11-10', 'gio': 15, 'nhiet': 30, 'mua': 70},
+            {'ngay': '2026-11-10', 'gio': 'x'},
+            {'ngay': 'khong', 'gio': 3},
+          ],
+        },
+      });
+      expect(d.gioTuan.length, 1);
+      expect(d.gioCuaNgay(DateTime(2026, 11, 10)).single.mua, 70);
+      expect(
+        d.gioCuaNgay(DateTime(2026, 11, 9)).single.gio,
+        14,
+        reason: 'chưa có giờ tuần cho hôm nay → 12 giờ tới',
+      );
+      expect(d.gioCuaNgay(DateTime(2026, 11, 11)), isEmpty);
+    },
+  );
+
+  test('09/11 câu tóm tắt ngày: khung giờ mưa, giờ nóng nhất, bỏ giờ đêm', () {
+    expect(
+      tomTatNgay([
+        const GioThoiTiet(3, 25, 90, 'mưa'),
+        const GioThoiTiet(13, 34, 10, ''),
+        const GioThoiTiet(15, 31, 55, 'mưa'),
+        const GioThoiTiet(16, 30, 80, 'dông'),
+        const GioThoiTiet(17, 29, 45, 'mưa'),
+      ]),
+      'Dễ mưa 15–18h, cao nhất 80% lúc 16h; nóng nhất 34° lúc 13h.',
+    );
+    expect(
+      tomTatNgay([
+        const GioThoiTiet(12, 33, 6, ''),
+        const GioThoiTiet(15, 32, 31, ''),
+        const GioThoiTiet(16, 31, 38, ''),
+        const GioThoiTiet(17, 30, 29, ''),
+        const GioThoiTiet(19, 28, 12, ''),
+      ]),
+      'Nếu mưa thường rơi 15–18h (mỗi giờ tối đa 38%); nóng nhất 33° lúc 12h.',
+    );
+    expect(
+      tomTatNgay([const GioThoiTiet(10, 33, 5, '')]),
+      'Ít khả năng mưa trong giờ buôn bán; nóng nhất 33° lúc 10h.',
+    );
+    expect(tomTatNgay(const []), 'Chưa có dự báo theo giờ cho ngày này.');
+  });
+
+  testWidgets('09/11 bấm một ngày: mở xem theo giờ, vuốt đổi ngày', (t) async {
+    final v = ThoiTietData(
+      bat: true,
+      viTri: const ViTriThoiTiet(10.8, 106.7, 'TP. Hồ Chí Minh'),
+      nhiet: 31,
+      troi: 'nhiều mây',
+      ngay: [
+        for (var i = 0; i < 7; i++)
+          NgayThoiTiet(DateTime(2026, 11, 9 + i), 33, 25, 60, 'mưa'),
+      ],
+      gioTuan: [
+        for (var i = 0; i < 7; i++)
+          for (var g = 0; g < 24; g++)
+            GioThoiTiet(
+              g,
+              25.0 + (g > 12 ? 24 - g : g) / 2,
+              g == 16 ? 80 : 10,
+              '',
+              ngay: DateTime(2026, 11, 9 + i),
+            ),
+      ],
+    );
+    for (final size in [const Size(360, 740), const Size(1280, 800)]) {
+      await t.binding.setSurfaceSize(size);
+      await t.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
+          child: const MaterialApp(home: ThoiTietScreen()),
+        ),
+      );
+      await t.pumpAndSettle();
+      await t.scrollUntilVisible(
+        find.text('T3'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await t.tap(find.text('T3'));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      expect(find.text('Thứ Ba, 10/11'), findsOneWidget);
+      expect(find.text('Chiều'), findsOneWidget);
+      expect(find.text('Tối'), findsOneWidget);
+      expect(
+        find.text('Dễ mưa khoảng 16h (80%); nóng nhất 31° lúc 12h.'),
+        findsOneWidget,
+      );
+      await t.fling(find.text('Thứ Ba, 10/11'), const Offset(-300, 0), 1500);
+      await t.pumpAndSettle();
+      expect(find.text('Thứ Tư, 11/11'), findsOneWidget);
+    }
+    await t.binding.setSurfaceSize(null);
+  });
 }

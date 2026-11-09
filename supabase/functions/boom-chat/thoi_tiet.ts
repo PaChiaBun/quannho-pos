@@ -8,7 +8,9 @@
 export type ViTri = { lat: number; lon: number; ten: string };
 export type Gio = { gio: number; nhiet: number | null; mua: number | null; troi: string };
 export type Ngay = { ngay: string; cao: number | null; thap: number | null; mua: number | null; troi: string };
-export type ThoiTiet = { luc: string; nhiet: number | null; troi: string; gio: Gio[]; ngay: Ngay[] };
+export type GioNgay = Gio & { ngay: string };
+// gio: 12 giờ tới (thẻ, Boom); gio_tuan: mọi giờ tới hết ngày thứ 7, để app mở xem từng ngày (09/11). Boom chỉ đọc gio.
+export type ThoiTiet = { luc: string; nhiet: number | null; troi: string; gio: Gio[]; ngay: Ngay[]; gio_tuan: GioNgay[] };
 export type Nguon = { ten: string; logo_sang: string | null; logo_toi: string | null; link: string };
 export type CauHinh = { team: string; key: string; service: string; pem: string };
 
@@ -79,23 +81,30 @@ const phanTram = (v: unknown): number | null => {
 const vnNgay = (iso: unknown) => (typeof iso === 'string' && !isNaN(Date.parse(iso)) ? new Date(Date.parse(iso) + VN_MS).toISOString().slice(0, 10) : '');
 const vnGio = (iso: unknown) => (typeof iso === 'string' && !isNaN(Date.parse(iso)) ? new Date(Date.parse(iso) + VN_MS).getUTCHours() : -1);
 
-/** Rút gọn câu trả lời của Apple: hiện tại, 12 giờ tới, 7 ngày tới. Không có gì dùng được thì null. */
+/** Hết ngày thứ 7 giờ Việt Nam (tính cả hôm nay), dạng Apple nhận cho hourlyEnd. */
+export function cuoiTuan(now: number): string {
+  const vn = now + VN_MS;
+  return new Date(vn - (vn % 86_400_000) + 7 * 86_400_000 - VN_MS).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+/** Rút gọn câu trả lời của Apple: hiện tại, 12 giờ tới, các giờ cả tuần, 7 ngày tới. Không có gì dùng được thì null. */
 export function rutGon(raw: unknown, now: number): ThoiTiet | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, any>;
   const cw = r.currentWeather ?? {};
-  const gio: Gio[] = (Array.isArray(r.forecastHourly?.hours) ? r.forecastHourly.hours : [])
+  const gio_tuan: GioNgay[] = (Array.isArray(r.forecastHourly?.hours) ? r.forecastHourly.hours : [])
     .filter((h: any) => typeof h?.forecastStart === 'string' && Date.parse(h.forecastStart) >= now - 3600_000)
-    .slice(0, 12)
-    .map((h: any) => ({ gio: vnGio(h.forecastStart), nhiet: so(h.temperature), mua: phanTram(h.precipitationChance), troi: troiViet(h.conditionCode) }))
-    .filter((h: Gio) => h.gio >= 0);
+    .slice(0, 7 * 24)
+    .map((h: any) => ({ ngay: vnNgay(h.forecastStart), gio: vnGio(h.forecastStart), nhiet: so(h.temperature), mua: phanTram(h.precipitationChance), troi: troiViet(h.conditionCode) }))
+    .filter((h: GioNgay) => h.gio >= 0 && h.ngay);
+  const gio: Gio[] = gio_tuan.slice(0, 12).map(({ ngay: _, ...h }) => h);
   const ngay: Ngay[] = (Array.isArray(r.forecastDaily?.days) ? r.forecastDaily.days : [])
     .slice(0, 7)
     .map((d: any) => ({ ngay: vnNgay(d?.forecastStart), cao: so(d?.temperatureMax), thap: so(d?.temperatureMin), mua: phanTram(d?.precipitationChance), troi: troiViet(d?.conditionCode) }))
     .filter((d: Ngay) => d.ngay);
   const nhiet = so(cw.temperature);
   if (nhiet === null && !gio.length && !ngay.length) return null;
-  return { luc: new Date(now).toISOString(), nhiet, troi: troiViet(cw.conditionCode), gio, ngay };
+  return { luc: new Date(now).toISOString(), nhiet, troi: troiViet(cw.conditionCode), gio, ngay, gio_tuan };
 }
 
 const b64url = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -125,7 +134,7 @@ export async function layThoiTiet(vt: ViTri, c: CauHinh | null, now = Date.now()
   if (dem && dem.het > now) return dem.v;
   let v: ThoiTiet | null = null;
   try {
-    const url = `https://weatherkit.apple.com/api/v1/weather/vi/${vt.lat}/${vt.lon}?dataSets=currentWeather,forecastHourly,forecastDaily&timezone=Asia/Ho_Chi_Minh&countryCode=VN`;
+    const url = `https://weatherkit.apple.com/api/v1/weather/vi/${vt.lat}/${vt.lon}?dataSets=currentWeather,forecastHourly,forecastDaily&hourlyEnd=${cuoiTuan(now)}&timezone=Asia/Ho_Chi_Minh&countryCode=VN`;
     const res = await f(url, { headers: { Authorization: `Bearer ${await taoVe(c, now)}` }, signal: AbortSignal.timeout(4000) });
     if (res.ok) v = rutGon(await res.json(), now);
   } catch {
