@@ -216,7 +216,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 
 **Minh bạch**
 - [ ] Chủ quán xem, sửa, xoá được những gì Boom nhớ.
-- [ ] Hỏi "em đang nhớ gì về quán anh" thì Boom kể ra được.
+- [x] Hỏi "em đang nhớ gì về quán anh" thì Boom kể ra được. (09/11, sau công tắc BOOM_BO_NHO: khối bộ nhớ nới tới 20 dòng, dặn kể đúng, chỉ chỗ sửa / xoá; chưa nhớ gì thì nói thẳng; nhân viên vẫn chỉ thấy điều "cả quán". Chưa áp.)
 
 **Bộ thử trước khi bật**
 
@@ -236,7 +236,8 @@ Xong khi: bộ thử đạt và câu tiếp thị trong bộ 32 câu khá lên s
 - `supabase/functions/boom-chat/loi_khuyen.ts` + kiểm thử 3/3: rút tối đa 2 việc đo được từ phần "Việc tuần này" (khung giờ, một thứ, số phần một món, giá trị mỗi đơn, số đơn, doanh thu), mốc là trung bình mỗi ngày mở bán lúc khuyên, ngày đo theo "N tuần / N ngày" (mặc định 14, trong 7–60).
 - `index.ts`: sau khi trả lời, ghi việc vào `boom_quan_loi_khuyen` (bỏ việc trùng chỉ số đang chờ đo); trước khi trả lời câu của **chủ quán**, đọc việc tới ngày đo, đọc số đúng khoảng thử bằng vé của chủ quán, ghi kết quả, đưa khối "KẾT QUẢ VIỆC BÉ BOOM ĐÃ KHUYÊN" để Boom báo 1–2 câu cuối và hỏi chủ quán có làm không; quá 3 giây thì bỏ.
 - Đo phần rút trên 64 câu trả lời thật của bộ QC (`tool/boom_do/bo_nho_07_11/do_loi_khuyen.ts`): lần đầu khoảng 6/14 gán đúng; sửa 6 kiểu lỗi (lấy dòng "Cần xem lại", việc bị dặn không làm, nhầm món, khung giờ đè món, việc đo thứ app không có số, "thử 2 tuần" đọc thành Thứ 2); lần cuối rút 33 việc ở 27/64 câu, Claude đọc lại thấy còn khoảng 2–3 việc gán sai. Đây là Claude tự chấm, không chấm mù.
-- Chưa làm: chủ quán báo "có làm / không làm" (cột `chu_quan_lam` đã có, chưa có chỗ ghi); dùng kết quả để học "việc nào hiệu quả với loại quán nào" (cần nhiều quán dùng thật); chưa chạy thử luồng đo trên máy chủ thật.
+- 09/11: chủ quán trả lời "có / chưa làm" ngay sau lượt Boom báo kết quả (sổ hỏi đáp ghi `+do_ket_qua`, trong 30 phút, câu ngắn rõ ý) → ghi `chu_quan_lam` cho việc vừa đo (`traLoiCoLam` + `ghiCoLam`, chưa áp; phần đọc câu có kiểm thử, phần ghi bảng chưa chạy thử vì migration chưa áp).
+- Chưa làm: dùng kết quả để học "việc nào hiệu quả với loại quán nào" (cần nhiều quán dùng thật); chưa chạy thử luồng đo trên máy chủ thật.
 
 - [x] Ghi: khuyên gì, ngày nào, đo bằng số nào, số lúc đầu. (nháp, chưa áp)
 - [x] Sau khoảng 2 tuần tự đọc số, báo lại và hỏi chủ quán có làm không. (nháp, chưa áp)

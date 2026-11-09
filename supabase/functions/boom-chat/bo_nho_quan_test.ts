@@ -68,6 +68,13 @@ Deno.test('bộ nhớ: khối đưa Boom không lộ điều riêng cho nhân vi
   assertEquals(B.boNhoChoBoom([], true, 'x'), '');
   const nhieu = Array.from({ length: 40 }, (_, i) => g(`Ghi nhớ thử số ${i} về quán`));
   assert(B.boNhoChoBoom(nhieu, true, 'x').split('\n').filter((l) => l.startsWith('- ')).length <= 12);
+  // 09/11: hỏi "em nhớ gì về quán" thì kể ra (tối đa 20 dòng), chưa nhớ gì thì nói thẳng, nhân viên vẫn không thấy điều riêng
+  const hoi = B.boNhoChoBoom(nhieu, true, 'Em đang nhớ gì về quán anh?');
+  assert(hoi.split('\n').filter((l) => l.startsWith('- ')).length > 12 && hoi.includes('kể ĐÚNG các điều trên'));
+  assertStringIncludes(B.boNhoChoBoom([], true, 'boom biết gì về quán mình'), 'CHƯA nhớ điều gì');
+  const nvHoi = B.boNhoChoBoom(ds, false, 'em nhớ những gì về quán');
+  assert(!nvHoi.includes('cho nghỉ') && nvHoi.includes('chỉ chủ quán sửa được'));
+  assertEquals(B.HOI_NHO.test('nho mua gi cho quan'), false);
 });
 
 Deno.test('bộ nhớ: đọc kết quả rút ghi nhớ phòng thủ', () => {

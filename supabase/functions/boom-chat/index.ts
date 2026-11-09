@@ -21,7 +21,7 @@ import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
 import { chonBai, soTayChoBoom } from './so_tay.ts';
 import { docBanHang } from './ban_hang.ts';
-import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen } from './loi_khuyen.ts';
+import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
 import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
@@ -284,6 +284,25 @@ async function ghiLoiKhuyen(storeId: string, answer: string, facts: ShopFacts | 
       await fetch(`${SB_URL}/rest/v1/boom_quan_loi_khuyen`, { method: 'POST', headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify(ghi), signal: AbortSignal.timeout(3000) })
         .then((x) => x.body?.cancel());
     }
+  } catch {
+    // phần thêm, lỗi thì bỏ
+  }
+}
+
+/**
+ * 09/11: chủ quán trả lời "có / chưa làm" ngay sau lượt Boom báo kết quả (sổ ghi '+do_ket_qua', trong 30 phút)
+ * → ghi chu_quan_lam cho việc vừa đo (đo trong 3 ngày qua, còn 'chua_biet'). Không chắc là trả lời thì không ghi.
+ */
+async function ghiCoLam(storeId: string, userId: string, coLam: 'co' | 'khong', logId: string): Promise<void> {
+  try {
+    // bỏ chính lượt này (đã ghi xong trước khi chạy nền)
+    const truoc = await rest(`boom_qa_log?select=model,created_at&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&id=neq.${logId}&order=created_at.desc&limit=1`, { signal: AbortSignal.timeout(1000) });
+    const t = Array.isArray(truoc) ? truoc[0] : null;
+    if (!t || !String(t.model ?? '').includes('do_ket_qua') || Date.now() - Date.parse(t.created_at) > 30 * 60_000) return;
+    const tu = ngayVN(Date.now() - 3 * 86_400_000);
+    await fetch(`${SB_URL}/rest/v1/boom_quan_loi_khuyen?store_id=eq.${storeId}&ket_qua=not.is.null&chu_quan_lam=eq.chua_biet&ngay_do=gte.${tu}`, {
+      method: 'PATCH', headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify({ chu_quan_lam: coLam }), signal: AbortSignal.timeout(3000),
+    }).then((x) => x.body?.cancel());
   } catch {
     // phần thêm, lỗi thì bỏ
   }
@@ -808,7 +827,8 @@ Deno.serve(async (req) => {
       tool: refused ? 'boom_tu_choi:model' : `${r.mode}:${kind}`,
       question: r.question, answer: refused ? refusalFor('programming') : answer, chunk_ids: r.chunk_ids });
     if (refused) return json(200, { answer: refusalFor('programming'), blocked: 'model', log_id: logId });
-    if (boNhoDs) chayNen(Promise.all([ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs), ghiLoiKhuyen(r.store_id, answer, r.facts)]).then(() => {}));
+    const coLam = boNhoDs && laChuBN ? traLoiCoLam(r.question) : null;
+    if (boNhoDs) chayNen(Promise.all([ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs), ghiLoiKhuyen(r.store_id, answer, r.facts), coLam ? ghiCoLam(r.store_id, user, coLam, logId) : null]).then(() => {}));
     return json(200, { answer, log_id: logId, model: MODEL, ky: kyHoi });
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === 'AbortError';

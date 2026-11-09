@@ -103,6 +103,19 @@ const tenChiSo = (c: string) =>
   : c.startsWith('mon:') ? `số phần ${c.slice(4)} mỗi ngày` : c;
 const giaTri = (c: string, v: number) => (c === 'so_don' || c.startsWith('mon:') ? String(Math.round(v * 10) / 10).replace('.', ',') : vnd(v));
 
+/**
+ * 09/11 (giai đoạn 5): sau lượt báo kết quả, chủ quán trả lời "có / chưa làm" → ghi chu_quan_lam. Chỉ câu ngắn mở đầu rõ ràng;
+ * câu dài hoặc lẫn ý thì không đoán (null). "không có" là không làm; "có, nhưng…" vẫn là có.
+ */
+export function traLoiCoLam(question: string): 'co' | 'khong' | null {
+  const q = question.normalize('NFC').toLowerCase().replace(/[!.?,…]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!q || q.length > 80) return null;
+  const dau = q.replace(/^(?:dạ|da|ừ|ừm|ờ|vâng|à|em|anh|chị|bé boom|boom)\s+/u, '');
+  if (/^(?:không|khong|ko|k|chưa|chua|hông|hổng|đâu có)(?:\s|$)/u.test(dau)) return 'khong';
+  if (/^(?:có|co|rồi|roi|làm rồi|lam roi|đã làm|da lam|ok|đúng|yes)(?:\s|$)/u.test(dau)) return 'co';
+  return null;
+}
+
 /** Khối báo kết quả cho Boom: số trước và sau, nói rõ số không chứng minh do việc đó. */
 export function ketQuaChoBoom(ds: { l: LoiKhuyenDaLuu; sau: number }[]): string {
   if (!ds.length) return '';

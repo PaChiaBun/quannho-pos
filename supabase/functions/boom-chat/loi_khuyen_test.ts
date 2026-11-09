@@ -55,3 +55,9 @@ Deno.test('lời khuyên: kỳ đo và khối báo kết quả', () => {
   assertStringIncludes(k, 'chưa chắc');
   assertEquals(K.ketQuaChoBoom([]), '');
 });
+
+Deno.test('lời khuyên: đọc chủ quán trả lời có / chưa làm (09/11)', () => {
+  for (const q of ['Có', 'dạ có làm rồi', 'làm rồi em', 'có, nhưng chỉ 1 tuần', 'ok']) assertEquals(K.traLoiCoLam(q), 'co', q);
+  for (const q of ['Không', 'chưa làm', 'ko có làm', 'dạ chưa', 'không có']) assertEquals(K.traLoiCoLam(q), 'khong', q);
+  for (const q of ['doanh thu hôm nay bao nhiêu', 'tuần sau nên làm gì để tăng khách cho quán vào buổi chiều, có cách nào hay hơn không ạ em ơi']) assertEquals(K.traLoiCoLam(q), null, q);
+});
