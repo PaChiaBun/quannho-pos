@@ -7,7 +7,7 @@
 
 
 
-## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 166 → 184 ĐÃ ÁP; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)
+## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 166 → 186 ĐÃ ÁP; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)
 
 Chủ Quán xem app thật trên máy ảo (quán Demo) và góp ý từng vòng; mỗi vòng cài đè bản thử lên máy ảo, chụp lại. Mã: `lib/features/thoi_tiet/`, `supabase/functions/boom-chat/thoi_tiet.ts`.
 
@@ -31,7 +31,8 @@ Chủ Quán xem app thật trên máy ảo (quán Demo) và góp ý từng vòng
   - Lô C, lần 176 (Chủ Quán "Làm lô C", TS `20261109_153252`, commit `ac9aad7`): "mưa thì quán bán giảm không" → lượng mưa 60 ngày qua từ Apple (7 lần gọi khung 9 ngày, CHỈ đệm bộ nhớ tới nửa đêm, không ghi cơ sở dữ liệu) × doanh thu từng ngày (vé người hỏi) → ngày mưa lớn ≥ 10 mm so ngày cùng thứ ít mưa; < 4 ngày thì "chưa đủ số". Không lưu con số kết luận vào bộ nhớ quán (khác kế hoạch). Apple thật 60 ngày TP.HCM: 28 ngày ≥ 10 mm / 32 ngày ít hơn. Lần 177 (`9cffb12`): "ngay mua" không dấu là câu thời tiết.
   - Lô D, lần 178–182 (Chủ Quán "Dạy đủ 5 lần rồi áp luôn", TS `20261109_164706`): món nước ngày mưa, đơn mỗi giờ cho câu hỏi người làm, mốc nhập cả đợt, nắng gắt ≥ 35° trùng giờ đông, tầm dự báo; giờ đông theo thứ hạng; câu hỏi nguyên nhân chuyện đã qua không gắn dòng dự báo. Chấm mù gộp 116 cặp vs 177: **+0,45 ± 0,35** (người làm +2,62, món +1,50). Trong lô bắt được: "bánh mì" bị coi là mì nước; câu kín "có phải tại mưa" bị gắn dự báo hôm nay → Boom đổ cho mưa.
   - Lần 183 (TS `20261109_170931`): hỏi ca nào tính đúng ca theo khối giờ bán thật. Bản giờ ca cố định chấm mù **−0,90** → bỏ; bản sửa +0,37, đúng quán 1,70 → 1,97. Lần 184 (TS `20261109_173508`): số người làm cùng lúc theo chấm công → mức đơn của ca tương đương mấy người; chấm mù **+0,67 ± 0,60**, lý lẽ 1,23 → 1,56. Commit lô D + 183: `70bb149`.
-  - Hoàn tác từng lần: `ROLLBACK=1 bash db-fix/boom_lNNN_ap_dung.sh <TS>` (176, 177, 182, 183, 184).
+  - Lần 185 (TS `20261109_175324`): chấm công cả kỳ tổng hợp lịch thường lệ mỗi người (thứ, giờ vào / ra trung vị) → "Thứ X khung này quán thường có N người: tên (giờ)"; trước đó Boom quy đổi được số người nhưng vẫn hỏi "ca chiều hiện có mấy người". Chấm mù 33 cặp vs 184: **+1,48 ± 0,75**; câu dùng được bộ mở 8 → 21 / 27. Lần 186 (TS `20261109_180421`): thử trên Demo thấy kỳ "tháng này" mới 9 ngày, mỗi thứ có ca 1 lần, ngưỡng ≥ 2 lần loại hết người → nay "thường làm" = có mặt ≥ nửa số ngày thứ đó có ca trong kỳ; không ai thì ghi "chưa thấy ai thường làm khung này" thay "0 người". Demo hỏi lại: Boom nêu Hà, Tâm kèm giờ. Còn: chưa nói thẳng khoảng trống 15–17h không ai làm.
+  - Hoàn tác từng lần: `ROLLBACK=1 bash db-fix/boom_lNNN_ap_dung.sh <TS>` (176, 177, 182, 183, 184, 185, 186).
 - ✅ **Web `/pos` lên 1.0.7 build 31** (Chủ Quán "triển khai trên web luôn", 15:34 build 30 rồi 15:44 build 31, commit `a6cd383`): màn thời tiết gọn trên web / iPad (2 cột ≥ 1000, 1 cột ≤ 720). Sao lưu `/var/www/quannho/pos_backup_20261109_153357` (= 1.0.6+25) và `pos_backup_20261109_154422` (= build 30). APK / Windows build 31 chưa dựng.
 - ✅ **Số ảo quán Demo** (để dạy Boom; Chủ Quán duyệt từng lần ghi): `db-fix/demo_so_ao_0911.sql` 1.244 đơn + 2.698 dòng món 17/10 → 09/11 (dấu `source_type='demo_seed'`); `db-fix/demo_cham_cong_ao_0911.sql` 4 nhân viên "(ảo)" + 104 ca 10/10 → 08/11 (dấu `note='DEMO_AO'`). Hoàn tác bằng tệp `_ROLLBACK.sql` cùng tên. Không dùng dữ liệu Apple để tạo số. ⚠️ Số ảo cũ `DEMO_CHUOI` (11/9–16/10) không có dòng món.
   - ⚠️ Bẫy SQL: `generate_series` trên `date` trả `timestamptz` → `AT TIME ZONE` lệch 7 tiếng; phải `::date` (chạy thử chấm công bắt được).

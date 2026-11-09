@@ -134,3 +134,14 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Chấm mù 183 cho thấy Boom có đơn/giờ của ca nhưng chưa nối ra "cần mấy người" (lý lẽ 1,63). Nay dòng người làm thêm số người làm cùng lúc theo chấm công (giờ công ÷ giờ mở × ngày mở), đơn mỗi giờ công, mức đơn của ca tương đương mấy người. Không quy đổi giờ đông nhất (chia thẳng ra quá nhiều: quán trà sữa ra 6 người = cả quán). Nhân viên hỏi (chấm công của riêng mình) thì không quy đổi. Sửa nhận nhầm "thêm canh" là "thêm ca".
 - Chấm mù 39 cặp vs 183 (khối gộp dòng hai bản): **+0,67 ± 0,60**; lý lẽ 1,23 → 1,56, tìm vấn đề 1,74 → 1,95, đúng quán 1,87 → 1,97, đúng số 1,90 → 1,82 (Boom chen số không liên quan, lỗi có từ trước).
 - Kịch bản áp: `db-fix/boom_l184_ap_dung.sh` (chép logic.ts, index.ts; chỉ kiểm đạt).
+
+## Lần 185 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_175324`)
+
+- Máy ảo Demo (có chấm công ảo) sau lần 184: Boom quy đổi ca chiều ~0,8 người, xếp 1 người, nhưng vẫn hỏi "ca chiều hiện có mấy người đã được xếp". Nay `soNhanSu` (lay_so.ts) tổng hợp thêm `lich`: mỗi người một dòng {tên, thứ thường làm (≥ 2 lần), giờ vào / ra trung vị, giờ VN} (một dòng / người vì cleanModule chỉ giữ 3 tầng, 12 phần tử); dòng người làm ghi "Thứ X khung này quán thường có N người: tên (giờ)". Nhân viên xem của mình thì không có lịch.
+- 4 quán mẫu thêm `lich` khớp giờ mở và giờ công. Chấm mù 33 cặp vs 184: **+1,48 ± 0,75** (mở +1,78, kín +0,17 trên 6 cặp); đúng quán 1,36 → 1,85, tìm vấn đề 1,48 → 1,88; câu dùng được bộ mở 8 → 21 / 27.
+- Kịch bản áp: `db-fix/boom_l185_ap_dung.sh` (chép logic.ts, lay_so.ts; chỉ kiểm đạt).
+
+## Lần 186 (09/11, sửa sau khi thử Demo; ĐÃ ÁP TS `20261109_180421`)
+
+- Kỳ "tháng này" mới 9 ngày → mỗi thứ có ca 1 lần, ngưỡng "≥ 2 lần" loại hết người, Boom chỉ nói "khoảng 1 người". Nay `lay_so.ts` đếm số ngày mỗi thứ có ca trong kỳ; một người "thường làm" thứ đó khi có mặt ≥ nửa số ngày ấy. Không ai thì dòng ghi "chấm công trong kỳ chưa thấy ai thường làm khung này vào Thứ X", không ghi "0 người".
+- Không chấm mù (sửa lỗi theo số thật, không đổi lời dặn). Demo hỏi lại "mai mưa chiều, ca chiều cần mấy nhân viên?": Boom nêu Hà (17h–) và Tâm (–15h). Còn: chưa tính sẵn khoảng trống giờ không ai làm.

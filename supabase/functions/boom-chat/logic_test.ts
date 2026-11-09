@@ -2075,3 +2075,14 @@ Deno.test('lần 184: số người làm cùng lúc theo chấm công, quy đổ
   assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, mSelf).includes('người làm cùng lúc'));
   assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Tối mai mưa, có nên nấu thêm canh không?', NOW, m).includes('người làm'));
 });
+
+Deno.test('lần 185: dòng người làm nêu ai thường làm khung đó vào thứ đó', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_c.json', import.meta.url)));
+  const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
+  // mai = Thứ Năm 29/10; ca chiều quán bán 16–20h → Bảo (15–20h)
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m), 'Thứ Năm khung này quán thường có 1 người: Bảo (15–20h) (theo chấm công)');
+  // ca sáng Thứ Năm: Cô Sáu, Tâm (6–14h), Hiền (10–14h)
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua, ca sang can may nguoi?', NOW, m), 'Thứ Năm khung này quán thường có 3 người: Cô Sáu (6–14h), Tâm (6–14h), Hiền (10–14h)');
+});

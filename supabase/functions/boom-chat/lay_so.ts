@@ -555,6 +555,32 @@ export function soNhanSu(shifts: Row[], users: Row[], payroll: Row[], period: st
     [...count.keys()].map((u) => ({ name: name.get(u) || 'Nhân viên', shifts: count.get(u)!, hours: r2(hours.get(u) ?? 0), late: late.get(u) ?? 0, late_minutes: lateMin.get(u) ?? 0 })),
     (x) => x.hours,
   );
+  // lần 185: lịch thường lệ mỗi người (thứ làm ≥ 2 lần trong kỳ, giờ vào / ra trung vị, giờ VN) → Boom biết ca X thứ Y quán thường có ai.
+  // Một dòng / người vì cleanModule chỉ giữ 3 tầng, 12 phần tử: thu = chuỗi thứ (0 = Thứ Hai … 6 = Chủ nhật)
+  const VN = 7 * 3600e3, giua = (a: number[]) => a.sort((x, y) => x - y)[Math.floor(a.length / 2)];
+  const theo = new Map<unknown, { thu: number[]; vao: number[]; ra: number[] }>();
+  // số ngày có ca của từng thứ trong kỳ: kỳ ngắn (vd tháng này mới 9 ngày, Thứ Ba 1 lần) thì 1 lần đã là "thường làm" (máy ảo 09/11)
+  const ngayThu = [0, 1, 2, 3, 4, 5, 6].map(() => new Set<string>());
+  for (const s of shifts) {
+    const a = ngay(s.clock_in);
+    if (a) { const va = new Date(a.getTime() + 7 * 3600e3); ngayThu[(va.getUTCDay() + 6) % 7].add(va.toISOString().slice(0, 10)); }
+  }
+  for (const s of shifts) {
+    const a = ngay(s.clock_in), b = ngay(s.clock_out);
+    if (!a || !b || b <= a) continue;
+    const va = new Date(a.getTime() + VN), vb = new Date(b.getTime() + VN);
+    const t = theo.get(s.user_id) ?? { thu: [0, 0, 0, 0, 0, 0, 0], vao: [], ra: [] };
+    t.thu[(va.getUTCDay() + 6) % 7]++;
+    t.vao.push(va.getUTCHours() + va.getUTCMinutes() / 60);
+    t.ra.push(vb.getUTCHours() + vb.getUTCMinutes() / 60 + (vb.getUTCDate() !== va.getUTCDate() ? 24 : 0));
+    theo.set(s.user_id, t);
+  }
+  const lich = [...theo.entries()].map(([u, t]) => ({
+    name: name.get(u) || 'Nhân viên',
+    thu: t.thu.map((c, i) => (c > 0 && c >= ngayThu[i].size / 2 ? String(i) : '')).join(''),
+    vao: Math.round(giua(t.vao)),
+    ra: Math.min(24, Math.round(giua(t.ra))),
+  })).filter((x) => x.thu);
   return {
     period,
     self,
@@ -565,6 +591,7 @@ export function soNhanSu(shifts: Row[], users: Row[], payroll: Row[], period: st
     forgot_clock_out: forgot,
     late_total: [...late.values()].reduce((x, y) => x + y, 0),
     staff: staff.slice(0, 12),
+    ...(self || !lich.length ? {} : { lich: lich.slice(0, 12) }),
     ...(payroll.length
       ? {
         payroll: payroll.map((p) => ({

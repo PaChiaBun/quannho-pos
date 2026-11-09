@@ -1036,7 +1036,15 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const canNguoi = nangSuat >= 0.3 && cungLuc > 0
         ? `; theo chấm công cả kỳ quán thường có ~${pctTxt(cungLuc)} người làm cùng lúc, mỗi giờ công ~${pctTxt(nangSuat)} đơn (${f.orders} đơn / ${Math.round(gioCong)} giờ công) → mức đơn của ca này tương đương ~${pctTxt(tb / nangSuat)} người (ước theo trung bình, chưa tính chuẩn bị / bếp)`
         : '';
-      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${canNguoi} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
+      // lần 185 (máy ảo: Boom quy đổi được ~0,8 người nhưng vẫn hỏi "ca chiều hiện có mấy người"): ai thường làm khung này vào thứ đó
+      const lichNs = ns && !ns.self && Array.isArray(ns.lich) ? (ns.lich as Record<string, unknown>[]) : [];
+      const wdI = wdOf(w.ngay[i].ngay);
+      const coMat = lichNs.filter((p) => typeof p.thu === 'string' && p.thu.includes(String(wdI)) && ds.some((h) => h >= Number(p.vao) && h < Number(p.ra)));
+      // không ai thì nói "chưa thấy ai thường làm", không ghi "0 người" (dễ hiểu thành quán bỏ trống ca)
+      const thuongCo = !lichNs.length ? '' : coMat.length
+        ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)`
+        : `; chấm công trong kỳ chưa thấy ai thường làm khung này vào ${THU_DAI[wdI]}`;
+      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${canNguoi}${thuongCo} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày

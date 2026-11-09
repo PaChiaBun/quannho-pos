@@ -1,6 +1,6 @@
 // Test lay_so.ts — KHÔNG gọi mạng: fetch giả trả JSON theo bảng (đường dẫn) + tham số.
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { type Ctx, docMuc, docQuyen, type Ky, mucDuocXem, type Quyen, soKhuyenMai, xemDuocBanHang } from './lay_so.ts';
+import { type Ctx, docMuc, docQuyen, type Ky, mucDuocXem, type Quyen, soKhuyenMai, soNhanSu, xemDuocBanHang } from './lay_so.ts';
 import { parseModules } from './logic.ts';
 
 type Row = Record<string, unknown>;
@@ -228,6 +228,8 @@ Deno.test('docMuc quản lý: đủ 5 mục, đúng khoá / số, parseModules n
     forgot_clock_out: 1,
     late_total: 1,
     staff: [{ name: 'Lan', shifts: 2, hours: 4.5, late: 1, late_minutes: 15 }, { name: 'Nhân viên', shifts: 2, hours: 2, late: 0, late_minutes: 0 }],
+    // lần 185: kỳ 3 ngày, mỗi thứ có ca 1 lần → 1 lần đã là "thường làm"
+    lich: [{ name: 'Lan', thu: '6', vao: 8, ra: 13 }, { name: 'Nhân viên', thu: '0', vao: 8, ra: 10 }],
     payroll: [{ name: 'Tháng 10', status: 'paid', total: 12000000, from: '2026-10-01', to: '2026-10-31' }],
   });
   assertEquals(pm.khach, {
@@ -326,4 +328,22 @@ Deno.test('chủ quán đọc được mục Khách hàng dù module chưa bật
   assertEquals(mucDuocXem(q(true, 'owner')).khach, 'all');
   assertEquals(mucDuocXem(q(false, 'manager')).khach, null);
   assertEquals(mucDuocXem(q(false, 'staff')).khach, null);
+});
+
+Deno.test('lần 185: lịch thường lệ mỗi người từ chấm công (giờ VN, thứ làm ≥ 2 lần)', () => {
+  const ca = (u: string, ngay: string, vao: string, ra: string) => ({ user_id: u, clock_in: `${ngay}T${vao}:00+07:00`, clock_out: `${ngay}T${ra}:00+07:00` });
+  const shifts = [
+    // Bảo: Thứ Ba 3/11, 10/11 và Thứ Năm 5/11 14–22h; Thứ Năm chỉ 1 lần → không tính
+    ca('b', '2026-11-03', '14:00', '22:05'), ca('b', '2026-11-10', '13:55', '22:00'), ca('b', '2026-11-05', '14:00', '22:00'),
+    // Lan: Thứ Hai 2/11, 9/11 6–14h
+    ca('l', '2026-11-02', '06:00', '14:00'), ca('l', '2026-11-09', '06:10', '14:00'),
+  ];
+  const r = soNhanSu(shifts, [{ id: 'b', name: 'Bảo' }, { id: 'l', name: 'Lan' }], [], 'Tháng này', new Date('2026-11-11T00:00:00+07:00'), false);
+  // Bảo làm Thứ Năm 1 / 1 lần có ca của Thứ Năm → cũng tính (kỳ ngắn); Thứ Ba 2 / 2
+  assertEquals(r.lich, [{ name: 'Bảo', thu: '13', vao: 14, ra: 22 }, { name: 'Lan', thu: '0', vao: 6, ra: 14 }]);
+  // kỳ dài: 4 Thứ Hai có ca, chỉ làm 1 lần → không tính là thường làm
+  const dai = [...['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23'].map((d) => ca('l', d, '06:00', '14:00')), ca('b', '2026-11-02', '14:00', '22:00')];
+  assertEquals(soNhanSu(dai, [{ id: 'b', name: 'Bảo' }, { id: 'l', name: 'Lan' }], [], 'Tháng này', new Date('2026-11-30T00:00:00+07:00'), false).lich, [{ name: 'Lan', thu: '0', vao: 6, ra: 14 }]);
+  // nhân viên xem của chính mình: không có lịch cả quán
+  assertEquals(soNhanSu(shifts, [], [], 'Tháng này', new Date('2026-11-11T00:00:00+07:00'), true).lich, undefined);
 });

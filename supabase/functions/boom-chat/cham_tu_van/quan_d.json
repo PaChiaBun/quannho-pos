@@ -1236,6 +1236,38 @@
       "status": "paid",
       "total": 24500000
      }
+    ],
+    "lich": [
+     {
+      "name": "Út Hiền",
+      "thu": "012345",
+      "vao": 6,
+      "ra": 13
+     },
+     {
+      "name": "Lan",
+      "thu": "012345",
+      "vao": 6,
+      "ra": 13
+     },
+     {
+      "name": "Phúc",
+      "thu": "012345",
+      "vao": 17,
+      "ra": 21
+     },
+     {
+      "name": "Ngọc (bán thời gian)",
+      "thu": "024",
+      "vao": 17,
+      "ra": 21
+     },
+     {
+      "name": "Khoa (bán thời gian)",
+      "thu": "135",
+      "vao": 17,
+      "ra": 21
+     }
     ]
    },
    "khach": {
