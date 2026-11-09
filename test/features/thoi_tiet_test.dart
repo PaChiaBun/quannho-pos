@@ -279,4 +279,46 @@ void main() {
     }
     await t.binding.setSurfaceSize(null);
   });
+
+  testWidgets('09/11 dòng Hỏi Boom ở Trang chủ: chỉ hiện khi có cảnh báo', (
+    t,
+  ) async {
+    Future<void> ve(ThoiTietData v) => t.pumpWidget(
+      ProviderScope(
+        key: UniqueKey(),
+        overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
+        child: const MaterialApp(home: Scaffold(body: ThoiTietHoiBoom())),
+      ),
+    );
+    const vt = ViTriThoiTiet(10.8, 106.7, 'Quận 1');
+    await ve(const ThoiTietData(bat: true, viTri: vt, nhiet: 30, troi: 'nắng'));
+    await t.pump();
+    expect(find.byType(InkWell), findsNothing, reason: 'trời thường thì ẩn');
+    await ve(const ThoiTietData(bat: true, nhiet: 36, troi: 'nắng'));
+    await t.pump();
+    expect(find.byType(InkWell), findsNothing, reason: 'chưa chọn khu vực');
+    await ve(
+      const ThoiTietData(
+        bat: true,
+        viTri: vt,
+        nhiet: 31,
+        troi: 'mây',
+        gio: [GioThoiTiet(16, 28, 70, 'dông')],
+      ),
+    );
+    await t.pump();
+    expect(
+      find.textContaining(
+        'Hỏi Boom: Sắp mưa ~16h, quán nên chuẩn bị gì?',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      cauHoiBoomThoiTiet(
+        const ThoiTietData(bat: true, viTri: vt, nhiet: 36, troi: 'nắng'),
+      ),
+      'Nắng nóng 36°, quán nên chuẩn bị gì?',
+    );
+  });
 }

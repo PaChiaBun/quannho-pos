@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quannho_pos/features/ai_assistant/screens/boom_chat_screen.dart';
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_message_bubble.dart';
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_typing_indicator.dart';
+import 'package:quannho_pos/features/thoi_tiet/thoi_tiet_provider.dart';
 import 'package:quannho_pos/features/ai_assistant/widgets/boom_suggestion_chips.dart';
 import 'package:quannho_pos/features/ai_assistant/providers/boom_chat_provider.dart';
 import 'package:quannho_pos/features/ai_assistant/services/boom_module_data_service.dart';
@@ -90,6 +91,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(BoomChatScreen), findsNothing);
+    });
+
+    testWidgets('09/11 có cảnh báo thời tiết: câu chuẩn bị đứng đầu gợi ý', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            boomHelpIndexProvider.overrideWith((ref) async => null),
+            boomGoiYProvider.overrideWith((ref) async => kBoomGoiYChung),
+            thoiTietProvider.overrideWith(_ThoiTietMai.new),
+          ],
+          child: const MaterialApp(home: Scaffold(body: BoomChatScreen())),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final chips = tester
+          .widget<BoomSuggestionChips>(find.byType(BoomSuggestionChips))
+          .suggestions;
+      expect(chips.first, 'Mai mưa 70%, quán nên chuẩn bị gì?');
+      expect(chips.skip(1), kBoomGoiYChung);
     });
 
     testWidgets('2. Suggestion chip hiển thị đúng 5 câu và bấm được', (
@@ -218,4 +240,18 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
   });
+}
+
+class _ThoiTietMai extends ThoiTietNotifier {
+  @override
+  Future<ThoiTietData?> build() async => ThoiTietData(
+    bat: true,
+    viTri: const ViTriThoiTiet(10.8, 106.7, 'Quận 1'),
+    nhiet: 28,
+    troi: 'mây',
+    ngay: [
+      NgayThoiTiet(DateTime(2026, 11, 9), 30, 25, 20, 'mây'),
+      NgayThoiTiet(DateTime(2026, 11, 10), 29, 24, 70, 'mưa'),
+    ],
+  );
 }

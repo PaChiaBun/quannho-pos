@@ -1057,6 +1057,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               alignment: Alignment.centerRight,
                               child: ThoiTietThe(),
                             ),
+                            const ThoiTietHoiBoom(),
                           ],
                         );
                       }
@@ -1167,6 +1168,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               );
                             },
                           ),
+                          const ThoiTietHoiBoom(),
                         ],
                       );
                     },

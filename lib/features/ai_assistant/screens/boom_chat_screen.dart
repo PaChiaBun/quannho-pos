@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/providers/session_provider.dart';
+import '../../thoi_tiet/thoi_tiet_provider.dart';
+import '../../thoi_tiet/thoi_tiet_widgets.dart' show cauHoiBoomThoiTiet;
 import '../help/boom_help_repository.dart';
 import '../providers/boom_chat_provider.dart';
 import '../services/boom_module_data_service.dart';
@@ -67,7 +69,15 @@ class _BoomChatScreenState extends ConsumerState<BoomChatScreen> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(boomChatProvider);
-    final goiY = ref.watch(boomGoiYProvider).value ?? kBoomGoiYChung;
+    final tt = ref.watch(thoiTietProvider).value;
+    // 09/11: đang có cảnh báo thời tiết → câu hỏi chuẩn bị lên đầu; ai cũng hỏi được (nhân viên: tư vấn không kèm số)
+    final cauThoiTiet = tt == null || !tt.bat || !tt.coSo
+        ? null
+        : cauHoiBoomThoiTiet(tt);
+    final goiY = [
+      ?cauThoiTiet,
+      ...ref.watch(boomGoiYProvider).value ?? kBoomGoiYChung,
+    ];
     final session = ref.watch(sessionProvider);
 
     final bool isOwnerOrManager =

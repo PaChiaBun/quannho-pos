@@ -62,6 +62,76 @@ String _do(double? x) => x == null ? '–' : '${x.round()}°';
   return null;
 }
 
+/// Câu hỏi Boom theo cảnh báo thời tiết (Trang chủ, gợi ý trong chat); không có cảnh báo → null.
+String? cauHoiBoomThoiTiet(ThoiTietData v) {
+  final cb = v.viTri == null ? null : canhBaoThoiTiet(v);
+  return cb == null ? null : '${cb.ngan}, quán nên chuẩn bị gì?';
+}
+
+/// Gửi sẵn câu hỏi rồi mở khung Boom.
+void moBoomVoiCauHoi(BuildContext context, WidgetRef ref, String q) {
+  ref.read(boomChatProvider.notifier).sendMessage(q);
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (_) => const BoomChatScreen(),
+  );
+}
+
+/// 09/11: dòng "Hỏi Boom" dưới hàng chip Trang chủ, chỉ hiện khi có cảnh báo thời tiết — lối vào Boom ở chỗ chủ
+/// quán đã nhìn (sổ thật: 0 lượt hỏi Boom từ 06/11). Không cảnh báo → ẩn, Trang chủ như cũ.
+class ThoiTietHoiBoom extends ConsumerWidget {
+  const ThoiTietHoiBoom({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final v = ref.watch(thoiTietProvider).value;
+    final q = v == null || !v.bat || !v.coSo ? null : cauHoiBoomThoiTiet(v);
+    if (q == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Material(
+        color: const Color(0x22FFFFFF),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => moBoomVoiCauHoi(context, ref, q),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded, color: _kCam, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Hỏi Boom: ',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(text: q),
+                      ],
+                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Thẻ nhỏ cạnh doanh thu trên Trang chủ: một dòng, cao bằng nhãn "Sẵn sàng"; có cảnh báo thì đổi màu.
 /// Chưa có khoá Apple, lỗi mạng, chưa có số → ẩn; không bao giờ làm chậm Trang chủ.
 class ThoiTietThe extends ConsumerWidget {
@@ -1407,14 +1477,9 @@ class _HoiBoom extends ConsumerWidget {
   final ThoiTietData v;
   const _HoiBoom(this.v);
 
-  static String cauHoi(ThoiTietData v) {
-    final mai = v.ngay.length > 1 ? v.ngay[1] : null;
-    if (v.muaSapToi != null)
-      return 'Chiều nay có thể mưa khoảng ${v.muaSapToi!.gio}h, quán nên chuẩn bị gì?';
-    if (mai != null && (mai.mua ?? 0) >= 50)
-      return 'Ngày mai khả năng mưa ${mai.mua}%, quán nên chuẩn bị gì?';
-    return 'Thời tiết mấy ngày tới thế này, quán nên chuẩn bị gì?';
-  }
+  static String cauHoi(ThoiTietData v) =>
+      cauHoiBoomThoiTiet(v) ??
+      'Thời tiết mấy ngày tới thế này, quán nên chuẩn bị gì?';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1424,16 +1489,7 @@ class _HoiBoom extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          ref.read(boomChatProvider.notifier).sendMessage(q);
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            useSafeArea: true,
-            builder: (_) => const BoomChatScreen(),
-          );
-        },
+        onTap: () => moBoomVoiCauHoi(context, ref, q),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
