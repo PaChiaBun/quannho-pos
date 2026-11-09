@@ -7,6 +7,20 @@
 
 
 
+## 2026-11-07 → 09 — AI Boom: QC độc lập, thời tiết, bộ nhớ quán, sổ tay, lô dạy (lần 152 → 165 ĐÃ ÁP; app 1.0.7 đã build, CHƯA đưa lên)
+
+Cấu trúc hiện tại: `.docs/kien-truc-boom-chat.md`. Kế hoạch + từng lần sửa / đo: `.docs/ke-hoach-boom-bo-nho-thoi-tiet.md`. Từng lần áp: `boom_changelog` (/admin).
+
+- ✅ **QC độc lập 07/11**: 26/64 câu dùng được, tiếp thị 1/16 → sửa 11 lỗi gốc bằng mã (buổi theo vế câu, khung giờ theo giờ có bán, mức bớt không vượt giá món, so mốc cả kỳ, tồn kho, lạc món…) → lần 152.
+- ✅ **Thời tiết Apple WeatherKit** (09/11): khoá tạo trên Apple (Team V4HN95W2C7, Key JS4U2BFQZW, Services ID `vn.lpm.quannho.weather`), khoá trong Keychain `boom-weatherkit-p8` và tệp bí mật máy chủ; đệm ≤ 3 giờ trong bộ nhớ (điều khoản Apple: KHÔNG lưu lâu). Quán Demo đã đặt khu vực TP.HCM. Lần 156–161.
+- ✅ **Bộ nhớ riêng từng quán + tự đo lời khuyên** (09/11): migration `20261107_boom_bo_nho_quan_v1` đã áp (sao lưu `quannho_before_bo_nho_20261109_102811.dump`), 24/24 test trên máy chủ, `BOOM_BO_NHO=1`, bỏ qua quán Demo. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_bo_nho_ap_dung.sh` (mất ghi nhớ).
+- ✅ **Sổ tay tiếp thị** bật 09/11 (`BOOM_SO_TAY=1`, lần 160), chỉ mở cho câu tiếp thị.
+- ✅ **Lô dạy 09/11** (lần 162–165): kỳ ít đơn tự lấy 30 ngày qua, "30 ngày tới", tuần mới so trọn tuần trước, kỳ chưa có đơn trả lời ngắn; xếp món theo lời mỗi phần, lời qua sàn, mua tặng theo giá vốn món, giá chủ quán nói khác menu; lỗi bỏ dấu mua/mưa, bao/bão.
+- ✅ **Đo chấm mù 09/11** (`tool/boom_do/do_09_11/`): lần 151 vs lần 164, 168 cặp trên bộ chưa dạy + kín: **+0,49 ± 0,30** (12,33 → 12,82 / 16); giá món +1,88, quyết định +1,04; tiếp thị +0,09; kế hoạch −1,50 (n nhỏ).
+- ⚠️ Lần đo trước đó (151 vs 161: +0,10) đưa người chấm khối số liệu của bản cũ → có thể trừ oan bản mới; đã sửa `tron.py`.
+- 🔲 App 1.0.7+26 (commit `5c4fa40`, worktree sạch `quan_nho_phat_hanh`): web + APK đã build, Windows chạy workflow; đưa web / APK lên máy chủ bị hệ thống quyền chặn → Chủ Quán tự đưa. Chưa ghi `app_versions`, chưa gửi App Store / Play. Tệp `AuthKey_JS4U2BFQZW.p8` còn trong Tải về: sao lưu rồi xoá.
+- ➡️ Tiếp theo: dòng tính sẵn hoà vốn (thuê người / quảng cáo / thuê quầy), giá cần đặt trên sàn; tiếp thị; sau 1–2 tuần đọc số đếm dùng thật (câu hỏi, 👍/👎, số ghi nhớ quán).
+
 ## 2026-11-05 — /admin: quán cần gọi sớm (Chủ Quán "Làm tiếp phần quản lý"; ĐÃ ÁP production 05/11, chưa commit)
 
 - Lý do: Tổng quan chỉ báo quán sau khi đã ngừng bán đủ 7 ngày; đo 05/11 có 1 quán chiếm 70% doanh số, 3 quán 87%.
