@@ -66,6 +66,11 @@ Trong `buildMessages`: `baiToanTiepThi` (tăng 10% = bao nhiêu đơn, ngưỡng
 giá vốn của đúng món, combo), `caBan` (ca theo khối giờ có bán; khối < 3% doanh thu là đơn lẻ), `kichBanGia` (tăng giá X thì
 hoà vốn), `giaKhacMenu` (giá chủ quán nói khác menu; `monKhop` khớp tên gọi tắt), `ngayHoi`, `uuDaiTrongBai`, `viecTiepThiTrongApp`…
 
+Thời tiết (lần 167–175): `thoiTietChoBoom` (dự báo + khung giờ mưa mỗi ngày `khungMua`), `thoiTietVoiSoQuan` (THỜI TIẾT × SỐ
+QUÁN: khung mưa đè bao nhiêu % doanh thu ngày, mức bán thường của thứ làm mốc nhập hàng, nắng nóng ≥ 35° → % nhóm đồ uống, ngày
+đáng chuẩn bị nhất; nhãn sổ `+tt_so`). Câu hướng dẫn chỉ có dự báo khi có chữ rõ (`HOI_THOI_TIET_RO`); câu chỉ hỏi thời tiết không
+gắn lời dặn kỳ chưa có đơn (`chiHoiThoiTiet`). Kế hoạch: `.docs/ke-hoach-boom-tu-van-thoi-tiet.md`.
+
 Cách viết một dòng tính sẵn: tính bằng mã, ghi số cụ thể, **nói rõ thước đo đúng** (bài học K18: ghi "lời nhiều nhất cả kỳ" như đáp
 án làm Boom kết luận sai), chỉ bật khi câu hỏi cần (từ khoá), có kiểm thử trong `logic_test.ts`.
 
@@ -74,7 +79,8 @@ Cách viết một dòng tính sẵn: tính bằng mã, ghi số cụ thể, **n
 `kiemTraLoi` hiện có 28 mã kiểm, mỗi mã trả danh sách lỗi; có lỗi thì viết lại 1 lần. Ví dụ: `soLa` (số không có trong khối gốc),
 `ngoaiGioBan`, `ngoaiThuBan`, `khuyenTheoKyIt`, `tangGiaKhiTut`, `khuyenLaiDaThu`, `soHuongSaiGio`, `mocCaKy`, `giamQuaGia`,
 `lacMon`, `viecAppKhongLam` (app không gửi tin, không giới hạn mã theo giờ…), `maTrung`, `muaTangChuaDung`, `boQuaGiaMenu`,
-`kyKhongDonDai`. Chốt bằng mã sau lần viết lại: `gonKhiKhongDon` (kỳ chưa có đơn → 1–2 câu), `ghiKy` (ghi kỳ của số; không gắn
+`kyKhongDonDai`, thời tiết `soTroiSai` (nhiệt độ / % ảnh hưởng của trời không có trong dự báo), `chiTienViTroi` (khuyên chi tiền
+chỉ vì dự báo), `doLoiTroi` (đổ doanh thu giảm cho trời khi không có số thời tiết). Chốt bằng mã sau lần viết lại: `gonKhiKhongDon` (kỳ chưa có đơn → 1–2 câu), `ghiKy` (ghi kỳ của số; không gắn
 vào bài đăng), `ghiApTay` (ưu đãi theo giờ phải dặn nhân viên áp tay), `ghiNguonThoiTiet`.
 
 **Bẫy hay gặp: bỏ dấu làm chữ khác nhau trùng nhau** — số/so, mua/mưa, bao/bão, nang/nắng, thử/Thứ, hẻm/thêm, sàn/sáng. Luật trên

@@ -88,3 +88,12 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Câu không có dự báo không đổi (dòng mới chỉ gắn khi đã có khối thời tiết), nên không chạy lại bộ hồi quy cũ.
 - Lưu ý: bản mới bị kiểm số bắt viết lại nhiều hơn (80 so 66 / 150), chưa xem lý do. Trợ lý viết bộ kín có thể đã đọc trời giả trước khi sửa Thứ Bảy / Chủ nhật của kiểu "mưa chiều" (ảnh hưởng như nhau cả A và B).
 - Kịch bản áp: `db-fix/boom_l172_ap_dung.sh` (chỉ kiểm đạt).
+
+## Kết quả lô B (09/11, chưa áp)
+
+- Thử trước: kiểm số có sẵn (`soLa`) đã bắt % mưa bịa, nhưng bỏ sót nhiệt độ bịa (37°) và "ngày mưa doanh thu giảm 30%".
+- Mã: `soTroiSai` (173), `chiTienViTroi` (174), `doLoiTroi` (175) trong `kiemTraLoi`; dòng nắng nóng của lô A nâng ngưỡng 34° → 35° (khớp cảnh báo app). Kiểm thử hàm 158/158.
+- Đếm trên 300 câu của lần đo lô A: bản lô A 0/150 câu bị báo, bản 168 có 2/150 (174, khuyên nhập thêm vì dự báo). Bản đầu của 174 báo nhầm 13/150 câu có rào ("không tăng nhập chỉ vì dự báo", "thử quảng cáo ngân sách nhỏ") → nới phần nhận biết rào.
+- Không chấm mù lại: không câu nào của bộ đo đổi, lô B là lưới an toàn cho lỗi hiếm.
+- Chưa làm: Boom chen "Cần xem lại: Thứ Bảy 8.750đ" (từ số bán hàng, không phải thời tiết).
+- Kịch bản áp: `db-fix/boom_l175_ap_dung.sh` (chỉ kiểm đạt).

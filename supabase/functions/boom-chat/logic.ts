@@ -950,7 +950,8 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
     if (parts.length || coMoc) lines.push(`${dau}: ${parts.join('; ') || 'chưa có dự báo theo giờ'}.`);
   }
   // 171: nắng nóng → nhóm đồ uống của quán
-  const nong = ngay.filter((i) => (w.ngay[i].cao ?? 0) >= 34);
+  // lần 173: 34° ở TP.HCM là ngày thường; app cảnh báo nắng nóng từ 35° → cùng ngưỡng (máy ảo 09/11: Boom gọi 34° là "nắng nóng")
+  const nong = ngay.filter((i) => (w.ngay[i].cao ?? 0) >= 35);
   if (nong.length && f.groups?.length) {
     const UONG = /uong|tra|ca phe|cafe|coffee|sinh to|nuoc|sua|da xay|\bda\b|kem|che|soda|nuoc ep/;
     const nhom = f.groups.filter((g) => UONG.test(boDau(g.name).toLowerCase()));
@@ -3226,6 +3227,37 @@ export function muaTangChuaDung(answer: string, ref: string): string {
   return `chưa dùng phép tính mua ${m[1]} tặng ${m[2]} (giảm ${m[3]}%; ${m[4].trim()}) → câu đầu kết luận có lỗ / phải bán thêm bao nhiêu theo đúng phép tính đó`;
 }
 
+// Lô B tư vấn thời tiết (lần 173–175): kiểm bằng mã sau khi trả lời, không thêm lời dặn.
+const CAU = (a: string) => a.split(/(?<=[.!?;\n])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
+const TROI_CHU = /mưa|nắng|nóng|thời tiết|trời|dự báo|bão|dông/i;
+
+/** 173: nhiệt độ không có trong dự báo; % tăng / giảm doanh thu vì trời mà khối không có (quán chưa có số ngày mưa). */
+export function soTroiSai(answer: string, ref: string): string[] {
+  if (!/DỰ BÁO THỜI TIẾT/.test(ref)) return [];
+  const out: string[] = [];
+  for (const m of answer.matchAll(/(?<![\d.,])(\d{1,2})\s*°/g)) if (!new RegExp(`(?<![\\d])${m[1]}°`).test(ref)) out.push(`${m[1]}°`);
+  for (const c of CAU(answer)) {
+    if (!TROI_CHU.test(c) || !/giảm|tăng|sụt|hụt|mất|vắng|ít đi|thêm khách/i.test(c)) continue;
+    for (const m of c.matchAll(/(\d+(?:[.,]\d+)?)\s*%/g)) if (!ref.includes(`${m[1]}%`)) out.push(`${m[1]}%`);
+  }
+  return [...new Set(out)];
+}
+
+/** 174: khuyên chi tiền (thuê người, quảng cáo, giảm giá, nhập nhiều, mua thiết bị) mà lý do là trời / dự báo, không rào thử nhỏ. */
+export function chiTienViTroi(answer: string, ref: string): string[] {
+  if (!/DỰ BÁO THỜI TIẾT/.test(ref)) return [];
+  const CHI = /thuê thêm|tuyển thêm|chạy quảng cáo|quảng cáo|giảm giá|khuyến mãi|mua (?:thêm )?(?:tủ|mái|máy|bạt|dù|ô)\b|nhập (?:thêm|nhiều|gấp|tăng)|tăng (?:lượng )?nhập/i;
+  // 09/11 đếm trên 300 câu đo lô A: câu phủ định / thử nhỏ / nhập thêm đá là đúng, không bắt
+  const RAO = /không|chưa|đừng|tránh|thử|nếu|theo dõi|vừa phải|nhẹ|hạn mức|tối đa|ngân sách nhỏ|cân nhắc|tạm|ít/i;
+  return CAU(answer).filter((c) => CHI.test(c) && TROI_CHU.test(c) && !RAO.test(c) && !/nhập thêm (?:nước )?đá(?![\p{L}])/iu.test(c)).map((c) => c.slice(0, 80));
+}
+
+/** 175: đổ doanh thu giảm cho trời khi khối không có số thời tiết nào. */
+export function doLoiTroi(answer: string, ref: string): boolean {
+  if (/DỰ BÁO THỜI TIẾT/.test(ref)) return false;
+  return /(?:do|vì|tại|bởi|có thể do|có lẽ do|chắc do)\s+(?:trời|thời tiết|mưa|nắng|nóng|mùa mưa)/i.test(answer);
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
@@ -3251,7 +3283,11 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const pd = phanThanhDon(answer, ref);
   const ct = goiSaiCaoThap(answer, ref);
   const gs = soGanSai(answer, ref);
+  const ttSai = soTroiSai(answer, ref), ttChi = chiTienViTroi(answer, ref), ttLoi = doLoiTroi(answer, ref);
   return [
+    ...(ttSai.length ? [`số thời tiết không có trong dự báo (${ttSai.join(', ')}) → chỉ dùng đúng nhiệt độ / % trong khối dự báo; quán CHƯA có số ngày mưa nên KHÔNG nói mưa / nắng làm tăng giảm bao nhiêu %`] : []),
+    ...(ttChi.length ? [`khuyên chi tiền chỉ vì dự báo ("${ttChi.join('"; "')}") → đổi thành chuẩn bị nhẹ / thử nhỏ có hạn mức và theo dõi; nói rõ dự báo có thể sai`] : []),
+    ...(ttLoi ? ['đổ doanh thu giảm cho thời tiết mà không có số thời tiết nào → bỏ ý đó, giải thích bằng số bán hàng (giờ, thứ, món, số đơn)'] : []),
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
     ...(monLac ? [`người hỏi đích danh "${monLac}" mà câu trả lời không nhắc món này → trả lời đúng món đó, có số của món đó; muốn nói món khác thì nói rõ là đang so`] : []),

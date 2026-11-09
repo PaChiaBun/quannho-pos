@@ -7,7 +7,7 @@
 
 
 
-## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày (Boom lần 166 ĐÃ ÁP; app 1.0.7 build 30 đã build, CHƯA đưa lên)
+## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 166 → 175 ĐÃ ÁP; app 1.0.7 build 30 đã build, CHƯA đưa lên)
 
 Chủ Quán xem app thật trên máy ảo (quán Demo) và góp ý từng vòng; mỗi vòng cài đè bản thử lên máy ảo, chụp lại. Mã: `lib/features/thoi_tiet/`, `supabase/functions/boom-chat/thoi_tiet.ts`.
 
@@ -19,6 +19,16 @@ Chủ Quán xem app thật trên máy ảo (quán Demo) và góp ý từng vòng
 - ✅ **Bản dựng** (worktree sạch `quan_nho_phat_hanh`): build 27 → 30 theo từng vòng góp ý, **chỉ dùng build 30** (commit `0486d6f`, đã push): web + APK (versionCode 30, chứng chỉ `5583d121…`) ở `quan_nho_phat_hanh/build/`, Windows workflow `42578724084`. Build 26–29 bỏ, không đưa lên.
 - ✅ Test: `test/features/thoi_tiet_test.dart` 7/7 (đọc giờ cả tuần, câu tóm tắt, bấm mở ngày + vuốt, màn 360 và 1280 không tràn chữ).
 - ⚠️ Chạy test hàm Boom phải có `-A` (thiếu quyền đọc tệp thì 7 bài báo hỏng giả).
+- ✅ **Boom đọc thời tiết, sửa lỗi thử trên máy ảo** (Chủ Quán "xem Ai Boom đọc dữ liệu thời tiết"):
+  - Lần 167 (TS `20261109_143931`): "cuối tuần thời tiết thế nào, nên nhập hàng ra sao?" app xếp vào câu hướng dẫn → Boom nói "không xem được thời tiết". Nay câu hướng dẫn có chữ rõ (mưa, nắng, thời tiết, bão, dông; KHÔNG tính nóng / lạnh / mai / nhập hàng vì hay gặp trong câu hỏi cách dùng app) cũng có dự báo. "Mai mấy giờ mưa" → "chưa có dự báo theo giờ": nay mỗi ngày kèm khung giờ mưa tính sẵn từ `gio_tuan`.
+  - Lần 168 (TS `20261109_144731`): câu chỉ hỏi thời tiết trên quán 0 đơn bị chen "tuần này chưa có đơn, đã mở bán chưa" → bỏ lời dặn đó cho câu chỉ hỏi thời tiết. Còn: "de mua nhat" không dấu Boom có thể hiểu "dễ mua nhất"; cuộc trò chuyện cũ đã có câu "chưa có đơn" thì Boom vẫn lặp. Commit `bf281aa`.
+- ✅ **Dạy Boom tư vấn theo thời tiết** (kế hoạch `.docs/ke-hoach-boom-tu-van-thoi-tiet.md`, Chủ Quán duyệt "Làm đi"):
+  - Bộ đo: 30 câu mở + 20 câu kín (trợ lý độc lập viết), 4 quán mẫu × 3 kiểu trời GIẢ (`cham_tu_van/thoi_tiet/troi_gia.ts`, không lưu dữ liệu Apple), công cụ `tool/boom_do/do_09_11/do_thoi_tiet.ts`.
+  - Lô A, lần 169–172 (TS `20261109_151317`, commit `38ffa10`): dòng tính sẵn THỜI TIẾT × SỐ QUÁN (`thoiTietVoiSoQuan`). Chấm mù 100 cặp so lần 168: **+1,34 ± 0,37** (mở +1,58 ± 0,50, kín +0,97 ± 0,55); giờ bán +2,86, chuẩn bị +1,71; đúng số giữ nguyên; câu bẫy không đổi. Quán Demo: Boom dùng mốc bán Thứ Ba và % đồ uống.
+  - Lô B, lần 173–175 (TS `20261109_152048`): kiểm bằng mã `soTroiSai`, `chiTienViTroi`, `doLoiTroi`; ngưỡng nắng nóng 34° → 35° (khớp cảnh báo app). Kiểm sẵn đã bắt % mưa bịa nhưng sót nhiệt độ bịa và "ngày mưa giảm 30%". 0/150 câu lô A bị báo nên không chấm mù lại. Quán Demo: "trời nóng có nên thuê người, nhập gấp đôi" → "chưa nên… chỉ vì dự báo".
+  - Hoàn tác từng lần: `ROLLBACK=1 bash db-fix/boom_lNNN_ap_dung.sh <TS>` (167, 168, 172, 175).
+  - ⚠️ Bản lô A bị kiểm số bắt viết lại nhiều hơn một chút (80 so 66 / 150), chưa xem lý do. Boom còn chen "Cần xem lại: Thứ Bảy 8.750đ" không liên quan (từ số bán hàng).
+  - ➡️ Lô C (ngày mưa quán thường giảm bao nhiêu: hỏi Apple thời tiết những ngày đã qua đúng lúc cần, chỉ lưu con số kết luận) chờ Chủ Quán quyết.
 - 🔲 Chưa đưa web / APK / Windows lên, chưa ghi `app_versions`, chưa gửi App Store / Play. Màn "Hôm nay" của màn xem ngày và tài khoản nhân viên chưa xem trên máy ảo (chỉ có test). Máy màn hẹp (Sunmi) chữ cảnh báo dài trên thẻ Trang chủ có thể bị cắt "…".
 
 ## 2026-11-07 → 09 — AI Boom: QC độc lập, thời tiết, bộ nhớ quán, sổ tay, lô dạy (lần 152 → 165 ĐÃ ÁP; app 1.0.7 đã build, CHƯA đưa lên)

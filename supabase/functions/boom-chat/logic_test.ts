@@ -1979,3 +1979,18 @@ Deno.test('lô A thời tiết (lần 169–172): dòng tính sẵn ghép dự b
   assertEquals(L.thoiTietVoiSoQuan(null, a, 'mai mưa không', NOW), '');
   assertEquals(L.thoiTietVoiSoQuan(TROI.mua_chieu, null, 'mai mưa không', NOW), '');
 });
+
+Deno.test('lô B thời tiết (lần 173–175): kiểm bằng mã sau khi trả lời', () => {
+  const ref = 'Kỳ: Tháng này. Doanh thu 1.000.000đ từ 10 đơn.\nDỰ BÁO THỜI TIẾT KHU VỰC QUÁN: bây giờ 31°. Các ngày tới: T5 29/10: 25–31°, mưa, khả năng mưa cả ngày 80% (dễ mưa 15–20h, cao nhất 75% lúc 17h).\nTHỜI TIẾT × SỐ QUÁN: khung dễ mưa 15–20h thường chiếm 48% doanh thu một ngày.';
+  // 173: nhiệt độ bịa, % ảnh hưởng của trời bịa; số đúng không bắt
+  assertEquals(L.soTroiSai('Dạ, mai nóng tới 37°.', ref), ['37°']);
+  assertEquals(L.soTroiSai('Dạ, ngày mưa doanh thu thường giảm 30%.', ref), ['30%']);
+  assertEquals(L.soTroiSai('Dạ, mai 25–31°, mưa đè khung chiếm 48% doanh thu, có thể vắng khách.', ref), []);
+  // 174: khuyên chi tiền chỉ vì dự báo; câu phủ định / thử nhỏ / nhập thêm đá không bắt
+  assertEquals(L.chiTienViTroi('Mai mưa nên thuê thêm 2 người giao hàng.', ref).length, 1);
+  assertEquals(L.chiTienViTroi('Không tăng lượng nhập mạnh chỉ vì dự báo mưa. Có thể thử quảng cáo ngân sách nhỏ tối Thứ Năm. Trời nóng nên nhập thêm đá.', ref), []);
+  // 175: đổ cho trời khi không có số thời tiết
+  assert(L.doLoiTroi('Doanh thu giảm có thể do trời mưa nhiều.', 'Kỳ: Tháng này. Doanh thu 1.000.000đ.'));
+  assert(!L.doLoiTroi('Doanh thu giảm có thể do trời mưa nhiều.', ref));
+  assert(L.kiemTraLoi('Dạ, mai nóng tới 37°.', ref).some((x: string) => x.startsWith('số thời tiết không có trong dự báo')));
+});
