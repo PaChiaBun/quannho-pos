@@ -985,7 +985,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const avg = f.orders > 0 ? ` Trung bình ${vnd(f.revenue / f.orders)} / đơn.` : '';
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
   // 06/11: ngày 0 đơn vẫn viết đủ Vì sao / Việc tuần này, bảo rà nguyên liệu và nhập giá vốn
-  if (motNgayKy && f.orders === 0 && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
+  // 09/11 web Demo (lần 162): Thứ 2 trưa "tuần này so tuần trước" 0 đơn → "giảm 100%" và khuyên ẩn hết món chưa bán
+  const kyChayKhongDon = f.orders === 0 && /^(?:Tuần này|Tháng này)/.test(f.period.normalize('NFC'));
+  if (kyChayKhongDon && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
+    lines.push(`KỲ NÀY CHƯA CÓ ĐƠN NÀO (tới giờ này): chỉ trả lời 1–2 câu: nói ${f.period} chưa có đơn nào tới giờ này, nêu số của kỳ so sánh nếu có (trung bình mỗi ngày), rồi hỏi quán đã mở bán chưa hay bán ngoài app. KHÔNG nói "giảm 100%", KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG khuyên ẩn món, bỏ món hay nhập hàng vì "chưa bán".`);
+  } else if (motNgayKy && f.orders === 0 && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
     lines.push('NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu: nói ngày đó 0đ, 0 đơn (nếu là hôm nay thì "tới giờ này"), nêu số của kỳ so sánh nếu có, rồi hỏi quán có nghỉ hay bán ngoài app không. KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG nhắc món, giá vốn, nguyên liệu.');
   }
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
