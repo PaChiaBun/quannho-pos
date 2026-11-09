@@ -218,31 +218,77 @@ class ThoiTietScreen extends ConsumerWidget {
             )
           : !v.coSo
           ? const _Rong('Chưa có dự báo cho khu vực này.')
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: [
-                _HienTai(v),
-                const SizedBox(height: 22),
-                if (v.gio.isNotEmpty) ...[
-                  const _TieuDe('Các giờ tới', Icons.schedule_rounded),
-                  _CacGio(v.gio),
+          // 09/11 Chủ Quán (web, iPad): màn rộng bị kéo dãn → ≥ 1000: 2 cột (bây giờ + giờ | 7 ngày), rộng tối đa 1200; vừa: 1 cột ≤ 720 ở giữa
+          : LayoutBuilder(
+              builder: (_, c) {
+                final trai = [
+                  _HienTai(v),
                   const SizedBox(height: 22),
-                ],
-                if (v.ngay.isNotEmpty) ...[
-                  const _TieuDe('7 ngày tới', Icons.calendar_month_rounded),
-                  _CacNgay(v),
-                  const SizedBox(height: 16),
-                ],
-                _HoiBoom(v),
-                const SizedBox(height: 20),
-                _GhiNguon(v),
-              ],
+                  if (v.gio.isNotEmpty) ...[
+                    const _TieuDe('Các giờ tới', Icons.schedule_rounded),
+                    _CacGio(v.gio),
+                    const SizedBox(height: 22),
+                  ],
+                ];
+                final phai = [
+                  if (v.ngay.isNotEmpty) ...[
+                    const _TieuDe('7 ngày tới', Icons.calendar_month_rounded),
+                    _CacNgay(v),
+                    const SizedBox(height: 16),
+                  ],
+                ];
+                final cuoi = [
+                  _HoiBoom(v),
+                  const SizedBox(height: 20),
+                  _GhiNguon(v),
+                ];
+                if (c.maxWidth >= 1000) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 11,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [...trai, ...cuoi],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            Expanded(
+                              flex: 9,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: phai,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return ListView(
+                  padding: _giua(c.maxWidth, 8, 24),
+                  children: [...trai, ...phai, ...cuoi],
+                );
+              },
             ),
     );
   }
 }
 
 const _kNen = Color(0xFFF7F4EE);
+
+/// Lề hai bên để nội dung không rộng quá [toiDa] trên web / iPad (vẫn ≥ 16 trên điện thoại).
+EdgeInsets _giua(double w, double tren, double duoi, {double toiDa = 720}) {
+  final le = w > toiDa + 32 ? (w - toiDa) / 2 : 16.0;
+  return EdgeInsets.fromLTRB(le, tren, le, duoi);
+}
 
 const _kMua = Color(0xFF2F6FDE);
 const _kNguongMua = 30;
@@ -784,65 +830,71 @@ class _ManNgayThoiTietState extends State<ManNgayThoiTiet> {
           Container(
             color: _kNavy,
             padding: const EdgeInsets.fromLTRB(8, 4, 8, 14),
-            child: Row(
-              children: [
-                for (var i = 0; i < ds.length; i++)
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => trang.animateToPage(
-                        i,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            i == 0
-                                ? 'Nay'
-                                : ThoiTietScreen._thu[ds[i].ngay.weekday],
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: i == chon
-                                  ? Colors.white
-                                  : const Color(0x99FFFFFF),
-                            ),
+            // màn rộng: dải ngày không trải hết chiều ngang
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < ds.length; i++)
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => trang.animateToPage(
+                            i,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
                           ),
-                          const SizedBox(height: 6),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 34,
-                            height: 34,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: i == chon ? Colors.white : null,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${ds[i].ngay.day}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                color: i == chon ? _kNavy : Colors.white,
+                          child: Column(
+                            children: [
+                              Text(
+                                i == 0
+                                    ? 'Nay'
+                                    : ThoiTietScreen._thu[ds[i].ngay.weekday],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: i == chon
+                                      ? Colors.white
+                                      : const Color(0x99FFFFFF),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 6),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 34,
+                                height: 34,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: i == chon ? Colors.white : null,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${ds[i].ngay.day}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                    color: i == chon ? _kNavy : Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Icon(
+                                (ds[i].mua ?? 0) >= _kNguongMua
+                                    ? Icons.water_drop_rounded
+                                    : iconTroi(ds[i].troi),
+                                size: 15,
+                                color: (ds[i].mua ?? 0) >= _kNguongMua
+                                    ? const Color(0xFF8DB6FF)
+                                    : const Color(0xFFFFC56B),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Icon(
-                            (ds[i].mua ?? 0) >= _kNguongMua
-                                ? Icons.water_drop_rounded
-                                : iconTroi(ds[i].troi),
-                            size: 15,
-                            color: (ds[i].mua ?? 0) >= _kNguongMua
-                                ? const Color(0xFF8DB6FF)
-                                : const Color(0xFFFFC56B),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -889,7 +941,7 @@ class _TrangNgay extends StatelessWidget {
         : const [Color(0xFF3B3896), Color(0xFF1E1B4B)];
     final tomTat = tomTatNgay(gio);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      padding: _giua(MediaQuery.sizeOf(context).width, 16, 28),
       children: [
         Container(
           clipBehavior: Clip.antiAlias,
@@ -931,27 +983,42 @@ class _TrangNgay extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          _do(d.cao),
-                          maxLines: 1,
-                          style: const TextStyle(
-                            fontSize: 44,
-                            height: 1,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          ' / ${_do(d.thap)}',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xB3FFFFFF),
+                        // màn hẹp: cụm cao / thấp tự thu nhỏ thay vì tràn (kiểm thử 360 điểm ảnh)
+                        Flexible(
+                          flex: 3,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.bottomLeft,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: _do(d.cao),
+                                    style: const TextStyle(
+                                      fontSize: 44,
+                                      height: 1,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: ' / ${_do(d.thap)}',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xB3FFFFFF),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         if (d.mua != null)
-                          Expanded(
+                          Flexible(
+                            flex: 2,
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: FittedBox(
