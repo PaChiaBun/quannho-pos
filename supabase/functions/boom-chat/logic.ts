@@ -993,7 +993,8 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
   }
   // lần 192 (chấm mù 188–191: quán nướng than còn 0 bao, ly 700ml hết khi bàn chạy giao ngày mưa — Boom không nối): câu chuẩn bị / nhập / giao / món
   // → hàng ĐÃ HẾT hoặc dưới nửa mức tối thiểu, ngay trong khối thời tiết; chỉ khi có hàng như vậy, câu người làm thuần thì không gắn
-  if (/chuan bi|nhap|\bhang\b|giao|mang (?:ve|di)|\bship|ban gi|nau|quang cao|dat them|\bdu (?:ban|dung)|mon (?:gi|nao)/.test(q)) {
+  // lần 194: thêm ướp / pha / nướng (lần 193: "ướp bao nhiêu sườn" ở quán đã hết than không gắn)
+  if (/chuan bi|nhap|\bhang\b|giao|mang (?:ve|di)|\bship|ban gi|nau|\buop\b|\bpha\b|nuong|quang cao|dat them|\bdu (?:ban|dung)|mon (?:gi|nao)/.test(q)) {
     const thieu = arr(modules?.kho?.low).filter((x) => nn(x.qty) < nn(x.min) / 2).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min)));
     if (thieu.length) lines.push(`Kho trước ${ngay.length > 1 ? 'các ngày này' : nhan(ngay[0]).toLowerCase()}: ${thieu.slice(0, 3).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'ĐÃ HẾT' : `còn ${qty(x.qty)} ${ss(x.unit)}`} (tối thiểu ${qty(x.min)})`).join('; ')} → nhập trước, nếu không thì chuẩn bị theo dự báo cũng không bán được món cần hàng này.`);
   }
@@ -1082,9 +1083,10 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       tenBuoi = gop ? ` ${TEN_BUOI[bq]} – ${TEN_BUOI[bq + 1].replace('buổi ', '')} (${TEN_BUOI[bq]} quán bán rất ít)` : ` ${TEN_BUOI[bq]}`;
     } else mon = f.groups.flatMap((g) => g.top ?? []).sort((a, b) => b.qty - a.qty);
     // hỏi đích danh món ("nấu mấy tô bún bò") → món đó lên đầu
+    // lần 194 (Demo 193: mốc 8 tô sáng đúng mà Boom dẫn 245 phần cả ngày): ghi kèm số cả kỳ của đúng buổi
     const hoiMon = (t: { name: string }) => q.includes(boDau(t.name).toLowerCase().split(' ').slice(0, 2).join(' '));
     mon = [...mon.filter(hoiMon), ...mon.filter((t) => !hoiMon(t))];
-    if (i !== undefined && mon.length) lines.push(`Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ${moBan} ngày mở bán${Math.abs(heSo - 1) >= 0.05 ? ` × ${pctTxt(heSo)} vì ${THU_DAI[wdOf(w.ngay[i].ngay)]} thường bán ${pctTxt(heSo)} lần ngày trung bình` : ''}): ${nhan(i)}${tenBuoi} ${mon.slice(0, 3).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần → chuẩn bị quanh mốc này, dự báo chỉ chỉnh nhẹ.`);
+    if (i !== undefined && mon.length) lines.push(`Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ${moBan} ngày mở bán${Math.abs(heSo - 1) >= 0.05 ? ` × ${pctTxt(heSo)} vì ${THU_DAI[wdOf(w.ngay[i].ngay)]} thường bán ${pctTxt(heSo)} lần ngày trung bình` : ''}): ${nhan(i)}${tenBuoi} ${mon.slice(0, 3).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần / ngày (cả kỳ${tenBuoi ? ` ${tenBuoi.trim().split(' (')[0]}` : ''}: ${mon.slice(0, 3).map((t) => t.qty).join(', ')} phần / ${moBan} ngày mở) → chuẩn bị quanh mốc này, dự báo chỉ chỉnh nhẹ.`);
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
   if (ngay.length >= 3 && anhHuong.length) {

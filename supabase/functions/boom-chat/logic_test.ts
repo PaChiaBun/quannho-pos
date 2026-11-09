@@ -2140,10 +2140,12 @@ Deno.test('lần 193: hỏi nấu / chuẩn bị bao nhiêu → mốc số phầ
     return L.thoiTietVoiSoQuan(TROI.mua_chieu, L.parseFacts(s.facts.thang_nay)!, q, NOW, L.parseModules({ ...s.modules.thang_nay }));
   };
   // quán C chiều 14–17h gần như không bán → gộp tối
-  assertStringIncludes(await tt('c', 'Mai trời mưa chiều tối, nấu bao nhiêu cho ca chiều?'), 'Mai 29/10 buổi chiều – tối (buổi chiều quán bán rất ít) Bún thịt nướng ~9, Cơm sườn ~7, Bún bò Huế ~5 phần');
+  assertStringIncludes(await tt('c', 'Mai trời mưa chiều tối, nấu bao nhiêu cho ca chiều?'), 'Mai 29/10 buổi chiều – tối (buổi chiều quán bán rất ít) Bún thịt nướng ~9, Cơm sườn ~7, Bún bò Huế ~5 phần / ngày (cả kỳ buổi chiều – tối: 240, 190, 130 phần / 28 ngày mở)');
   // "tối" ở vế tả trời vẫn lấy được buổi
-  assertStringIncludes(await tt('d', 'Tối mai mưa, ướp bao nhiêu sườn?'), 'Mai 29/10 buổi tối Cơm tấm sườn ~5');
+  assertStringIncludes(await tt('d', 'Tối mai mưa, ướp bao nhiêu sườn?'), 'Mai 29/10 buổi tối Cơm tấm sườn ~5, Cơm tấm gà nướng ~3, Nước sâm ~2 phần / ngày (cả kỳ buổi tối: 130, 70, 40 phần / 24 ngày mở)');
   // hỏi người làm, hỏi ngày quán nghỉ: không gắn
   assert(!(await tt('b', 'Mai mưa tối, ca tối cần mấy nhân viên?')).includes('Mốc số phần'));
   assert(!(await tt('d', 'Chủ nhật này trời mưa, nên nấu bao nhiêu?')).includes('Mốc số phần'));
+  // lần 194: dòng kho bắt "ướp" (quán D hết than)
+  assertStringIncludes(await tt('d', 'Tối mai mưa, ướp bao nhiêu sườn?'), 'Than ĐÃ HẾT');
 });

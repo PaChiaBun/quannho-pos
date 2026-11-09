@@ -188,3 +188,9 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Bộ cũ chỉ T11, T26 (T26 là ngày nghỉ) → thêm TD16–TD19. Chấm mù 15 cặp vs 192: **+4,60 ± 0,93**; thẳng 0,73 → 2,00, việc làm 0,93 → 1,73, đúng quán 1,20 → 2,00, gọn 1,07 → 1,73; dùng được 2 → 13 / 15. Bộ thiên về tính năng (ý chính đòi số phần), bộ kín không có câu loại này.
 - Demo: "~8 tô bún bò buổi sáng" đúng, nhưng Boom dẫn 245 phần (cả ngày) làm căn cứ → lần sau ghi số cả kỳ của buổi trong dòng. Dòng kho (192) chưa bắt "ướp".
 
+## Lần 194 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_193016`)
+
+- Dòng mốc phần ghi số cả kỳ của đúng buổi, gom một vế cuối dòng: "… phần / ngày (cả kỳ buổi tối: 130, 70, 40 phần / 24 ngày mở)" (bản đầu lặp "phần buổi tối / 24 ngày" từng món → bỏ vì dài). Dòng kho thêm ướp / pha / nướng.
+- Chấm mù 15 cặp vs 193: +0,53 ± 0,76 (chưa rõ); tìm vấn đề 1,27 → 1,67; câu ướp sườn quán hết than: mới 3 / 3 nhắc, cũ 0 / 3. Demo: Boom dẫn đúng 73 phần buổi sáng / 9 ngày.
+- Còn (cả hai bản): gán số của khung này cho khung khác (doanh thu cả ngày 4.525.000đ gọi là "buổi tối", 15% gọi là của khung tối).
+
