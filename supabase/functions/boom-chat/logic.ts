@@ -1042,7 +1042,7 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const coMat = lichNs.filter((p) => typeof p.thu === 'string' && p.thu.includes(String(wdI)) && ds.some((h) => h >= Number(p.vao) && h < Number(p.ra)));
       // không ai thì nói "chưa thấy ai thường làm", không ghi "0 người" (dễ hiểu thành quán bỏ trống ca)
       const thuongCo = !lichNs.length ? '' : coMat.length
-        ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)`
+        ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)${gioTrong(ds, coMat, donGio)}`
         : `; chấm công trong kỳ chưa thấy ai thường làm khung này vào ${THU_DAI[wdI]}`;
       lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${canNguoi}${thuongCo} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
@@ -1066,6 +1066,14 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
 }
 
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+// lần 187 (Demo sau 186: Boom nêu "Tâm đến 15h, Hà từ 17h" mà không nói 15–17h trống): giờ bán trong khung không ai thường làm, gộp thành đoạn liền
+export function gioTrong(ds: number[], coMat: Record<string, unknown>[], donGio: (h: number) => number): string {
+  const trong = ds.filter((h) => !coMat.some((p) => h >= Number(p.vao) && h < Number(p.ra)));
+  if (!trong.length) return '';
+  const doan: number[][] = [];
+  for (const h of trong) (doan.length && doan[doan.length - 1].at(-1) === h - 1 ? doan[doan.length - 1] : (doan.push([]), doan[doan.length - 1])).push(h);
+  return `; KHOẢNG TRỐNG: ${doan.map((d) => `${d[0]}–${d[d.length - 1] + 1}h`).join(', ')} chưa thấy ai thường làm (~${pctTxt(trong.reduce((a, h) => a + donGio(h), 0) / trong.length)} đơn/giờ)`;
+}
 
 function parseBands(v: unknown): { name: string; qty: number }[][] | null {
   if (!Array.isArray(v) || v.length !== 4) return null;

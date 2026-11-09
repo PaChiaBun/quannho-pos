@@ -145,3 +145,9 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 
 - Kỳ "tháng này" mới 9 ngày → mỗi thứ có ca 1 lần, ngưỡng "≥ 2 lần" loại hết người, Boom chỉ nói "khoảng 1 người". Nay `lay_so.ts` đếm số ngày mỗi thứ có ca trong kỳ; một người "thường làm" thứ đó khi có mặt ≥ nửa số ngày ấy. Không ai thì dòng ghi "chấm công trong kỳ chưa thấy ai thường làm khung này vào Thứ X", không ghi "0 người".
 - Không chấm mù (sửa lỗi theo số thật, không đổi lời dặn). Demo hỏi lại "mai mưa chiều, ca chiều cần mấy nhân viên?": Boom nêu Hà (17h–) và Tâm (–15h). Còn: chưa tính sẵn khoảng trống giờ không ai làm.
+
+## Lần 187 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_182731`)
+
+- `gioTrong` (logic.ts): giờ bán của khung không thuộc giờ vào–ra thường lệ của ai → "KHOẢNG TRỐNG: a–bh chưa thấy ai thường làm (~X đơn/giờ)", đoạn liền gộp lại. Chỉ ghi khi có người thường làm thứ đó.
+- Bộ cũ (41 mở + 20 kín) không câu nào có giờ trống → thêm 4 câu mở TD12–TD15 (quán B, ca chiều Thứ Năm: Ngọc 9–15h, Thảo 16–22h, trống 15–16h). Chấm mù 12 cặp vs 186: **+2,00 ± 0,80**; tìm vấn đề 0,83 → 2,00; dùng được 3 → 8 / 12. Chỉ một quán, một tình huống.
+- Demo: Boom nêu khoảng trống 15–17h. Còn: "14–15h có 2 người" (chỉ Tâm), chưa nối giờ đông nhất 15h nằm trong khoảng trống, gán 6,5 đơn/giờ của ca cho khung mưa 15–20h (cả hai bản).

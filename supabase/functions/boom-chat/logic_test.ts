@@ -2086,3 +2086,11 @@ Deno.test('lần 185: dòng người làm nêu ai thường làm khung đó vào
   // ca sáng Thứ Năm: Cô Sáu, Tâm (6–14h), Hiền (10–14h)
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua, ca sang can may nguoi?', NOW, m), 'Thứ Năm khung này quán thường có 3 người: Cô Sáu (6–14h), Tâm (6–14h), Hiền (10–14h)');
 });
+
+Deno.test('lần 187: giờ bán trong khung không ai thường làm, gộp đoạn liền', () => {
+  const don = (h: number) => h; // đơn/giờ = số giờ cho dễ kiểm
+  // Demo: ca chiều 14–18h, Tâm 7–15h, Hà 17–22h → 15–17h trống, TB (15+16)/2
+  assertEquals(L.gioTrong([14, 15, 16, 17], [{ vao: 7, ra: 15 }, { vao: 17, ra: 22 }], don), '; KHOẢNG TRỐNG: 15–17h chưa thấy ai thường làm (~15,5 đơn/giờ)');
+  assertEquals(L.gioTrong([6, 7, 8, 9, 10], [{ vao: 7, ra: 8 }, { vao: 9, ra: 10 }], don), '; KHOẢNG TRỐNG: 6–7h, 8–9h, 10–11h chưa thấy ai thường làm (~8 đơn/giờ)');
+  assertEquals(L.gioTrong([16, 17, 18, 19], [{ vao: 15, ra: 20 }], don), '');
+});

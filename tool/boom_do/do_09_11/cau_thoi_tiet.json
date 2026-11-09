@@ -367,5 +367,41 @@
 "q": "Tháng sau mưa nhiều không, có nên nhập ít lại không?",
 "y_chinh": "Dự báo chỉ có tới 03/11, chưa có dự báo tháng sau; không đoán; nhập theo mức bán thường, xem lại khi có dự báo",
 "can_tranh": "Đoán trời tháng sau; khuyên nhập ít vì đoán"
+},
+{
+"id": "TD12",
+"quan": "b",
+"troi": "mua_chieu",
+"loai": "nguoi",
+"q": "Mai mưa chiều, ca chiều cần mấy nhân viên?",
+"y_chinh": "Thứ Năm ca chiều quán bán 14–18h, Ngọc làm tới 15h, Thảo vào 16h → 15–16h chưa ai thường làm (~5,7 đơn/giờ); cần người phủ khung đó (kéo Ngọc thêm 1 tiếng hoặc Thảo vào sớm); số người theo số đơn, không thêm chỉ vì mưa",
+"can_tranh": "Chỉ nêu tên mà không thấy giờ trống; thêm người chỉ vì mưa; bịa số"
+},
+{
+"id": "TD13",
+"quan": "b",
+"troi": "nang_nong",
+"loai": "nguoi",
+"q": "Mai nắng, ca chiều xếp người sao cho ổn?",
+"y_chinh": "Thứ Năm ca chiều quán bán 14–18h, Ngọc làm tới 15h, Thảo vào 16h → 15–16h chưa ai thường làm (~5,7 đơn/giờ); cần người phủ khung đó (kéo Ngọc thêm 1 tiếng hoặc Thảo vào sớm); số người theo số đơn, không thêm chỉ vì mưa",
+"can_tranh": "Chỉ nêu tên mà không thấy giờ trống; thêm người chỉ vì mưa; bịa số"
+},
+{
+"id": "TD14",
+"quan": "b",
+"troi": "mua_sang",
+"loai": "nguoi",
+"q": "ca chieu mai co du nguoi khong",
+"y_chinh": "Thứ Năm ca chiều quán bán 14–18h, Ngọc làm tới 15h, Thảo vào 16h → 15–16h chưa ai thường làm (~5,7 đơn/giờ); cần người phủ khung đó (kéo Ngọc thêm 1 tiếng hoặc Thảo vào sớm); số người theo số đơn, không thêm chỉ vì mưa",
+"can_tranh": "Chỉ nêu tên mà không thấy giờ trống; thêm người chỉ vì mưa; bịa số"
+},
+{
+"id": "TD15",
+"quan": "b",
+"troi": "mua_chieu",
+"loai": "nguoi",
+"q": "Chiều mai mưa, có cần gọi thêm người phục vụ không?",
+"y_chinh": "Thứ Năm ca chiều quán bán 14–18h, Ngọc làm tới 15h, Thảo vào 16h → 15–16h chưa ai thường làm (~5,7 đơn/giờ); cần người phủ khung đó (kéo Ngọc thêm 1 tiếng hoặc Thảo vào sớm); số người theo số đơn, không thêm chỉ vì mưa",
+"can_tranh": "Chỉ nêu tên mà không thấy giờ trống; thêm người chỉ vì mưa; bịa số"
 }
 ]
