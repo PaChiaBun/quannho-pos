@@ -200,3 +200,14 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Độ chính xác trên 458 câu trả lời đo hôm nay: 3 / 3 là lỗi thật, 0 bắt nhầm. Lời viết lại: "chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này" (bản đầu làm Boom chèn "không phải doanh thu cả ngày quy đổi…").
 - Không chấm mù: lỗi ~3 / 458 câu, A/B không thấy.
 
+## Lần 196 (09/11, Chủ Quán "dạy tiếp đi"; KHÔNG ÁP — chấm mù không hơn)
+
+- Thử vế "người sát khoảng trống: Ngọc (ra 15h, ~58 giờ/tuần — QUÁ 48), Thảo (vào 16h, ~45 giờ/tuần)" sau dòng KHOẢNG TRỐNG.
+- Chấm mù 12 cặp (quán B, TD12–15 × 3) vs 195: +0,33 ± 1,03; việc làm 1,00 → 1,33, đúng quán 1,75 → 2,00 nhưng đúng số 1,75 → 1,58 (2 câu hỏng). Bỏ, trả mã về 195.
+- Lỗi số lặp lại ở CẢ HAI bản: "6,5 đơn/giờ" của ca 14–18h gán cho khung mưa 15–20h (hoặc 16–18h); "2 người từ 16–18h" sai lịch. Hướng tiếp: kiểm bằng mã như lần 195 cho số đơn/giờ của ca gán cho khung khác.
+
+## Lần 197 (09/11, Chủ Quán "Làm lần 197"; ĐÃ ÁP TS `20261109_195645`)
+
+- Kiểm bằng mã `donGioSaiKhung` (không thêm lời dặn): từ khối lấy cặp (khung a–bh, X đơn/giờ); trong câu trả lời, mỗi "X đơn/giờ" xét khung giờ gần nhất phía trước trong cùng vế (tách , . không cắt số thập phân, ; : xuống dòng). Khung đó không nằm gọn trong khung của X → bắt. Bỏ qua khi có "ca sáng/trưa/chiều/tối", "ca này" chen giữa, hoặc khung đúng đứng ngay sau số ("6,5 đơn/giờ từ 14–18h").
+- Trên 500 câu trả lời đo hôm nay: 5 / 5 là lỗi thật, 0 bắt nhầm; sót kiểu "khung này thường khoảng 6,5". Chạy lại TD12, TD05 × 6: 1 lượt mắc, bị bắt, câu cuối hết lỗi. Không chấm mù (lỗi ~1%).
+

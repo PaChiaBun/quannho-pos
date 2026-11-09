@@ -2162,3 +2162,16 @@ Deno.test('lần 195: số trung bình cả ngày gán cho một buổi / ca', (
   assertEquals(L.tienNgayGoiBuoi('Chưa nên đóng ca trưa sớm, Thứ Năm thường đạt 4.525.000đ/ngày.', ref), []);
 });
 
+Deno.test('lần 197: số đơn/giờ của ca gán cho khung giờ khác', () => {
+  const ref = '- Mai 29/10 — người làm: ca chiều (quán bán 14–18h) quán thường ~6,5 đơn/giờ, đông nhất 17h ~8,6 đơn; KHOẢNG TRỐNG: 15–16h chưa thấy ai thường làm (~5,7 đơn/giờ)';
+  // sai: khung mưa 15–20h, khung 11–14h không phải khung của số
+  assertEquals(L.donGioSaiKhung('Khung dễ mưa 15–20h trung bình khoảng 6,5 đơn/giờ, cao nhất 8,6 đơn lúc 17h.', ref), ['6,5 đơn/giờ gán cho 15–20h']);
+  assertEquals(L.donGioSaiKhung('Theo lịch có 1 người, nhưng khung mưa 15–20h có khoảng 6,5 đơn/giờ.', ref), ['6,5 đơn/giờ gán cho 15–20h']);
+  // đúng: đúng khung, khung con, số đứng trước khung đúng, có "ca chiều" chen giữa, khoảng trống
+  assertEquals(L.donGioSaiKhung('Ca chiều 14–18h thường khoảng 6,5 đơn/giờ.', ref), []);
+  assertEquals(L.donGioSaiKhung('Rà lại 16–18h quán thường có khoảng 6,5 đơn/giờ.', ref), []);
+  assertEquals(L.donGioSaiKhung('Khung 15–20h dễ mưa, nhưng quán thường có 6,5 đơn/giờ từ 14–18h.', ref), []);
+  assertEquals(L.donGioSaiKhung('Khung 15–20h chiếm 15% doanh thu và ca chiều trung bình khoảng 6,5 đơn/giờ.', ref), []);
+  assertEquals(L.donGioSaiKhung('Khung 14–18h khoảng 6,5 đơn/giờ, riêng 15–16h khoảng 5,7 đơn/giờ.', ref), []);
+});
+

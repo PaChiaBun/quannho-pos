@@ -3451,6 +3451,30 @@ export function tienNgayGoiBuoi(answer: string, ref: string): string[] {
   return [...new Set(out)];
 }
 
+/** Lần 197 (chấm mù 188–196 lặp lại: "khung dễ mưa 15–20h trung bình khoảng 6,5 đơn/giờ" khi 6,5 là của ca 14–18h): số đơn/giờ của khối
+ * gắn với khung giờ đứng gần nhất phía trước trong cùng vế; khung đó không nằm gọn trong khung của số → bắt. Có "ca sáng/trưa/chiều/tối"
+ * chen giữa, hoặc khung đúng đứng ngay sau số ("6,5 đơn/giờ từ 14–18h") thì không bắt. */
+export function donGioSaiKhung(answer: string, ref: string): string[] {
+  const dung = new Map<string, [number, number][]>();
+  for (const m of ref.matchAll(/(\d{1,2})–(\d{1,2})h(?:[^;\n~]{0,60}?)~([\d,]+) đơn\/giờ/g)) dung.set(m[3], [...(dung.get(m[3]) ?? []), [+m[1], +m[2]]]);
+  if (!dung.size) return [];
+  const trongKhung = (a: number, b: number, v: string) => (dung.get(v) ?? []).some(([x, y]) => a >= x && b <= y);
+  const out: string[] = [];
+  // dấu phẩy thập phân (6,5) không tách vế
+  for (const ve of answer.split(/[,.](?!\d)|[;:\n]/)) {
+    for (const m of ve.matchAll(/([\d]+(?:,\d+)?) đơn\/giờ/g)) {
+      if (!dung.has(m[1])) continue;
+      const truoc = ve.slice(0, m.index!), sau = ve.slice(m.index! + m[0].length, m.index! + m[0].length + 25);
+      const k = [...truoc.matchAll(/(\d{1,2})–(\d{1,2})h/g)].at(-1);
+      const kSau = /^\s*(?:trong|từ|ở|của)?\s*(?:ca |khung )?(\d{1,2})–(\d{1,2})h/.exec(sau);
+      if (kSau && trongKhung(+kSau[1], +kSau[2], m[1])) continue;
+      if (!k || /\bca (?:sáng|trưa|chiều|tối)|ca này/i.test(truoc.slice(k.index! + k[0].length))) continue;
+      if (!trongKhung(+k[1], +k[2], m[1])) out.push(`${m[1]} đơn/giờ gán cho ${k[1]}–${k[2]}h`);
+    }
+  }
+  return [...new Set(out)];
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
@@ -3478,10 +3502,12 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const gs = soGanSai(answer, ref);
   const ttSai = soTroiSai(answer, ref), ttChi = chiTienViTroi(answer, ref), ttLoi = doLoiTroi(answer, ref);
   const ngayBuoi = tienNgayGoiBuoi(answer, ref);
+  const dgKhung = donGioSaiKhung(answer, ref);
   return [
     ...(ttSai.length ? [`số thời tiết không có trong dự báo (${ttSai.join(', ')}) → chỉ dùng đúng nhiệt độ / % trong khối dự báo; quán CHƯA có số ngày mưa nên KHÔNG nói mưa / nắng làm tăng giảm bao nhiêu %`] : []),
     ...(ttChi.length ? [`khuyên chi tiền chỉ vì dự báo ("${ttChi.join('"; "')}") → đổi thành chuẩn bị nhẹ / thử nhỏ có hạn mức và theo dõi; nói rõ dự báo có thể sai`] : []),
     ...(ttLoi ? ['đổ doanh thu giảm cho thời tiết mà không có số thời tiết nào → bỏ ý đó, giải thích bằng số bán hàng (giờ, thứ, món, số đơn)'] : []),
+    ...(dgKhung.length ? [`gắn số đơn/giờ vào sai khung giờ (${dgKhung.join('; ')}) → mỗi số đơn/giờ đi với đúng khung của nó trong dòng THỜI TIẾT × SỐ QUÁN (vd ca 14–18h); khung mưa chỉ có % doanh thu, không có số đơn/giờ riêng — chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(ngayBuoi.length ? [`gọi số trung bình CẢ NGÀY (${ngayBuoi.join(', ')}) là doanh thu của một buổi / ca / khung → sửa câu đó thành "cả ngày" (hoặc dùng % khung giờ / số phần buổi trong khối); chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
