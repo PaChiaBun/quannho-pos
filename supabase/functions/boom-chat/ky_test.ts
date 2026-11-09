@@ -1,5 +1,5 @@
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { canGiuKy, cauGiuKy, docKy } from './ky.ts';
+import { canGiuKy, cauGiuKy, docKy, ky30Ngay } from './ky.ts';
 
 // Hôm nay Thứ Ba 03/11/2026 09:00 giờ VN — 30 câu đo thử bộ định tuyến GPT ngày 03/11 (GPT đúng 15/30)
 const NOW = new Date('2026-11-03T09:00:00+07:00');
@@ -181,4 +181,17 @@ Deno.test('docKy: cách nói kỳ thường gặp (06/11, hôm nay Thứ Sáu 6/
   const y = docKy('tháng này so với cùng kỳ năm ngoái', now);
   assertEquals([y.truocTu.slice(0, 10), y.truocDen.slice(0, 10), y.nhanTruoc], ['2025-11-01', '2025-11-06', 'cùng kỳ năm ngoái (1/11–6/11/2025)']);
   assert(y.nhan.startsWith('Tháng này'));
+});
+
+Deno.test('kỳ 09/11: tương lai dùng 30 ngày qua; đầu tuần so trọn tuần trước; dựng kỳ 30 ngày', () => {
+  const T2 = new Date('2026-11-09T03:30:00Z'); // Thứ 2 9/11 10h30 giờ VN
+  assertEquals(docKy('trong 30 ngày tới nên làm gì để kéo khách', T2).nhan.startsWith('30 ngày qua'), true);
+  assertEquals(docKy('tháng tới nên chạy khuyến mãi gì', T2).nhan.startsWith('30 ngày qua'), true);
+  assertEquals(docKy('nên làm gì để kéo khách', T2).nhan.startsWith('Tháng này'), true);
+  const k = docKy('Tuần này so với tuần trước thế nào?', T2);
+  assertEquals([k.truocTu, k.truocDen], ['2026-11-02T00:00:00+07:00', '2026-11-09T00:00:00+07:00']);
+  assertEquals(k.nhanTruoc.startsWith('trọn tuần trước'), true);
+  // giữa tuần vẫn so cùng kỳ
+  assertEquals(docKy('Tuần này so với tuần trước thế nào?', new Date('2026-11-12T03:30:00Z')).nhanTruoc.startsWith('cùng kỳ'), true);
+  assertEquals(ky30Ngay(T2).nhan.startsWith('30 ngày qua'), true);
 });

@@ -836,7 +836,9 @@ export function changeLine(f: ShopFacts, todayD = -1): string {
     const tb = (v: number, n: number, dang: boolean) => { const m = n - (dang ? 1 : 0); return m > 0 ? v / m : 0; };
     // có số từng ngày thì bỏ tiền hôm nay (ngày dở) như dòng "Doanh thu theo thứ"
     const tienHomNay = todayD >= 0 ? f.by_day?.find((y) => y.d === f.to)?.revenue ?? 0 : 0;
-    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k] - (k === todayD ? tienHomNay : 0), c1[k], k === todayD), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
+    // 09/11 chấm mù: không có số từng ngày thì không bỏ được tiền ngày dở → chia đủ n như dòng "Doanh thu theo thứ" (trước đó Thứ 4 hai số)
+    const coSoNgay = !!f.by_day?.length;
+    const ds = names.map((d, k) => ({ d, a: tb(f.by_weekday![k] - (k === todayD ? tienHomNay : 0), c1[k], k === todayD && coSoNgay), b: tb(f.prev_by_weekday![k], c0[k], k === thuCatKyTruoc) }))
       .filter((x) => x.a > 0 && x.b > 0).map((x) => ({ ...x, r: (x.a - x.b) / x.b })).sort((a, b) => a.r - b.r);
     if (ds.length >= 2) {
       const lo = ds[0], hi = ds[ds.length - 1];
@@ -1228,6 +1230,23 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     });
     lines.push(`Tính sẵn lời theo nhóm: ${gc.join('; ')} → CHƯA so được nhóm nào lời hơn (thiếu giá vốn phần lớn món); doanh thu nhiều hơn KHÔNG có nghĩa là lời hơn — chỉ nêu % doanh thu từng nhóm và xin nhập giá vốn các món còn thiếu.`);
   }
+  // 09/11 chấm mù: "món nào lời nhất" cả hai bản đều chọn món BÁN CHẠY nhất; tính sẵn tiền lời mỗi phần và cả kỳ
+  const coVon = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.price > t.cost).map((t) => [t.name, t])).values()];
+  // câu so đúng 2 món đã có khối "So 2 món" bên dưới
+  const haiMonHoi = [...new Set(monKhop(f, question).map((x) => x.t.name))].length === 2;
+  if (!haiMonHoi && coVon.length >= 2 && /l[oờ]i (?:nh[aấ]t|nhi[eề]u|h[oơ]n|cao)|l[aã]i (?:nh[aấ]t|nhi[eề]u|h[oơ]n|cao)|m[oó]n n[aà]o (?:c[oó] )?(?:l[oờ]i|l[aã]i)|đ[aá]ng (?:đ[aẩ]y|b[aá]n)/i.test(question)) {
+    const xep = coVon.map((t) => ({ t, moi: t.price! - t.cost!, ca: (t.price! - t.cost!) * t.qty })).sort((a, b) => b.ca - a.ca).slice(0, 5);
+    const banChay = [...coVon].sort((a, b) => b.qty - a.qty)[0];
+    // 09/11 lô dạy: kín K18 tụt −4/−3 vì dòng ghi "lời nhiều nhất cả kỳ" như đáp án → Boom kết luận "lời hơn" theo tổng tiền (điều cần tránh)
+    const moiCao = [...xep].sort((a, b) => b.moi - a.moi)[0];
+    lines.push(`XẾP MÓN THEO TIỀN LỜI (tính sẵn, lãi gộp = giá bán − giá vốn, chỉ món có giá vốn): ${[...xep].sort((a, b) => b.moi - a.moi).map((x) => `${x.t.name} lời ${vnd(x.moi)}/phần (giá vốn ${Math.round((x.t.cost! / x.t.price!) * 100)}%), bán ${qty(x.t.qty)} phần → góp ${vnd(x.ca)} tiền lời cả kỳ`).join('; ')}. "Món lời hơn" = lời mỗi phần: ${moiCao.t.name} cao nhất; tiền lời cả kỳ nhiều chủ yếu do bán nhiều phần, KHÔNG dùng để nói món nào lời hơn${banChay.name !== moiCao.t.name ? `; món bán chạy nhất (${banChay.name}) không phải món lời mỗi phần cao nhất` : ''}. Món chưa có giá vốn không xếp được.`);
+  }
+  // 09/11 chấm mù: có giá vốn mà không tính đơn sàn còn lời bao nhiêu
+  if (coVon.length && /s[aà]n\b|grab|shopee|be food|baemin|giao h[aà]ng|app giao/i.test(question)) {
+    const m = monTrongCau(f, question), ds = m ? coVon.filter((t) => t.name === m) : [...coVon].sort((a, b) => b.qty - a.qty).slice(0, 2);
+    const phi = /(\d{1,2})\s*%/.exec(question), muc = phi ? [+phi[1]] : [25, 30];
+    if (ds.length) lines.push(`BÁN QUA SÀN (tính sẵn, phí sàn ${phi ? `${muc[0]}% theo câu hỏi` : 'GIẢ SỬ 25–30%, nói rõ là giả định'}, chưa tính bao bì): ${ds.map((t) => `${t.name} giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)} → tại quán lời ${vnd(t.price! - t.cost!)}/phần, qua sàn còn ${muc.map((p) => vnd(t.price! * (1 - p / 100) - t.cost!)).join('–')}/phần`).join('; ')}.`);
+  }
   // lần 92: so HAI MÓN (D39 "bún bò với cơm sườn món nào ngon ăn hơn") — GPT né câu hỏi, không nói chỉ một món có giá vốn
   const monQ = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => [t.name, t])).values()].filter((t) => {
     const w = t.name.toLowerCase().split(/\s+/), key = w.slice(0, Math.min(2, w.length)).join(' ');
@@ -1413,6 +1432,8 @@ export function ghiKy(answer: string, nhan: string | undefined, question: string
   if (!nhan || coNeuKy(question, now)) return answer;
   // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
   if (/\b(?:kho|ton|con lai|con bao nhieu|sap het|hien tai|bay gio|lam sao|o dau|the nao|cach)\b/.test(boDau(question))) return answer;
+  // 09/11 web Demo: bài đăng Facebook bị gắn "Số trên là của tháng này…" ở cuối, chủ quán chép nguyên lên mạng
+  if (/\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question))) return answer;
   // \b không dùng được sau "đ" (JS coi đ không phải chữ)
   if (!/\d[\d.,]*\s*(?:đ(?!\p{L})|đồng|đơn|phần|ly(?!\p{L})|khách|triệu|%)/iu.test(answer)) return answer;
   const dau = nhan.split('(')[0].trim().toLowerCase();
@@ -2067,6 +2088,12 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round(((1 - x) / con) * 10) / 10).replace('.', ',')} lần số suất mới giữ được tiền còn lại sau nguyên liệu`; };
     const co = c >= 0.15 && c <= 0.8;
     out.push(`Mua ${mua} tặng ${tang} = giảm ${Math.round((tang / tong) * 100)}%. ${co ? `Nguyên liệu ${Math.round(c * 100)}% doanh thu: ${nl(c)}.` : `Quán chưa ghi khoản nguyên liệu; GIẢ SỬ 35%: ${nl(0.35)}; GIẢ SỬ 45%: ${nl(0.45)}; nói rõ là giả định.`} Chưa tính lương, mặt bằng.`);
+    // 09/11 web + chấm mù: món hỏi có giá vốn riêng mà vẫn nói "chưa đủ dữ liệu"; 2 phần cơm tấm vốn 43.200đ > giá 40.000đ là lỗ ngay mỗi lượt
+    const khop = monKhop(f, question).filter((x) => x.t.cost && x.t.price), t = khop[0]?.t;
+    if (t) {
+      const thu = t.price! * mua, von = t.cost! * tong, con = thu - von, thuong = (t.price! - t.cost!) * mua;
+      out.push(`${t.name}${khop.length > 1 || khop[0].tat ? ' (món bán chạy nhất khớp tên trong câu)' : ''} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}): mỗi lượt mua ${mua} tặng ${tang} thu ${vnd(thu)}, tốn nguyên liệu ${vnd(von)} → ${con <= 0 ? `LỖ ${vnd(-con)} mỗi lượt ngay cả trước lương, mặt bằng: KHÔNG nên chạy` : `còn ${vnd(con)}/lượt (bán thường ${mua} phần lời ${vnd(thuong)}) → phải bán gấp khoảng ${String(Math.round((thuong / con) * 10) / 10).replace('.', ',')} lần số lượt mới giữ được tiền lời`}. Câu đầu nói kết luận này.`);
+    }
   }
   // 07/11: QC: "combo A với B để giá bao nhiêu" không đưa giá nào vì thiếu giá vốn một món
   const haiMon = /combo/.test(q) ? [...new Set((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]))].filter((t, i, a) => t.price && t.name.length >= 5 && a.findIndex((y) => y.name === t.name) === i && ` ${boDauVc(question)} `.includes(` ${boDauVc(t.name).trim()} `)) : [];
@@ -2219,6 +2246,40 @@ function mucBot(f: ShopFacts, mon: string[], uong: boolean): string {
 }
 
 /** Món được nhắc đích danh trong câu hỏi; lấy tên dài nhất. */
+/** 09/11: chủ quán gọi tắt tên món ("ca phe sua" cho "Cà phê sữa đá", "trà sữa", "cơm tấm"): khớp nguyên tên, rồi khớp phần đầu
+ *  tên (≥ 2 chữ, ≥ 6 ký tự). Trả các món khớp, bán chạy trước, kèm vị trí cuối cụm tên trong câu (bỏ dấu, có khoảng trắng hai đầu). */
+export function monKhop(f: ShopFacts | null | undefined, question: string): { t: FactItem; het: number; tat: boolean }[] {
+  const q = ` ${boDauVc(question)} `;
+  const mon = [...new Map((f?.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.name.length >= 5).map((t) => [t.name, t])).values()];
+  const out: { t: FactItem; het: number; tat: boolean }[] = [];
+  for (const t of mon) {
+    const w = boDauVc(t.name).trim().split(' ');
+    for (let k = w.length; k >= 2; k--) {
+      const cum = w.slice(0, k).join(' ');
+      if (cum.length < 6) break;
+      const i = q.indexOf(` ${cum} `);
+      if (i >= 0) { out.push({ t, het: i + cum.length + 1, tat: k < w.length }); break; }
+    }
+  }
+  // khớp nguyên tên trước; cùng loại thì món bán chạy trước
+  return out.sort((a, b) => Number(a.tat) - Number(b.tat) || b.t.qty - a.t.qty);
+}
+
+/** 09/11 chấm mù: chủ quán nói "cà phê sữa đá 20k" khi menu ghi 25.000đ, cả hai bản đều tính theo giá chủ quán nói mà không nhận ra. */
+export function giaKhacMenu(f: ShopFacts | null | undefined, question: string): string {
+  const q = ` ${boDauVc(question)} `;
+  const lech: string[] = [];
+  for (const { t, het, tat } of monKhop(f, question)) {
+    if (!t.price) continue;
+    const m = /^ (?:(?:gia|ban|dang ban|dang|co|chi|la) ){0,3}(\d{1,3})(?: ?k\b| ?(?:nghin|ngan|n)\b| 000\b)/.exec(q.slice(het, het + 30));
+    if (!m) continue;
+    const noi = +m[1] * 1000;
+    if (Math.abs(noi - t.price) >= 1000 && !lech.some((x) => x.includes(t.name))) lech.push(`${t.name}${tat ? ' (khớp theo tên gọi tắt)' : ''}: câu hỏi nói ${vnd(noi)}, menu trong app đang ghi ${vnd(t.price)}`);
+    break; // một cụm tên chỉ ứng một món (món khớp tốt nhất)
+  }
+  return lech.length ? `GIÁ TRONG CÂU KHÁC MENU (tính sẵn): ${lech.join('; ')}. Nói ra chỗ lệch này ngay, tính theo giá menu và hỏi lại chủ quán giá nào đúng (có thể menu chưa sửa); KHÔNG lặng lẽ dùng giá trong câu.` : '';
+}
+
 export function monTrongCau(f: ShopFacts | null | undefined, question: string): string {
   const q = ` ${boDauVc(question)} `;
   const ten = [...new Set((f?.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => t.name))].filter((n) => n.length >= 6 && q.includes(` ${boDauVc(n).trim()} `));
@@ -2351,6 +2412,7 @@ export function buildMessages(
     baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
+    giaKhacMenu(extra?.facts, question),
     extra?.thoiTiet ?? '',
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
     /mu[oố]n ch[eế]t|ch[eế]t m[aấ]t|m[eệ]t ch[eế]t|ch[eế]t lu[oô]n|ch[eế]t đi đ[uư][oợ]c|ch[eế]t (?:v[oớ]i|ng[aạ]t)/i.test(question) && /l[aà]m|m[eệ]t|b[aậ]n|đ[oô]ng|qu[aá]n|ca\b|nh[aâ]n vi[eê]n/i.test(question)
@@ -3040,10 +3102,21 @@ export function ngoaiGioBan(answer: string, ref: string): string[] {
 }
 
 /** 09/11 (QC 07/11 còn sót): có phép tính "Mua X tặng Y = giảm Z%" mà câu trả lời không dùng số nào của nó → vẫn nói chung chung "chưa kết luận được". */
+/** 09/11 lô dạy: có dòng "GIÁ TRONG CÂU KHÁC MENU" mà câu trả lời không nhắc giá menu (bỏ qua, hoặc lặng lẽ dùng giá chủ quán nói). */
+export function boQuaGiaMenu(answer: string, ref: string): string {
+  const m = /GIÁ TRONG CÂU KHÁC MENU \(tính sẵn\): ([^\n]*?)\. Nói ra/.exec(ref);
+  if (!m) return '';
+  const thieu = [...m[1].matchAll(/([^;:]+?)(?: \(khớp theo tên gọi tắt\))?: câu hỏi nói ([\d.]+đ), menu trong app đang ghi ([\d.]+đ)/g)]
+    .filter((x) => !answer.includes(x[3]) && !answer.includes(x[3].replace(/\.000đ$/, 'k')) && !answer.includes(x[3].replace(/\.000đ$/, ' nghìn')));
+  return thieu.length ? `chưa nói giá trong câu khác giá menu (${thieu.map((x) => `${x[1].trim()}: câu hỏi ${x[2]}, menu ${x[3]}`).join('; ')}) → nói chỗ lệch ở câu đầu, tính theo giá menu và hỏi lại giá nào đúng` : '';
+}
+
 export function muaTangChuaDung(answer: string, ref: string): string {
   const m = /Mua (\d) tặng (\d) = giảm (\d+)%\. ([^\n]*?)Chưa tính lương/.exec(ref);
   if (!m) return '';
-  const so = [`${m[3]}%`, ...[...m[4].matchAll(/gấp khoảng ([\d,]+) lần|(\d+)% doanh thu/g)].map((x) => x[1] ?? `${x[2]}%`)];
+  // phép tính theo đúng món (09/11): "LỖ 3.200đ mỗi lượt", "còn 11.000đ/lượt", "gấp khoảng 2,1 lần" cũng là dùng phép tính
+  const so = [`${m[3]}%`, ...[...m[4].matchAll(/gấp khoảng ([\d,]+) lần|(\d+)% doanh thu/g)].map((x) => x[1] ?? `${x[2]}%`),
+    ...[...ref.matchAll(/LỖ ([\d.]+đ) mỗi lượt|còn ([\d.]+đ)\/lượt|phải bán gấp khoảng ([\d,]+) lần số lượt/g)].map((x) => x[1] ?? x[2] ?? x[3])];
   if (so.some((x) => answer.includes(x)) || /không đủ tiền nguyên liệu/iu.test(answer)) return '';
   return `chưa dùng phép tính mua ${m[1]} tặng ${m[2]} (giảm ${m[3]}%; ${m[4].trim()}) → câu đầu kết luận có lỗ / phải bán thêm bao nhiêu theo đúng phép tính đó`;
 }
@@ -3062,6 +3135,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const cbGia = comboThieuGia(answer, ref);
   const maGiong = maTrung(answer, ref);
   const mtChua = muaTangChuaDung(answer, ref);
+  const giaBo = boQuaGiaMenu(answer, ref);
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
@@ -3086,6 +3160,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(cbGia.length ? [`đề xuất combo mà chưa có giá combo (${cbGia.join('; ')}) → ghi rõ giá combo, dùng dòng combo tính sẵn nếu có`] : []),
     ...(maGiong.length ? [`đề xuất mã mới trùng mã đang chạy (${maGiong.join(', ')}) → nói về mã đó, hoặc đề xuất mức khác`] : []),
     ...(mtChua ? [mtChua] : []),
+    ...(giaBo ? [giaBo] : []),
     ...(kyIt.length ? [`kỳ này quá ít đơn nên không khuyên theo giờ, theo thứ (${kyIt.join('; ')}) → bỏ việc theo giờ, thứ, không đặt mốc tiền theo giờ, thay bằng việc kéo khách quay lại; nói rõ nên xem "30 ngày qua" để có đủ số`] : []),
     ...(thuNgoai.length ? [`đề xuất ưu đãi vào ngày quán nghỉ (${thuNgoai.join(', ')}) → chỉ đề xuất ngày quán có bán`] : []),
     ...(gioNgoai.length ? [`đề xuất khung giờ quán KHÔNG bán (${gioNgoai.join('; ')}) → chỉ đề xuất trong giờ quán có bán`] : []),
@@ -3133,6 +3208,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     extra?.facts && ngayMoBan(extra.facts) ? `SỐ NGÀY KỲ: ${ngayMoBan(extra.facts)}` : '',
     ngayHoi(question, now, extra?.facts),
     kichBanGia(extra?.facts, question),
+    giaKhacMenu(extra?.facts, question),
     todayBlock(now),
   ].filter(Boolean).join('\n');
 }

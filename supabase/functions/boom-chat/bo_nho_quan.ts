@@ -107,6 +107,7 @@ export function keHoachGhi(moi: GhiNho[], cu: GhiNho[]): KeHoachGhi {
  */
 /** 09/11 (giai đoạn 4, minh bạch): "em đang nhớ gì về quán anh" → kể ra đúng các điều đang nhớ. */
 export const HOI_NHO = /\b(?:nho|biet) (?:gi|nhung gi|duoc gi|nhieu khong)(?: (?:ve|cua))? (?:quan|tiem|anh|chi|em|toi|minh|tui)\b|\bbo nho (?:quan|cua)|\b(?:da|dang) nho (?:gi|nhung gi)\b/;
+export const laHoiNho = (question: string) => HOI_NHO.test(boDau(question));
 export function boNhoChoBoom(ds: GhiNho[], laChu: boolean, question: string): string {
   const q = tu(question);
   const hoiNho = HOI_NHO.test(boDau(question));

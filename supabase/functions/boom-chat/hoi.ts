@@ -1,7 +1,7 @@
 // Chế độ 'ask' (03/11/2026, thiết kế .docs/thiet-ke-boom-may-chu-lay-so.md): app chỉ gửi câu hỏi; máy chủ đọc kỳ bằng luật
 // (ky.ts), đọc ĐỦ số người hỏi được xem bằng vé của chính họ (lay_so.ts, RLS), đệm theo (người hỏi, quán, kỳ).
 // Đo 03/11: gửi đủ 5 mục không làm Boom kém đi (12,50 → 12,45 / 16), câu app không gửi số 9,2 → 11,6.
-import { docKy, type Ky } from './ky.ts';
+import { coNeuKy, docKy, ky30Ngay, type Ky } from './ky.ts';
 import { docBanHang } from './ban_hang.ts';
 import { type Ctx, docMuc, docQuyen, xemDuocBanHang } from './lay_so.ts';
 import { type ModuleFacts, parseFacts, parseModules, type ShopFacts } from './logic.ts';
@@ -18,6 +18,17 @@ function hanDem(ky: Ky, now: number): number {
 
 export async function laySoChoCau(ctx: Ctx, question: string, now = new Date(), cauTruoc?: string | null): Promise<SoCuaCau> {
   const ky = docKy(question, now, cauTruoc);
+  const so = await laySoTheoKy(ctx, ky, now);
+  // 09/11 web Demo ngày 9: không nêu kỳ → "tháng này" 12 đơn → khuyên tăng giá theo 5 ly, mã giảm không có số. Ít đơn thì đọc lại 30 ngày qua.
+  const macDinh = !coNeuKy(question, now) && !(cauTruoc && coNeuKy(cauTruoc, now)) && /^Tháng này/.test(ky.nhan);
+  if (macDinh && so.facts && so.facts.orders < IT_DON_KY) return await laySoTheoKy(ctx, ky30Ngay(now), now);
+  return so;
+}
+
+/** Dưới mức này kỳ mặc định chưa đủ để nói giờ, thứ, món nào yếu (như IT_DON trong logic.ts). */
+const IT_DON_KY = 30;
+
+async function laySoTheoKy(ctx: Ctx, ky: Ky, now: Date): Promise<SoCuaCau> {
   // khoá theo NGÀY của mốc cuối với kỳ đang chạy (now đổi từng giây) để câu hỏi tiếp cùng kỳ trúng đệm
   const khoa = `${ctx.userId}|${ctx.storeId}|${ky.tu}|${ky.den.slice(0, 13)}|${ky.truocTu}|${ky.truocDen.slice(0, 13)}`;
   const t = now.getTime();

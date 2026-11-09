@@ -257,11 +257,19 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   return out.sort((a, b) => a.at - b.at);
 }
 
-/** Không nhắc kỳ: tháng này; ngày 1–7 thì 30 ngày qua — hỏi thật 03/11: "món nào nên bỏ" chỉ có 3 ngày số → khuyên ẩn 65 món. */
-function macDinh(vn: Date): Doan {
-  if (vn.getUTCDate() > 7) return kyCo('thang_nay', vn);
+/** Không nhắc kỳ: tháng này; ngày 1–7 thì 30 ngày qua — hỏi thật 03/11: "món nào nên bỏ" chỉ có 3 ngày số → khuyên ẩn 65 món.
+ *  09/11 web Demo: "trong 30 ngày tới nên làm gì" đọc thành tháng này (ngày 9, 12 đơn) → kế hoạch tương lai dựa trên 30 ngày qua. */
+function macDinh(vn: Date, tuongLai = false): Doan {
+  if (vn.getUTCDate() > 7 && !tuongLai) return kyCo('thang_nay', vn);
   const hn = ngay(vn.getUTCFullYear(), vn.getUTCMonth() + 1, vn.getUTCDate()), s = cong(hn, -29 * D);
   return khoang(vn, s, cong(hn, D), cong(s, -30 * D), '30 ngày qua', '30 ngày trước đó');
+}
+const TUONG_LAI = /\b(?:\d+ (?:ngay|tuan|thang)|tuan|thang|thoi gian) (?:toi|sau|tiep(?: theo)?|sap toi)\b|\bsap toi\b/;
+
+/** 09/11: câu không nêu kỳ mà "tháng này" quá ít đơn → hoi.ts đọc lại bằng kỳ này (Demo ngày 9: 12 đơn, khuyên tăng giá theo 5 ly). */
+export function ky30Ngay(now: Date = new Date()): Ky {
+  const d = macDinh(cong(now, VN), true), so = d.truoc();
+  return { tu: iso(d.tu), den: iso(d.den), truocTu: iso(so.tu), truocDen: iso(so.den), nhan: d.nhan, nhanTruoc: so.nhan };
 }
 
 const loaiKy = (nhan: string) => /^Tháng/.test(nhan) ? 'thang' : /^Tuần/.test(nhan) ? 'tuan' : /^Quý/.test(nhan) ? 'quy' : /^(Hôm|Thứ|Chủ nhật)/.test(nhan) ? 'ngay' : '';
@@ -275,6 +283,9 @@ function kySo(chinh: Doan, k: Doan, f: string): { tu: Date; den: Date; nhan: str
   if (/\b(?:ca|tron) (?:thang|thg|tuan|quy|ngay)\b/.test(f)) {
     return { ...nguyen, nhan: `trọn ${ten} (${dm(k.tu)}–${dm(cong(k.den, -1000))})` };
   }
+  // 09/11 web Demo Thứ 2 10h: "tuần này so với tuần trước" cắt tuần trước còn Thứ 2 (0đ) → "chưa có số tuần trước". Kỳ chạy chưa tới
+  // 1 ngày trọn (chưa có số cả ngày nào) thì so trọn kỳ trước; formatFacts tự quy về cùng số ngày mở bán.
+  if (loaiKy(chinh.nhan) !== 'ngay' && chinh.den.getTime() - chinh.tu.getTime() < D) return { ...nguyen, nhan: `trọn ${ten} (${dm(k.tu)}–${dm(cong(k.den, -1000))})` };
   const truoc = chinh.truoc();
   if (truoc.tu.getTime() === k.tu.getTime()) return truoc;
   const den = new Date(Math.min(k.den.getTime(), k.tu.getTime() + chinh.den.getTime() - chinh.tu.getTime()));
@@ -329,7 +340,7 @@ export function docKy(question: string, now: Date = new Date(), cauTruoc?: strin
     so = kySo(chinh, k, f);
   } else {
     // "được nhiêu rồi": không nêu kỳ mà hỏi số tới lúc này thì hiểu là hôm nay; đã có kỳ câu trước thì giữ kỳ đó
-    chinh = ds[0]?.doan ?? (f.split(' ').length <= 6 && /\b(?:nhieu|bn) r(?:oi)?$/.test(f) ? kyCo('hom_nay', vn) : macDinh(vn));
+    chinh = ds[0]?.doan ?? (f.split(' ').length <= 6 && /\b(?:nhieu|bn) r(?:oi)?$/.test(f) ? kyCo('hom_nay', vn) : macDinh(vn, TUONG_LAI.test(f)));
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
     so = k2 ? kySo(chinh, k2, f) : chinh.truoc();
   }

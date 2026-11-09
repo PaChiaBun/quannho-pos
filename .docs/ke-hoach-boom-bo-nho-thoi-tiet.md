@@ -270,3 +270,44 @@ Xong khi: bộ thử đạt và câu tiếp thị trong bộ 32 câu khá lên s
 - **Đo lại 08/11 với cách chọn mới** (chỉ câu tiếp thị; sửa từ khoá bỏ dấu lọt nhau như "hẻm" trong "thêm", "sàn" trong "sáng"): sổ tay mở cho 21/92 câu (QC 12/32, bộ cũ 5/40, bộ kín 4/20); 71 câu còn lại lời nhắc giống hệt bản đang chạy. 3 lượt, một người chấm mù, 63 cặp: **+0,48 ± 0,42** (khoảng không chứa 0); QC +0,47, bộ cũ +0,67, bộ kín +0,25; không nhóm nào âm. Việc làm 1,46 → 1,63, đúng quán 1,84 → 1,95.
 - Đã nối vào `index.ts` sau công tắc `BOOM_SO_TAY=1` (mặc định tắt); hồ sơ để chọn bài lấy từ bộ nhớ quán (bộ nhớ tắt thì chỉ chọn theo câu hỏi). Phép đo trên giả định có hồ sơ quán; khi bộ nhớ tắt, bài vị trí / khách chính sẽ ít được mở hơn, chưa đo riêng trường hợp đó.
 - **Bật 09/11 (lần 160):** `BOOM_SO_TAY=1` trong tệp bí mật (sao lưu `boom-ai.env.truoc_so_tay_20261109_032134`). Web Demo: câu "quán gần trường, kéo thêm học sinh" có nhãn `+so_tay`; câu "doanh thu bao nhiêu" không. Tắt: xoá dòng rồi tạo lại container functions.
+
+## Đo 09/11: Boom đã thông minh hơn chưa
+
+**Thử 12 câu trên web Demo qua máy chủ thật (lần 161, sổ tay + thời tiết bật, Demo bỏ qua bộ nhớ):**
+- Đúng như mong đợi: hỏi buổi chiều thì trả lời buổi chiều trước; ưu đãi theo giờ có câu "dặn nhân viên áp tay"; mưa dùng dự báo, không khuyên nhập nhiều chỉ vì dự báo, có ghi nguồn; sáng quá tải thì không kéo thêm khách; sổ tay mở đúng câu tiếp thị.
+- Lỗi thấy (chưa sửa):
+  1. Đầu kỳ ít số: ngày 9 trong tháng chỉ 12 đơn, máy vẫn dùng "tháng này" → khuyên tăng giá dựa trên 5 ly, mã giảm không có số, mua tặng "chưa đủ dữ liệu". Nên lấy kỳ dài hơn (30 ngày qua) khi kỳ mặc định quá ít đơn và câu hỏi không nói kỳ.
+  2. "Tuần này so với tuần trước" đầu tuần: so với đúng số ngày tuần trước (chỉ Thứ 2) → "chưa có số tuần trước"; nên nêu cả tuần trước.
+  3. "Trong 30 ngày tới" đọc thành "tháng này"; kế hoạch tương lai nên dựa trên 30 ngày qua.
+  4. Mua 1 tặng 1 một món có giá vốn riêng: phép tính dùng tỉ lệ nguyên liệu cả quán, không dùng giá vốn món (trà đào 35.000đ / 12.000đ → phải bán gấp ~4,2 lần).
+  5. Mã giảm khi kỳ ít đơn: phép tính ngưỡng bị tắt nên không có số; chỉ cần giá trị đơn trung bình.
+  6. Bài đăng Facebook bị gắn "Số trên là của tháng này…" ở cuối.
+  7. "Tuần này" (câu so số) mở thời tiết vì HOI_THOI_TIET có "tuần này".
+  8. "Em nhớ gì về quán" khi quán không dùng bộ nhớ: Boom nói "đang nhớ" rồi kể số bán hàng như trí nhớ.
+  9. Mời thêm món 55.000đ cho khách gọi ly trà; vẫn khuyên tăng giá khi đơn giảm 96% (kỳ ít đơn).
+  10. Lần gọi đầu sau khi tạo lại hàm, 4 câu cùng lúc: 1 câu 500 "worker did not respond in time" (khởi động chậm, gọi lại được).
+
+**Chấm mù A/B 09/11** (`tool/boom_do/do_09_11/`: `do.ts`, `tron.py`, `tong.py`; bộ mới `cau_moi.json` do trợ lý khác viết). A = lần 151 (f53ccb9), B = lần 161 (sổ tay bật), cả hai chạy như máy chủ (viết lại 1 lần, B có ghiApTay), không hồ sơ quán, 2 lượt/câu, 8 người chấm, 168 cặp:
+
+| Bộ | n | Cũ /16 | Mới /16 | Mới − cũ | Dùng được / tạm / hỏng (cũ → mới) |
+|---|---|---|---|---|---|
+| QC 07/11 (đã sửa theo bộ này) | 64 | 13,27 | 13,53 | +0,27 ± 0,45 | 42/21/1 → 47/17/0 |
+| Mới (chưa từng thấy) | 64 | 12,22 | 12,50 | +0,28 ± 0,55 | 29/31/4 → 34/27/3 |
+| Kín | 40 | 13,00 | 12,53 | −0,47 ± 0,68 | 23/17/0 → 16/22/2 |
+| Tất cả | 168 | 12,80 | 12,90 | +0,10 ± 0,32 | |
+
+- Kết luận: CHƯA thấy khá lên rõ. Bộ QC và bộ mới nhích lên (khoảng tin cậy chứa 0); bộ kín tụt (chứa 0, nhưng dùng được 23 → 16). Theo loại: số liệu +0,85, tiếp thị +0,53, khác +1,00; quyết định −0,21, so sánh −1,00, kế hoạch −1,67 (n nhỏ).
+- Theo tiêu chí: việc làm 1,36 → 1,50 (khá lên); tìm vấn đề 1,25 → 1,26 và lý lẽ 1,24 → 1,25 vẫn thấp nhất, cả hai bản.
+- Người chấm (cả hai bản): bỏ sót điểm đắt nhất đã có trong khối số (món lời nhất theo tiền lời chứ không theo bán chạy, mua 1 tặng 1 lỗ ngay mỗi đơn khi 2 phần giá vốn > giá bán, lời trên sàn với giá vốn đã có, Thứ 4 tụt riêng, mã đang chạy, hao hụt); không đối chiếu giá chủ quán nói với giá menu (20k vs 25k); hay dừng ở "chưa có số" thay vì tự tính phép nhỏ; chèn số lạc đề làm dài.
+- Giới hạn: bộ đo cho mọi câu số "tháng này" nên câu "trưa nay / hôm qua" bị chấm sai số do cách đo, không phải lỗi máy chủ (máy chủ đọc kỳ riêng). Khối số đưa người chấm là của bản cũ (có lỗi Thứ 4 hai số đã sửa ở lần 154).
+
+### Lô dạy 5 lần (09/11, chưa áp)
+1. Kỳ: câu không nêu kỳ mà "tháng này" < 30 đơn → `hoi.ts` đọc lại 30 ngày qua (`ky30Ngay`); "30 ngày tới / tháng tới / sắp tới" → 30 ngày qua; "tuần này so tuần trước" khi kỳ chạy chưa trọn 1 ngày → so trọn tuần trước (không áp cho kỳ ngày).
+2. Tiền lời: dòng "XẾP MÓN THEO TIỀN LỜI" (lời mỗi phần, % giá vốn, tiền lời cả kỳ) khi hỏi lời nhất / lời hơn / đáng đẩy; dòng "BÁN QUA SÀN" (phí sàn theo câu hỏi, không có thì giả sử 25–30%).
+3. Mua tặng theo giá vốn của đúng món (lỗ mỗi lượt hoặc phải bán gấp bao nhiêu); mã kiểm `muaTangChuaDung` nhận cả số của phép tính theo món.
+4. `giaKhacMenu`: giá chủ quán nói khác giá menu → nói ra, tính theo menu, hỏi lại. `monKhop` khớp tên món gọi tắt ("ca phe sua", "bún bò", "cơm tấm").
+5. Bài đăng không gắn câu ghi kỳ; "tuần này" không lấy thời tiết; hỏi "nhớ gì" khi quán không dùng bộ nhớ → nói thẳng chưa có bộ nhớ riêng.
+- Đo lô (bản 161 vs lô, bộ mới + kín, 104 cặp, 5 người chấm; khối số liệu đưa người chấm lấy của bản MỚI — lần đo 151/161 trước lấy khối bản cũ, có thể đã trừ oan bản 161 khi dẫn số dòng mới): tổng +0,03 ± 0,40; giá món +2,12 ± 1,90 (câu bật dòng mới: M22 +7/+4, M21 +4); so sánh (kín) −2,17 ± 1,18 — K18 −4/−3 do dòng xếp món ghi "lời nhiều nhất cả kỳ" như đáp án → Boom kết luận "lời hơn" theo tổng tiền. Đã sửa: "món lời hơn" = lời mỗi phần, câu so đúng 2 món không bật dòng xếp. Phần 1 (kỳ) và 5 (nhớ gì) bộ đo không chạm tới (bộ đo luôn đưa số tháng này đủ đơn).
+- Người chấm vẫn thấy: khối số có Thứ 4 hai trung bình khác nhau khi không có số từng ngày (lần 154 chỉ sửa khi có by_day); "trưa nay / hôm qua" bộ đo đưa số cả kỳ (giới hạn bộ đo).
+- Đo lại riêng 14 câu có dòng tính sẵn mới (QC + mới + kín), sau khi sửa dòng xếp món, 3 lượt/câu, 42 cặp, 2 người chấm: +0,62 ± 0,63; kín +2,33 (K18 hết tụt); tìm vấn đề 1,12 → 1,48, lý lẽ 1,24 → 1,33, trả lời thẳng 1,62 → 1,76. Câu không có dòng mới: lời nhắc giống hệt bản 161.
+- Sửa thêm sau đo: `boQuaGiaMenu` (có dòng giá khác menu mà câu trả lời không nhắc giá menu → viết lại); thứ của hôm nay khi KHÔNG có số từng ngày: dòng so kỳ trước chia đủ n như bảng theo thứ (hết Thứ 4 hai số). Test 150/150.

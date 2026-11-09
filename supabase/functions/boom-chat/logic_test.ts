@@ -1860,3 +1860,77 @@ Deno.test('mua tặng: đọc "mua một tặng một", "1+1"; câu trả lời 
   assertEquals(L.muaTangChuaDung('Dạ, mua 1 tặng 1 là giảm 50%, giá vốn 35% thì thu không đủ tiền nguyên liệu.', ref), '');
   assertEquals(L.muaTangChuaDung('Dạ, chưa đủ số.', 'khác'), '');
 });
+
+Deno.test('09/11: món lời nhất xếp theo tiền lời; bán qua sàn còn lời bao nhiêu', () => {
+  const f = L.parseFacts({ period: 'Tháng này', revenue: 9_000_000, orders: 300, top: [], slow: [], from: '2026-11-01', to: '2026-11-28',
+    groups: [{ name: 'Món', revenue: 9_000_000, qty: 350, items: 3, unsold: 0, unsold_names: [], slow: [],
+      top: [{ name: 'Cơm tấm sườn', qty: 200, revenue: 7_000_000, price: 35000, cost: 20000 }, { name: 'Cơm sườn bì chả', qty: 100, revenue: 4_500_000, price: 45000, cost: 21000 }, { name: 'Trà đá', qty: 50, revenue: 150_000, price: 3000 }] }] })!;
+  const t = L.formatFacts(f, new Date('2026-11-28T10:00:00+07:00'), 'món nào lời nhất');
+  assertStringIncludes(t, 'Cơm tấm sườn lời 15.000đ/phần (giá vốn 57%), bán 200 phần → góp 3.000.000đ tiền lời cả kỳ');
+  assertStringIncludes(t, '"Món lời hơn" = lời mỗi phần: Cơm sườn bì chả cao nhất');
+  assert(!L.formatFacts(f, new Date('2026-11-28T10:00:00+07:00'), 'cơm tấm sườn với cơm sườn bì chả món nào lời hơn').includes('XẾP MÓN THEO TIỀN LỜI'));
+  const s = L.formatFacts(f, new Date('2026-11-28T10:00:00+07:00'), 'bán cơm sườn bì chả trên shopee có lời không');
+  assertStringIncludes(s, 'Cơm sườn bì chả giá 45.000đ, giá vốn 21.000đ → tại quán lời 24.000đ/phần, qua sàn còn 12.750đ–10.500đ/phần');
+  assert(!L.formatFacts(f, new Date('2026-11-28T10:00:00+07:00'), 'doanh thu tháng này').includes('XẾP MÓN THEO TIỀN LỜI'));
+});
+
+Deno.test('09/11: mua tặng tính theo giá vốn của đúng món', () => {
+  const f = { period: '30 ngày qua', revenue: 15_000_000, orders: 300, top: [], slow: [], from: '2026-10-10', to: '2026-11-08', by_weekday: [2e6, 2e6, 2e6, 2e6, 2e6, 2e6, 3e6],
+    groups: [{ name: 'Món', revenue: 9e6, qty: 300, items: 2, unsold: 0, unsold_names: [], slow: [],
+      top: [{ name: 'Trà đào cam sả', qty: 100, revenue: 3.5e6, price: 35000, cost: 12000 }, { name: 'Cơm tấm sườn', qty: 200, revenue: 8e6, price: 40000, cost: 21600 }] }] };
+  const tra = L.baiToanTiepThi(f as never, null, 'chạy mua 1 tặng 1 trà đào cam sả có lời không');
+  assertStringIncludes(tra, 'thu 35.000đ, tốn nguyên liệu 24.000đ → còn 11.000đ/lượt (bán thường 1 phần lời 23.000đ) → phải bán gấp khoảng 2,1 lần');
+  assertStringIncludes(L.baiToanTiepThi(f as never, null, 'mua 1 tặng 1 cơm tấm sườn được không'), 'LỖ 3.200đ mỗi lượt');
+  assert(!L.baiToanTiepThi(f as never, null, 'mua 1 tặng 1 có lỗ không').includes('/lượt'));
+});
+
+Deno.test('09/11: mã kiểm mua tặng nhận số của phép tính theo món', () => {
+  const f = { period: '30 ngày qua', revenue: 15_000_000, orders: 300, top: [], slow: [], from: '2026-10-10', to: '2026-11-08', by_weekday: [2e6, 2e6, 2e6, 2e6, 2e6, 2e6, 3e6],
+    groups: [{ name: 'Món', revenue: 9e6, qty: 300, items: 1, unsold: 0, unsold_names: [], slow: [], top: [{ name: 'Cơm tấm sườn', qty: 200, revenue: 8e6, price: 40000, cost: 21600 }] }] };
+  const ref = L.baiToanTiepThi(f as never, null, 'mua 1 tặng 1 cơm tấm sườn được không');
+  assertEquals(L.muaTangChuaDung('Dạ không nên, mỗi lượt lỗ 3.200đ tiền nguyên liệu.', ref), '');
+  assertEquals(L.muaTangChuaDung('Dạ chưa đủ số để kết luận.', ref).length > 0, true);
+});
+
+Deno.test('09/11: giá chủ quán nói khác giá menu', () => {
+  const f = L.parseFacts({ period: 'Tháng này', revenue: 9e6, orders: 300, top: [], slow: [], from: '2026-11-01', to: '2026-11-28',
+    groups: [{ name: 'Uống', revenue: 9e6, qty: 350, items: 2, unsold: 0, unsold_names: [], slow: [],
+      top: [{ name: 'Cà phê sữa đá', qty: 200, revenue: 5e6, price: 25000, cost: 9000 }, { name: 'Bạc xỉu', qty: 100, revenue: 3e6, price: 30000 }] }] })!;
+  assertStringIncludes(L.giaKhacMenu(f, 'cà phê sữa đá 20k mà tăng lên 22k có được ko'), 'Cà phê sữa đá: câu hỏi nói 20.000đ, menu trong app đang ghi 25.000đ');
+  assertStringIncludes(L.giaKhacMenu(f, 'ca phe sua da gia 20 nghin, bac xiu 30k'), 'Cà phê sữa đá');
+  assert(!L.giaKhacMenu(f, 'ca phe sua da gia 20 nghin, bac xiu 30k').includes('Bạc xỉu'));
+  assertEquals(L.giaKhacMenu(f, 'cà phê sữa đá 25k có rẻ quá không'), '');
+  assertEquals(L.giaKhacMenu(f, 'cà phê sữa đá bán 200 ly'), '');
+});
+
+Deno.test('09/11: bài đăng không bị gắn câu ghi kỳ', () => {
+  const a = 'Trà đào cam sả 35.000đ/ly, mời bạn ghé quán ạ.';
+  assertEquals(L.ghiKy(a, 'Tháng này (1/11–9/11)', 'Viết giúp bài đăng Facebook giới thiệu món trà đào'), a);
+  assertEquals(L.ghiKy(a, 'Tháng này (1/11–9/11)', 'trà đào bán được bao nhiêu') !== a, true);
+});
+
+Deno.test('09/11: khớp tên món gọi tắt cho giá khác menu', () => {
+  const f = L.parseFacts({ period: 'Tháng này', revenue: 9e6, orders: 300, top: [], slow: [], from: '2026-11-01', to: '2026-11-28',
+    groups: [{ name: 'Uống', revenue: 9e6, qty: 350, items: 2, unsold: 0, unsold_names: [], slow: [],
+      top: [{ name: 'Cà phê sữa đá', qty: 200, revenue: 5e6, price: 25000, cost: 9000 }, { name: 'Cà phê đen đá', qty: 100, revenue: 2e6, price: 20000 }] }] })!;
+  assertStringIncludes(L.giaKhacMenu(f, 'sua dac len gia, ca phe sua dang ban 20k, tang len 22k co mat khach ko'), 'Cà phê sữa đá (khớp theo tên gọi tắt): câu hỏi nói 20.000đ, menu trong app đang ghi 25.000đ');
+  assertEquals(L.giaKhacMenu(f, 'cà phê đen đá 20k có rẻ không'), '');
+});
+
+Deno.test('09/11: không có số từng ngày thì thứ của hôm nay vẫn một trung bình ở cả hai dòng', () => {
+  const f = L.parseFacts({ period: '35 ngày qua', revenue: 5_000_000, orders: 200, top: [], slow: [], from: '2026-10-01', to: '2026-11-04',
+    by_weekday: [1_000_000, 1_000_000, 900_000, 700_000, 700_000, 700_000, 0],
+    prev_period: '35 ngày trước', prev_revenue: 5_000_000, prev_orders: 200, prev_from: '2026-08-27', prev_to: '2026-09-30',
+    prev_by_weekday: [1_000_000, 1_000_000, 2_000_000, 700_000, 700_000, 700_000, 0] })!;
+  const t = L.formatFacts(f, new Date('2026-11-04T10:00:00+07:00'), 'doanh thu sao giảm');
+  assertStringIncludes(t, 'Thứ 4 900.000đ (5 ngày, trung bình 180.000đ/ngày)');
+  assert(/Thứ 4 kỳ trước [\d.]+đ → nay 180\.000đ/.test(t), t);
+});
+
+Deno.test('09/11: mã kiểm bắt câu bỏ qua giá khác menu', () => {
+  const ref = 'GIÁ TRONG CÂU KHÁC MENU (tính sẵn): Cà phê sữa đá (khớp theo tên gọi tắt): câu hỏi nói 20.000đ, menu trong app đang ghi 25.000đ. Nói ra chỗ lệch này ngay';
+  assertStringIncludes(L.boQuaGiaMenu('Dạ tăng từ 20.000đ lên 22.000đ thì ổn.', ref), 'Cà phê sữa đá: câu hỏi 20.000đ, menu 25.000đ');
+  assertEquals(L.boQuaGiaMenu('Dạ menu đang ghi 25.000đ chứ không phải 20k ạ.', ref), '');
+  assertEquals(L.boQuaGiaMenu('Dạ menu ghi 25k ạ.', ref), '');
+  assertEquals(L.boQuaGiaMenu('Dạ ổn.', 'khác'), '');
+});

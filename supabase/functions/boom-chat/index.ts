@@ -22,7 +22,7 @@ import { laySoChoCau } from './hoi.ts';
 import { chonBai, soTayChoBoom } from './so_tay.ts';
 import { docBanHang } from './ban_hang.ts';
 import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
-import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
+import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, laHoiNho, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
@@ -716,7 +716,11 @@ Deno.serve(async (req) => {
   // Lời khuyên tới ngày đo: chỉ chủ quán nhận báo kết quả (nhân viên thường không xem được số bán hàng)
   const ketQua = boNhoDs && laChuBN ? await doLoiKhuyen(r.store_id, user, (req.headers.get('authorization') ?? '').slice(7).trim()) : '';
   if (ketQua) kind += '+do_ket_qua';
-  const boNho = [boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : '', ketQua].filter(Boolean).join('\n\n');
+  // 09/11 web Demo (quán bỏ qua bộ nhớ): "em nhớ gì về quán" → Boom nói "đang nhớ" rồi kể số bán hàng như trí nhớ
+  const khongBoNho = r.mode === 'advice' && !boNhoDs && laHoiNho(r.question)
+    ? 'BỘ NHỚ QUÁN: quán này CHƯA dùng bộ nhớ riêng của Bé Boom, nên Bé Boom chưa ghi nhớ điều gì về quán. Nói thẳng như vậy; KHÔNG nói "em đang nhớ", KHÔNG kể số bán hàng như điều đã nhớ.'
+    : '';
+  const boNho = [boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : khongBoNho, ketQua].filter(Boolean).join('\n\n');
   if (boNho) kind += '+bo_nho';
   // hồ sơ để chọn bài theo vị trí / khách chính: điều chủ quán đã nói trong bộ nhớ (bộ nhớ tắt thì chỉ chọn theo câu hỏi)
   const soTay = SO_TAY && r.mode === 'advice'

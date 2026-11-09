@@ -94,3 +94,8 @@ Deno.test('thời tiết: chữ "mua" (mua bán) không phải "mưa" (09/11)', 
   for (const q of ['mai có mưa không', 'troi mua thi ban sao', 'mua to thì nên làm gì', 'cuối tuần này nắng không']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
   assertEquals(T.ghiNguonThoiTiet('Mua 1 tặng 1 là giảm 50%.', true), 'Mua 1 tặng 1 là giảm 50%.');
 });
+
+Deno.test('thời tiết: "tuần này" (câu so số) không lấy thời tiết, "tuần tới" vẫn lấy (09/11)', () => {
+  assertEquals(T.HOI_THOI_TIET.test('Tuần này so với tuần trước thế nào?'), false);
+  assertEquals(T.HOI_THOI_TIET.test('tuần tới có nên nhập thêm hàng không'), true);
+});
