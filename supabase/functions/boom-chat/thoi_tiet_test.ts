@@ -154,3 +154,8 @@ Deno.test('thời tiết: "ngay mua" không dấu là hỏi thời tiết, lô C
   // "ngày mua" có dấu ngày là ngày mua hàng, không phải mưa
   assert(!T.HOI_THOI_TIET.test('ngày mua hàng gần nhất của khách là khi nào'));
 });
+
+Deno.test('lô D: "có phải tại mưa" là câu mưa × bán (lô C), câu thường không (09/11)', () => {
+  for (const q of ['Sao thứ 4 nào cũng bán kém z, có phải tại mưa ko', 'doanh thu giam co phai do mua khong', 'ban kem tai mua ha']) assert(T.HOI_MUA_BAN.test(q) && T.HOI_THOI_TIET.test(q), q);
+  for (const q of ['mua 1 tặng 1 bán chạy không', 'sao thứ 4 bán kém']) assert(!T.HOI_MUA_BAN.test(q), q);
+});

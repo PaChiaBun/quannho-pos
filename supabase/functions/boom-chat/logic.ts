@@ -893,6 +893,9 @@ const ngayMoBan = (f: ShopFacts) => (weekdayCounts(f.from, f.to) ?? []).reduce((
 export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, question: string, now: Date = new Date()): string {
   if (!w || !f || !w.ngay.length) return '';
   const q = boDau(question.normalize('NFC')).toLowerCase();
+  // lô D chấm mù: "sao thứ 4 nào cũng bán kém, có phải tại mưa" (hỏi chuyện đã qua) mà gắn dòng dự báo hôm nay → Boom nói "mưa có thể ảnh hưởng".
+  // Câu hỏi nguyên nhân chuyện đã qua: KHÔNG gắn các dòng dự báo × số quán (chỉ cho việc chuẩn bị sắp tới); lô C (số ngày mưa thật) vẫn gắn.
+  if (/\b(?:vi|tai) sao\b|\bsao\b.{0,40}(?:kem|giam|it khach|vang|\be\b)|co phai (?:tai|do|vi)|(?:giam|kem|vang|e) (?:la )?(?:do|tai|vi)\b/.test(q)) return '';
   const THU_DAI = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'];
   const wdOf = (d: string) => (new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7;
   const nhan = (i: number) => `${i === 0 ? 'Hôm nay' : i === 1 ? 'Mai' : THU_DAI[wdOf(w.ngay[i].ngay)]} ${w.ngay[i].ngay.slice(8, 10)}/${w.ngay[i].ngay.slice(5, 7)}`;
@@ -927,7 +930,10 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
   const tron = (x: number) => vnd(Math.round(x / 1000) * 1000);
   const tongGio = f.by_hour ? f.by_hour.reduce((a, b) => a + b, 0) : 0;
   const phanGio = (tu: number, den: number) => (tongGio > 0 ? f.by_hour!.slice(tu, den).reduce((a, b) => a + b, 0) / tongGio : null);
-  const gioDong = tongGio > 0 ? f.by_hour!.map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]).sort((a, b) => a - b) : [];
+  // 3 giờ đông nhất XẾP THEO DOANH THU (lô D: liệt kê theo giờ làm Boom gọi 7h là "đông nhất" khi 11h mới đông nhất → kiểm số bắt viết lại)
+  const gioDong = tongGio > 0 ? f.by_hour!.map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]) : [];
+  const HANG = ['đông nhất', 'đông thứ 2', 'đông thứ 3'];
+  const hang = (h: number) => `${h}h – ${HANG[gioDong.indexOf(h)]}`;
   const lines: string[] = [];
   const anhHuong: { i: number; muc: number; txt: string }[] = [];
   for (const i of ngay) {
@@ -942,10 +948,20 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const ph = phanGio(k.tu, k.den);
       const trong = gioDong.filter((h) => h >= k.tu && h < k.den);
       if (ph !== null) {
-        parts.push(`khung dễ mưa ${k.tu}–${k.den}h thường chiếm ${Math.round(ph * 100)}% doanh thu một ngày của quán${trong.length ? ` (gồm giờ đông nhất ${trong.map((h) => `${h}h`).join(', ')})` : gioDong.length ? ` (giờ đông nhất ${gioDong.map((h) => `${h}h`).join(', ')} nằm NGOÀI khung)` : ''}${ph < 0.15 ? ' → ít ảnh hưởng tới quán' : ''}`);
+        parts.push(`khung dễ mưa ${k.tu}–${k.den}h thường chiếm ${Math.round(ph * 100)}% doanh thu một ngày của quán${trong.length ? ` (gồm ${trong.map(hang).join(', ')})` : gioDong.length ? ` (3 giờ đông nhất của quán ${gioDong.map((h) => `${h}h`).join(' > ')} nằm NGOÀI khung)` : ''}${ph < 0.15 ? ' → ít ảnh hưởng tới quán' : ''}`);
         if (tb?.tien) anhHuong.push({ i, muc: tb.tien * ph * (k.p / 100), txt: `${k.tu}–${k.den}h, ~${Math.round(ph * 100)}% doanh thu ngày` });
       }
     } else if (k) parts.push('giờ buôn bán ít khả năng mưa');
+    // lần 181: ngày nắng nóng ≥ 35° → khung nóng nhất (giờ ≥ cao − 1°) đè bao nhiêu % doanh thu, gồm giờ đông nào
+    const cao = w.ngay[i].cao ?? 0;
+    if (cao >= 35) {
+      const nong = gioCua(i).filter((h) => h.gio >= 6 && h.gio <= 22 && (h.nhiet ?? 0) >= cao - 1).map((h) => h.gio);
+      if (nong.length) {
+        const tu = Math.min(...nong), den = Math.max(...nong) + 1, ph = phanGio(tu, den);
+        const trong = gioDong.filter((h) => h >= tu && h < den);
+        if (ph !== null) parts.push(`nắng nóng nhất khoảng ${tu}–${den}h (tới ${cao}°), khung này thường chiếm ${Math.round(ph * 100)}% doanh thu ngày${trong.length ? ` (gồm ${trong.map(hang).join(', ')})` : ''}`);
+      }
+    }
     // 170: mốc nhập hàng theo thứ (nằm ở đầu dòng; câu dặn chung ghi 1 lần ở cuối)
     if (parts.length || coMoc) lines.push(`${dau}: ${parts.join('; ') || 'chưa có dự báo theo giờ'}.`);
   }
@@ -962,10 +978,70 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       lines.push(`Nắng nóng (${nong.map((i) => `${nhan(i)} tới ${w.ngay[i].cao}°`).join(', ')}): nhóm ${nhom.map((g) => g.name).join(', ')} chiếm ${Math.round(nhom.reduce((a, g) => a + (g.revenue ?? 0), 0) / tong * 100)}% doanh thu món${chieu.length ? `; buổi chiều bán chạy: ${chieu.join(', ')}` : ''} → chuẩn bị đá, nguyên liệu các món này theo mốc ngày thường.`);
     }
   }
+  // 178 (lô D): ngày dễ mưa → món nước / món nóng của quán (theo tên món); quán không có món kiểu này thì bỏ, không đoán
+  // lô D2 chấm mù: chỉ gắn khi hỏi CHUNG nên chuẩn bị / nấu / bán món gì (hỏi đích danh "nhập thịt nướng" mà gắn → Boom lệch sang bún bò)
+  const HOI_MON = /mon (?:gi|nao)|chuan bi gi|nau gi|ban gi|day mon|nen nau|uu tien mon|mon nuoc|mon nong/.test(q);
+  const muaNgay = HOI_MON ? ngay.filter((i) => (khungMuaSo(gioCua(i))?.p ?? w.ngay[i].mua ?? 0) >= 40) : [];
+  if (muaNgay.length && f.groups?.length) {
+    // "bánh mì" không phải mì nước (lô D2: Bánh mì thịt bị gọi là món nước)
+    const NONG = /bun bo|bun rieu|bun moc|bun ca|\bpho\b(?! mai)|hu tieu|chao|(?<!banh )\bmi\b|mi quang|lau|sup|banh canh|mien|\bcanh\b|nong|ca phe phin nong|tra gung/;
+    const tong = f.items_revenue || f.groups.reduce((a, g) => a + (g.revenue ?? 0), 0);
+    const mon = f.groups.flatMap((g) => g.top ?? []).filter((t) => NONG.test(boDau(t.name).toLowerCase()) && t.revenue >= tong * 0.03).sort((a, b) => b.revenue - a.revenue);
+    if (mon.length && tong > 0) {
+      lines.push(`Ngày dễ mưa (${muaNgay.map(nhan).join(', ')}): món nước / món nóng của quán ${mon.slice(0, 3).map((t) => `${t.name} (${Math.round(t.revenue / tong * 100)}% doanh thu món)`).join(', ')} → ưu tiên đủ nguyên liệu và hộp mang về cho các món này; món khác giữ mốc ngày thường.`);
+    }
+  }
+  // 179 (lô D): hỏi người làm / ca → số đơn mỗi giờ trong khung mưa (hoặc giờ đông khi không mưa), từ doanh thu theo giờ ÷ giá trị TB một đơn
+  const NGUOI = /nguoi|nhan vien|\bnv\b|\bca (?:sang|trua|chieu|toi)|thue|phuc vu|giao hang|shipper|tang ca|them ca/;
+  const moBan = ngayMoBan(f);
+  if (NGUOI.test(q) && f.by_hour && f.orders > 0 && f.revenue > 0 && moBan > 0) {
+    const tbDon = f.revenue / f.orders;
+    const donGio = (h: number) => f.by_hour![h] / moBan / tbDon;
+    // lần 183 (máy ảo Demo): "ca chiều cần mấy nhân viên" mà dòng lấy giờ đông chung (8h, 12h) → Boom "chưa có số ca chiều". Hỏi ca nào tính đúng ca đó.
+    const CA: Record<string, [string, number, number]> = { sang: ['ca sáng', 6, 11], trua: ['ca trưa', 11, 14], chieu: ['ca chiều', 14, 18], toi: ['ca tối', 18, 22] };
+    const caHoi = q.match(/\b(?:ca|buoi) (sang|trua|chieu|toi)\b/)?.[1];
+    for (const i of ngay.slice(0, 3)) {
+      const k = khungMuaSo(gioCua(i));
+      const mua = k && k.p >= 30 ? k : null;
+      let ten: string, ds: number[];
+      if (caHoi) {
+        // chấm mù 183: giờ ca cố định lệch giờ bán thật (quán bán chiều 16–20h, tối 17–21h) → ca theo khối giờ quán có bán:
+        // khối giờ bán (liền nhau, > 1% doanh thu) giao nhiều nhất với ca; khối ≤ 6 tiếng thì lấy cả khối, dài hơn thì cắt theo ca
+        const [t, a, b] = CA[caHoi];
+        const mo = Array.from({ length: 24 }, (_, h) => f.by_hour![h] > tongGio * 0.01);
+        const khoi: number[][] = [];
+        for (let h = 0; h < 24; h++) if (mo[h]) (mo[h - 1] && khoi.length ? khoi[khoi.length - 1] : (khoi.push([]), khoi[khoi.length - 1])).push(h);
+        const giao = (k: number[]) => k.filter((h) => h >= a && h < b).length;
+        const chon = khoi.filter((k) => giao(k) > 0).sort((x, y) => giao(y) - giao(x))[0] ?? [];
+        ds = chon.length <= 6 ? chon : chon.filter((h) => h >= a && h < b);
+        ten = ds.length ? `${t} (quán bán ${ds[0]}–${ds[ds.length - 1] + 1}h)` : t;
+      } else if (mua) {
+        ten = `khung dễ mưa ${mua.tu}–${mua.den}h`;
+        ds = Array.from({ length: mua.den - mua.tu }, (_, j) => mua.tu + j);
+      } else {
+        ten = `giờ đông ${gioDong.map((h) => `${h}h`).join(', ')}`;
+        ds = gioDong;
+      }
+      if (!ds.length) { if (caHoi) lines.push(`${nhan(i)} — người làm: ${ten} quán gần như không có đơn trong kỳ.`); continue; }
+      const dinh = ds.reduce((a, h) => (donGio(h) > donGio(a) ? h : a), ds[0]);
+      const tb = ds.reduce((a, h) => a + donGio(h), 0) / ds.length;
+      const trungMua = caHoi && mua ? (ds.some((h) => h >= mua.tu && h < mua.den) ? `; khung dễ mưa ${mua.tu}–${mua.den}h TRÙNG ca này` : `; khung dễ mưa ${mua.tu}–${mua.den}h không trùng ca này`) : caHoi && k ? '; giờ buôn bán ít khả năng mưa' : '';
+      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
+    }
+  }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
   if (ngay.length >= 3 && anhHuong.length) {
     const top = anhHuong.sort((a, b) => b.muc - a.muc)[0];
     lines.push(`Ngày đáng chuẩn bị nhất: ${nhan(top.i)} (mưa ${top.txt}, ~${tron(top.muc)} doanh thu nằm trong khung mưa).`);
+  }
+  // lần 180: hỏi nhập hàng cho nhiều ngày → cộng sẵn mức bán thường của các ngày quán mở (trừ ngày nghỉ, ngày thiếu số)
+  if (ngay.length >= 3 && /nhap|dat hang|mua hang|nguyen lieu|chuan bi hang|hang hoa/.test(q)) {
+    const co = ngay.map((i) => ({ i, tb: tbThu(wdOf(w.ngay[i].ngay)) })).filter((x) => x.tb && !x.tb.nghi && x.tb.tien !== null && x.tb.n >= 2);
+    if (co.length >= 3) {
+      const tong = co.reduce((a, x) => a + x.tb!.tien!, 0);
+      const nghi = ngay.filter((i) => tbThu(wdOf(w.ngay[i].ngay))?.nghi).map(nhan);
+      lines.push(`Mốc nhập hàng cả đợt: ${co.length} ngày mở bán (${nhan(co[0].i)} → ${nhan(co[co.length - 1].i)}) quán thường bán tổng ~${tron(tong)}${nghi.length ? `; không tính ngày nghỉ ${nghi.join(', ')}` : ''}${co.length < ngay.length - nghi.length ? '; có ngày chưa đủ số nên không cộng' : ''} → nhập theo mốc này, chia nhiều lần với đồ tươi.`);
+    }
   }
   if (lines.some((l) => l.includes('quán thường bán ~'))) lines.push('Mốc nhập hàng = mức bán thường của thứ đó; dự báo chỉ để chỉnh nhẹ quanh mốc, không tăng / giảm mạnh chỉ vì dự báo.');
   return lines.length ? `THỜI TIẾT × SỐ QUÁN (tính sẵn từ dự báo và số của quán; dự báo có thể sai):\n- ${lines.join('\n- ')}` : '';

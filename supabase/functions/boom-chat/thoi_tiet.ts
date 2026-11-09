@@ -206,7 +206,8 @@ export async function layMuaDaQua(vt: ViTri, c: CauHinh | null, soNgay = 60, now
 }
 
 /** Câu hỏi về mưa ảnh hưởng chuyện bán ("mưa thì quán giảm nhiều không"). "mua" không dấu chỉ tính khi chắc là mưa (mua bán). */
-export const HOI_MUA_BAN = /(?:mưa|tr[oờ]i mua|ng[aà]y mua|\bmua (?:to|l[oớ]n|nhi[eề]u)\b).{0,40}(?:giảm|giam|ảnh hưởng|anh huong|ế|vắng|vang|bán|\bban\b|doanh thu|khách|khach|mất|ít|\bit\b|đơn|\bdon\b)|(?:doanh thu|bán|\bban\b|khách|khach|vắng|đơn|\bdon\b).{0,40}(?:mưa|tr[oờ]i mua|ng[aà]y mua)/i;
+// lô D: "sao thứ 4 nào cũng bán kém, có phải tại mưa" → đúng câu lô C trả lời được bằng số (thêm kém / tại mưa không dấu)
+export const HOI_MUA_BAN = /(?:mưa|tr[oờ]i mua|ng[aà]y mua|\bmua (?:to|l[oớ]n|nhi[eề]u)\b|\b(?:tai|do|vi) mua\b).{0,40}(?:giảm|giam|ảnh hưởng|anh huong|ế|vắng|vang|bán|\bban\b|doanh thu|khách|khach|mất|ít|\bit\b|đơn|\bdon\b|kém|\bkem\b)|(?:doanh thu|bán|\bban\b|khách|khach|vắng|đơn|\bdon\b|kém|\bkem\b|ế).{0,40}(?:mưa|tr[oờ]i mua|ng[aà]y mua|\b(?:tai|do|vi) mua\b)/i;
 
 /** Chỉ để test: xoá đệm. */
 export function xoaDemThoiTiet() {
@@ -219,12 +220,12 @@ export function xoaDemThoiTiet() {
 // 09/11: "doanh thu bao nhiêu" khớp b[aã]o (bão), "kha nang" khớp n[aắ]ng: chữ không dấu chỉ tính khi đi kèm từ chắc chắn.
 // 09/11 web Demo: "mua một tặng một" khớp m[uư]a → lấy thời tiết và gắn nguồn Apple cho câu mua bán. "mua" không dấu chỉ tính khi chắc là mưa.
 // 09/11 máy ảo (sau lô C): "ngay mua thi quan ban giam nhieu khong" không nhận là thời tiết → Boom trả lời doanh thu, bỏ lô C
-export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:t[oớ]i|sau)/i;
+export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:t[oớ]i|sau)/i;
 
 // 09/11 máy ảo: "cuối tuần thời tiết thế nào, nên nhập hàng ra sao?" app xếp vào câu hướng dẫn → Boom không có dự báo,
 // trả lời "không xem được thời tiết". Câu hướng dẫn chỉ lấy thời tiết khi có chữ RÕ về thời tiết; bỏ "nóng" (món nóng),
 // "lạnh" (tủ lạnh), "mai", "nhập hàng", "chuẩn bị" vì hay gặp trong câu hỏi cách dùng app.
-export const HOI_THOI_TIET_RO = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\bd[eễ] mua\b|\bmua (?:kh[oô]ng|nh[aấ]t|l[uú]c)\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|th[oờ]i ti[eế]t|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b/i;
+export const HOI_THOI_TIET_RO = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bd[eễ] mua\b|\bmua (?:kh[oô]ng|nh[aấ]t|l[uú]c)\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|th[oờ]i ti[eế]t|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b/i;
 
 // 09/11 máy ảo: "mai mấy giờ mưa" trên quán 0 đơn tuần này → Boom chen "tuần này chưa có đơn, đã mở bán chưa".
 // Câu CHỈ hỏi thời tiết (chữ rõ, không nhắc chuyện bán hàng) thì không gắn lời dặn kỳ chưa có đơn.
@@ -263,6 +264,8 @@ export function thoiTietChoBoom(question: string, w: ThoiTiet | null, vt: ViTri 
     `${w.nhiet !== null ? `bây giờ ${Math.round(w.nhiet)}°${w.troi ? `, ${w.troi}` : ''}. ` : ''}` +
     `${muaGio.length ? `Giờ tới có khả năng mưa: ${muaGio.map((h) => `${h.gio}h ${h.mua}%`).join(', ')}. ` : 'Vài giờ tới khả năng mưa thấp. '}` +
     `${ngay ? `Các ngày tới: ${ngay}. ` : ''}` +
+    // lần 182: hỏi "tháng sau", "tuần sau nữa" thì Boom không được đoán trời ngoài tầm dự báo
+    `${w.ngay.length ? `Dự báo chỉ có tới hết ${w.ngay[w.ngay.length - 1].ngay.slice(8, 10)}/${w.ngay[w.ngay.length - 1].ngay.slice(5, 7)}; ngày sau đó (tuần sau nữa, tháng sau…) CHƯA có dự báo, không đoán trời những ngày đó. ` : ''}` +
     'Chỉ dùng khi câu hỏi cần; nói "dự báo", "khả năng"; không khuyên việc tốn tiền chỉ vì dự báo; không lấy thời tiết làm lý do che vấn đề của quán.';
 }
 

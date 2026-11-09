@@ -1968,7 +1968,7 @@ Deno.test('lô A thời tiết (lần 169–172): dòng tính sẵn ghép dự b
   const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
   const b = L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('b'), 'Mai mưa chiều thì quán nên chuẩn bị gì?', NOW);
   assertStringIncludes(b, 'Mai 29/10 (Thứ Năm, quán thường bán ~4.142.000đ/ngày, TB 4 ngày): khung dễ mưa 15–20h thường chiếm 48% doanh thu');
-  assertStringIncludes(b, 'gồm giờ đông nhất 18h, 19h');
+  assertStringIncludes(b, 'gồm 19h – đông thứ 2, 18h – đông thứ 3');
   const a = await fx('a');
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, a, 'Chủ nhật này mưa không?', NOW), 'quán thường NGHỈ Chủ nhật');
   const tuan = L.thoiTietVoiSoQuan(TROI.mua_sang, a, 'Tuần tới mưa nhiều, nhập hàng sao?', NOW);
@@ -2013,4 +2013,53 @@ Deno.test('lô C (lần 176): ngày mưa lớn so ngày cùng thứ ít mưa, ch
   // mùa mưa: gần như ngày nào cũng mưa lớn → không so được
   assertStringIncludes(L.muaLonVaDoanhThu(mua.map((x) => ({ ...x, mm: 30 })), ban, NOW), 'chưa có đủ ngày ít mưa để so');
   assertEquals(L.muaLonVaDoanhThu(null, ban, NOW), '');
+});
+
+Deno.test('lô D thời tiết (lần 178–179): món nước khi mưa, đơn mỗi giờ cho câu hỏi người làm', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('c'), 'Mai mưa thì nên nấu món gì nhiều?', NOW), 'món nước / món nóng của quán Bún bò Huế (27% doanh thu món)');
+  // "Thạch phô mai" không phải phở; món < 3% doanh thu không nêu
+  const b = L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('b'), 'Mai mưa tối, ca tối cần mấy nhân viên?', NOW);
+  assert(!b.includes('món nước'));
+  assertStringIncludes(b, 'ca tối (quán bán 18–22h) quán thường ~11,9 đơn/giờ, đông nhất 20h ~14,4 đơn'); // lần 183: hỏi ca tối → số của ca tối
+  // không hỏi người làm thì không có dòng người làm
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('b'), 'Mai mưa tối thì sao?', NOW).includes('người làm'));
+});
+
+Deno.test('lô D: câu hỏi nguyên nhân chuyện đã qua không gắn dòng dự báo × số quán', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const f = L.parseFacts(JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_c.json', import.meta.url))).facts.thang_nay)!;
+  for (const q of ['Sao thứ 4 nào cũng bán kém z, có phải tại mưa ko', 'Doanh thu tuần này giảm vì sao?', 'Tuần này vắng có phải do trời mưa không']) assertEquals(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, q, NOW), '', q);
+  assert(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Mai mưa thì nên nấu món gì nhiều?', NOW).length > 0);
+});
+
+Deno.test('lô D3: món nước chỉ khi hỏi chung món gì; bánh mì không phải mì nước', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  const c = await fx('c');
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, c, 'chieu toi may hom toi mua, mai nhap thit nuong it lai ha', NOW).includes('món nước'));
+  assert(L.thoiTietVoiSoQuan(TROI.mua_chieu, c, 'Mai mưa chiều thì quán nên chuẩn bị món gì?', NOW).includes('Bún bò Huế'));
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_sang, await fx('a'), 'Mai mưa sáng thì nên bán món gì?', NOW).includes('món nước'));
+});
+
+Deno.test('lô D (lần 180–182): mốc nhập cả đợt, nắng gắt trùng giờ đông, tầm dự báo', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const T = await import('./thoi_tiet.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_sang, await fx('a'), 'Tuần tới mưa nhiều, nhập hàng sao?', NOW), 'Mốc nhập hàng cả đợt: 5 ngày mở bán (Mai 29/10 → Thứ Ba 03/11) quán thường bán tổng ~19.546.000đ; không tính ngày nghỉ Chủ nhật 01/11');
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.nang_nong, await fx('c'), 'Mai nắng nóng, trưa có vắng khách không?', NOW), 'nắng nóng nhất khoảng 13–16h (tới 36°), khung này thường chiếm 9% doanh thu ngày');
+  assertStringIncludes(T.thoiTietChoBoom('tháng sau mưa không', TROI.mua_chieu, null), 'Dự báo chỉ có tới hết 03/11; ngày sau đó (tuần sau nữa, tháng sau…) CHƯA có dự báo');
+});
+
+Deno.test('lần 183: hỏi ca nào tính đơn mỗi giờ của đúng ca đó', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('c'), 'mai mua chieu, ca chieu can may nhan vien?', NOW), 'ca chiều (quán bán 16–20h) quán thường ~3,6 đơn/giờ, đông nhất 18h ~5,1 đơn (TB 28 ngày mở bán, 54k/đơn); khung dễ mưa 15–20h TRÙNG ca này');
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, await fx('a'), 'mai mưa, ca tối cần mấy người?', NOW), 'ca tối quán gần như không có đơn trong kỳ');
 });

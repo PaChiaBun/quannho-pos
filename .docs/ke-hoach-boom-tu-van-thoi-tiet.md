@@ -106,3 +106,25 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Khác kế hoạch: KHÔNG lưu con số kết luận vào bộ nhớ quán (177) — tính lại mỗi lần rẻ (Apple đệm theo khu vực trong ngày, doanh thu 1 lần đọc), khỏi lo điều khoản dữ liệu phái sinh. 178 (gắn con số vào mọi câu thời tiết) chưa làm: chỉ câu hỏi mưa × bán.
 - Không chấm mù: cần lịch sử giả cho cả 4 quán mẫu; thử thật trên quán Demo sau khi áp.
 - Kịch bản áp: `db-fix/boom_l176_ap_dung.sh` (chỉ kiểm đạt).
+
+## Lô D (09/11, Chủ Quán "Tiếp tục dạy sâu"; chưa áp)
+
+- 178: ngày dễ mưa → món nước / món nóng của quán (bún bò, phở, cháo, canh…, ≥ 3% doanh thu món; "phô mai" không phải phở). 179: câu hỏi người làm / ca → số đơn mỗi giờ trong khung mưa (hoặc giờ đông), đông nhất mấy đơn.
+- Sửa thêm sau lần chấm đầu: giờ đông ghi theo THỨ HẠNG doanh thu (liệt kê theo giờ làm Boom gọi 7h là đông nhất → kiểm số bắt viết lại 6 lần còn 1); câu hỏi nguyên nhân chuyện đã qua không gắn dòng dự báo × số quán (câu kín "sao thứ 4 bán kém, có phải tại mưa" tụt 5 điểm vì Boom đổ cho mưa hôm nay); "tại / do / vì mưa", "kém" vào câu mưa × bán (lô C).
+- Bộ đo thêm 8 câu (TD01–08: món, người làm). Công cụ đo ghi lỗi kiểm số (`loi_kiem`).
+- Chấm mù 88 cặp đổi khối, lần 177 → D2: **+0,89 ± 0,39** (mở +1,05 ± 0,50, kín +0,57 ± 0,63); người làm +2,88, món +2,12, bẫy +2,17, chuẩn bị +0,88, nhập hàng −0,70 ± 0,72 (dòng món nước đôi khi kéo lệch đề).
+- Kịch bản áp: `db-fix/boom_l179_ap_dung.sh` (chỉ kiểm đạt).
+- D3 (sửa nhập hàng −0,70): "bánh mì" bị bộ nhận món nước bắt nhầm (chữ "mì"); dòng món nước chen vào câu hỏi đích danh ("nhập thịt nướng") → Boom lệch sang bún bò. Nay "bánh mì" không phải mì nước, dòng món nước chỉ khi hỏi chung "món gì / chuẩn bị gì / nấu gì". Chấm mù 28 cặp D3 vs D2 (khối của D2 đầy đủ hơn): +0,29 ± 0,64, nhập hàng +1,00, đúng số 1,86 → 1,96. Gộp vào lần 178–179.
+
+## Lô D đủ 5 lần — ĐÃ ÁP 09/11 16:47 (Chủ Quán "Dạy đủ 5 lần rồi áp luôn"; TS 20261109_164706)
+
+- 180: hỏi nhập hàng nhiều ngày → tổng mức bán thường các ngày mở bán (trừ ngày nghỉ). 181: ngày ≥ 35° → khung nóng nhất đè bao nhiêu % doanh thu, gồm giờ đông nào. 182: ghi rõ dự báo chỉ tới ngày nào, không đoán ngoài tầm. Bộ đo thêm TD09–TD11.
+- Chấm mù gộp 116 cặp, lần 177 → 178–182: **+0,45 ± 0,35** (mở +0,62 ± 0,45, kín +0,11 ± 0,56); người làm +2,62, món +1,50, nhập hàng +0,65; giờ bán −0,38 ± 1,10, chi tiền −0,06 (trong dao động). Câu dùng được bộ mở 57 → 72 / 78.
+- Thử máy ảo Demo sau áp: "mai mưa chiều, ca chiều cần mấy nhân viên?" → dòng 179 lấy giờ đông chung (8h, 12h, 9h) vì mai ít mưa, không lấy ca chiều → Boom nói "chưa có lượng đơn riêng ca chiều". Cần: câu hỏi nêu ca (sáng / trưa / chiều / tối) thì tính đơn/giờ của đúng ca đó.
+- Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l182_ap_dung.sh 20261109_164706`. Mã CHƯA commit (logic.ts 5d304380, thoi_tiet.ts 64f522e1).
+
+## Lần 183 (09/11, Chủ Quán "Sửa đi"; chưa áp)
+
+- Hỏi ca nào tính đơn mỗi giờ của đúng ca đó. Bản đầu dùng giờ ca cố định (chiều 14–18h, tối 18–22h) → chấm mù 30 cặp −0,90 ± 0,69: lệch giờ bán thật (quán bán chiều 16–20h, tối 17–21h). Bỏ.
+- Bản sửa: khối giờ quán thật sự bán (liền nhau, > 1% doanh thu) giao nhiều nhất với ca; khối ≤ 6 tiếng lấy cả khối, dài hơn cắt theo ca; ghi "ca chiều (quán bán 16–20h)"; khung mưa có trùng ca không. Chấm mù 30 cặp vs 182 (khối gộp dòng hai bản): +0,37 ± 0,71; đúng quán 1,70 → 1,97, gọn 1,50 → 1,70, lý lẽ 1,77 → 1,63.
+- Kịch bản áp: `db-fix/boom_l183_ap_dung.sh` (chỉ kiểm đạt; đối chiếu mã băm lần 182 vì lô D chưa commit).

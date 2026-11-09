@@ -21,7 +21,9 @@ const goi = async (L: any, q: string, m: any) => {
   const j = await r.json(); return L.plainAnswer(String(j.choices?.[0]?.message?.content ?? ''));
 };
 const out: any[] = [];
-const job = CA.flatMap((c: any) => ['A', 'B'].flatMap((ban) => Array.from({ length: LUOT }, (_, r) => async () => {
+// IDS="mo:T02 kin:K03…" chỉ chạy các câu đó; CHI_B=1 chỉ sinh bản B (ghép với câu trả lời bản cũ đã có)
+const IDS = (Deno.env.get('IDS') ?? '').split(/\s+/).filter(Boolean), CHI_B = Deno.env.get('CHI_B') === '1';
+const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.bo}:${c.id}`)).flatMap((c: any) => (CHI_B ? ['B'] : ['A', 'B']).flatMap((ban) => Array.from({ length: LUOT }, (_, r) => async () => {
   const L = ban === 'A' ? LA : LB, T = ban === 'A' ? TA : TB, s = st[c.quan];
   const facts = L.parseFacts(JSON.parse(JSON.stringify(s.facts.thang_nay))), modules = L.parseModules({ ...s.modules.thang_nay });
   const w = TROI[c.troi];
@@ -32,10 +34,11 @@ const job = CA.flatMap((c: any) => ['A', 'B'].flatMap((ban) => Array.from({ leng
   try { a = await goi(L, c.q, msgs); } catch { a = ''; }
   const goc = `${L.soLieuGoc(c.q, { facts, modules, now: NOW })}\n${thoiTiet}`;
   const loi = a ? L.kiemTraLoi(a, goc) : [];
+  const loi_kiem = loi.map((x: string) => x.slice(0, 60)); // 09/11 lô D: xem kiểm số bắt gì
   if (loi.length) { try { const b = await goi(L, c.q, [...msgs, { role: 'assistant', content: a }, { role: 'user', content: L.noteKiem(loi) }]); if (b) { a = b; viet_lai = true; } } catch { /* giữ */ } }
   if (a) a = L.ghiApTay(L.gonKhiKhongDon ? L.gonKhiKhongDon(a, goc) : a);
   out.push({ id: c.id, bo: c.bo, ban, r, loai: c.loai, quan: c.quan, q: c.q, ho_so: s.mo_ta, cau_truoc: '', van_de: [`Trời (dự báo giả để đo): ${c.troi}`],
-    y_chinh: c.y_chinh, can_tranh: c.can_tranh, kh: goc, a, viet_lai, co_tt: !!thoiTiet });
+    y_chinh: c.y_chinh, can_tranh: c.can_tranh, kh: goc, a, viet_lai, loi_kiem, co_tt: !!thoiTiet });
 })));
 for (let i = 0; i < job.length; i += 12) await Promise.all(job.slice(i, i + 12).map((f: any) => f()));
 await Deno.writeTextFile(Deno.args[1], JSON.stringify(out));
