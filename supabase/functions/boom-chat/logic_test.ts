@@ -2194,3 +2194,22 @@ Deno.test('lần 203: thứ viết tắt t6, t7 trong câu thời tiết', async
   assertStringIncludes(t, 'Thứ Sáu 30/10');
   assertStringIncludes(t, 'Thứ Bảy 31/10');
 });
+
+Deno.test('lần 204: câu hỏi lượng không nói trời cũng có mốc số phần / ngày', async () => {
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const ff = async (k: string, q: string) => {
+    const s = JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url)));
+    return L.formatFacts(L.parseFacts(s.facts.thang_nay)!, NOW, q);
+  };
+  // món hỏi đích danh lên đầu, theo thứ của "mai"
+  assertStringIncludes(await ff('c', 'Mai nấu mấy tô bún bò?'), 'Thứ Năm Bún bò Huế ~32');
+  // thứ viết tắt, buổi
+  assertStringIncludes(await ff('a', 't7 pha bao nhieu ly ca phe sua'), 'Thứ Bảy Cà phê sữa đá ~21');
+  assertStringIncludes(await ff('b', 'tối nay chuẩn bị bao nhiêu ly trà sữa'), 'Thứ Tư buổi tối Trà sữa trân châu đường đen ~20');
+  // ngày quán nghỉ; câu có trời để khối thời tiết lo; câu không hỏi lượng
+  assertStringIncludes(await ff('d', 'chủ nhật ướp bao nhiêu sườn'), 'Chủ nhật quán thường NGHỈ');
+  assert(!(await ff('c', 'Mai mưa, nấu mấy tô bún bò?')).includes('Mốc số phần'));
+  assert(!(await ff('b', 'tháng này doanh thu sao')).includes('Mốc số phần'));
+  // lần 205: nhắc tên nhóm món → cộng cả nhóm
+  assertStringIncludes(await ff('a', 'dat bao nhieu o banh mi moi sang'), 'cả nhóm "Bánh mì" (3 món, cả ngày) ~30 phần / ngày (720 phần cả kỳ)');
+});

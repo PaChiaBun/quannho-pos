@@ -63,10 +63,11 @@ Lỗi: chen chuyện kho / giá vốn không liên quan câu hỏi làm dài; c�
 | de_kin3 | trợ lý độc lập | lần 198; kiểm tổng 168 → 199 | 09/11 | đã đọc nhận xét lỗi — hết kín |
 | de_kin4 | trợ lý độc lập | kiểm tổng 168 → 199 | 09/11 | đã đọc nhận xét lỗi — hết kín |
 | de_kin5 | trợ lý độc lập (09/11) | lô 1 | 09/11 | chỉ Q07 đổi khối; đã đọc nhận xét Q07 |
-| de_kin6 | trợ lý độc lập (09/11) | lô 2 | | |
+| de_kin6 | trợ lý độc lập (09/11) | lô 2 | 09/11 | chỉ R01 đổi khối; đã đọc nhận xét R01 (dùng để sửa 205) |
 | de_kin7 | trợ lý độc lập (09/11) | lô 3 / kiểm tổng | | |
 
 ## Kết quả
 
 - **Lô 1 (ĐÃ ÁP 09/11, TS `20261109_221036`):** 201 nhận "mưa" không dấu (+14 câu trên 2.412, 0 bắt nhầm "mua hàng"); 202 BỎ ("dông" → "đông khách" đếm 0 câu); 203 thứ viết tắt t2–t7 trong dòng THỜI TIẾT × SỐ QUÁN (bỏ sót ngày 8 / 13 → 0 / 13). de_kin5: 1 / 24 câu đổi khối (Q07), chạy riêng 6 lượt chấm mù **+4,00 ± 1,01**. Demo "t7 mua chieu…": hiểu Thứ Bảy, vẫn "chưa có số bán riêng Thứ Bảy" (lô 2). Người chấm thấy: gọi Thứ Bảy "cao nhất tuần" sai (cả hai bản); một câu bản 199 lẫn chữ Do Thái.
+- **Lô 2 (ĐÃ ÁP 09/11, TS `20261109_222548`):** 204 tách `mocSoPhan` dùng chung; câu hỏi lượng KHÔNG nói trời cũng có mốc số phần / ngày theo mai / hôm nay / tối nay / thứ / t7 / cn, báo ngày quán nghỉ; mẫu câu hỏi lượng thêm đặt, lấy, mấy ổ. 205 (thay việc cũ): câu nhắc tên nhóm món ≥ 2 món → cộng cả nhóm ("bánh mì" ~30 ổ / ngày). Kiểm phép chia sai số ngày (~3 / 2.110 câu) và gọi số cả kỳ là "tuần" (~1) BỎ vì quá hiếm. de_kin6: 1 / 24 câu đổi khối (R01); 204 riêng +0,50 ± 0,84; thêm 205 theo nhận xét người chấm rồi đo lại R01: +3,33 ± 0,83 (ưu ái — cùng câu). Demo "t7 pha bao nhiêu ly cà phê sữa đá": "~40 ly" (đúng trung bình 359 / 9 ngày) nhưng mở đầu "thứ 7 quán bán" khi kỳ mới có 1 Thứ Bảy (bán 30).
 

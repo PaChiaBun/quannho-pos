@@ -1,6 +1,6 @@
 // Phần xử lý thuần của hàm boom-chat (không gọi mạng) — test bằng `deno test supabase/functions/boom-chat`.
 import { boDau, coNeuKy } from './ky.ts';
-import { chiHoiThoiTiet, khungMuaSo, type ThoiTiet } from './thoi_tiet.ts';
+import { chiHoiThoiTiet, HOI_THOI_TIET_RO, khungMuaSo, type ThoiTiet } from './thoi_tiet.ts';
 
 export const LIMITS = {
   // byte UTF-8: chữ Việt có dấu tốn 2–3 byte; khối số liệu theo nhóm món có thể tới ~20 KB (QC 24/10)
@@ -1063,31 +1063,12 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
   }
   // lần 193 (chấm mù 188–192: "nấu bao nhiêu" Boom nói "chưa có số bán theo ngày", không ra số phần): mốc phần món của ngày được hỏi
   // = số cả kỳ ÷ ngày mở bán × hệ số thứ đó; hỏi một buổi thì lấy món của buổi đó (buổi lấy ở vế có chữ nấu / chuẩn bị, không lấy vế tả trời)
-  const HOI_PHAN = /(?:nau|chuan bi|pha|uop|lam|ban)\b.{0,25}(?:bao nhieu|may (?:phan|to|ly|dia|suat|chen|noi))|bao nhieu (?:phan|to|ly|dia|suat|chen)/;
   if (HOI_PHAN.test(q) && !/nguoi|nhan vien|\bnv\b/.test(q) && f.groups?.length && moBan > 0) {
     const i = ngay.find((j) => !tbThu(wdOf(w.ngay[j].ngay))?.nghi);
-    const vePhan = question.split(/[,.;?]/).find((v) => HOI_PHAN.test(boDau(v).toLowerCase())) ?? '';
-    // vế hỏi số phần không nói buổi ("Tối mai mưa, ướp bao nhiêu sườn") thì lấy buổi cả câu
-    let bq = buoiTrongCau(vePhan).bq;
-    if (bq < 0) bq = buoiTrongCau(question).bq;
     const tbNgay = f.revenue / moBan, tb = i !== undefined ? tbThu(wdOf(w.ngay[i].ngay)) : null;
     const heSo = tb?.tien && tb.n >= 2 && tbNgay > 0 ? tb.tien / tbNgay : 1;
-    const TEN_BUOI = ['buổi sáng', 'buổi trưa', 'buổi chiều', 'buổi tối'];
-    // buổi quán gần như không bán (quán C chiều 14–17h ~2 phần) → gộp buổi kế tiếp, nhãn "chiều – tối"
-    const tongBuoi = (k: number) => (f.by_band?.[k] ?? []).reduce((a, t) => a + t.qty, 0) / moBan;
-    let mon: { name: string; qty: number }[] = [], tenBuoi = '';
-    if (bq >= 0 && f.by_band?.[bq]?.length) {
-      const gop = tongBuoi(bq) < 5 && bq < 3 && f.by_band[bq + 1]?.length;
-      const m = new Map<string, number>();
-      for (const t of [...f.by_band[bq], ...(gop ? f.by_band[bq + 1] : [])]) m.set(t.name, (m.get(t.name) ?? 0) + t.qty);
-      mon = [...m].map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty);
-      tenBuoi = gop ? ` ${TEN_BUOI[bq]} – ${TEN_BUOI[bq + 1].replace('buổi ', '')} (${TEN_BUOI[bq]} quán bán rất ít)` : ` ${TEN_BUOI[bq]}`;
-    } else mon = f.groups.flatMap((g) => g.top ?? []).sort((a, b) => b.qty - a.qty);
-    // hỏi đích danh món ("nấu mấy tô bún bò") → món đó lên đầu
-    // lần 194 (Demo 193: mốc 8 tô sáng đúng mà Boom dẫn 245 phần cả ngày): ghi kèm số cả kỳ của đúng buổi
-    const hoiMon = (t: { name: string }) => q.includes(boDau(t.name).toLowerCase().split(' ').slice(0, 2).join(' '));
-    mon = [...mon.filter(hoiMon), ...mon.filter((t) => !hoiMon(t))];
-    if (i !== undefined && mon.length) lines.push(`Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ${moBan} ngày mở bán${Math.abs(heSo - 1) >= 0.05 ? ` × ${pctTxt(heSo)} vì ${THU_DAI[wdOf(w.ngay[i].ngay)]} thường bán ${pctTxt(heSo)} lần ngày trung bình` : ''}): ${nhan(i)}${tenBuoi} ${mon.slice(0, 3).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần / ngày (cả kỳ${tenBuoi ? ` ${tenBuoi.trim().split(' (')[0]}` : ''}: ${mon.slice(0, 3).map((t) => t.qty).join(', ')} phần / ${moBan} ngày mở) → chuẩn bị quanh mốc này, dự báo chỉ chỉnh nhẹ.`);
+    const dong = i !== undefined ? mocSoPhan(f, question, moBan, heSo, THU_DAI[wdOf(w.ngay[i].ngay)], nhan(i), 'dự báo chỉ chỉnh nhẹ') : '';
+    if (dong) lines.push(dong);
   }
   // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
   if (ngay.length >= 3 && anhHuong.length) {
@@ -1108,6 +1089,38 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
 }
 
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+export const HOI_PHAN = /(?:nau|chuan bi|pha|uop|lam|ban|dat|lay)\b.{0,25}(?:bao nhieu|may (?:phan|to|ly|dia|suat|chen|noi|o|cai))|bao nhieu (?:phan|to|ly|dia|suat|chen|o\b)/;
+/** Lần 193–194, lần 204 dùng chung: mốc số phần / ngày của món theo buổi được hỏi (số cả kỳ ÷ ngày mở bán × hệ số thứ). */
+export function mocSoPhan(f: ShopFacts, question: string, moBan: number, heSo: number, thu: string, nhanNgay: string, duoi: string): string {
+  if (!f.groups?.length || moBan <= 0) return '';
+  const q = boDau(question.normalize('NFC')).toLowerCase();
+  const vePhan = question.split(/[,.;?]/).find((v) => HOI_PHAN.test(boDau(v).toLowerCase())) ?? '';
+  // vế hỏi số phần không nói buổi ("Tối mai mưa, ướp bao nhiêu sườn") thì lấy buổi cả câu
+  let bq = buoiTrongCau(vePhan).bq;
+  if (bq < 0) bq = buoiTrongCau(question).bq;
+  const TEN_BUOI = ['buổi sáng', 'buổi trưa', 'buổi chiều', 'buổi tối'];
+  // buổi quán gần như không bán (quán C chiều 14–17h ~2 phần) → gộp buổi kế tiếp, nhãn "chiều – tối"
+  const tongBuoi = (k: number) => (f.by_band?.[k] ?? []).reduce((a, t) => a + t.qty, 0) / moBan;
+  let mon: { name: string; qty: number }[] = [], tenBuoi = '';
+  if (bq >= 0 && f.by_band?.[bq]?.length) {
+    const gop = tongBuoi(bq) < 5 && bq < 3 && f.by_band[bq + 1]?.length;
+    const m = new Map<string, number>();
+    for (const t of [...f.by_band[bq], ...(gop ? f.by_band[bq + 1] : [])]) m.set(t.name, (m.get(t.name) ?? 0) + t.qty);
+    mon = [...m].map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty);
+    tenBuoi = gop ? ` ${TEN_BUOI[bq]} – ${TEN_BUOI[bq + 1].replace('buổi ', '')} (${TEN_BUOI[bq]} quán bán rất ít)` : ` ${TEN_BUOI[bq]}`;
+  } else mon = f.groups.flatMap((g) => g.top ?? []).sort((a, b) => b.qty - a.qty);
+  // hỏi đích danh món ("nấu mấy tô bún bò") → món đó lên đầu; lần 194: ghi kèm số cả kỳ của đúng buổi
+  const hoiMon = (t: { name: string }) => q.includes(boDau(t.name).toLowerCase().split(' ').slice(0, 2).join(' '));
+  mon = [...mon.filter(hoiMon), ...mon.filter((t) => !hoiMon(t))];
+  if (!mon.length) return '';
+  // lần 205 (de_kin6 R01: hỏi "bánh mì" mà mốc chỉ có Bánh mì thịt ~16, quán bán 3 loại ~30 ổ / ngày): câu nhắc tên NHÓM món có ≥ 2 món → cộng cả nhóm
+  const nhom = f.groups.find((g) => [...(g.top ?? []), ...(g.slow ?? [])].length >= 2 && q.includes(boDau(g.name).toLowerCase()));
+  const ds = nhom ? [...(nhom.top ?? []), ...(nhom.slow ?? [])] : [];
+  const tongNhom = ds.reduce((a, t) => a + t.qty, 0);
+  const caNhom = nhom && tongNhom > 0 ? `; cả nhóm "${nhom.name}" (${ds.length} món, cả ngày) ~${Math.round((tongNhom / moBan) * heSo)} phần / ngày (${tongNhom} phần cả kỳ)` : '';
+  return `Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ${moBan} ngày mở bán${Math.abs(heSo - 1) >= 0.05 ? ` × ${pctTxt(heSo)} vì ${thu} thường bán ${pctTxt(heSo)} lần ngày trung bình` : ''}): ${nhanNgay}${tenBuoi} ${mon.slice(0, 3).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần / ngày (cả kỳ${tenBuoi ? ` ${tenBuoi.trim().split(' (')[0]}` : ''}: ${mon.slice(0, 3).map((t) => t.qty).join(', ')} phần / ${moBan} ngày mở)${caNhom} → chuẩn bị quanh mốc này${duoi ? `, ${duoi}` : ''}.`;
+}
+
 // lần 189: đơn mỗi người trong lịch phải lo so với mức cả kỳ; không quy ra "thiếu N người" (lúc đông người làm nhanh hơn, lần 184)
 export function soVoiLich(donGioCa: number, lich: number, nangSuat: number): string {
   if (lich < 0.5) return '; SO VỚI LỊCH: khung này gần như không ai thường làm';
@@ -1227,6 +1240,21 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
   const prof = shopProfile(f);
   if (prof) lines.unshift(`HỒ SƠ QUÁN (tự suy từ số liệu): ${prof}`);
+  // lần 204 (bộ kín độc lập 09/11 + Demo "t7 … chuẩn bị": "chưa có số bán riêng Thứ Bảy" dù chia ra được): câu hỏi lượng KHÔNG nói trời
+  // cũng có mốc số phần / ngày (câu có trời đã có dòng này trong khối thời tiết)
+  const qd = boDau(question.normalize('NFC')).toLowerCase(), moBanF = ngayMoBan(f);
+  if (HOI_PHAN.test(qd) && !/nguoi|nhan vien|\bnv\b/.test(qd) && !HOI_THOI_TIET_RO.test(question) && moBanF > 0) {
+    const THU = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'], SO: Record<string, number> = { hai: 0, ba: 1, tu: 2, nam: 3, sau: 4, bay: 5 };
+    const homNay = (new Date(vnDay(now)).getUTCDay() + 6) % 7;
+    const mt = /\b(?:thu |t)(hai|ba|tu|nam|sau|bay|[2-7])\b/.exec(qd);
+    const wd = mt ? (/\d/.test(mt[1]) ? +mt[1] - 2 : SO[mt[1]]) : /chu nhat|\bcn\b/.test(qd) ? 6 : /\bmai\b/.test(qd) ? (homNay + 1) % 7 : /hom nay|(?:sang|trua|chieu|toi) nay/.test(qd) ? homNay : -1;
+    const cnt = weekdayCounts(f.from, f.to);
+    const nghi = wd >= 0 && f.by_weekday && cnt && !f.by_weekday[wd] && cnt[wd] >= 2;
+    const heSo = wd >= 0 && wd !== homNay && f.by_weekday && cnt && cnt[wd] >= 2 && f.revenue > 0 ? (f.by_weekday[wd] / cnt[wd]) / (f.revenue / moBanF) : 1;
+    const dong = nghi ? '' : mocSoPhan(f, question, moBanF, heSo, wd >= 0 ? THU[wd] : '', wd >= 0 ? THU[wd] : 'Mỗi ngày mở bán', '');
+    if (nghi) lines.push(`${THU[wd]} quán thường NGHỈ (0đ cả ${cnt![wd]} lần trong kỳ) → không cần chuẩn bị số phần cho ngày này.`);
+    else if (dong) lines.push(dong);
+  }
   // 05/11: hỏi "năm nay" mà máy chủ chỉ đọc 92 ngày → Boom ghi ngày nhưng không nói đây không phải cả năm
   if (/^\d+ ngày (?:cuối|đầu) năm/.test(f.period) || (/^92 ngày qua/.test(f.period) && /n[aă]m/i.test(question))) {
     lines.push(`KỲ BỊ GIỚI HẠN: Bé Boom chỉ đọc được tối đa 92 ngày, đây là ${f.period}, KHÔNG phải cả năm / nửa năm. Dòng đầu phải nói rõ "Bé Boom chỉ đọc được 92 ngày này, chưa phải cả năm" rồi mới nêu số; không kết luận cho cả năm.`);
