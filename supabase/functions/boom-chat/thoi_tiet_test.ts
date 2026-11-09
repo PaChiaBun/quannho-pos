@@ -147,3 +147,10 @@ Deno.test('lô C: lượng mưa ngày đã qua theo khung 9 ngày, đệm tới 
   for (const q of ['mưa thì quán bán giảm nhiều không', 'ngày mưa doanh thu thế nào', 'troi mua khach co vang khong', 'khách có vắng khi mưa không']) assert(T.HOI_MUA_BAN.test(q), q);
   for (const q of ['mua 1 tặng 1 bán chạy không', 'mai mưa không', 'doanh thu tháng này']) assert(!T.HOI_MUA_BAN.test(q), q);
 });
+
+Deno.test('thời tiết: "ngay mua" không dấu là hỏi thời tiết, lô C nhận (09/11)', () => {
+  const q = 'ngay mua thi quan ban giam nhieu khong?';
+  assert(T.HOI_THOI_TIET.test(q) && T.HOI_THOI_TIET_RO.test(q) && T.HOI_MUA_BAN.test(q));
+  // "ngày mua" có dấu ngày là ngày mua hàng, không phải mưa
+  assert(!T.HOI_THOI_TIET.test('ngày mua hàng gần nhất của khách là khi nào'));
+});
