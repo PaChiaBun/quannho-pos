@@ -89,7 +89,8 @@ Deno.test('thời tiết: ghi nguồn đọc đúng dạng Apple trả thật (0
 });
 
 Deno.test('thời tiết: chữ "mua" (mua bán) không phải "mưa" (09/11)', () => {
-  for (const q of ['Chạy khuyến mãi mua một tặng một có lỗ không?', 'nên mua thêm máy pha không', 'khách mua nhiều món gì']) assertEquals(T.HOI_THOI_TIET.test(q), false, q);
+  for (const q of ['Chạy khuyến mãi mua một tặng một có lỗ không?', 'nên mua thêm máy pha không', 'khách mua nhiều món gì', '30 ngày qua doanh thu bao nhiêu?', 'kha nang tang doanh thu the nao', 'dong cua luc may gio', 'khách đông lúc nào']) assertEquals(T.HOI_THOI_TIET.test(q), false, q);
+  for (const q of ['có bão không', 'trời nóng quá bán gì', 'mai dông không', 'nang gat qua nen ban gi']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
   for (const q of ['mai có mưa không', 'troi mua thi ban sao', 'mua to thì nên làm gì', 'cuối tuần này nắng không']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
   assertEquals(T.ghiNguonThoiTiet('Mua 1 tặng 1 là giảm 50%.', true), 'Mua 1 tặng 1 là giảm 50%.');
 });

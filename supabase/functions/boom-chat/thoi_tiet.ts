@@ -166,8 +166,9 @@ export function xoaDemThoiTiet() {
   nguonDem = null;
 }
 
+// 09/11: "doanh thu bao nhiêu" khớp b[aã]o (bão), "kha nang" khớp n[aắ]ng: chữ không dấu chỉ tính khi đi kèm từ chắc chắn.
 // 09/11 web Demo: "mua một tặng một" khớp m[uư]a → lấy thời tiết và gắn nguồn Apple cho câu mua bán. "mua" không dấu chỉ tính khi chắc là mưa.
-export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|n[aắ]ng|tr[oờ]i|th[oờ]i ti[eế]t|n[oó]ng|l[aạ]nh|b[aã]o\b|d[oô]ng|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:n[aà]y|t[oớ]i|sau)/i;
+export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:n[aà]y|t[oớ]i|sau)/i;
 
 const THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 /** Khối đưa Boom, chỉ khi câu hỏi liên quan. Nhãn "dự báo" vì dự báo có thể sai. */

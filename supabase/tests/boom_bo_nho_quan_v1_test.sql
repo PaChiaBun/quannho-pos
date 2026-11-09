@@ -17,6 +17,15 @@ BEGIN
 END
 $f$;
 
+-- Máy chủ thật: stores.owner_user_id và store_members.user_id trỏ tới user_accounts (bản giả lập tại máy không có bảng này)
+DO $$ BEGIN
+  IF to_regclass('public.user_accounts') IS NOT NULL THEN
+    EXECUTE $q$INSERT INTO public.user_accounts (id, phone, password_hash) VALUES
+      ('a0000000-0000-0000-0000-0000000000a1', '0900000a01', 'x'), ('a0000000-0000-0000-0000-0000000000a2', '0900000a02', 'x'),
+      ('a0000000-0000-0000-0000-0000000000a3', '0900000a03', 'x'), ('b0000000-0000-0000-0000-0000000000b1', '0900000b01', 'x')$q$;
+  END IF;
+END $$;
+
 -- 2 quán: A (chủ uA, nhân viên uN), B (chủ uB)
 INSERT INTO public.stores (id, store_code, name, owner_user_id) VALUES
   ('a0000000-0000-0000-0000-00000000000a', 'QN-TBNA', 'Quán A thử', 'a0000000-0000-0000-0000-0000000000a1'),

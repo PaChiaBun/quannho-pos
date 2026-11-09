@@ -13,7 +13,7 @@ Lập ngày 07/11/2026. Mốc mã lúc lập: commit `f53ccb9` (máy chủ Boom 
 | 3 | Bật đường mới cho app | 2–4 ngày, cộng thời gian Apple duyệt | Mã xong (4e25a91); chờ thử máy có đăng nhập rồi phát hành |
 | 4 | Bộ nhớ riêng từng quán | 3–5 ngày | Mã xong, đang tắt; chờ duyệt áp migration và bật |
 | 5 | Ghi lời khuyên và tự đo kết quả | 3–5 ngày | Nháp xong, đang tắt (cùng công tắc bộ nhớ) |
-| 6 | Thử công cụ và sổ tay trên mảng tiếp thị | khoảng 1 tuần | Công cụ bỏ; sổ tay +0,48 ± 0,42, đang tắt chờ bật |
+| 6 | Thử công cụ và sổ tay trên mảng tiếp thị | khoảng 1 tuần | Công cụ bỏ; sổ tay +0,48 ± 0,42, **đã bật 09/11 (lần 160)** |
 | 7 | Người dùng thật và dữ liệu | làm dần | Chưa làm |
 
 Các con số là ước đoán, chưa phải cam kết. Giai đoạn 1 và 2 làm song song được. Thứ tự chưa được Chủ Quán chốt.
@@ -180,6 +180,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - **Màn chủ quán (07/11):** `lib/features/ai_assistant/bo_nho/bo_nho_quan_screen.dart`, ô "Bé Boom nhớ gì về quán" trong Cài đặt (chỉ chủ quán, tự ẩn khi máy chủ chưa có hàm). Xem theo nhóm, nút "Đúng rồi" cho điều đoán, sửa, xoá (hỏi lại trước khi xoá), công tắc tắt. Kiểm thử `test/features/bo_nho_quan_test.dart` 3/3, chưa thử với máy chủ thật vì migration chưa áp.
 - Chưa làm: bảng lời khuyên và tự đo (giai đoạn 5); thử cả luồng trên máy chủ thật sau khi áp.
 - Bản giả lập khác máy chủ thật ở `store_members` (chỉ các cột cần) và `auth.uid()`; khi áp phải chạy kiểm thử ngay trên máy chủ trong giao dịch rồi hoàn tác, như các migration khác.
+- **09/11 chuẩn bị áp:** `db-fix/boom_bo_nho_ap_dung.sh` (KHO=1 chỉ kiểm; thường: sao lưu database → migration → 24 test tự ROLLBACK, công tắc vẫn tắt; BAT=1: bật `BOOM_BO_NHO=1` bỏ qua quán Demo; ROLLBACK=1: tắt công tắc, gỡ bảng). Bài test thêm người dùng giả vào `user_accounts` khi máy chủ có bảng đó (máy chủ thật có khoá ngoài stores / store_members → user_accounts); chạy lại tại máy 24/24 cả khi có và không có khoá ngoài đó. Chưa chạy trên máy chủ.
 
 **3 bảng** (🔒 đổi cơ sở dữ liệu, viết kèm cách hoàn tác)
 - [ ] `boom_quan_ho_so`: mỗi quán một dòng: loại quán, khách chính, gần gì, khu vực, giờ mở, ngày nghỉ, mục tiêu.
@@ -267,3 +268,4 @@ Xong khi: bộ thử đạt và câu tiếp thị trong bộ 32 câu khá lên s
   - **Đề xuất:** chỉ mở sổ tay khi CÂU HỎI là câu tiếp thị (khớp bài theo câu hỏi), không mở theo hồ sơ cho câu khác; câu không khớp thì lời nhắc giống hệt bản đang chạy nên không thể tụt. Cần đo lại riêng câu tiếp thị với cách chọn này trước khi áp.
 - **Đo lại 08/11 với cách chọn mới** (chỉ câu tiếp thị; sửa từ khoá bỏ dấu lọt nhau như "hẻm" trong "thêm", "sàn" trong "sáng"): sổ tay mở cho 21/92 câu (QC 12/32, bộ cũ 5/40, bộ kín 4/20); 71 câu còn lại lời nhắc giống hệt bản đang chạy. 3 lượt, một người chấm mù, 63 cặp: **+0,48 ± 0,42** (khoảng không chứa 0); QC +0,47, bộ cũ +0,67, bộ kín +0,25; không nhóm nào âm. Việc làm 1,46 → 1,63, đúng quán 1,84 → 1,95.
 - Đã nối vào `index.ts` sau công tắc `BOOM_SO_TAY=1` (mặc định tắt); hồ sơ để chọn bài lấy từ bộ nhớ quán (bộ nhớ tắt thì chỉ chọn theo câu hỏi). Phép đo trên giả định có hồ sơ quán; khi bộ nhớ tắt, bài vị trí / khách chính sẽ ít được mở hơn, chưa đo riêng trường hợp đó.
+- **Bật 09/11 (lần 160):** `BOOM_SO_TAY=1` trong tệp bí mật (sao lưu `boom-ai.env.truoc_so_tay_20261109_032134`). Web Demo: câu "quán gần trường, kéo thêm học sinh" có nhãn `+so_tay`; câu "doanh thu bao nhiêu" không. Tắt: xoá dòng rồi tạo lại container functions.
