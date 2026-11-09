@@ -28,6 +28,7 @@ import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
   ghiApTay,
   gonKhiKhongDon,
+  thoiTietVoiSoQuan,
   ghiKy,
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
@@ -708,7 +709,11 @@ Deno.serve(async (req) => {
   let thoiTiet = '';
   if (THOI_TIET && ((r.mode === 'advice' && HOI_THOI_TIET.test(r.question)) || (r.mode === 'answer' && HOI_THOI_TIET_RO.test(r.question)))) {
     const vt = await viTriQuan(r.store_id);
-    thoiTiet = vt ? thoiTietChoBoom(r.question, await layThoiTiet(vt, THOI_TIET), vt) : '';
+    const w = vt ? await layThoiTiet(vt, THOI_TIET) : null;
+    thoiTiet = vt ? thoiTietChoBoom(r.question, w, vt) : '';
+    // lô A (lần 169–172): dòng tính sẵn ghép dự báo với số của quán
+    const voiSo = thoiTiet ? thoiTietVoiSoQuan(w, r.facts ?? null, r.question) : '';
+    if (voiSo) { thoiTiet += `\n${voiSo}`; kind += '+tt_so'; }
     if (thoiTiet) kind += '+thoi_tiet';
   }
   // Bộ nhớ quán chỉ cho câu tư vấn; nhân viên chỉ thấy điều "cả quán"

@@ -194,15 +194,20 @@ const THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 /** Khung giờ mưa của một ngày (6h–22h), tính sẵn bằng mã như câu tóm tắt trong app: % cả ngày của Apple cao hơn từng giờ
  *  (10/11: ngày 65%, giờ cao nhất 39%) nên lấy khung tương đối quanh giờ cao nhất. Không đủ số thì rỗng. */
-export function khungMua(gio: Gio[]): string {
+export function khungMuaSo(gio: Gio[]): { tu: number; den: number; p: number; dinh: number; mot: boolean } | null {
   const mo = gio.filter((h) => h.gio >= 6 && h.gio <= 22 && h.mua !== null);
-  if (!mo.length) return '';
+  if (!mo.length) return null;
   const dinh = mo.reduce((a, b) => ((b.mua ?? 0) > (a.mua ?? 0) ? b : a));
   const p = dinh.mua ?? 0;
-  if (p < 20) return 'giờ buôn bán ít khả năng mưa';
   const khung = mo.filter((h) => (h.mua ?? 0) >= Math.min(40, Math.max(20, p * 0.6)));
-  const gioChu = khung.length === 1 ? `khoảng ${dinh.gio}h` : `${khung[0].gio}–${khung[khung.length - 1].gio + 1}h`;
-  return p >= 40 ? `dễ mưa ${gioChu}, cao nhất ${p}% lúc ${dinh.gio}h` : `nếu mưa thường rơi ${gioChu}, mỗi giờ tối đa ${p}%`;
+  return { tu: khung[0]?.gio ?? dinh.gio, den: (khung[khung.length - 1]?.gio ?? dinh.gio) + 1, p, dinh: dinh.gio, mot: khung.length <= 1 };
+}
+export function khungMua(gio: Gio[]): string {
+  const k = khungMuaSo(gio);
+  if (!k) return '';
+  if (k.p < 20) return 'giờ buôn bán ít khả năng mưa';
+  const gioChu = k.mot ? `khoảng ${k.dinh}h` : `${k.tu}–${k.den}h`;
+  return k.p >= 40 ? `dễ mưa ${gioChu}, cao nhất ${k.p}% lúc ${k.dinh}h` : `nếu mưa thường rơi ${gioChu}, mỗi giờ tối đa ${k.p}%`;
 }
 /** Khối đưa Boom, chỉ khi câu hỏi liên quan. Nhãn "dự báo" vì dự báo có thể sai. */
 export function thoiTietChoBoom(question: string, w: ThoiTiet | null, vt: ViTri | null): string {

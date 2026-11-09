@@ -1,6 +1,6 @@
 // Phần xử lý thuần của hàm boom-chat (không gọi mạng) — test bằng `deno test supabase/functions/boom-chat`.
 import { boDau, coNeuKy } from './ky.ts';
-import { chiHoiThoiTiet } from './thoi_tiet.ts';
+import { chiHoiThoiTiet, khungMuaSo, type ThoiTiet } from './thoi_tiet.ts';
 
 export const LIMITS = {
   // byte UTF-8: chữ Việt có dấu tốn 2–3 byte; khối số liệu theo nhóm món có thể tới ~20 KB (QC 24/10)
@@ -887,6 +887,88 @@ export function weekdayCounts(from?: string | null, to?: string | null): number[
 const ngayMoKyTruoc = (f: ShopFacts) => (weekdayCounts(f.prev_from, f.prev_to) ?? []).reduce((t, c, k) => t + ((f.prev_by_weekday ?? f.by_weekday) && !(f.prev_by_weekday ?? f.by_weekday)![k] && c >= 2 ? 0 : c), 0);
 // 05/11: thứ chỉ có 1 ngày trong kỳ mà 0đ chưa đủ để gọi là nghỉ (kỳ 5 ngày ghi "Thứ 3, Chủ nhật: quán NGHỈ")
 const ngayMoBan = (f: ShopFacts) => (weekdayCounts(f.from, f.to) ?? []).reduce((t, c, k) => t + (f.by_weekday && !f.by_weekday[k] && c >= 2 ? 0 : c), 0);
+
+/** Lô A thời tiết (lần 169–172, kế hoạch .docs/ke-hoach-boom-tu-van-thoi-tiet.md): dòng TÍNH SẴN ghép dự báo với số quán,
+ *  để lời khuyên đúng quán thay vì "chuẩn bị mái che" chung chung. Thiếu số nào thì bỏ dòng đó, không đoán. */
+export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, question: string, now: Date = new Date()): string {
+  if (!w || !f || !w.ngay.length) return '';
+  const q = boDau(question.normalize('NFC')).toLowerCase();
+  const THU_DAI = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'];
+  const wdOf = (d: string) => (new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const nhan = (i: number) => `${i === 0 ? 'Hôm nay' : i === 1 ? 'Mai' : THU_DAI[wdOf(w.ngay[i].ngay)]} ${w.ngay[i].ngay.slice(8, 10)}/${w.ngay[i].ngay.slice(5, 7)}`;
+  // ngày được hỏi: hôm nay / mai / mốt / thứ X / cuối tuần; hỏi cả tuần → mọi ngày; không nói → hôm nay + mai
+  const SO_THU: Record<string, number> = { hai: 0, '2': 0, ba: 1, '3': 1, tu: 2, '4': 2, nam: 3, '5': 3, sau: 4, '6': 4, bay: 5, '7': 5 };
+  const ca = w.ngay.map((_, i) => i);
+  let ngay: number[] = [];
+  if (/tuan (?:toi|nay|sau)|may ngay toi|7 ngay|ca tuan/.test(q)) ngay = ca;
+  else {
+    if (/hom nay|chieu nay|toi nay|trua nay|sang nay/.test(q)) ngay.push(0);
+    if (/\bmai\b/.test(q) && !/ngay mai kia/.test(q)) ngay.push(1);
+    if (/\bmot\b|ngay kia/.test(q)) ngay.push(2);
+    for (const m of q.matchAll(/\bthu (hai|ba|tu|nam|sau|bay|[2-7])\b/g)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === SO_THU[m[1]]); if (i !== undefined) ngay.push(i); }
+    if (/chu nhat|\bcn\b|cuoi tuan/.test(q)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === 6); if (i !== undefined) ngay.push(i); }
+    if (/cuoi tuan/.test(q)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === 5); if (i !== undefined) ngay.push(i); }
+    if (!ngay.length) ngay = [0, 1].filter((i) => i < w.ngay.length);
+  }
+  ngay = [...new Set(ngay)].sort((a, b) => a - b);
+  const gioCua = (i: number) => (w.gio_tuan ?? []).filter((h) => h.ngay === w.ngay[i].ngay);
+  const cnt = weekdayCounts(f.from, f.to);
+  // thứ của hôm nay (kỳ tới hôm nay): chia n−1 như mọi dòng khác (lần 165); có số từng ngày thì bỏ tiền hôm nay
+  const todayD = f.to === new Date(vnDay(now)).toISOString().slice(0, 10) ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
+  // không có số từng ngày thì tổng còn gồm hôm nay dở → chia n−1 thổi mốc lên (quán mẫu A: Thứ 4 5,9tr so 4,4tr) → bỏ mốc thứ đó
+  const tienNay = f.by_day?.find((y) => y.d === f.to)?.revenue;
+  const tbThu = (k: number) => {
+    if (!f.by_weekday || !cnt || !cnt[k]) return null;
+    const nghi = !f.by_weekday[k] && cnt[k] >= 2;
+    const n = k === todayD ? cnt[k] - 1 : cnt[k];
+    if (n < 1 || (k === todayD && tienNay === undefined)) return { tien: null, n, nghi };
+    return { tien: (f.by_weekday[k] - (k === todayD ? tienNay! : 0)) / n, n, nghi };
+  };
+  const tron = (x: number) => vnd(Math.round(x / 1000) * 1000);
+  const tongGio = f.by_hour ? f.by_hour.reduce((a, b) => a + b, 0) : 0;
+  const phanGio = (tu: number, den: number) => (tongGio > 0 ? f.by_hour!.slice(tu, den).reduce((a, b) => a + b, 0) / tongGio : null);
+  const gioDong = tongGio > 0 ? f.by_hour!.map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]).sort((a, b) => a - b) : [];
+  const lines: string[] = [];
+  const anhHuong: { i: number; muc: number; txt: string }[] = [];
+  for (const i of ngay) {
+    const d = w.ngay[i], wd = wdOf(d.ngay), tb = tbThu(wd);
+    if (tb?.nghi) { lines.push(`${nhan(i)}: quán thường NGHỈ ${THU_DAI[wd]} (0đ cả ${tb.n} lần trong kỳ) → không cần chuẩn bị gì theo thời tiết ngày này.`); continue; }
+    const parts: string[] = [];
+    const coMoc = tb && tb.tien !== null && tb.n >= 2;
+    const dau = `${nhan(i)}${coMoc ? ` (${i <= 1 ? `${THU_DAI[wd]}, ` : ''}quán thường bán ~${tron(tb!.tien!)}/ngày, TB ${tb!.n} ngày)` : ''}`;
+    // 169: khung mưa đè lên bao nhiêu % doanh thu ngày
+    const k = khungMuaSo(gioCua(i));
+    if (k && k.p >= 30) {
+      const ph = phanGio(k.tu, k.den);
+      const trong = gioDong.filter((h) => h >= k.tu && h < k.den);
+      if (ph !== null) {
+        parts.push(`khung dễ mưa ${k.tu}–${k.den}h thường chiếm ${Math.round(ph * 100)}% doanh thu một ngày của quán${trong.length ? ` (gồm giờ đông nhất ${trong.map((h) => `${h}h`).join(', ')})` : gioDong.length ? ` (giờ đông nhất ${gioDong.map((h) => `${h}h`).join(', ')} nằm NGOÀI khung)` : ''}${ph < 0.15 ? ' → ít ảnh hưởng tới quán' : ''}`);
+        if (tb?.tien) anhHuong.push({ i, muc: tb.tien * ph * (k.p / 100), txt: `${k.tu}–${k.den}h, ~${Math.round(ph * 100)}% doanh thu ngày` });
+      }
+    } else if (k) parts.push('giờ buôn bán ít khả năng mưa');
+    // 170: mốc nhập hàng theo thứ (nằm ở đầu dòng; câu dặn chung ghi 1 lần ở cuối)
+    if (parts.length || coMoc) lines.push(`${dau}: ${parts.join('; ') || 'chưa có dự báo theo giờ'}.`);
+  }
+  // 171: nắng nóng → nhóm đồ uống của quán
+  const nong = ngay.filter((i) => (w.ngay[i].cao ?? 0) >= 34);
+  if (nong.length && f.groups?.length) {
+    const UONG = /uong|tra|ca phe|cafe|coffee|sinh to|nuoc|sua|da xay|\bda\b|kem|che|soda|nuoc ep/;
+    const nhom = f.groups.filter((g) => UONG.test(boDau(g.name).toLowerCase()));
+    const tong = f.items_revenue || f.groups.reduce((a, g) => a + (g.revenue ?? 0), 0);
+    if (nhom.length && tong > 0) {
+      const tenUong = new Set(nhom.flatMap((g) => (g.top ?? []).map((t) => t.name)));
+      const chieu = (f.by_band?.[2] ?? []).filter((t) => tenUong.has(t.name)).map((t) => t.name);
+      lines.push(`Nắng nóng (${nong.map((i) => `${nhan(i)} tới ${w.ngay[i].cao}°`).join(', ')}): nhóm ${nhom.map((g) => g.name).join(', ')} chiếm ${Math.round(nhom.reduce((a, g) => a + (g.revenue ?? 0), 0) / tong * 100)}% doanh thu món${chieu.length ? `; buổi chiều bán chạy: ${chieu.join(', ')}` : ''} → chuẩn bị đá, nguyên liệu các món này theo mốc ngày thường.`);
+    }
+  }
+  // 172: ngày đáng chuẩn bị nhất khi hỏi nhiều ngày
+  if (ngay.length >= 3 && anhHuong.length) {
+    const top = anhHuong.sort((a, b) => b.muc - a.muc)[0];
+    lines.push(`Ngày đáng chuẩn bị nhất: ${nhan(top.i)} (mưa ${top.txt}, ~${tron(top.muc)} doanh thu nằm trong khung mưa).`);
+  }
+  if (lines.some((l) => l.includes('quán thường bán ~'))) lines.push('Mốc nhập hàng = mức bán thường của thứ đó; dự báo chỉ để chỉnh nhẹ quanh mốc, không tăng / giảm mạnh chỉ vì dự báo.');
+  return lines.length ? `THỜI TIẾT × SỐ QUÁN (tính sẵn từ dự báo và số của quán; dự báo có thể sai):\n- ${lines.join('\n- ')}` : '';
+}
 
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
 
