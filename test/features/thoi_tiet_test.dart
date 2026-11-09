@@ -13,11 +13,15 @@ class _CoDinh extends ThoiTietNotifier {
 
 Future<void> _ve(WidgetTester t, ThoiTietData? v) async {
   // khoá mới mỗi lần: Riverpod không áp lại override khi dựng lại cùng một ProviderScope
-  await t.pumpWidget(ProviderScope(
-    key: UniqueKey(),
-    overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
-    child: const MaterialApp(home: Scaffold(body: Center(child: ThoiTietThe()))),
-  ));
+  await t.pumpWidget(
+    ProviderScope(
+      key: UniqueKey(),
+      overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
+      child: const MaterialApp(
+        home: Scaffold(body: Center(child: ThoiTietThe())),
+      ),
+    ),
+  );
   await t.pump();
 }
 
@@ -36,11 +40,21 @@ void main() {
           {'gio': 'x'},
         ],
         'ngay': [
-          {'ngay': '2026-11-07', 'cao': 33, 'thap': 26, 'mua': 60, 'troi': 'dông'},
+          {
+            'ngay': '2026-11-07',
+            'cao': 33,
+            'thap': 26,
+            'mua': 60,
+            'troi': 'dông',
+          },
           {'ngay': 'khong'},
         ],
       },
-      'nguon': {'ten': 'Apple Weather', 'link': 'javascript:alert(1)', 'logo_sang': 'http://x'},
+      'nguon': {
+        'ten': 'Apple Weather',
+        'link': 'javascript:alert(1)',
+        'logo_sang': 'http://x',
+      },
     });
     expect(d.viTri!.ten, 'Quận 1');
     expect(d.gio.length, 2);
@@ -55,7 +69,10 @@ void main() {
     final luc = DateTime(2026, 11, 7, 14);
     expect(thoiTietDaCu(luc, DateTime(2026, 11, 7, 16, 59)), isFalse);
     expect(thoiTietDaCu(luc, DateTime(2026, 11, 7, 17)), isTrue);
-    expect(thoiTietDaCu(DateTime(2026, 11, 7, 23), DateTime(2026, 11, 8, 0, 30)), isTrue);
+    expect(
+      thoiTietDaCu(DateTime(2026, 11, 7, 23), DateTime(2026, 11, 8, 0, 30)),
+      isTrue,
+    );
   });
 
   testWidgets('thẻ: ẩn khi chưa bật, hiện nhiệt độ và giờ mưa', (t) async {
@@ -65,8 +82,18 @@ void main() {
     expect(find.byType(InkWell), findsNothing);
     await _ve(t, const ThoiTietData(bat: true));
     expect(find.text('Chọn khu vực'), findsOneWidget);
-    await _ve(t, const ThoiTietData(bat: true, viTri: ViTriThoiTiet(10.8, 106.7, 'Quận 1')));
-    expect(find.byType(InkWell), findsNothing, reason: 'có khu vực nhưng chưa có số thì ẩn');
+    await _ve(
+      t,
+      const ThoiTietData(
+        bat: true,
+        viTri: ViTriThoiTiet(10.8, 106.7, 'Quận 1'),
+      ),
+    );
+    expect(
+      find.byType(InkWell),
+      findsNothing,
+      reason: 'có khu vực nhưng chưa có số thì ẩn',
+    );
     await _ve(
       t,
       const ThoiTietData(
@@ -78,39 +105,59 @@ void main() {
       ),
     );
     expect(find.text('32°'), findsOneWidget);
-    expect(find.text('Mưa ~16h'), findsOneWidget);
+    expect(find.text('Sắp mưa ~16h'), findsOneWidget);
   });
 
-  testWidgets('màn chi tiết: điện thoại và máy tính không tràn chữ, có ghi nguồn', (t) async {
-    final v = ThoiTietData(
-      bat: true,
-      viTri: const ViTriThoiTiet(10.8, 106.7, 'TP. Hồ Chí Minh'),
-      nhiet: 31.6,
-      troi: 'mây rải rác',
-      gio: [for (var i = 0; i < 12; i++) GioThoiTiet((14 + i) % 24, 30.0 - i, i * 8, i.isEven ? 'mưa' : 'nhiều mây')],
-      ngay: [for (var i = 0; i < 7; i++) NgayThoiTiet(DateTime(2026, 11, 7 + i), 33, 26, 60, 'dông')],
-      luc: DateTime(2026, 11, 7, 14, 5),
-    );
-    for (final size in [const Size(360, 740), const Size(1280, 800)]) {
-      await t.binding.setSurfaceSize(size);
-      await t.pumpWidget(ProviderScope(
-        key: UniqueKey(),
-        overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
-        child: const MaterialApp(home: ThoiTietScreen()),
-      ));
-      await t.pumpAndSettle();
-      expect(t.takeException(), isNull);
-      // 09/11: tiêu đề 2 dòng (tên khu vực dưới chữ Thời tiết, không bị nút Đổi khu vực cắt)
-      expect(find.text('Thời tiết'), findsOneWidget);
-      expect(find.text('TP. Hồ Chí Minh'), findsOneWidget);
-      expect(find.text('Hôm nay'), findsOneWidget);
-      // ghi nguồn ở cuối danh sách: cuộn tới mới được dựng
-      await t.scrollUntilVisible(find.text('Nguồn dữ liệu'), 300, scrollable: find.byType(Scrollable).first);
-      expect(t.takeException(), isNull);
-      expect(find.text('Apple Weather'), findsOneWidget);
-      expect(find.text('Nguồn dữ liệu'), findsOneWidget);
-      expect(find.text('Hỏi Bé Boom'), findsOneWidget);
-    }
-    await t.binding.setSurfaceSize(null);
-  });
+  testWidgets(
+    'màn chi tiết: điện thoại và máy tính không tràn chữ, có ghi nguồn',
+    (t) async {
+      final v = ThoiTietData(
+        bat: true,
+        viTri: const ViTriThoiTiet(10.8, 106.7, 'TP. Hồ Chí Minh'),
+        nhiet: 31.6,
+        troi: 'mây rải rác',
+        gio: [
+          for (var i = 0; i < 12; i++)
+            GioThoiTiet(
+              (14 + i) % 24,
+              30.0 - i,
+              i * 8,
+              i.isEven ? 'mưa' : 'nhiều mây',
+            ),
+        ],
+        ngay: [
+          for (var i = 0; i < 7; i++)
+            NgayThoiTiet(DateTime(2026, 11, 7 + i), 33, 26, 60, 'dông'),
+        ],
+        luc: DateTime(2026, 11, 7, 14, 5),
+      );
+      for (final size in [const Size(360, 740), const Size(1280, 800)]) {
+        await t.binding.setSurfaceSize(size);
+        await t.pumpWidget(
+          ProviderScope(
+            key: UniqueKey(),
+            overrides: [thoiTietProvider.overrideWith(() => _CoDinh(v))],
+            child: const MaterialApp(home: ThoiTietScreen()),
+          ),
+        );
+        await t.pumpAndSettle();
+        expect(t.takeException(), isNull);
+        // 09/11: tiêu đề 2 dòng (tên khu vực dưới chữ Thời tiết, không bị nút Đổi khu vực cắt)
+        expect(find.text('Thời tiết'), findsOneWidget);
+        expect(find.text('TP. Hồ Chí Minh'), findsOneWidget);
+        expect(find.text('Hôm nay'), findsOneWidget);
+        // ghi nguồn ở cuối danh sách: cuộn tới mới được dựng
+        await t.scrollUntilVisible(
+          find.text('Nguồn dữ liệu'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(t.takeException(), isNull);
+        expect(find.text('Apple Weather'), findsOneWidget);
+        expect(find.text('Nguồn dữ liệu'), findsOneWidget);
+        expect(find.text('Hỏi Bé Boom'), findsOneWidget);
+      }
+      await t.binding.setSurfaceSize(null);
+    },
+  );
 }

@@ -25,7 +25,45 @@ IconData iconTroi(String troi) {
 
 String _do(double? x) => x == null ? '–' : '${x.round()}°';
 
-/// Thẻ nhỏ cạnh doanh thu trên Trang chủ. Chưa có khoá Apple, lỗi mạng, chưa có số → ẩn; không bao giờ làm chậm Trang chủ.
+/// Cảnh báo ngắn cho thẻ Trang chủ và dải trong màn chi tiết (09/11, Chủ Quán: "hiện cảnh báo trời sắp mưa").
+/// Ưu tiên: sắp mưa trong vài giờ (≥ 40%) > hôm nay mưa (≥ 50%) > mai mưa (≥ 60%) > nắng nóng (≥ 35°).
+({String ngan, String dai, bool mua})? canhBaoThoiTiet(ThoiTietData v) {
+  final h = v.muaSapToi;
+  if (h != null)
+    return (
+      ngan: 'Sắp mưa ~${h.gio}h',
+      dai: 'Có thể mưa khoảng ${h.gio}h (khả năng ${h.mua}%)',
+      mua: true,
+    );
+  final nay = v.ngay.isNotEmpty ? v.ngay.first : null,
+      mai = v.ngay.length > 1 ? v.ngay[1] : null;
+  if ((nay?.mua ?? 0) >= 50)
+    return (
+      ngan: 'Hôm nay mưa ${nay!.mua}%',
+      dai: 'Hôm nay khả năng mưa ${nay.mua}%',
+      mua: true,
+    );
+  if ((mai?.mua ?? 0) >= 60)
+    return (
+      ngan: 'Mai mưa ${mai!.mua}%',
+      dai: 'Ngày mai khả năng mưa ${mai.mua}%',
+      mua: true,
+    );
+  final nong = [
+    v.nhiet,
+    nay?.cao,
+  ].whereType<double>().fold<double>(0, (a, b) => a > b ? a : b);
+  if (nong >= 35)
+    return (
+      ngan: 'Nắng nóng ${nong.round()}°',
+      dai: 'Nắng nóng, cao nhất khoảng ${nong.round()}°',
+      mua: false,
+    );
+  return null;
+}
+
+/// Thẻ nhỏ cạnh doanh thu trên Trang chủ: một dòng, cao bằng nhãn "Sẵn sàng"; có cảnh báo thì đổi màu.
+/// Chưa có khoá Apple, lỗi mạng, chưa có số → ẩn; không bao giờ làm chậm Trang chủ.
 class ThoiTietThe extends ConsumerWidget {
   const ThoiTietThe({super.key});
 
@@ -35,67 +73,86 @@ class ThoiTietThe extends ConsumerWidget {
     if (v == null || !v.bat) return const SizedBox.shrink();
     final chuaChon = v.viTri == null;
     if (!chuaChon && !v.coSo) return const SizedBox.shrink();
-    final mua = v.muaSapToi;
-    final dong2 = chuaChon
-        ? 'Chọn khu vực'
-        : mua != null
-        ? 'Mưa ~${mua.gio}h'
-        : v.troi;
-    // khoảng cách với nhãn "Sẵn sàng" nằm trong thẻ: thẻ ẩn thì không để lại khoảng trống
+    final cb = chuaChon ? null : canhBaoThoiTiet(v);
+    final nen = cb == null
+        ? const Color(0x22FFFFFF)
+        : cb.mua
+        ? const Color(0x553B82F6)
+        : const Color(0x55F26B21);
+    final vien = cb == null
+        ? const Color(0x33FFFFFF)
+        : cb.mua
+        ? const Color(0xAA7FB0FF)
+        : const Color(0xAAFFA463);
+    final icon = chuaChon
+        ? Icons.wb_cloudy_outlined
+        : cb == null
+        ? iconTroi(v.troi)
+        : cb.mua
+        ? Icons.water_drop_rounded
+        : Icons.wb_sunny_rounded;
+    final mauIcon = cb == null
+        ? Colors.white
+        : cb.mua
+        ? const Color(0xFFB7D3FF)
+        : const Color(0xFFFFC28A);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Semantics(
         button: true,
         label: chuaChon
             ? 'Thời tiết, chọn khu vực quán'
-            : 'Thời tiết ${_do(v.nhiet)}, $dong2',
+            : 'Thời tiết ${_do(v.nhiet)}${cb != null ? ', ${cb.dai}' : ', ${v.troi}'}',
         child: Material(
-          color: const Color(0x22FFFFFF),
-          borderRadius: BorderRadius.circular(14),
+          color: nen,
+          // 09/11 máy ảo: một dòng "34° · Mai mưa 65%" đẩy chữ DOANH THU xuống hàng → hai dòng hẹp
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: vien),
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const ThoiTietScreen())),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 150),
+              constraints: const BoxConstraints(maxWidth: 118),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.fromLTRB(9, 6, 11, 6),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      chuaChon
-                          ? Icons.wb_cloudy_outlined
-                          : iconTroi(mua != null ? 'mưa' : v.troi),
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    Icon(icon, color: mauIcon, size: 20),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             chuaChon ? 'Thời tiết' : _do(v.nhiet),
+                            maxLines: 1,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 15,
                               fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              height: 1.1,
                             ),
                           ),
-                          if (dong2.isNotEmpty)
+                          if (chuaChon || cb != null || v.troi.isNotEmpty)
                             Text(
-                              dong2,
+                              chuaChon ? 'Chọn khu vực' : cb?.ngan ?? v.troi,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xCCFFFFFF),
+                              style: TextStyle(
                                 fontSize: 11,
+                                height: 1.2,
+                                fontWeight: cb != null
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: cb != null
+                                    ? Colors.white
+                                    : const Color(0xCCFFFFFF),
                               ),
                             ),
                         ],
@@ -127,30 +184,34 @@ class ThoiTietScreen extends ConsumerWidget {
     final ten = v?.viTri?.ten ?? '';
     return Scaffold(
       backgroundColor: _kNen,
+      // 09/11 app thật: theme ép chữ tiêu đề trắng → nền kem làm chữ chìm; theo thanh tiêu đề xanh đậm chữ trắng như mọi màn
       appBar: AppBar(
-        backgroundColor: _kNen,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: _kNavy,
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Thời tiết',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: Colors.white,
+              ),
             ),
             if (ten.isNotEmpty)
               Text(
                 ten,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
+                style: const TextStyle(fontSize: 13, color: Color(0xCCFFFFFF)),
               ),
           ],
         ),
         actions: [
           TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: _kCam),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFFFB27A),
+            ),
             onPressed: () => chonKhuVuc(context, ref),
             icon: const Icon(Icons.place_outlined, size: 18),
             label: const Text('Đổi khu vực'),
@@ -172,6 +233,10 @@ class ThoiTietScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
                 _HienTai(v),
+                if (canhBaoThoiTiet(v) case final cb?) ...[
+                  const SizedBox(height: 12),
+                  _DaiCanhBao(cb),
+                ],
                 const SizedBox(height: 20),
                 if (v.gio.isNotEmpty) ...[
                   const _TieuDe('Các giờ tới'),
@@ -201,6 +266,62 @@ class ThoiTietScreen extends ConsumerWidget {
 }
 
 const _kNen = Color(0xFFF7F4EE);
+
+/// Dải cảnh báo dưới phần "bây giờ": mưa thì gợi ý chuẩn bị chỗ ngồi, đồ mang đi; nắng nóng thì đồ uống lạnh, đá.
+class _DaiCanhBao extends StatelessWidget {
+  final ({String ngan, String dai, bool mua}) cb;
+  const _DaiCanhBao(this.cb);
+  @override
+  Widget build(BuildContext context) {
+    final mau = cb.mua ? _kMua : _kCam;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cb.mua ? const Color(0xFFE6EEFC) : const Color(0xFFFFEEDF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: mau.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            cb.mua ? Icons.water_drop_rounded : Icons.wb_sunny_rounded,
+            color: mau,
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  cb.dai,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: mau,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  cb.mua
+                      ? 'Chuẩn bị mái che, khăn lau sàn chống trơn, túi đựng đồ mang đi; nhập hàng tươi vừa đủ.'
+                      : 'Chuẩn bị thêm đá, đồ uống lạnh; để ý chỗ ngồi có bóng mát.',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black87,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 const _kMua = Color(0xFF2F6FDE);
 const _kNguongMua = 30;
 
