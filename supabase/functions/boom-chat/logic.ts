@@ -908,7 +908,8 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
     if (/hom nay|chieu nay|toi nay|trua nay|sang nay/.test(q)) ngay.push(0);
     if (/\bmai\b/.test(q) && !/ngay mai kia/.test(q)) ngay.push(1);
     if (/\bmot\b|ngay kia/.test(q)) ngay.push(2);
-    for (const m of q.matchAll(/\bthu (hai|ba|tu|nam|sau|bay|[2-7])\b/g)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === SO_THU[m[1]]); if (i !== undefined) ngay.push(i); }
+    // lần 203 (8 / 13 câu thời tiết có "t6", "t7" bị bỏ sót ngày): thứ viết tắt t2–t7
+    for (const m of q.matchAll(/\b(?:thu |t)(hai|ba|tu|nam|sau|bay|[2-7])\b/g)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === SO_THU[m[1]]); if (i !== undefined) ngay.push(i); }
     if (/chu nhat|\bcn\b|cuoi tuan/.test(q)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === 6); if (i !== undefined) ngay.push(i); }
     if (/cuoi tuan/.test(q)) { const i = ca.find((j) => wdOf(w.ngay[j].ngay) === 5); if (i !== undefined) ngay.push(i); }
     if (!ngay.length) ngay = [0, 1].filter((i) => i < w.ngay.length);

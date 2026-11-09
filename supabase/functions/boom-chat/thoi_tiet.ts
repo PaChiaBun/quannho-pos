@@ -220,12 +220,13 @@ export function xoaDemThoiTiet() {
 // 09/11: "doanh thu bao nhiêu" khớp b[aã]o (bão), "kha nang" khớp n[aắ]ng: chữ không dấu chỉ tính khi đi kèm từ chắc chắn.
 // 09/11 web Demo: "mua một tặng một" khớp m[uư]a → lấy thời tiết và gắn nguồn Apple cho câu mua bán. "mua" không dấu chỉ tính khi chắc là mưa.
 // 09/11 máy ảo (sau lô C): "ngay mua thi quan ban giam nhieu khong" không nhận là thời tiết → Boom trả lời doanh thu, bỏ lô C
-export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:t[oớ]i|sau)/i;
+// lần 201 (QC độc lập 09/11: "mua sang hoai", "mua sang ca tuan" không dấu không nhận là câu thời tiết): mua + buổi / kéo dài; loại mua tối đa, sang nhượng…
+export const HOI_THOI_TIET = /mưa|(?<!(?:khach|khach hang|nguoi ta|nguoi|ho|minh|toi|em|anh|chi|hay) )\bmua (?:sang|trua|chieu|toi|dem)\b(?! (?:da|thieu|nhuong|ten|tay|hang|do|them|ve)\b)|\bmua (?:hoai|suot|lien|ca tuan|nhieu ngay|may ngay|mien man)\b|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:t[oớ]i|sau)/i;
 
 // 09/11 máy ảo: "cuối tuần thời tiết thế nào, nên nhập hàng ra sao?" app xếp vào câu hướng dẫn → Boom không có dự báo,
 // trả lời "không xem được thời tiết". Câu hướng dẫn chỉ lấy thời tiết khi có chữ RÕ về thời tiết; bỏ "nóng" (món nóng),
 // "lạnh" (tủ lạnh), "mai", "nhập hàng", "chuẩn bị" vì hay gặp trong câu hỏi cách dùng app.
-export const HOI_THOI_TIET_RO = /mưa|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bd[eễ] mua\b|\bmua (?:kh[oô]ng|nh[aấ]t|l[uú]c)\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|th[oờ]i ti[eế]t|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b/i;
+export const HOI_THOI_TIET_RO = /mưa|(?<!(?:khach|khach hang|nguoi ta|nguoi|ho|minh|toi|em|anh|chi|hay) )\bmua (?:sang|trua|chieu|toi|dem)\b(?! (?:da|thieu|nhuong|ten|tay|hang|do|them|ve)\b)|\bmua (?:hoai|suot|lien|ca tuan|nhieu ngay|may ngay|mien man)\b|tr[oờ]i mua|đổ mua|\bngay mua\b|\b(?:tai|do|vi) mua\b|\bd[eễ] mua\b|\bmua (?:kh[oô]ng|nh[aấ]t|l[uú]c)\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|th[oờ]i ti[eế]t|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b/i;
 
 // 09/11 máy ảo: "mai mấy giờ mưa" trên quán 0 đơn tuần này → Boom chen "tuần này chưa có đơn, đã mở bán chưa".
 // Câu CHỈ hỏi thời tiết (chữ rõ, không nhắc chuyện bán hàng) thì không gắn lời dặn kỳ chưa có đơn.

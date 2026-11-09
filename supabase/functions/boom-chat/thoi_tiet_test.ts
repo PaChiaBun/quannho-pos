@@ -95,6 +95,9 @@ Deno.test('thời tiết: chữ "mua" (mua bán) không phải "mưa" (09/11)', 
   for (const q of ['Chạy khuyến mãi mua một tặng một có lỗ không?', 'nên mua thêm máy pha không', 'khách mua nhiều món gì', '30 ngày qua doanh thu bao nhiêu?', 'kha nang tang doanh thu the nao', 'dong cua luc may gio', 'khách đông lúc nào']) assertEquals(T.HOI_THOI_TIET.test(q), false, q);
   for (const q of ['có bão không', 'trời nóng quá bán gì', 'mai dông không', 'nang gat qua nen ban gi']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
   for (const q of ['mai có mưa không', 'troi mua thi ban sao', 'mua to thì nên làm gì', 'cuối tuần này nắng không']) assertEquals(T.HOI_THOI_TIET.test(q), true, q);
+  // lần 201: "mưa" không dấu đi với buổi / kéo dài; "mua" (mua hàng) không bắt
+  for (const q of ['sua dac con 3 lon, hat rang con 2.5kg, ma tuan nay mua sang hoai, nhap it lai dc ko', 'mua sang ca tuan, co nen tang ma giam ko', 'mua chieu nay co nen dong som']) { assertEquals(T.HOI_THOI_TIET.test(q), true, q); assertEquals(T.HOI_THOI_TIET_RO.test(q), true, q); }
+  for (const q of ['khach mua toi da may ly', 'mua sang nhuong quan', 'nen mua them ly khong', 'khach mua sang hay mua chieu nhieu hon']) assertEquals(T.HOI_THOI_TIET_RO.test(q), false, q);
   assertEquals(T.ghiNguonThoiTiet('Mua 1 tặng 1 là giảm 50%.', true), 'Mua 1 tặng 1 là giảm 50%.');
 });
 

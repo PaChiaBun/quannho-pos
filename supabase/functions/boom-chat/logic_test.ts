@@ -2185,3 +2185,12 @@ Deno.test('lần 199: nói chưa có số bán mỗi ngày khi khối có số p
   assertEquals(L.chuaCoSoNgay('Chưa có số doanh thu riêng 11–13h theo từng ngày mưa.', ref), []);
 });
 
+
+Deno.test('lần 203: thứ viết tắt t6, t7 trong câu thời tiết', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
+  const t = L.thoiTietVoiSoQuan(TROI.mua_chieu, L.parseFacts(s.facts.thang_nay)!, 't6 t7 mua chieu thi chuan bi gi', NOW, L.parseModules({ ...s.modules.thang_nay }));
+  assertStringIncludes(t, 'Thứ Sáu 30/10');
+  assertStringIncludes(t, 'Thứ Bảy 31/10');
+});
