@@ -2107,3 +2107,27 @@ Deno.test('lần 189: so đơn mỗi người trong lịch với mức cả kỳ
   assertEquals(L.soVoiLich(2, 2.5, 2.5), '; SO VỚI LỊCH: ~2,5 người thường làm cùng lúc → mỗi người ~0,8 đơn/giờ, gấp ~0,3 lần mức cả kỳ (~2,5 đơn/giờ công) → nhẹ hơn thường');
   assertEquals(L.soVoiLich(2, 0.25, 2.5), '; SO VỚI LỊCH: khung này gần như không ai thường làm');
 });
+
+Deno.test('lần 191: phép so chỉ tính giờ có người, giờ trống không đẩy lên NẶNG HƠN THƯỜNG', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
+  const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
+  // quán B ca chiều Thứ Năm 14–18h: Ngọc 9–15h, Thảo 16–22h, trống 15–16h → giờ có người luôn 1 người
+  const t = L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m);
+  assertStringIncludes(t, 'KHOẢNG TRỐNG: 15–16h');
+  assertStringIncludes(t, 'SO VỚI LỊCH: ~1 người thường làm cùng lúc');
+});
+
+
+Deno.test('lần 192: câu chuẩn bị theo thời tiết kèm hàng đã hết / dưới nửa tối thiểu', async () => {
+  const { TROI } = await import('./cham_tu_van/thoi_tiet/troi_gia.ts');
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const s = JSON.parse(await Deno.readTextFile(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
+  // quán D: Than 0 / 3 bao, Trứng gà 40 / 120 quả
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Mai mưa chiều thì quán nên chuẩn bị gì?', NOW, m), 'Kho trước mai 29/10: Than ĐÃ HẾT (tối thiểu 3); Trứng gà còn 40 quả (tối thiểu 120)');
+  // câu người làm thuần, câu chỉ hỏi trời: không gắn
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'mai mua chieu, ca chieu can may nhan vien?', NOW, m).includes('Kho trước'));
+  assert(!L.thoiTietVoiSoQuan(TROI.mua_chieu, f, 'Mai trời thế nào?', NOW, m).includes('Kho trước'));
+});

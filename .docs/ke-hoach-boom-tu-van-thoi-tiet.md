@@ -171,3 +171,14 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Chấm mù 30 cặp vs 187, khối gộp hai bản (bản mới bỏ một vế): **+0,63 ± 0,69**; câu người làm **+1,25 ± 0,92**; tìm vấn đề 1,47 → 1,77, gọn 1,63 → 1,77; dùng được bộ mở 19 → 22 / 26.
 - Demo: Boom nêu khoảng trống 15–17h ngay câu đầu, không còn đếm sai "14–15h có 2 người". Còn: khuyên "2 người cùng lúc" khi ca ~1,9 đơn/giờ — NẶNG HƠN THƯỜNG ở đây do lịch chỉ phủ ~nửa khung; lần sau tách "phủ thiếu giờ" khỏi "thiếu người".
 
+## Lần 191 (09/11, sửa sau Demo; ĐÃ ÁP TS `20261109_190127`)
+
+- Lần 190 chia đơn cả khung cho số người trung bình cả khung (gồm giờ trống) → Demo ~0,5 người ra NẶNG HƠN THƯỜNG, Boom khuyên "2 người cùng lúc" khi ca ~1,9 đơn/giờ. Nay phép so chỉ lấy giờ có người; giờ trống để dòng KHOẢNG TRỐNG lo.
+- Chấm mù 12 cặp (quán B, TD12–15, khối gộp) vs 190: +0,17 ± 1,13 (ngang, đúng số 1,83 → 2,00) — quán B ca chiều nặng thật ở cả hai cách. Demo hỏi lại: "chưa cần thêm người… xếp 1 người phủ khoảng trống 15–17h".
+
+## Lần 192 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_191004`)
+
+- Người chấm 188–191 cùng thấy: quán nướng than còn 0 bao, ly 700ml hết khi bàn giao hàng ngày mưa, gạo / gas dưới tối thiểu — Boom có khối KHO nhưng không nối. Nay câu chuẩn bị / nhập / giao / món trong `thoiTietVoiSoQuan` kèm "Kho trước <ngày>: … ĐÃ HẾT / còn … (tối thiểu …) → nhập trước" (hàng dưới nửa tối thiểu, tối đa 3); câu người làm thuần, câu chỉ hỏi trời không gắn.
+- Chấm mù 56 cặp (28 câu × 2) vs 191: **+0,89 ± 0,46** (mở +0,78 ± 0,54, kín +1,19 ± 0,88); tìm vấn đề 1,46 → 1,88, việc làm 1,54 → 1,80, đúng quán 1,73 → 1,95; gọn 1,77 → 1,52; dùng được kín 5 → 12 / 16, mở 30 → 35 / 40.
+- Còn (người chấm): "nấu bao nhiêu" chưa ra số phần mỗi ngày (chia số tháng / số ngày mở); gán số khung này cho khung khác; kín K13 / K17 / K20 ý chính lệch dự báo trong khối.
+

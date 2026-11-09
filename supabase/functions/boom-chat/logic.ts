@@ -991,6 +991,12 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       lines.push(`Ngày dễ mưa (${muaNgay.map(nhan).join(', ')}): món nước / món nóng của quán ${mon.slice(0, 3).map((t) => `${t.name} (${Math.round(t.revenue / tong * 100)}% doanh thu món)`).join(', ')} → ưu tiên đủ nguyên liệu và hộp mang về cho các món này; món khác giữ mốc ngày thường.`);
     }
   }
+  // lần 192 (chấm mù 188–191: quán nướng than còn 0 bao, ly 700ml hết khi bàn chạy giao ngày mưa — Boom không nối): câu chuẩn bị / nhập / giao / món
+  // → hàng ĐÃ HẾT hoặc dưới nửa mức tối thiểu, ngay trong khối thời tiết; chỉ khi có hàng như vậy, câu người làm thuần thì không gắn
+  if (/chuan bi|nhap|\bhang\b|giao|mang (?:ve|di)|\bship|ban gi|nau|quang cao|dat them|\bdu (?:ban|dung)|mon (?:gi|nao)/.test(q)) {
+    const thieu = arr(modules?.kho?.low).filter((x) => nn(x.qty) < nn(x.min) / 2).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min)));
+    if (thieu.length) lines.push(`Kho trước ${ngay.length > 1 ? 'các ngày này' : nhan(ngay[0]).toLowerCase()}: ${thieu.slice(0, 3).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'ĐÃ HẾT' : `còn ${qty(x.qty)} ${ss(x.unit)}`} (tối thiểu ${qty(x.min)})`).join('; ')} → nhập trước, nếu không thì chuẩn bị theo dự báo cũng không bán được món cần hàng này.`);
+  }
   // 179 (lô D): hỏi người làm / ca → số đơn mỗi giờ trong khung mưa (hoặc giờ đông khi không mưa), từ doanh thu theo giờ ÷ giá trị TB một đơn
   const NGUOI = /nguoi|nhan vien|\bnv\b|\bca (?:sang|trua|chieu|toi)|thue|phuc vu|giao hang|shipper|tang ca\b|them ca\b/; // \b: "thêm canh" không phải "thêm ca"
   const moBan = ngayMoBan(f);
@@ -1046,7 +1052,10 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
         : `; chấm công trong kỳ chưa thấy ai thường làm khung này vào ${THU_DAI[wdI]}`;
       // lần 189 (chấm mù 188: Boom có "tương đương ~4,6 người" và "thường có 1 người" mà không so): phép so tính sẵn.
       // lần 190 (189 thêm vế thì mất điểm gọn): có phép so thì THAY vế "tương đương ~X người", dòng không dài thêm
-      const soLich = canNguoi && lichNs.length ? soVoiLich(tb, ds.reduce((a, h) => a + coMat.filter((p) => h >= Number(p.vao) && h < Number(p.ra)).length, 0) / ds.length, nangSuat) : '';
+      // lần 191 (Demo 190: lịch chỉ phủ nửa khung → chia cả khung ra "NẶNG HƠN THƯỜNG", Boom khuyên 2 người): chỉ so trên giờ có người; giờ trống đã có KHOẢNG TRỐNG
+      const soNg = (h: number) => coMat.filter((p) => h >= Number(p.vao) && h < Number(p.ra)).length;
+      const coNg = ds.filter((h) => soNg(h) > 0);
+      const soLich = canNguoi && lichNs.length ? (coNg.length ? soVoiLich(coNg.reduce((a, h) => a + donGio(h), 0) / coNg.length, coNg.reduce((a, h) => a + soNg(h), 0) / coNg.length, nangSuat) : soVoiLich(tb, 0, nangSuat)) : '';
       lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${soLich ? '' : canNguoi}${thuongCo}${soLich} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
   }
