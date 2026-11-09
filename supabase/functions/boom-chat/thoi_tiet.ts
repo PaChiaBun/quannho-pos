@@ -180,12 +180,39 @@ export function xoaDemThoiTiet() {
 // 09/11 web Demo: "mua một tặng một" khớp m[uư]a → lấy thời tiết và gắn nguồn Apple cho câu mua bán. "mua" không dấu chỉ tính khi chắc là mưa.
 export const HOI_THOI_TIET = /mưa|tr[oờ]i mua|đổ mua|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|tr[oờ]i|th[oờ]i ti[eế]t|nóng|\bnong (?:qua|buc|nuc)\b|lạnh|\blanh (?:qua|buot)\b|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b|ng[aà]y mai|\bmai\b|cu[oố]i tu[aầ]n|chu[aẩ]n b[iị]|nh[aậ]p (?:h[aà]ng|nguy[eê]n li[eệ]u)|chi[eề]u nay|t[oố]i nay|tu[aầ]n (?:t[oớ]i|sau)/i;
 
+// 09/11 máy ảo: "cuối tuần thời tiết thế nào, nên nhập hàng ra sao?" app xếp vào câu hướng dẫn → Boom không có dự báo,
+// trả lời "không xem được thời tiết". Câu hướng dẫn chỉ lấy thời tiết khi có chữ RÕ về thời tiết; bỏ "nóng" (món nóng),
+// "lạnh" (tủ lạnh), "mai", "nhập hàng", "chuẩn bị" vì hay gặp trong câu hỏi cách dùng app.
+export const HOI_THOI_TIET_RO = /mưa|tr[oờ]i mua|đổ mua|\bd[eễ] mua\b|\bmua (?:kh[oô]ng|nh[aấ]t|l[uú]c)\b|\bmua (?:to|l[oớ]n|r[aà]o|ph[uù]n|b[aã]o|d[aầ]m)\b|nắng|\bnang (?:nong|gat|to|qua)\b|th[oờ]i ti[eế]t|bão|\bbao (?:to|lon|vao|do bo)\b|dông|giông|\bdong (?:set|loc)\b/i;
+
+// 09/11 máy ảo: "mai mấy giờ mưa" trên quán 0 đơn tuần này → Boom chen "tuần này chưa có đơn, đã mở bán chưa".
+// Câu CHỈ hỏi thời tiết (chữ rõ, không nhắc chuyện bán hàng) thì không gắn lời dặn kỳ chưa có đơn.
+const CHUYEN_BAN = /doanh ?thu|đơn|\bdon\b|bán|\bban\b|khách|\bkhach\b|món|\bmon\b|lời|lãi|\bloi\b|\blai\b|vốn|\bvon\b|nh[aậ]p h[aà]ng|\bkho\b|thu chi|tiền|\btien\b/i;
+export const chiHoiThoiTiet = (q: string) => HOI_THOI_TIET_RO.test(q) && !CHUYEN_BAN.test(q);
+
 const THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+/** Khung giờ mưa của một ngày (6h–22h), tính sẵn bằng mã như câu tóm tắt trong app: % cả ngày của Apple cao hơn từng giờ
+ *  (10/11: ngày 65%, giờ cao nhất 39%) nên lấy khung tương đối quanh giờ cao nhất. Không đủ số thì rỗng. */
+export function khungMua(gio: Gio[]): string {
+  const mo = gio.filter((h) => h.gio >= 6 && h.gio <= 22 && h.mua !== null);
+  if (!mo.length) return '';
+  const dinh = mo.reduce((a, b) => ((b.mua ?? 0) > (a.mua ?? 0) ? b : a));
+  const p = dinh.mua ?? 0;
+  if (p < 20) return 'giờ buôn bán ít khả năng mưa';
+  const khung = mo.filter((h) => (h.mua ?? 0) >= Math.min(40, Math.max(20, p * 0.6)));
+  const gioChu = khung.length === 1 ? `khoảng ${dinh.gio}h` : `${khung[0].gio}–${khung[khung.length - 1].gio + 1}h`;
+  return p >= 40 ? `dễ mưa ${gioChu}, cao nhất ${p}% lúc ${dinh.gio}h` : `nếu mưa thường rơi ${gioChu}, mỗi giờ tối đa ${p}%`;
+}
 /** Khối đưa Boom, chỉ khi câu hỏi liên quan. Nhãn "dự báo" vì dự báo có thể sai. */
 export function thoiTietChoBoom(question: string, w: ThoiTiet | null, vt: ViTri | null): string {
   if (!w || !HOI_THOI_TIET.test(question)) return '';
   const muaGio = w.gio.filter((h) => (h.mua ?? 0) >= 40);
-  const ngay = w.ngay.map((d) => `${THU[new Date(`${d.ngay}T00:00:00Z`).getUTCDay()]} ${d.ngay.slice(8, 10)}/${d.ngay.slice(5, 7)}: ${d.thap ?? '?'}–${d.cao ?? '?'}°${d.troi ? `, ${d.troi}` : ''}${d.mua !== null ? `, khả năng mưa ${d.mua}%` : ''}`).join('; ');
+  // 09/11: Boom trả lời "chưa có dự báo theo từng giờ" cho "mai mấy giờ mưa" → mỗi ngày kèm khung giờ mưa tính sẵn
+  const ngay = w.ngay.map((d) => {
+    const khung = khungMua((w.gio_tuan ?? []).filter((h) => h.ngay === d.ngay));
+    return `${THU[new Date(`${d.ngay}T00:00:00Z`).getUTCDay()]} ${d.ngay.slice(8, 10)}/${d.ngay.slice(5, 7)}: ${d.thap ?? '?'}–${d.cao ?? '?'}°${d.troi ? `, ${d.troi}` : ''}${d.mua !== null ? `, khả năng mưa cả ngày ${d.mua}%` : ''}${khung ? ` (${khung})` : ''}`;
+  }).join('; ');
   return `DỰ BÁO THỜI TIẾT KHU VỰC QUÁN${vt?.ten ? ` (${vt.ten})` : ''} (Apple Weather, lấy lúc ${new Date(Date.parse(w.luc) + VN_MS).toISOString().slice(11, 16)}; dự báo có thể sai): ` +
     `${w.nhiet !== null ? `bây giờ ${Math.round(w.nhiet)}°${w.troi ? `, ${w.troi}` : ''}. ` : ''}` +
     `${muaGio.length ? `Giờ tới có khả năng mưa: ${muaGio.map((h) => `${h.gio}h ${h.mua}%`).join(', ')}. ` : 'Vài giờ tới khả năng mưa thấp. '}` +

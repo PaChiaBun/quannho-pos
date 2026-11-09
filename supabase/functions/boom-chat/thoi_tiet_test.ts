@@ -102,3 +102,25 @@ Deno.test('thời tiết: "tuần này" (câu so số) không lấy thời tiế
   assertEquals(T.HOI_THOI_TIET.test('Tuần này so với tuần trước thế nào?'), false);
   assertEquals(T.HOI_THOI_TIET.test('tuần tới có nên nhập thêm hàng không'), true);
 });
+
+Deno.test('thời tiết: câu hướng dẫn chỉ lấy khi có chữ rõ (09/11)', () => {
+  for (const q of ['cuoi tuan nay thoi tiet the nao, nen nhap hang ra sao?', 'mai mưa thì nhập hàng sao', 'trời nắng gắt bán gì']) assert(T.HOI_THOI_TIET_RO.test(q), q);
+  for (const q of ['ngay mai may gio thi de mua nhat?', 'mai mua khong em']) assert(T.HOI_THOI_TIET_RO.test(q), q);
+  for (const q of ['cách nhập hàng', 'thêm món nóng vào menu', 'mai mở ca thế nào', 'chuẩn bị máy in', 'tủ lạnh hết hàng', 'mua 1 tặng 1 cài sao', 'doanh thu bao nhiêu']) assert(!T.HOI_THOI_TIET_RO.test(q), q);
+});
+
+Deno.test('thời tiết: mỗi ngày kèm khung giờ mưa tính sẵn (09/11)', () => {
+  const g = (gio: number, mua: number) => ({ gio, nhiet: 30, mua, troi: '' });
+  assertEquals(T.khungMua([g(12, 6), g(15, 31), g(16, 39), g(17, 29), g(19, 12)]), 'nếu mưa thường rơi 15–18h, mỗi giờ tối đa 39%');
+  assertEquals(T.khungMua([g(3, 90), g(14, 30), g(15, 55), g(16, 80), g(17, 45)]), 'dễ mưa 15–18h, cao nhất 80% lúc 16h');
+  assertEquals(T.khungMua([g(10, 5)]), 'giờ buôn bán ít khả năng mưa');
+  assertEquals(T.khungMua([]), '');
+  const w = T.rutGon(MAU, NOW)!;
+  const khoi = T.thoiTietChoBoom('mai mưa không', { ...w, gio_tuan: [{ ngay: '2026-11-08', ...g(15, 70) }] }, null);
+  assertStringIncludes(khoi, 'CN 08/11: 27–34°, trời quang, khả năng mưa cả ngày 10% (dễ mưa khoảng 15h, cao nhất 70% lúc 15h)');
+});
+
+Deno.test('thời tiết: câu chỉ hỏi thời tiết không bị chen "chưa có đơn" (09/11)', () => {
+  for (const q of ['ngay mai may gio thi de mua nhat?', 'mai mưa không', 'cuối tuần thời tiết thế nào']) assert(T.chiHoiThoiTiet(q), q);
+  for (const q of ['mai mưa thì doanh thu giảm không', 'cuoi tuan nay thoi tiet the nao, nen nhap hang ra sao?', 'trời mưa bán món gì', 'tuần này bao nhiêu đơn']) assert(!T.chiHoiThoiTiet(q), q);
+});

@@ -23,7 +23,7 @@ import { chonBai, soTayChoBoom } from './so_tay.ts';
 import { docBanHang } from './ban_hang.ts';
 import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
 import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, laHoiNho, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
-import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
+import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_THOI_TIET, HOI_THOI_TIET_RO, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
   ghiApTay,
@@ -704,9 +704,9 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  // Thời tiết chỉ cho câu tư vấn có liên quan; lỗi thì bỏ, không làm chậm câu trả lời quá 4 giây
+  // Thời tiết cho câu tư vấn có liên quan, và câu hướng dẫn có chữ rõ về thời tiết (09/11); lỗi thì bỏ, không chậm quá 4 giây
   let thoiTiet = '';
-  if (r.mode === 'advice' && THOI_TIET && HOI_THOI_TIET.test(r.question)) {
+  if (THOI_TIET && ((r.mode === 'advice' && HOI_THOI_TIET.test(r.question)) || (r.mode === 'answer' && HOI_THOI_TIET_RO.test(r.question)))) {
     const vt = await viTriQuan(r.store_id);
     thoiTiet = vt ? thoiTietChoBoom(r.question, await layThoiTiet(vt, THOI_TIET), vt) : '';
     if (thoiTiet) kind += '+thoi_tiet';

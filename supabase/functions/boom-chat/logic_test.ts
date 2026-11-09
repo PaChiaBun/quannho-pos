@@ -1939,6 +1939,8 @@ Deno.test('09/11: tuần này chưa có đơn thì trả lời ngắn, không kh
   const f = L.parseFacts({ period: 'Tuần này (từ thứ Hai 9/11)', revenue: 0, orders: 0, top: [], slow: [], from: '2026-11-09', to: '2026-11-09',
     prev_period: 'trọn tuần trước (2/11–8/11)', prev_revenue: 560_000, prev_orders: 7 })!;
   assertStringIncludes(L.formatFacts(f, new Date('2026-11-09T12:00:00+07:00'), 'Tuần này so với tuần trước thế nào?'), 'KỲ NÀY CHƯA CÓ ĐƠN NÀO');
+  // 09/11 máy ảo: câu chỉ hỏi thời tiết không bị chen "tuần này chưa có đơn"
+  assert(!L.formatFacts(f, new Date('2026-11-09T12:00:00+07:00'), 'ngay mai may gio thi de mua nhat?').includes('CHƯA CÓ ĐƠN'));
 });
 
 Deno.test('09/11 lần 163: kỳ chưa có đơn — mã kiểm và chốt gọn', () => {
