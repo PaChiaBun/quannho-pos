@@ -3430,6 +3430,27 @@ export function doLoiTroi(answer: string, ref: string): boolean {
   return /(?:do|vì|tại|bởi|có thể do|có lẽ do|chắc do)\s+(?:trời|thời tiết|mưa|nắng|nóng|mùa mưa)/i.test(answer);
 }
 
+/** Lần 195 (chấm mù 188–194 lặp lại: "Tối quán thường bán khoảng 4.525.000đ/ngày"): số trung bình CẢ NGÀY trong khối gán cho một buổi / ca / khung.
+ * "tối mai", "chiều nay" là chỉ lúc, không bắt; chỉ xét vế (tách theo dấu phẩy) có số đó. */
+export function tienNgayGoiBuoi(answer: string, ref: string): string[] {
+  const ngay = new Set([...ref.matchAll(/(\d{1,3}(?:\.\d{3}){2,})đ\/ngày/g)].map((m) => m[1]));
+  if (!ngay.size) return [];
+  const out: string[] = [];
+  for (const ve of answer.split(/[,;:.\n](?!\d)/)) {
+    for (const m of ve.matchAll(/(\d{1,3}(?:\.\d{3}){2,})đ/g)) {
+      if (!ngay.has(m[1])) continue;
+      const truoc = ve.slice(Math.max(0, m.index! - 50), m.index!);
+      if (/cả ngày|một ngày|mỗi ngày|cả hôm/i.test(truoc)) continue;
+      const buoi = [...truoc.matchAll(/(?:^|[^\p{L}])(?:(?:buổi|ca|khung|giờ) )?(?:sáng|trưa|chiều|tối)(?! (?:mai|nay|mốt|qua))(?![\p{L}])|khung \d/giu)].at(-1);
+      // "ca trưa … Thứ Hai trung bình 4.500.000đ/ngày": có tên thứ đứng giữa thì số là của thứ đó
+      // "ca tối Thứ Năm" (thứ đứng liền sau buổi) vẫn là buổi
+      const sau = buoi ? truoc.slice(buoi.index! + buoi[0].length) : '', w = sau.search(/Thứ (?:[2-7]|Hai|Ba|Tư|Năm|Sáu|Bảy)|Chủ nhật/i);
+      if (buoi && (w < 0 || !sau.slice(0, w).trim())) out.push(`${m[1]}đ`);
+    }
+  }
+  return [...new Set(out)];
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const gioNgoai = ngoaiGioBan(answer, ref);
   const cheUuDai = uuDaiTuChe(answer, ref);
@@ -3456,10 +3477,12 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const ct = goiSaiCaoThap(answer, ref);
   const gs = soGanSai(answer, ref);
   const ttSai = soTroiSai(answer, ref), ttChi = chiTienViTroi(answer, ref), ttLoi = doLoiTroi(answer, ref);
+  const ngayBuoi = tienNgayGoiBuoi(answer, ref);
   return [
     ...(ttSai.length ? [`số thời tiết không có trong dự báo (${ttSai.join(', ')}) → chỉ dùng đúng nhiệt độ / % trong khối dự báo; quán CHƯA có số ngày mưa nên KHÔNG nói mưa / nắng làm tăng giảm bao nhiêu %`] : []),
     ...(ttChi.length ? [`khuyên chi tiền chỉ vì dự báo ("${ttChi.join('"; "')}") → đổi thành chuẩn bị nhẹ / thử nhỏ có hạn mức và theo dõi; nói rõ dự báo có thể sai`] : []),
     ...(ttLoi ? ['đổ doanh thu giảm cho thời tiết mà không có số thời tiết nào → bỏ ý đó, giải thích bằng số bán hàng (giờ, thứ, món, số đơn)'] : []),
+    ...(ngayBuoi.length ? [`gọi số trung bình CẢ NGÀY (${ngayBuoi.join(', ')}) là doanh thu của một buổi / ca / khung → sửa câu đó thành "cả ngày" (hoặc dùng % khung giờ / số phần buổi trong khối); chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này`] : []),
     ...(cheUuDai.length ? [`bài viết tự chế ưu đãi không có mã nào khớp (${cheUuDai.join('; ')}) → trong bài chỉ dùng đúng mã đang chạy hoặc để [ưu đãi của quán]; gợi ý thì viết sau bài, mở đầu bằng "Đề xuất:"`] : []),
     ...(khongLam.length ? [`khuyên việc app không làm được (${khongLam.join('; ')}) → đổi sang việc làm được, hoặc nói rõ phải làm ngoài app`] : []),
     ...(monLac ? [`người hỏi đích danh "${monLac}" mà câu trả lời không nhắc món này → trả lời đúng món đó, có số của món đó; muốn nói món khác thì nói rõ là đang so`] : []),

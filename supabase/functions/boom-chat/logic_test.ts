@@ -2149,3 +2149,16 @@ Deno.test('lần 193: hỏi nấu / chuẩn bị bao nhiêu → mốc số phầ
   // lần 194: dòng kho bắt "ướp" (quán D hết than)
   assertStringIncludes(await tt('d', 'Tối mai mưa, ướp bao nhiêu sườn?'), 'Than ĐÃ HẾT');
 });
+
+Deno.test('lần 195: số trung bình cả ngày gán cho một buổi / ca', () => {
+  const ref = '- Mai 29/10 (Thứ Năm, quán thường bán ~4.525.000đ/ngày, TB 4 ngày): khung dễ mưa 15–20h thường chiếm 15% doanh thu một ngày';
+  assertEquals(L.tienNgayGoiBuoi('Vì sao: Tối quán thường bán khoảng 4.525.000đ/ngày; khung mưa ít ảnh hưởng.', ref), ['4.525.000đ']);
+  assertEquals(L.tienNgayGoiBuoi('Ca tối Thứ Năm doanh thu khoảng 4.525.000đ.', ref), ['4.525.000đ']);
+  // đúng: cả ngày, hoặc "tối mai" chỉ lúc
+  assertEquals(L.tienNgayGoiBuoi('Vì sao: Thứ Năm quán thường bán khoảng 4.525.000đ/ngày.', ref), []);
+  assertEquals(L.tienNgayGoiBuoi('Tối mai mưa nhưng Thứ Năm thường bán 4.525.000đ/ngày.', ref), []);
+  assertEquals(L.tienNgayGoiBuoi('Buổi tối chỉ chiếm 15%, cả ngày Thứ Năm thường bán 4.525.000đ.', ref), []);
+  assertEquals(L.tienNgayGoiBuoi('Chưa nên đóng ca trưa sớm: Thứ Năm trung bình 4.525.000đ/ngày.', ref), []);
+  assertEquals(L.tienNgayGoiBuoi('Chưa nên đóng ca trưa sớm, Thứ Năm thường đạt 4.525.000đ/ngày.', ref), []);
+});
+

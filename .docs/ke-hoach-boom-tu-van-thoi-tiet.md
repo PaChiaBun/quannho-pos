@@ -194,3 +194,9 @@ Làm theo cách dạy đã chốt (`ke-hoach-day-boom-thong-minh.md`): kiểm m�
 - Chấm mù 15 cặp vs 193: +0,53 ± 0,76 (chưa rõ); tìm vấn đề 1,27 → 1,67; câu ướp sườn quán hết than: mới 3 / 3 nhắc, cũ 0 / 3. Demo: Boom dẫn đúng 73 phần buổi sáng / 9 ngày.
 - Còn (cả hai bản): gán số của khung này cho khung khác (doanh thu cả ngày 4.525.000đ gọi là "buổi tối", 15% gọi là của khung tối).
 
+## Lần 195 (09/11, Chủ Quán "dạy tiếp đi"; ĐÃ ÁP TS `20261109_193937`)
+
+- Lỗi lặp lại qua các lần chấm 188–194: số trung bình CẢ NGÀY gọi là của buổi / ca ("Tối quán thường bán khoảng 4.525.000đ/ngày", "tối thứ Năm thường đạt 4.525.000đ"). Kiểm bằng mã `tienNgayGoiBuoi` (không thêm lời dặn): số "…đ/ngày" của khối, trong cùng vế (tách , ; : .) có chữ buổi / ca / khung đứng trước trong 50 ký tự; "tối mai / nay" không tính; có tên thứ chen giữa ("ca trưa sớm: Thứ Hai …") thì là số của thứ đó, trừ khi thứ đứng liền sau buổi ("ca tối Thứ Năm").
+- Độ chính xác trên 458 câu trả lời đo hôm nay: 3 / 3 là lỗi thật, 0 bắt nhầm. Lời viết lại: "chỉ sửa số, KHÔNG viết thêm câu giải thích về lỗi này" (bản đầu làm Boom chèn "không phải doanh thu cả ngày quy đổi…").
+- Không chấm mù: lỗi ~3 / 458 câu, A/B không thấy.
+
