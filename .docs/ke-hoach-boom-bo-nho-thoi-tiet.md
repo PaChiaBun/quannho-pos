@@ -11,8 +11,8 @@ Lập ngày 07/11/2026. Mốc mã lúc lập: commit `f53ccb9` (máy chủ Boom 
 | 1 | Sửa lỗi gốc QC | khoảng 1 ngày | Đã áp (lần 152, 08/11); 2 lỗi web 08/11 đã sửa, chưa áp |
 | 2 | Thời tiết trên Trang chủ và Boom | 3–4 ngày | Mã xong, đã lên máy chủ nhưng tự tắt; chờ khoá Apple |
 | 3 | Bật đường mới cho app | 2–4 ngày, cộng thời gian Apple duyệt | Mã xong (4e25a91); chờ thử máy có đăng nhập rồi phát hành |
-| 4 | Bộ nhớ riêng từng quán | 3–5 ngày | Mã xong, đang tắt; chờ duyệt áp migration và bật |
-| 5 | Ghi lời khuyên và tự đo kết quả | 3–5 ngày | Nháp xong, đang tắt (cùng công tắc bộ nhớ) |
+| 4 | Bộ nhớ riêng từng quán | 3–5 ngày | **Đã áp và bật 09/11** (bỏ qua quán Demo); chờ quán thật dùng để đo |
+| 5 | Ghi lời khuyên và tự đo kết quả | 3–5 ngày | **Bật cùng bộ nhớ 09/11**; kết quả đầu tiên sau khoảng 2 tuần |
 | 6 | Thử công cụ và sổ tay trên mảng tiếp thị | khoảng 1 tuần | Công cụ bỏ; sổ tay +0,48 ± 0,42, **đã bật 09/11 (lần 160)** |
 | 7 | Người dùng thật và dữ liệu | làm dần | Chưa làm |
 
@@ -181,6 +181,7 @@ Xong khi: các lỗi trên không còn trong lượt đo, không mảng nào t�
 - Chưa làm: bảng lời khuyên và tự đo (giai đoạn 5); thử cả luồng trên máy chủ thật sau khi áp.
 - Bản giả lập khác máy chủ thật ở `store_members` (chỉ các cột cần) và `auth.uid()`; khi áp phải chạy kiểm thử ngay trên máy chủ trong giao dịch rồi hoàn tác, như các migration khác.
 - **09/11 chuẩn bị áp:** `db-fix/boom_bo_nho_ap_dung.sh` (KHO=1 chỉ kiểm; thường: sao lưu database → migration → 24 test tự ROLLBACK, công tắc vẫn tắt; BAT=1: bật `BOOM_BO_NHO=1` bỏ qua quán Demo; ROLLBACK=1: tắt công tắc, gỡ bảng). Bài test thêm người dùng giả vào `user_accounts` khi máy chủ có bảng đó (máy chủ thật có khoá ngoài stores / store_members → user_accounts); chạy lại tại máy 24/24 cả khi có và không có khoá ngoài đó. Chưa chạy trên máy chủ.
+- **09/11 đã áp và bật:** sao lưu `quannho_before_bo_nho_20261109_102811.dump`; migration xong; 24/24 test trên máy chủ (tự ROLLBACK); app không đọc thẳng bảng, chủ quán gọi được hàm xem; `BOOM_BO_NHO=1`, `BOOM_BO_NHO_BO_QUA` = quán Demo. Thử Demo: không nhãn `+bo_nho`, 0 ghi nhớ. CHƯA thấy luồng ghi nhớ chạy trên quán thật; màn "Bé Boom nhớ gì về quán" chỉ có ở bản app chưa phát hành. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_bo_nho_ap_dung.sh` (mất ghi nhớ đã lưu).
 
 **3 bảng** (🔒 đổi cơ sở dữ liệu, viết kèm cách hoàn tác)
 - [ ] `boom_quan_ho_so`: mỗi quán một dòng: loại quán, khách chính, gần gì, khu vực, giờ mở, ngày nghỉ, mục tiêu.
