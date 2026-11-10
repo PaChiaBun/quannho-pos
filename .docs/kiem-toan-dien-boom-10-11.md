@@ -256,3 +256,9 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 - Chấm mù trên de_kin12 (bộ đã lộ ở lần kiểm 4): 24 câu ngẫu nhiên × 2 = 48 cặp **+0,27 ± 0,66**; trong đó 28 cặp chỉ đổi nhãn +0,04 ± 0,72. Đo thêm 18 câu bị chạm thật còn lại × 2 = 36 cặp −0,08 ± 0,65 (có thêm phần xếp theo nhóm). Gộp 56 cặp bị chạm thật **+0,16 ± 0,61**; cả 84 cặp **+0,12 ± 0,47** → chưa rõ.
 - Câu nhắm đúng lỗi thắng rõ: trung bình mỗi ngày +6 / +3; lời ít nhất +8.
 - Còn thấy: mốc nấu trân châu chỉ lấy món topping, bỏ trân châu trong ly trà sữa (cả hai bản); so dự báo cả tháng với số 1–28 tháng trước; trung bình ngày chia cả ngày quán nghỉ.
+
+## 22. Lần 232 (không áp)
+
+- Sửa 3 lỗi còn lại của lô E: mốc nấu nguyên liệu nằm trong tên món khác (trân châu trong "Trà sữa trân châu đường đen"); kỳ trước chỉ là N ngày đầu tháng trước → ước thô cả tháng trước để so với dự báo; trung bình ngày CÓ MỞ BÁN (bỏ thứ quán nghỉ).
+- Chấm mù 46 cặp (23 câu bị chạm ở de_kin10/11/12 × 2): **+0,04 ± 0,84** → không áp. Câu đích "so dự báo với tháng trước" thắng rõ (+6 / +4), nhưng dòng ước tháng trước còn bám vào câu "giờ nào tụt so với tháng trước" (−4 / −10) vì luật bắt chữ quá rộng ("so", "tháng trước"). Trân châu −1 / +1.
+- Bản vá: `db-fix/boom_l232_tran_chau_thang_truoc_khong_ap.patch`. Muốn làm lại: chỉ gắn dòng ước tháng trước khi câu hỏi CẢ dự báo / cuối tháng LẪN tháng trước / mức tháng N, đo bằng bộ kín mới.
