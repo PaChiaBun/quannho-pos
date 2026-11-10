@@ -776,7 +776,36 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
   if (n && nn(n.forgot_clock_out)) al.push(`${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra`);
   const alq = al.filter((x) => hopChuDe(x, question));
   if (alq.length) out.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi): ${alq.slice(0, 8).map((x, z) => `${z + 1}) ${x}`).join('; ')}.`);
+  out.push(...tiepThiTinhSan(question, ban, m));
   return out.join('\n');
+}
+
+/** lần 217 (kiểm toàn diện 10/11, lô 3 tiếp thị / khuyến mãi): hiểu "cho đắt" = đắt hàng; bài đăng có sẵn món + giá + mã thật; nhóm khách được hỏi. */
+export function tiepThiTinhSan(question: string, ban: ShopFacts | null, m: ModuleFacts | null): string[] {
+  const q = boDau(question.normalize('NFC')).toLowerCase().replace(/\s+/g, ' '), out: string[] = [];
+  // "sửa sao cho đắt" (2/2 lượt hiểu thành tăng giá)
+  if (/\b(?:cho|de|sao cho|the nao cho|lam sao cho) (?:ban )?dat\b(?! (?:qua|hon|gia|vay|the|ko|khong|lam|ne|nhi))|\bdat (?:hang|khach)\b/.test(q)) {
+    out.push('Ý câu hỏi: "cho đắt" / "đắt hàng" = BÁN CHẠY HƠN (khách mua nhiều hơn), KHÔNG phải tăng giá → câu đầu trả lời cách bán được nhiều hơn.');
+  }
+  // bài đăng chung chung, để trống "[Địa chỉ]" (1/2 lượt)
+  if (/\b(?:bai dang|bai post|viet bai|soan bai|dang (?:bai|fb|facebook|face|zalo|tiktok|insta)|caption|status|content)\b/.test(q)) {
+    const mon = (ban?.groups ?? []).flatMap((g) => g.top).filter((t) => t.price).sort((a, b) => b.qty - a.qty).slice(0, 3);
+    const act = arr(m?.khuyen_mai?.active);
+    const ma = act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` đến ${ss(x.end)}` : ''}`);
+    out.push(`Thông tin THẬT cho bài đăng (tính sẵn): món chủ lực ${mon.length ? mon.map((t) => `${t.name} ${vnd(t.price!)}`).join(', ') : '(chưa có giá món)'}; ${m?.khuyen_mai ? (ma.length ? `ưu đãi đang chạy: ${ma.join('; ')}` : 'quán CHƯA có mã nào đang chạy → KHÔNG đưa ưu đãi vào bài') : 'chưa đọc được mã giảm → KHÔNG đưa ưu đãi vào bài'} → bài viết dùng ĐÚNG món, giá${ma.length ? ', ưu đãi' : ''} này; thông tin không có (địa chỉ, số điện thoại) thì BỎ, KHÔNG để chỗ trống kiểu [Địa chỉ].`);
+  }
+  // nhóm khách được hỏi → việc làm phải nhắm đúng nhóm (1/2 lượt lạc sang quảng bá chung)
+  const nhom: [RegExp, string][] = [
+    [/\b(?:hoc sinh|hs|sinh vien|sv|hoc tro)\b/, 'học sinh / sinh viên — rảnh trước giờ học, giờ ra về, cuối tuần; nhạy giá, đi theo nhóm bạn'],
+    [/\b(?:van phong|cong so|nhan vien van phong|dan vp)\b/, 'dân văn phòng — mua sáng trước giờ làm, trưa 11–13h, đặt theo nhóm / giao tới toà'],
+    [/\b(?:tho|cong trinh|cong nhan|phu ho)\b/, 'thợ / công nhân công trình — ăn sáng sớm, trưa theo giờ nghỉ, đi theo tổ đội; cần no, nhanh, giá ổn'],
+    [/\b(?:gia dinh|phu huynh|tre em|em be)\b/, 'gia đình / phụ huynh — cuối tuần, buổi tối, đưa đón con'],
+  ];
+  const hit = nhom.find(([rx]) => rx.test(q));
+  if (hit && /\b(?:keo|thu hut|quang ba|tiep thi|marketing|y tuong|khuyen mai|uu dai|giam|tang khach|them khach|khach moi)\b/.test(q)) {
+    out.push(`Nhóm khách được hỏi (kinh nghiệm chung): ${hit[1]} → MỌI việc làm phải nhắm đúng nhóm này (chỗ họ ở, giờ họ rảnh khớp giờ quán mở), KHÔNG lạc sang quảng bá chung / món thêm cho khách đang có.`);
+  }
+  return out;
 }
 
 /** Kiểm số liệu app gửi: sai kiểu / quá dài → bỏ cả khối (GPT tư vấn chung như cũ). */
@@ -1277,10 +1306,12 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
   // 06/11: ngày 0 đơn vẫn viết đủ Vì sao / Việc tuần này, bảo rà nguyên liệu và nhập giá vốn
   // 09/11 web Demo (lần 162): Thứ 2 trưa "tuần này so tuần trước" 0 đơn → "giảm 100%" và khuyên ẩn hết món chưa bán
-  const kyChayKhongDon = f.orders === 0 && /^(?:Tuần này|Tháng này)/.test(f.period.normalize('NFC')) && !chiHoiThoiTiet(question);
+  // lần 217c (Demo 10/11: "viết bài đăng fb hôm nay" lúc chưa có đơn → chỉ báo "chưa có đơn", không viết bài): câu xin viết không áp hai luật này
+  const xv = xinViet(question);
+  const kyChayKhongDon = f.orders === 0 && /^(?:Tuần này|Tháng này)/.test(f.period.normalize('NFC')) && !chiHoiThoiTiet(question) && !xv;
   if (kyChayKhongDon && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
     lines.push(`KỲ NÀY CHƯA CÓ ĐƠN NÀO (tới giờ này): chỉ trả lời 1–2 câu: nói ${f.period} chưa có đơn nào tới giờ này, nêu số của kỳ so sánh nếu có (trung bình mỗi ngày), rồi hỏi quán đã mở bán chưa hay bán ngoài app. KHÔNG nói "giảm 100%", KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG khuyên ẩn món, bỏ món hay nhập hàng vì "chưa bán".`);
-  } else if (motNgayKy && f.orders === 0 && !chiHoiThoiTiet(question) && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
+  } else if (motNgayKy && f.orders === 0 && !chiHoiThoiTiet(question) && !xv && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
     lines.push('NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu: nói ngày đó 0đ, 0 đơn (nếu là hôm nay thì "tới giờ này"), nêu số của kỳ so sánh nếu có, rồi hỏi quán có nghỉ hay bán ngoài app không. KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG nhắc món, giá vốn, nguyên liệu.');
   }
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
@@ -1728,11 +1759,23 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
 }
 
 /** Câu trả lời hiển thị dạng chữ thường: bỏ ký hiệu định dạng (**đậm**, # tiêu đề) GPT hay chèn. */
+/** lần 217b (Demo 10/11: bài đăng "Giờ mở cửa: [giờ mở]" — chủ quán chép nguyên lên mạng): bỏ chỗ trống [..] mô hình để lại.
+ *  Dòng chỉ còn "nhãn: [..]" → bỏ cả dòng; chỗ trống giữa câu → bỏ cùng giới từ đứng trước. Chỉ chỗ trống chữ (không số, ≤ 30 ký tự). */
+export function boChoTrong(answer: string): string {
+  const ct = String.raw`\[[\p{L} /]{2,30}\]`;
+  return answer
+    .split('\n')
+    .filter((d) => !new RegExp(String.raw`^\s*[-•]?\s*[\p{L}\p{M} ]{0,30}:\s*${ct}\s*[.!]?\s*$`, 'u').test(d))
+    .map((d) => (new RegExp(ct, 'u').test(d) ? d.replace(new RegExp(String.raw`\s*(?:tại|ở|số|gọi|liên hệ|hotline|địa chỉ)?\s*${ct}`, 'giu'), '').replace(/\s+([.,!])/g, '$1') : d))
+    .join('\n');
+}
+
 /** Người hỏi không nêu kỳ mà câu trả lời có số bán hàng, chưa nói kỳ thì mã ghi thêm một câu.
  *  06/11: chỉ 28/96 câu nói kỳ; bắt mô hình nói kỳ làm tư vấn tụt (chấm mù 45 câu −0,38 ± 0,33) nên không dặn trong lời nhắc. */
 /** 08/11 (QC 07/11 còn sót): việc "ưu đãi 14–17h" không nói cách áp, mà mã giảm của app không giới hạn theo giờ.
  *  Đo trên câu đã lưu: 33/368 và 27/126 câu dính. Hình thức nên sửa bằng mã (gắn 1 câu vào dòng đầu dính), không bắt viết lại. */
 export function ghiApTay(answer: string): string {
+  answer = boChoTrong(answer);
   const i = answer.search(/việc (?:tuần này|làm|nên làm|cần làm)/iu);
   if (i < 0) return answer;
   const het = answer.slice(i).search(/\n\s*(?:cần xem lại|lưu ý|ghi chú)/iu);
@@ -1748,12 +1791,15 @@ export function ghiApTay(answer: string): string {
   return answer.slice(0, i) + phan.replace(dong, dong.replace(/\s*$/, '') + them) + answer.slice(i + phan.length);
 }
 
+/** Câu xin VIẾT nội dung (bài đăng, tin nhắn, caption…) — không phải hỏi số liệu. */
+export const xinViet = (question: string) => /\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question));
+
 export function ghiKy(answer: string, nhan: string | undefined, question: string, now: Date = new Date()): string {
   if (!nhan || coNeuKy(question, now)) return answer;
   // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
   if (/\b(?:kho|ton|con lai|con bao nhieu|sap het|hien tai|bay gio|lam sao|o dau|the nao|cach)\b/.test(boDau(question))) return answer;
   // 09/11 web Demo: bài đăng Facebook bị gắn "Số trên là của tháng này…" ở cuối, chủ quán chép nguyên lên mạng
-  if (/\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question))) return answer;
+  if (xinViet(question)) return answer;
   // \b không dùng được sau "đ" (JS coi đ không phải chữ)
   if (!/\d[\d.,]*\s*(?:đ(?!\p{L})|đồng|đơn|phần|ly(?!\p{L})|khách|triệu|%)/iu.test(answer)) return answer;
   const dau = nhan.split('(')[0].trim().toLowerCase();

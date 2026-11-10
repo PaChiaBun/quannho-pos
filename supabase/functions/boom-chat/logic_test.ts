@@ -2254,3 +2254,32 @@ Deno.test('lần 216: vay — tính sẵn tiền góp, số tháng', () => {
   assertEquals(v('tháng này thu chi thế nào'), '');
   assertEquals(v('vay 50tr được ko'.replace('50tr', '')), '');
 });
+
+// lần 217: tiếp thị — "cho đắt" = đắt hàng, bài đăng có món + giá + mã thật, nhóm khách
+Deno.test('lần 217: tiếp thị tính sẵn', () => {
+  const a = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_a.json', import.meta.url)));
+  const f = L.parseFacts(a.facts.thang_nay), m = L.parseModules({ ...a.modules.thang_nay });
+  assertStringIncludes(L.tiepThiTinhSan('combo bán ít quá, sửa sao cho đắt', f, m).join(), 'BÁN CHẠY HƠN');
+  assertEquals(L.tiepThiTinhSan('giá cà phê có đắt quá không', f, m), []);
+  assertStringIncludes(L.tiepThiTinhSan('viết giùm bài đăng fb sáng nay', f, m).join(), 'ưu đãi đang chạy: SANGVUI giảm 10% đơn từ 40.000đ');
+  assertStringIncludes(L.tiepThiTinhSan('lam sao keo them hs moi', f, m).join(), 'học sinh / sinh viên');
+  assertEquals(L.tiepThiTinhSan('học sinh mua món gì nhiều nhất', f, m), []);
+});
+
+// lần 217b: bỏ chỗ trống [..] trong câu trả lời (bài đăng Demo "Giờ mở cửa: [giờ mở]")
+Deno.test('lần 217b: bỏ chỗ trống', () => {
+  assertEquals(L.boChoTrong('Mời Anh ghé quán nhé.\nGiờ mở cửa: [giờ mở]'), 'Mời Anh ghé quán nhé.');
+  assertEquals(L.boChoTrong('Ghé quán tại [Địa chỉ] nhé!'), 'Ghé quán nhé!');
+  assertEquals(L.boChoTrong('Đặt món gọi [số điện thoại].'), 'Đặt món.');
+  assertEquals(L.boChoTrong('Doanh thu tăng 5% [1].\nViệc tuần này: a , b'), 'Doanh thu tăng 5% [1].\nViệc tuần này: a , b');
+  assertEquals(L.ghiApTay('Bài: [Tên quán] mời bạn.'), 'Bài: mời bạn.');
+});
+
+// lần 217c: câu xin viết bài lúc hôm nay chưa có đơn không bị luật "chỉ báo chưa có đơn"
+Deno.test('lần 217c: xin viết bài khi 0 đơn', () => {
+  const a = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_a.json', import.meta.url)));
+  const f = { ...L.parseFacts(a.facts.thang_nay)!, period: 'Hôm nay', orders: 0, revenue: 0 };
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  assert(!L.formatFacts(f, now, 'viet giup bai dang fb hom nay').includes('NGÀY NÀY KHÔNG CÓ ĐƠN'));
+  assertStringIncludes(L.formatFacts(f, now, 'hom nay ban duoc bao nhieu'), 'NGÀY NÀY KHÔNG CÓ ĐƠN');
+});

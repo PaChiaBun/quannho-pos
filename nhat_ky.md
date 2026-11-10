@@ -13,7 +13,11 @@
 - ✅ Kiểm toàn diện (`.docs/kiem-toan-dien-boom-10-11.md`): sổ thật từ 06/11 không có lượt nào; bộ kín mới de_kin9 85/104 dùng được, 13,83/16; yếu tiếp thị, thu chi, thời tiết, khuyến mãi.
 - ✅ Lần 215 ĐÃ ÁP 10/11 19:46 (TS 20261110_194619): sửa 3 dòng số tính sẵn (nhãn lương dưới mốc, số phần khung giờ cả kỳ, khoảng giá combo) + nhận "bn phần". Chấm mù 104 cặp: tổng +0,04 ± 0,36, thời tiết +1,75 ± 1,42. Demo: "mai nau bn phan banh mi" → ~23 phần / ngày. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l215_ap_dung.sh 20261110_194619`.
 - ✅ Lần 216 ĐÃ ÁP 10/11 20:02 (TS 20261110_200248): câu vay / trả nợ có dòng "Trả nợ (tính sẵn)" (tiền góp so thu − chi / tháng, số tháng, "vay phần còn lại", lãi %/năm). Chấm mù 26 cặp (12 câu vay người ngoài viết + T43): +1,85 ± 0,85. Demo (Thu Chi chưa ghi chi): Boom tính 50tr / 12 tháng ≈ 4,17tr gốc, nói chưa đủ số kết luận. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l216_ap_dung.sh 20261110_200248`.
-- ➡️ Lô 3 (tiếp thị / khuyến mãi), lô 4 (đường đi trong app, cần bản mới).
+- ✅ Lần 217 ĐÃ ÁP 10/11 20:13 (TS 20261110_201343): tiếp thị — bài đăng có món + giá + mã thật, nhóm khách được hỏi, "cho đắt" = đắt hàng. Chấm mù 28 cặp +1,43 ± 0,92 (bài đăng +3,88). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l217_ap_dung.sh 20261110_201343`.
+- ✅ Lần 217b ĐÃ ÁP 10/11 20:19 (TS 20261110_201910): `boChoTrong()` bỏ chỗ trống [..] (Demo sau 217 ra "Giờ mở cửa: [giờ mở]"; soát 446 câu: chạm 4, đều đúng).
+- ⚠️ Demo sau 217b: "viết bài đăng fb hôm nay" lúc 0 đơn → chỉ báo "chưa có đơn". Lần 217c ĐÃ ÁP 10/11 20:22 (TS 20261110_202242): câu xin viết không áp luật 0 đơn (thử 4 quán: cũ 2/4 không viết, mới 4/4). Demo: đã viết bài, không chỗ trống, nhưng nhạt (hôm nay 0 đơn → không có món / giá). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l217c_ap_dung.sh 20261110_202242`.
+- ➡️ Máy chủ đọc thực đơn (món + giá, chỉ đọc, JWT người hỏi) cho câu xin viết khi số kỳ trống.
+- ➡️ Lô 4 (đường đi trong app, cần bản mới); mở rộng nhận câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới).
 
 ## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 214 ĐANG CHẠY (gọi song song none + low; 211, 213 đã hoàn tác); 188, 189, 196, 198, 200, 202 bỏ; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)
 

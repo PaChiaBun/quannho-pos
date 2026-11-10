@@ -74,3 +74,10 @@ Bản đo: máy chủ lần 214 (mã phân tích lần 207, `logic.ts` b0798ce),
 - Mã: `vayTinhSan()` trong `logic.ts` — dòng "Trả nợ (tính sẵn)": tiền góp / tháng so thu − chi / tháng (quy 30 ngày), tổng + kỳ hạn, "vay phần còn lại", lãi %/năm (đọc trên câu gốc), "gốc lãi".
 - Đo: bộ câu vay 12 câu do người ngoài viết (`de_vay.json`) + T43. Bản đầu (lấy số tiền đầu tiên) +0,77 ± 0,69 và người chấm bắt lỗi lấy sai khoản vay → viết lại; bản sửa **+1,85 ± 0,85** (26 cặp). Sau đó sửa lãi %/năm và "gốc lãi" (2 câu, có test, chưa đo lại).
 - Kịch bản: `db-fix/boom_l216_ap_dung.sh` (đã chạy chế độ kiểm).
+
+## 6. Lô 3 (lần 217, chưa áp)
+
+- Đếm lỗi trên bản 215 (16 câu tiếp thị / khuyến mãi, TB ~14,5): "sửa sao cho đắt" hiểu thành tăng giá 2/2; bài đăng chung chung, để trống [Địa chỉ] 1/2; quảng bá cho thợ công trình lạc sang quảng bá chung 1/2. Lỗi "giờ không hợp học sinh" của lần kiểm đầu không còn.
+- Mã: `tiepThiTinhSan()` — dòng "Thông tin THẬT cho bài đăng" (món + giá + mã đang chạy), "Nhóm khách được hỏi", "cho đắt = bán chạy hơn".
+- Đo: bộ `de_tiep_thi.json` 16 câu người ngoài viết (mã nhận 8) + 6 câu bộ kín cũ, 2 lượt: **+1,43 ± 0,92** (28 cặp); bài đăng +3,88, nhóm khách +0,69, đắt hàng −0,50 (4 cặp, bản mới hiểu đúng ý 2/2).
+- Chưa bắt: kịch bản clip TikTok, tin nhắn Zalo, câu "giữ chân" nhóm khách → lô sau, đo bằng bộ mới.
