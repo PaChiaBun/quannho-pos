@@ -268,3 +268,9 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 - Như lần 232, nhưng dòng ước cả tháng trước chỉ gắn khi câu hỏi CẢ tháng / cuối tháng / dự báo LẪN tháng trước / tháng N (`hoiCaThangVoiTruoc`, đọc trên chữ bỏ dấu).
 - Bộ kín MỚI `cham_tu_van/thoi_tiet/de_kin13.json` (32 câu, 4 loại × 8: cả tháng so tháng trước, so tháng trước theo giờ / món, trung bình ngày, nấu nguyên liệu; người khác viết, Claude không đọc trước khi đo). Chấm mù 64 cặp (4 người chấm): câu bị chạm 22 cặp **+2,14 ± 1,48**; câu không chạm 42 cặp +0,50 ± 1,08; cả bộ +1,06 ± 0,89. Cả tháng so tháng trước (chạm) +3,33; so tháng trước theo giờ / món ±0 (hết bám sai).
 - Người chấm còn bắt: câu "tháng này có đạt tháng 9 không" bị coi là hỏi THÁNG KHÁC → mất dòng dự báo (lỗi có từ trước); ước tháng trước theo ngày lịch, quán nghỉ Chủ nhật lệch ~1 điểm %; câu "mục tiêu 130 triệu" bị đọc thành khoản vay; trân châu ở câu không có chữ hỏi số phần vẫn chỉ 13 phần; tháng sau có bao nhiêu ngày mở bán chưa tính sẵn.
+
+## 24. Lần 233 (chưa áp)
+
+- Ước thô cả tháng khi kỳ tháng < 14 ngày (Demo ngày 11 nói "có khả năng vượt" khi đang giảm 3,3%) — chỉ thử được trên Demo vì quán mẫu là ngày 28; câu "tháng này có đạt tháng 9 không" không còn bị coi là hỏi tháng khác; "muốn đạt 130 triệu" không còn bị đọc thành vay (câu có dấu đọc trên chữ gốc); ước cả tháng trước theo ngày mở bán (quán nghỉ Chủ nhật).
+- Bộ kín MỚI `de_kin14.json` (24 câu: mục tiêu tiền, so tháng N, vay thật; người khác viết). Chấm mù 48 cặp: câu bị chạm 14 cặp **+1,79 ± 1,89** (so tháng N +3,75; mục tiêu tiền −0,83 trên 6 cặp); không chạm +0,21; cả bộ +0,67 ± 0,73. Vay thật không bị chạm (không hại).
+- Người chấm bắt lỗi vay có sẵn: tiền góp "2,5 triệu/tháng" trong câu bị đọc sai (~278.000đ); vay có lãi chỉ chia gốc; vay nóng trả MỘT LẦN bị chia như trả góp; nợ trả cuối tháng bị coi là trả góp.

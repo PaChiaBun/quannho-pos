@@ -2461,7 +2461,7 @@ Deno.test('lần 232: trân châu, cả tháng trước, ngày mở bán', () =>
   const now = new Date('2026-10-28T09:00:00+07:00');
   assertStringIncludes(L.formatFacts(ld('b'), now, 'mai nên nấu bao nhiêu trân châu'), 'Trà sữa trân châu đường đen ~32 phần / ngày → mốc nấu phải cộng');
   const t = L.formatFacts(ld('b'), now, 'dự báo cả tháng này so với tháng trước');
-  assertStringIncludes(t, 'chỉ là 28 ngày đầu tháng trước');
+  assertStringIncludes(t, 'chỉ là phần đầu tháng trước (28 ngày mở bán)');
   assertStringIncludes(t, '~145.705.000đ');
   assertStringIncludes(L.formatFacts(ld('a'), now, 'trung bình mỗi ngày bán được bao nhiêu'), 'trung bình mỗi ngày CÓ MỞ BÁN: 4.095.000đ/ngày (23 ngày)');
   assert(!L.formatFacts(ld('c'), now, 'trung bình mỗi ngày bán được bao nhiêu').includes('CÓ MỞ BÁN'));
@@ -2473,4 +2473,24 @@ Deno.test('lần 232b: chỉ câu cả tháng với tháng trước', () => {
   assert(L.hoiCaThangVoiTruoc('het thang chac vuot thang roi ko'));
   assert(!L.hoiCaThangVoiTruoc('giờ nào tụt so với tháng trước, trưa hay tối'));
   assert(!L.hoiCaThangVoiTruoc('thang nay ban dc nhiu roi, du tinh het thang dc bn'));
+});
+
+// lần 233: ước thô đầu tháng, "đạt tháng 9" vẫn là câu tháng này, "muốn" không phải "mượn", ngày mở bán tháng trước
+Deno.test('lần 233: đầu tháng, tháng N làm mốc, muốn ≠ mượn', () => {
+  const ld = (k: string) => L.parseFacts(JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  assertEquals(L.vayTinhSan('Tháng này muốn đạt 130 triệu thì mỗi ngày bán bao nhiêu', 130_000_000, 100_000_000, 30), '');
+  assert(L.vayTinhSan('vay 50tr', 130_000_000, 100_000_000, 30) !== '');
+  assert(L.vayTinhSan('muon tien 50tr tra moi thang', 130_000_000, 100_000_000, 30) !== '');
+  const t = L.formatFacts(ld('b'), now, 'tháng này có đạt lại mức tháng 9 không');
+  assertStringIncludes(t, 'Dự báo cả tháng');
+  assert(!t.includes('Câu hỏi về tháng khác'));
+  // quán a nghỉ một thứ → ước tháng 9 theo ngày mở
+  assertStringIncludes(L.formatFacts(ld('a'), now, 'dự báo cả tháng này so với tháng trước'), 'ngày mở bán, theo trung bình');
+  // kỳ đầu tháng (ngày 11) có ước thô
+  const b = ld('b'), nt = new Date('2026-10-11T09:00:00+07:00');
+  const f11 = { ...b, to: '2026-10-11', prev_to: '2026-09-11', by_day: undefined, revenue: 50_000_000, prev_revenue: 52_000_000 };
+  const u = L.formatFacts(f11, nt, 'du bao het thang nay co vuot thang truoc khong');
+  assertStringIncludes(u, 'Ước thô cả tháng (tính sẵn');
+  assertStringIncludes(u, 'KHÔNG nói "có khả năng vượt tháng trước"');
 });
