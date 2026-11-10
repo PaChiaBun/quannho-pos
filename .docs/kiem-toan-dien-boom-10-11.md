@@ -358,3 +358,10 @@ Nội dung lên 10/12 (lần 5: 6/12), khuyến mãi 9/12 (5/12). Tiêu chí th�
 6. Mốc số phần ghi "× 0,4" nhưng tính bằng 0,44 (hệ số ghi làm tròn).
 
 **Kế hoạch lô G:** (a) sửa 1–5; (b) kho: hàng đã hết + quán đang mở → dòng tính sẵn "nhập ngay hôm nay X" cả ở câu thời tiết; hao hụt / ngày tính sẵn; (c) giá trên sàn khi câu có phí: giá mới giữ lời; (d) mã đang chạy cho nhóm khách được hỏi (HSSV…) nêu rõ "đã có mã X". Đo bằng bộ kín mới theo loại câu đích.
+
+## 29. Lô G — lần 236 (ĐÃ ÁP 11/11 02:15, TS 20261111_021527)
+
+- `khungHoi`: "5 giờ tới 9 giờ tối", "4h–8h" khi khung sáng không bán → cộng 12 (phân biệt "tới" / "tối" trên chữ có dấu). Dòng người làm trong khối thời tiết: đơn / giờ nhân hệ số thứ của ngày được hỏi (Thứ 7 ×1,3…); `soVoiLich` ≥ 1,2 lần = "nặng hơn thường". Mua X tặng MÓN KHÁC có số ("mua 2 ly cà phê tặng 1 bánh mì") → tính theo món khác, mức giảm theo giá món tặng (không phải 33%); câu có số chỉ nhận tên món nằm trọn trong câu; món tặng không có trong menu → không tính kiểu tặng cùng món. Combo không lấy món combo có sẵn làm một vế. Kho trong khối thời tiết: hàng ĐÃ HẾT → nhập ngay hôm nay. Bán qua sàn: giá trên sàn giữ lời = giá ÷ (1 − phí). Hỏi nhóm học sinh / sinh viên mà đã có mã HS/SV → nêu mã đang có, không đề xuất mã mới. So cuối tuần ghi đúng ngày có bán (quán nghỉ Chủ nhật).
+- Bộ kín MỚI `de_kin19.json` (30 câu: kho hết, giờ ca, giá sàn, nhóm khách, tặng món). Chấm mù 60 cặp: câu bị chạm 26 cặp **+1,15 ± 0,94**; giờ ca +1,4, giá sàn +0,88; không chạm −0,44 ± 0,66.
+- Sau chấm sửa (có test, chưa đo lại bằng GPT): "trân châu đường đen" khớp nhầm topping "Trân châu đen" (giảm 68%); "tặng 1 trà tắc" tính như tặng bạc xỉu; "Chủ nhật có bán" khi quán nghỉ Chủ nhật.
+- Còn thấy: Boom vẫn né giá sàn ở vài câu dù có dòng; ước lượng hàng cần nhập từ số ly bán / ngày chưa có dòng.

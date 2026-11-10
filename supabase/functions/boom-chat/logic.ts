@@ -648,7 +648,7 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
         `${nn(k.low_count)} mặt hàng ở / dưới mức tối thiểu, trong đó ${nn(k.out_count)} đã hết.` +
         (low.length ? ` Sắp hết / hết: ${low.map((x) => `${ss(x.name)} còn ${qty(x.qty)} ${ss(x.unit)} (tối thiểu ${qty(x.min)})`).join('; ')}.` : '') +
         // lần 235 (kiểm lần 5: lúc 9h quán đang bán vẫn dặn "nhập trước khung 6h–13h"; hết ly / than không nói nhập ngay): giờ hiện tại
-        (low.length && /h[eế]t|nh[aậ]p|thi[eế]u|c[oò]n (?:đ[uủ]|bao)|kho|b[aá]n sao/iu.test(question) ? ` Bây giờ là ${new Date(now.getTime() + 7 * 3600_000).getUTCHours()}h: món ĐÃ HẾT mà quán đang / sắp bán → nhập NGAY hôm nay (nói số lượng tối thiểu cần nhập = mức tối thiểu − còn lại) và cách xoay tạm trong lúc chờ; KHÔNG dặn "nhập trước giờ mở" khi đã qua giờ mở, KHÔNG khuyên ngưng món chủ lực.` : ''),
+        (low.length && /h[eế]t|nh[aậ]p|thi[eế]u|c[oò]n (?:đ[uủ]|bao)|kho|b[aá]n sao|than|gas|đ[aá] (?:vi[eê]n|c[aâ]y)/iu.test(question) ? ` Bây giờ là ${new Date(now.getTime() + 7 * 3600_000).getUTCHours()}h: món ĐÃ HẾT mà quán đang / sắp bán → nhập NGAY hôm nay (nói số lượng tối thiểu cần nhập = mức tối thiểu − còn lại) và cách xoay tạm trong lúc chờ; KHÔNG dặn "nhập trước giờ mở" khi đã qua giờ mở, KHÔNG khuyên ngưng món chủ lực.` : ''),
     );
     out.push(
       `Nhập hàng trong kỳ: ${nn(k.imports)} phiếu${k.import_total !== undefined ? `, tổng ${vnd(nn(k.import_total))}` : ''}.` +
@@ -771,6 +771,10 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
   const p = m.khuyen_mai;
   if (p) {
     const act = arr(p.active), used = arr(p.used);
+    // lần 236 (kiểm lần 6: hỏi giữ / kéo học sinh mà đề xuất mã học sinh mới khi đã có HSSV10): mã đang chạy cho nhóm khách được hỏi
+    const nhomQ = boDau(question.normalize('NFC')).toLowerCase();
+    const maNhom = /\b(?:hoc sinh|sinh vien|hs|sv|hssv|hoc tro)\b/.test(nhomQ) ? act.filter((x) => /HS|SV|HOC|STU/i.test(ss(x.code))) : [];
+    if (maNhom.length) out.push(`Quán ĐÃ có mã cho học sinh / sinh viên: ${maNhom.map((x) => { const u = used.find((y) => ss(y.code) === ss(x.code)); return `${ss(x.code)}${u ? ` (dùng ${nn(u.times)} lượt, giảm ${vnd(nn(u.discount))})` : ''}`; }).join(', ')} → KHÔNG đề xuất mã học sinh mới; nói về mã đang có (giữ / chỉnh mức / nhắc khách dùng).`);
     out.push(
       `[KHUYẾN MÃI — ${ss(p.period)}] ${nn(p.active_count) > 0 ? `${nn(p.active_count)} mã đang chạy` : 'Quán CHƯA có mã nào đang chạy (đã đọc đủ danh sách mã, không phải thiếu số)'}` +
         (act.length ? `: ${act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` hết hạn ${ss(x.end)}` : ''}`).join('; ')}` : '') + '.',
@@ -1106,7 +1110,7 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
   // lần 194: thêm ướp / pha / nướng (lần 193: "ướp bao nhiêu sườn" ở quán đã hết than không gắn)
   if (/chuan bi|nhap|\bhang\b|giao|mang (?:ve|di)|\bship|ban gi|nau|\buop\b|\bpha\b|nuong|quang cao|dat them|\bdu (?:ban|dung)|mon (?:gi|nao)/.test(q)) {
     const thieu = arr(modules?.kho?.low).filter((x) => nn(x.qty) < nn(x.min) / 2).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min)));
-    if (thieu.length) lines.push(`Kho trước ${ngay.length > 1 ? 'các ngày này' : nhan(ngay[0]).toLowerCase()}: ${thieu.slice(0, 3).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'ĐÃ HẾT' : `còn ${qty(x.qty)} ${ss(x.unit)}`} (tối thiểu ${qty(x.min)})`).join('; ')} → nhập trước, nếu không thì chuẩn bị theo dự báo cũng không bán được món cần hàng này.`);
+    if (thieu.length) lines.push(`Kho trước ${ngay.length > 1 ? 'các ngày này' : nhan(ngay[0]).toLowerCase()}: ${thieu.slice(0, 3).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'ĐÃ HẾT' : `còn ${qty(x.qty)} ${ss(x.unit)}`} (tối thiểu ${qty(x.min)})`).join('; ')} → nhập trước, nếu không thì chuẩn bị theo dự báo cũng không bán được món cần hàng này.${thieu.some((x) => nn(x.qty) <= 0) ? ` Hàng ĐÃ HẾT (${thieu.filter((x) => nn(x.qty) <= 0).map((x) => ss(x.name)).join(', ')}) mà quán đang / sắp bán HÔM NAY → việc ĐẦU TIÊN là nhập ngay hôm nay (không để "ngày mai"), kèm cách xoay tạm trong lúc chờ.` : ''}`); // lần 236 (kiểm lần 6: than hết lúc 9h mà dặn nhập "ngày mai")
   }
   // 179 (lô D): hỏi người làm / ca → số đơn mỗi giờ trong khung mưa (hoặc giờ đông khi không mưa), từ doanh thu theo giờ ÷ giá trị TB một đơn
   const NGUOI = /nguoi|nhan vien|\bnv\b|\bca (?:sang|trua|chieu|toi)|thue|phuc vu|giao hang|shipper|tang ca\b|them ca\b/; // \b: "thêm canh" không phải "thêm ca"
@@ -1140,8 +1144,12 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
         ds = gioDong;
       }
       if (!ds.length) { if (caHoi) lines.push(`${nhan(i)} — người làm: ${ten} quán gần như không có đơn trong kỳ.`); continue; }
-      const dinh = ds.reduce((a, h) => (donGio(h) > donGio(a) ? h : a), ds[0]);
-      const tb = ds.reduce((a, h) => a + donGio(h), 0) / ds.length;
+      // lần 236 (kiểm lần 6: Thứ 7 / Chủ nhật dùng đơn/giờ trung bình MỌI ngày → "ngang mức thường, không thêm người" dù cuối tuần gấp 1,7): nhân hệ số thứ của ngày đó
+      const cntW = weekdayCounts(f.from, f.to), wdH = wdOf(w.ngay[i].ngay), tbNgayAll = moBan > 0 ? f.revenue / moBan : 0;
+      const he = f.by_weekday && cntW && cntW[wdH] > 0 && f.by_weekday[wdH] > 0 && tbNgayAll > 0 ? (f.by_weekday[wdH] / cntW[wdH]) / tbNgayAll : 1;
+      const dg = (h: number) => donGio(h) * he;
+      const dinh = ds.reduce((a, h) => (dg(h) > dg(a) ? h : a), ds[0]);
+      const tb = ds.reduce((a, h) => a + dg(h), 0) / ds.length;
       const trungMua = caHoi && mua ? (ds.some((h) => h >= mua.tu && h < mua.den) ? `; khung dễ mưa ${mua.tu}–${mua.den}h TRÙNG ca này` : `; khung dễ mưa ${mua.tu}–${mua.den}h không trùng ca này`) : caHoi && k ? '; giờ buôn bán ít khả năng mưa' : '';
       // lần 184 (chấm mù 183: có đơn/giờ nhưng chưa nối ra "cần mấy người"): mức quán vẫn làm = đơn ÷ giờ công cả kỳ (chấm công)
       const ns = modules?.nhan_su as Record<string, unknown> | undefined;
@@ -1159,15 +1167,15 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
       const coMat = lichNs.filter((p) => typeof p.thu === 'string' && p.thu.includes(String(wdI)) && ds.some((h) => h >= Number(p.vao) && h < Number(p.ra)));
       // không ai thì nói "chưa thấy ai thường làm", không ghi "0 người" (dễ hiểu thành quán bỏ trống ca)
       const thuongCo = !lichNs.length ? '' : coMat.length
-        ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)${gioTrong(ds, coMat, donGio)}`
+        ? `; ${THU_DAI[wdI]} khung này quán thường có ${coMat.length} người: ${coMat.map((p) => `${p.name} (${p.vao}–${p.ra}h)`).join(', ')} (theo chấm công)${gioTrong(ds, coMat, dg)}`
         : `; chấm công trong kỳ chưa thấy ai thường làm khung này vào ${THU_DAI[wdI]}`;
       // lần 189 (chấm mù 188: Boom có "tương đương ~4,6 người" và "thường có 1 người" mà không so): phép so tính sẵn.
       // lần 190 (189 thêm vế thì mất điểm gọn): có phép so thì THAY vế "tương đương ~X người", dòng không dài thêm
       // lần 191 (Demo 190: lịch chỉ phủ nửa khung → chia cả khung ra "NẶNG HƠN THƯỜNG", Boom khuyên 2 người): chỉ so trên giờ có người; giờ trống đã có KHOẢNG TRỐNG
       const soNg = (h: number) => coMat.filter((p) => h >= Number(p.vao) && h < Number(p.ra)).length;
       const coNg = ds.filter((h) => soNg(h) > 0);
-      const soLich = canNguoi && lichNs.length ? (coNg.length ? soVoiLich(coNg.reduce((a, h) => a + donGio(h), 0) / coNg.length, coNg.reduce((a, h) => a + soNg(h), 0) / coNg.length, nangSuat) : soVoiLich(tb, 0, nangSuat)) : '';
-      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(donGio(dinh))} đơn (TB ${moBan} ngày mở bán, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${soLich ? '' : canNguoi}${thuongCo}${soLich} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
+      const soLich = canNguoi && lichNs.length ? (coNg.length ? soVoiLich(coNg.reduce((a, h) => a + dg(h), 0) / coNg.length, coNg.reduce((a, h) => a + soNg(h), 0) / coNg.length, nangSuat) : soVoiLich(tb, 0, nangSuat)) : '';
+      lines.push(`${nhan(i)} — người làm: ${ten} quán thường ~${pctTxt(tb)} đơn/giờ, đông nhất ${dinh}h ~${pctTxt(dg(dinh))} đơn (TB ${moBan} ngày mở bán${Math.abs(he - 1) >= 0.1 ? ` × ${pctTxt(Math.round(he * 100) / 100)} vì ${THU_DAI[wdH]} thường bán ${pctTxt(Math.round(he * 100) / 100)} lần ngày trung bình` : ''}, ${Math.round(tbDon / 1000)}k/đơn)${trungMua}${soLich ? '' : canNguoi}${thuongCo}${soLich} → xếp người theo số đơn này, không thêm người chỉ vì dự báo.`);
     }
   }
   // lần 193 (chấm mù 188–192: "nấu bao nhiêu" Boom nói "chưa có số bán theo ngày", không ra số phần): mốc phần món của ngày được hỏi
@@ -1232,6 +1240,12 @@ export function khungHoi(f: ShopFacts, question: string): string {
     const m = /\b(?:mo|dong|ve som|nghi|bo|cat|giu)\b[^.?]{0,25}?\b(\d{1,2})\s*(?:h|gio)\b|\b(\d{1,2})\s*(?:h|gio)\b[^.?]{0,25}?\b(?:mo|dong|ve som|nghi|bo|cat|giu)\b/.exec(q);
     if (m) { a = +(m[1] ?? m[2]); b = a + 1; }
   }
+  // lần 236 (kiểm lần 6: "5 giờ tới 9 giờ" tối hiểu thành 5–9h sáng): nói chiều / tối, hoặc khung sáng không bán mà khung +12h có bán → cộng 12
+  const ban = (x: number, y: number) => h.slice(x, y).reduce((s, v) => s + v, 0);
+  // "tới" và "tối" bỏ dấu đều là "toi": câu có dấu đọc trên chữ gốc; câu không dấu bỏ "N giờ toi M" (nghĩa là tới) rồi mới tìm
+  const buoiSau = /[^\x00-\x7F]/.test(question) ? /chiều|tối|đêm/iu.test(question) : /\b(?:chieu|toi|dem)\b/.test(q.replace(/\d+\s*(?:h|gio)?\s*toi\s*\d+/g, ''));
+  if (a < 12 && b <= 12 && (buoiSau || (ban(a, b) <= h.reduce((s, v) => s + v, 0) * 0.005 && ban(a + 12, Math.min(24, b + 12)) > 0))) { a += 12; b = Math.min(24, b + 12); }
+  else if (a < 12 && b > 12 && b < a + 12 && /\b(?:toi|dem)\b/.test(q)) { /* "11h đến 14h" vẫn là trưa */ }
   if (a < 0 || a > 23 || b <= a || b > 24) return '';
   const tong = h.reduce((x, v) => x + v, 0), t = h.slice(a, b).reduce((x, v) => x + v, 0), n = ngayMoBan(f);
   const gio = b - a === 1 ? `giờ ${a}h (${a}:00–${a}:59)` : `khung ${a}–${b}h (các giờ ${Array.from({ length: b - a }, (_, i) => `${a + i}h`).join(', ')}; KHÔNG gồm ${b}h)`;
@@ -1296,7 +1310,7 @@ export function mocSoPhan(f: ShopFacts, question: string, moBan: number, heSo: n
 export function soVoiLich(donGioCa: number, lich: number, nangSuat: number): string {
   if (lich < 0.5) return '; SO VỚI LỊCH: khung này gần như không ai thường làm';
   const k = donGioCa / lich / nangSuat;
-  return `; SO VỚI LỊCH: ~${pctTxt(lich)} người thường làm cùng lúc → mỗi người ~${pctTxt(donGioCa / lich)} đơn/giờ, gấp ~${pctTxt(k)} lần mức cả kỳ (~${pctTxt(nangSuat)} đơn/giờ công) → ${k >= 1.5 ? 'NẶNG HƠN THƯỜNG' : k <= 0.67 ? 'nhẹ hơn thường' : 'ngang mức thường'}`;
+  return `; SO VỚI LỊCH: ~${pctTxt(lich)} người thường làm cùng lúc → mỗi người ~${pctTxt(donGioCa / lich)} đơn/giờ, gấp ~${pctTxt(k)} lần mức cả kỳ (~${pctTxt(nangSuat)} đơn/giờ công) → ${k >= 1.5 ? 'NẶNG HƠN THƯỜNG' : k >= 1.2 ? 'nặng hơn thường (cân nhắc thêm 1 người giờ đông nhất)' : k <= 0.67 ? 'nhẹ hơn thường' : 'ngang mức thường'}`;
 }
 // lần 187 (Demo sau 186: Boom nêu "Tâm đến 15h, Hà từ 17h" mà không nói 15–17h trống): giờ bán trong khung không ai thường làm, gộp thành đoạn liền
 export function gioTrong(ds: number[], coMat: Record<string, unknown>[], donGio: (h: number) => number): string {
@@ -1630,7 +1644,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     }
     if (/cu[oố]i tu[aầ]n|ng[aà]y th[uư][oờ]ng/i.test(question) && thuong > 0 && cuoi > 0) {
       const thap = [...days.slice(0, 5)].filter((x) => x.v > 0 && x.n).sort((a, b) => a.v / a.n! - b.v / b.n!)[0];
-      lines.push(`So cuối tuần – ngày thường (tính sẵn): ngày thường (Thứ 2–6) trung bình ${vnd(thuong)}/ngày, cuối tuần (Thứ 7, Chủ nhật có bán) trung bình ${vnd(cuoi)}/ngày → cuối tuần ${cuoi >= thuong ? `GẤP ${pctTxt(Math.round((cuoi / thuong) * 10) / 10)} lần` : `chỉ bằng ${Math.round((cuoi / thuong) * 100)}%`} ngày thường (${cuoi >= thuong ? 'hơn' : 'kém'} ${vnd(Math.abs(cuoi - thuong))}/ngày). Khối KHÔNG có số đơn theo thứ → KHÔNG nói chênh do số đơn hay giá trị đơn. Việc: ${cuoi >= thuong ? `(1) xếp thêm người và chuẩn bị nguyên liệu cho ${cuoi >= thuong * 1.3 ? 'Thứ 7, Chủ nhật' : 'cuối tuần'} theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) KHÔNG ưu đãi cuối tuần (đã đông) — ưu đãi khung vắng ngày yếu nhất (${thap.d}); mốc đo: ${thap.d} lên ≥ ${vnd(Math.round((thap.v / thap.n! + thuong) / 2 / 1000) * 1000)}/ngày sau 4 tuần` : `(1) cuối tuần bớt người / nguyên liệu theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) một ưu đãi CHỈ cuối tuần, đo sau 4 tuần`}.`);
+      lines.push(`So cuối tuần – ngày thường (tính sẵn): ngày thường (Thứ 2–6) trung bình ${vnd(thuong)}/ngày, cuối tuần (${days.slice(5).filter((x) => x.v > 0).map((x) => x.d).join(', ')}${days[6].v > 0 ? '' : '; Chủ nhật quán NGHỈ'}) trung bình ${vnd(cuoi)}/ngày → cuối tuần ${cuoi >= thuong ? `GẤP ${pctTxt(Math.round((cuoi / thuong) * 10) / 10)} lần` : `chỉ bằng ${Math.round((cuoi / thuong) * 100)}%`} ngày thường (${cuoi >= thuong ? 'hơn' : 'kém'} ${vnd(Math.abs(cuoi - thuong))}/ngày). Khối KHÔNG có số đơn theo thứ → KHÔNG nói chênh do số đơn hay giá trị đơn. Việc: ${cuoi >= thuong ? `(1) xếp thêm người và chuẩn bị nguyên liệu cho ${days.slice(5).filter((x) => x.v > 0).map((x) => x.d).join(', ')} theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) KHÔNG ưu đãi cuối tuần (đã đông) — ưu đãi khung vắng ngày yếu nhất (${thap.d}); mốc đo: ${thap.d} lên ≥ ${vnd(Math.round((thap.v / thap.n! + thuong) / 2 / 1000) * 1000)}/ngày sau 4 tuần` : `(1) cuối tuần bớt người / nguyên liệu theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) một ưu đãi CHỈ cuối tuần, đo sau 4 tuần`}.`);
     }
     // Kỳ tuần chưa trọn: doanh thu mới vài ngày KHÔNG phải cả tuần (Claude chấm 29/10: GPT lấy 3 ngày làm ước cả tuần)
     const nDays = cnt ? cnt.reduce((a, b) => a + b, 0) : 0;
@@ -1767,7 +1781,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const m = monTrongCau(f, question), ds = m ? coVon.filter((t) => t.name === m) : [...coVon].sort((a, b) => b.qty - a.qty).slice(0, 2);
     // lần 228: "giảm 10% trên Grab" từng bị đọc thành phí sàn 10% — chỉ lấy % đi với chữ phí / chiết khấu / hoa hồng
     const phi = phiSanTrongCau(question), muc = phi ? [phi] : [25, 30];
-    if (ds.length) lines.push(`BÁN QUA SÀN (tính sẵn, phí sàn ${phi ? `${phi}% theo câu hỏi` : 'GIẢ SỬ 25–30%, nói rõ là giả định'}, chưa tính bao bì): ${ds.map((t) => `${t.name} giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)} → tại quán lời ${vnd(t.price! - t.cost!)}/phần, qua sàn còn ${muc.map((p) => vnd(t.price! * (1 - p / 100) - t.cost!)).join('–')}/phần`).join('; ')}.`);
+    if (ds.length) lines.push(`BÁN QUA SÀN (tính sẵn, phí sàn ${phi ? `${phi}% theo câu hỏi` : 'GIẢ SỬ 25–30%, nói rõ là giả định'}, chưa tính bao bì): ${ds.map((t) => `${t.name} giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)} → tại quán lời ${vnd(t.price! - t.cost!)}/phần, qua sàn còn ${muc.map((p) => vnd(t.price! * (1 - p / 100) - t.cost!)).join('–')}/phần; muốn qua sàn vẫn lời như tại quán thì giá trên sàn ≈ ${muc.map((p) => vnd(Math.ceil(t.price! / (1 - p / 100) / 1000) * 1000)).join('–')} (= giá quán ÷ (1 − phí))`).join('; ')}.`); // lần 236 (kiểm lần 6: không ra giá cần tăng trên sàn dù có phí)
   }
   // lần 92: so HAI MÓN (D39 "bún bò với cơm sườn món nào ngon ăn hơn") — GPT né câu hỏi, không nói chỉ một món có giá vốn
   const monQ = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => [t.name, t])).values()].filter((t) => {
@@ -2590,16 +2604,21 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const gc = /(?:h[aạ]|gi[aả]m|b[aá]n|đ[eể])[^.?]{0,30}c[oò]n (\d+(?:[.,]\d+)?)\s*(k|ng[aà]n|ngh[iì]n)(?!\p{L})/u.exec(q);
   const giamTien = !muaTang && (gm || gc) ? (gc ? { so: 0, pt: false, con: Number(gc[1].replace(',', '.')) * 1000 } : { so: Number(gm![1].replace(',', '.')), pt: gm![2] === '%', con: 0 }) : null;
   // lần 225: "mua 2 bánh mì thịt tặng 1 ly trà tắc", "mua cơm tấm sườn bì chả tặng ly nước sâm" — tặng món khác, không có số kiểu "mua 1 tặng 1"
-  const mk = !muaTang ? /mua (.{2,50}?) t[aặ]ng (.{2,40}?)(?=[,.?!]|$| th[iì] | c[oó] | v[aậ]y| l[aà] )/.exec(q) : null;
+  // lần 236 (kiểm lần 6: "mua 2 ly cà phê tặng 1 bánh mì trứng" bị tính "mua 2 tặng 1 = giảm 33%" như tặng cùng món): có số vẫn xét tên món
+  const mk = /mua (.{2,50}?) t[aặ]ng (.{2,40}?)(?=[,.?!]|$| th[iì] | c[oó] | v[aậ]y| l[aà] )/.exec(q);
   const muaKhac = mk ? (() => {
     // tên món nằm TRỌN trong đoạn câu, lấy tên dài nhất ("cơm tấm sườn bì chả" không về "cơm tấm sườn", và ngược lại)
     const dai = (doan: string) => {
       const xs = monKhop(f, doan).filter((x) => x.t.price), d = ` ${boDauVc(doan)} `;
-      return xs.filter((x) => d.includes(` ${boDauVc(x.t.name).trim()} `)).sort((x, y) => y.t.name.length - x.t.name.length)[0]?.t ?? xs[0]?.t;
+      // lần 236 (chấm mù: "2 ly trân châu đường đen" khớp gần sang topping "Trân châu đen" → giảm 68%): câu có số ("mua 2 … tặng 1") chỉ nhận tên món nằm TRỌN trong câu
+      return xs.filter((x) => d.includes(` ${boDauVc(x.t.name).trim()} `)).sort((x, y) => y.t.name.length - x.t.name.length)[0]?.t ?? (muaTang ? undefined : xs[0]?.t);
     };
     const a = dai(mk[1]), b = dai(mk[2]);
     return a && b && a.name !== b.name ? { a, b, n: Number(/(\d+)/.exec(mk[1])?.[1] ?? 1) || 1 } : null;
   })() : null;
+  // lần 236 (chấm mù: "mua 2 bạc xỉu tặng 1 trà tắc" — trà tắc không có trong menu → tính như tặng bạc xỉu): món tặng có tên mà không phải món mua thì KHÔNG tính kiểu tặng cùng món
+  const tangLa = mk && !muaKhac ? boDauVc(mk[2]).replace(/\b(?:\d+|mot|ly|phan|dia|to|cai|chai|lon|coc|suat|o)\b/g, ' ').trim() : '';
+  const tangKhac = !!tangLa && tangLa.length >= 3 && !` ${boDauVc(mk![1])} `.includes(` ${tangLa} `);
   // lần 225: chương trình đã / đang chạy, cả câu không dấu ("tuần rồi chạy mua 1 tặng 1", "mấy hôm nay quán làm")
   const daChay = /(?:dang (?:chay|lam|co)|hien (?:tai|dang|co)|thang nay|tuan nay|tuan (?:roi|truoc|qua)|da chay|vua chay|da lam|may hom nay|hom nay)/.test(boDau(question.normalize('NFC')).toLowerCase());
   if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang && !giamTien && !muaKhac) {
@@ -2656,7 +2675,8 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     ? `Chọn ngày: cuối tuần ${vnd(mauTuan.tbCt)}/ngày đã đông hơn ngày thường ${vnd(mauTuan.tbTg)}/ngày, giảm giá lúc đông là bớt tiền của khách vốn đã đến. Nên thử ở ${mauTuan.yeu} (${vnd(mauTuan.tbYeu)}/ngày).`
     : `Chọn ngày: ngày thường yếu nhất là ${mauTuan.yeu} (${vnd(mauTuan.tbYeu)}/ngày), trung bình ngày thường ${vnd(mauTuan.tbTg)}/ngày, nên thử ở ngày đó; mức chênh nhỏ thì vài ngày đổi kết luận, đo 2 tuần.`);
   // 07/11: QC: "mua 1 tặng 1 có lỗ không" trả lời chưa kết luận được, dù đây là phép tính; quán thiếu số thì tính theo khoảng giả định
-  if (muaTang && +muaTang[1] > 0 && +muaTang[2] > 0) {
+  if (tangKhac && muaTang) out.push(`Mua ${muaTang[1]} tặng ${muaTang[2]} MÓN KHÁC ("${mk![2].trim()}") — món tặng không khớp món nào trong menu nên KHÔNG tính được; mức giảm = giá món tặng ÷ (giá các món mua + giá món tặng), KHÔNG phải ${Math.round((+muaTang[2] / (+muaTang[1] + +muaTang[2])) * 100)}% như tặng cùng món → hỏi lại giá / giá vốn món tặng.`);
+  if (muaTang && !muaKhac && !tangKhac && +muaTang[1] > 0 && +muaTang[2] > 0) {
     const mua = +muaTang[1], tang = +muaTang[2], tong = mua + tang;
     const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round((((1 - x) * mua) / con) * 10) / 10).replace('.', ',')} lần số lượt mua (tức làm ra gấp ${String(Math.round((((1 - x) * tong) / con) * 100) / 100).replace('.', ',')} lần số phần, vì mỗi lượt ra ${tong} phần) mới giữ được tiền còn lại sau nguyên liệu`; }; // lần 231: người chấm đọc 1,2 lần lượt thành số phần → ghi cả hai // lần 223: so lời bán thường đủ ${mua} phần khách trả (trước so 1 suất → mua 2 tặng 1 ra 0,7 lần)
     const co = c >= 0.15 && c <= 0.8;
@@ -2700,11 +2720,12 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     if (a.cost && b.cost) {
       const thu = a.price! * n, von = a.cost * n + b.cost, con = thu - von, thuong = (a.price! - a.cost) * n;
       out.push(`${ten} (tính sẵn, chưa tính lương, mặt bằng): mỗi lượt thu ${vnd(thu)}, tốn nguyên liệu ${vnd(von)} (${a.name} ${vnd(a.cost)}${n > 1 ? ` × ${n}` : ''} + ${b.name} ${vnd(b.cost)}) → ${con <= 0 ? `LỖ ${vnd(-con)} mỗi lượt: KHÔNG nên chạy` : `còn ${vnd(con)}/lượt (bán thường ${n} ${a.name} lời ${vnd(thuong)}) → phải bán gấp ${pctTxt(Math.round((thuong / con) * 10) / 10)} lần số lượt mới giữ được tiền lời`}. Câu đầu nói kết luận này.`);
-    } else out.push(`${ten}: ${!a.cost ? a.name : b.name} chưa có giá vốn → nói rõ cần nhập giá vốn món đó mới tính được lời / lỗ; KHÔNG tự đoán giá vốn.`);
+    } else out.push(`${ten}: theo giá bán, món tặng ${vnd(b.price!)} = giảm ~${Math.round((b.price! / (a.price! * n + b.price!)) * 100)}% giá trị lượt (KHÔNG phải giảm ${Math.round((1 / (n + 1)) * 100)}% như tặng cùng món); ${!a.cost ? a.name : b.name} chưa có giá vốn → nói rõ cần nhập giá vốn món đó mới tính được lời / lỗ; KHÔNG tự đoán giá vốn.`); // lần 236
     if (m?.khuyen_mai && daChay) out.push(`Trong app quán CHƯA có chương trình "${ten}" (mã đang chạy: ${act.length ? act.map((x) => ss(x.code)).join(', ') : 'không có'}) → nói rõ chưa thấy trong app (có thể quán làm ngoài app, app không đo được số lượt).`);
   }
   // 07/11: QC: "combo A với B để giá bao nhiêu" không đưa giá nào vì thiếu giá vốn một món
-  const haiMon = /combo/.test(q) ? [...new Set((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]))].filter((t, i, a) => t.price && t.name.length >= 5 && a.findIndex((y) => y.name === t.name) === i && ` ${boDauVc(question)} `.includes(` ${boDauVc(t.name).trim()} `)) : [];
+  // lần 236 (kiểm lần 6: ghép "Bánh mì thịt + Combo cà phê sữa + bánh mì thịt"): không lấy món combo có sẵn làm một vế
+  const haiMon = /combo/.test(q) ? [...new Set((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]))].filter((t, i, a) => t.price && t.name.length >= 5 && !/^combo/i.test(t.name) && a.findIndex((y) => y.name === t.name) === i && ` ${boDauVc(question)} `.includes(` ${boDauVc(t.name).trim()} `)) : [];
   if (haiMon.length === 2) {
     const tong = haiMon[0].price! + haiMon[1].price!, thieu = haiMon.filter((t) => !t.cost);
     const von = haiMon.reduce((a, t) => a + (t.cost ?? t.price! * 0.4), 0);
