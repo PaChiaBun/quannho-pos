@@ -2454,7 +2454,25 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const mt = /(?:mua )?(\d|một|mot|hai|ba|bốn|bon) (?:ly |phần |suất |món |cái )?t[aặ]ng (\d|một|mot|hai)(?!\d)|(?<![\d.,])(\d)\s*\+\s*(\d)(?![\d.,%])/.exec(q);
   const muaTang = mt && (mt[1] ? /mua|t[aặ]ng/.test(mt[0]) : /mua|t[aặ]ng|khuy[eế]n m[aã]i|ch[uư][oơ]ng tr[iì]nh|ưu đãi/.test(q))
     ? [mt[0], SO_CHU[mt[1] ?? ''] ?? mt[1] ?? mt[3], SO_CHU[mt[2] ?? ''] ?? mt[2] ?? mt[4]] : null;
-  if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang) {
+  // lần 223 (kiểm toàn diện lần 2: "giảm 10k cho hs thì phải bán thêm bn phần mới hòa" 2/2 không ra số dù có giá vốn)
+  const gm = /gi[aả]m (?:gi[aá] )?(\d+(?:[.,]\d+)?)\s*(k|ng[aà]n|ngh[iì]n|đ(?:[oồ]ng)?|%)(?!\p{L})/u.exec(q);
+  // lần 225: "hạ giá cơm sườn còn 37k" = giá mới, không phải số tiền giảm
+  const gc = /(?:h[aạ]|gi[aả]m|b[aá]n|đ[eể])[^.?]{0,30}c[oò]n (\d+(?:[.,]\d+)?)\s*(k|ng[aà]n|ngh[iì]n)(?!\p{L})/u.exec(q);
+  const giamTien = !muaTang && (gm || gc) ? (gc ? { so: 0, pt: false, con: Number(gc[1].replace(',', '.')) * 1000 } : { so: Number(gm![1].replace(',', '.')), pt: gm![2] === '%', con: 0 }) : null;
+  // lần 225: "mua 2 bánh mì thịt tặng 1 ly trà tắc", "mua cơm tấm sườn bì chả tặng ly nước sâm" — tặng món khác, không có số kiểu "mua 1 tặng 1"
+  const mk = !muaTang ? /mua (.{2,50}?) t[aặ]ng (.{2,40}?)(?=[,.?!]|$| th[iì] | c[oó] | v[aậ]y| l[aà] )/.exec(q) : null;
+  const muaKhac = mk ? (() => {
+    // tên món nằm TRỌN trong đoạn câu, lấy tên dài nhất ("cơm tấm sườn bì chả" không về "cơm tấm sườn", và ngược lại)
+    const dai = (doan: string) => {
+      const xs = monKhop(f, doan).filter((x) => x.t.price), d = ` ${boDauVc(doan)} `;
+      return xs.filter((x) => d.includes(` ${boDauVc(x.t.name).trim()} `)).sort((x, y) => y.t.name.length - x.t.name.length)[0]?.t ?? xs[0]?.t;
+    };
+    const a = dai(mk[1]), b = dai(mk[2]);
+    return a && b && a.name !== b.name ? { a, b, n: Number(/(\d+)/.exec(mk[1])?.[1] ?? 1) || 1 } : null;
+  })() : null;
+  // lần 225: chương trình đã / đang chạy, cả câu không dấu ("tuần rồi chạy mua 1 tặng 1", "mấy hôm nay quán làm")
+  const daChay = /(?:dang (?:chay|lam|co)|hien (?:tai|dang|co)|thang nay|tuan nay|tuan (?:roi|truoc|qua)|da chay|vua chay|da lam|may hom nay|hom nay)/.test(boDau(question.normalize('NFC')).toLowerCase());
+  if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang && !giamTien && !muaKhac) {
     // 08/11 web Demo 12 đơn: câu "tháng này thế nào, nên làm gì" không phải câu tiếp thị nên thiếu dòng ít đơn, vẫn khuyên ưu đãi 14–17h
     return f.orders < IT_DON && /n[eê]n (?:l[aà]m|thay|c[aả]i|t[aậ]p)|l[aà]m (?:sao|g[iì])|c[aá]ch n[aà]o|g[oợ]i [yý]|t[uư] v[aấ]n|khuy[eê]n|c[aả]i thi[eệ]n|kh[aắ]c ph[uụ]c/.test(q)
       ? `BÀI TOÁN TIỀN: Kỳ này mới có ${qty(f.orders)} đơn, chưa đủ để nói giờ, thứ hay món nào yếu: KHÔNG khuyên theo giờ vắng, thứ yếu hay món bán chậm của kỳ này. Nói thẳng điều này, gợi ý xem kỳ dài hơn (vd "30 ngày qua").`
@@ -2510,6 +2528,32 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
       const thu = t.price! * mua, von = t.cost! * tong, con = thu - von, thuong = (t.price! - t.cost!) * mua;
       out.push(`${t.name}${khop.length > 1 || khop[0].tat ? ' (món bán chạy nhất khớp tên trong câu)' : ''} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}): mỗi lượt mua ${mua} tặng ${tang} thu ${vnd(thu)}, tốn nguyên liệu ${vnd(von)} → ${con <= 0 ? `LỖ ${vnd(-con)} mỗi lượt ngay cả trước lương, mặt bằng: KHÔNG nên chạy` : `còn ${vnd(con)}/lượt (bán thường ${mua} phần lời ${vnd(thuong)}) → phải bán gấp khoảng ${String(Math.round((thuong / con) * 10) / 10).replace('.', ',')} lần số lượt mới giữ được tiền lời`}. Câu đầu nói kết luận này.`);
     }
+    // lần 223: "chương trình mua 2 tặng 1 tháng này có lời không" khi app không có chương trình đó (2/2 bàn như có thật)
+    const act = arr(m?.khuyen_mai?.active);
+    if (m?.khuyen_mai && daChay) {
+      out.push(`Trong app quán CHƯA có chương trình mua ${mua} tặng ${tang} (mã đang chạy: ${act.length ? act.map((x) => ss(x.code)).join(', ') : 'không có'}) → câu đầu nói rõ chưa thấy chương trình này trong app (có thể quán làm ngoài app), rồi tính như phương án ở trên.`);
+    }
+  }
+  if (giamTien) {
+    // lần 225 (chấm mù: món hỏi chưa có giá vốn → từng tính sang món khác, ra "giảm −3.000đ", "giảm 0đ")
+    const hoi = monKhop(f, question).filter((x) => x.t.price), khop = hoi.filter((x) => x.t.cost);
+    const ds = khop.length ? [khop[0].t] : hoi.length ? [] : (f.groups ?? []).flatMap((g) => g.top).filter((t) => t.cost && t.price).sort((a, b) => b.qty - a.qty).slice(0, 3);
+    const dong = ds.filter((t) => (giamTien.con ? t.price! - giamTien.con : 1) > 0).map((t) => {
+      const g = giamTien.con ? t.price! - giamTien.con : giamTien.pt ? (t.price! * giamTien.so) / 100 : giamTien.so * (giamTien.so < 1000 ? 1000 : 1);
+      const cu = t.price! - t.cost!, moi = cu - g;
+      return `${t.name} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}, lời ${vnd(cu)}/phần) giảm ${vnd(g)} → ${moi <= 0 ? `LỖ hoặc hết lời (${vnd(moi)}/phần): KHÔNG nên giảm mức này` : `còn lời ${vnd(moi)}/phần → phải bán gấp ${pctTxt(Math.round((cu / moi) * 10) / 10)} lần số phần (thêm ${Math.round((cu / moi - 1) * 100)}%) mới giữ nguyên tiền lời`}`;
+    });
+    if (dong.length) out.push(`Giảm giá theo phần (tính sẵn, chưa tính lương, mặt bằng): ${dong.join('; ')}. Giảm cho một nhóm khách (học sinh…) thì chỉ phần đơn của nhóm đó phải tăng như trên. Câu đầu nêu số lần phải bán gấp này.`);
+    else out.push(`Giảm giá theo phần: ${hoi.length ? `${hoi[0].t.name} chưa có giá vốn` : 'món trong câu chưa có giá vốn'} → nói rõ cần nhập giá vốn món đó (Kho hàng → món → Giá vốn) mới tính được số phần phải bán thêm; KHÔNG tự đoán giá vốn, KHÔNG lấy món khác thay.`);
+  }
+  if (muaKhac) {
+    const { a, b, n } = muaKhac, act = arr(m?.khuyen_mai?.active);
+    const ten = `Mua ${n > 1 ? `${n} ` : ''}${a.name} tặng ${b.name}`;
+    if (a.cost && b.cost) {
+      const thu = a.price! * n, von = a.cost * n + b.cost, con = thu - von, thuong = (a.price! - a.cost) * n;
+      out.push(`${ten} (tính sẵn, chưa tính lương, mặt bằng): mỗi lượt thu ${vnd(thu)}, tốn nguyên liệu ${vnd(von)} (${a.name} ${vnd(a.cost)}${n > 1 ? ` × ${n}` : ''} + ${b.name} ${vnd(b.cost)}) → ${con <= 0 ? `LỖ ${vnd(-con)} mỗi lượt: KHÔNG nên chạy` : `còn ${vnd(con)}/lượt (bán thường ${n} ${a.name} lời ${vnd(thuong)}) → phải bán gấp ${pctTxt(Math.round((thuong / con) * 10) / 10)} lần số lượt mới giữ được tiền lời`}. Câu đầu nói kết luận này.`);
+    } else out.push(`${ten}: ${!a.cost ? a.name : b.name} chưa có giá vốn → nói rõ cần nhập giá vốn món đó mới tính được lời / lỗ; KHÔNG tự đoán giá vốn.`);
+    if (m?.khuyen_mai && daChay) out.push(`Trong app quán CHƯA có chương trình "${ten}" (mã đang chạy: ${act.length ? act.map((x) => ss(x.code)).join(', ') : 'không có'}) → nói rõ chưa thấy trong app (có thể quán làm ngoài app, app không đo được số lượt).`);
   }
   // 07/11: QC: "combo A với B để giá bao nhiêu" không đưa giá nào vì thiếu giá vốn một món
   const haiMon = /combo/.test(q) ? [...new Set((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]))].filter((t, i, a) => t.price && t.name.length >= 5 && a.findIndex((y) => y.name === t.name) === i && ` ${boDauVc(question)} `.includes(` ${boDauVc(t.name).trim()} `)) : [];

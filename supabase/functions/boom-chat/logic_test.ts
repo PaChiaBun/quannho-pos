@@ -2342,6 +2342,17 @@ Deno.test('lần 222: món lời nhiều tiền nhất được ưu tiên', () =
   assert(so.length >= 2 && so.every((v, i) => i === 0 || so[i - 1] >= v), dong);
 });
 
+// lần 223: giảm X đồng → số lần phải bán gấp; mua X tặng Y "tháng này" mà app không có → nói rõ
+Deno.test('lần 223: khuyến mãi tính sẵn', () => {
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const f = L.parseFacts(d.facts.thang_nay)!, m = L.parseModules({ ...d.modules.thang_nay });
+  const t = L.baiToanTiepThi(f, m, 'giảm 10k cho hs thì phải bán thêm bn phần mới hòa');
+  assert(/Cơm tấm sườn \(giá 40\.000đ, giá vốn 21\.600đ, lời 18\.400đ\/phần\) giảm 10\.000đ → còn lời 8\.400đ\/phần → phải bán gấp 2,2 lần/.test(t), t.slice(0, 400));
+  assertStringIncludes(L.baiToanTiepThi(f, m, 'chương trình mua 2 tặng 1 tháng này có lời không'), 'Trong app quán CHƯA có chương trình mua 2 tặng 1');
+  assert(!L.baiToanTiepThi(f, m, 'có nên làm mua 1 tặng 1 không, có lời không').includes('CHƯA có chương trình'));
+  assert(!L.baiToanTiepThi(f, m, 'tháng này doanh thu sao').includes('Giảm giá theo phần'));
+});
+
 // lần 223: mua 2 tặng 1 tính theo lượt: (2 × (1 − x)) / (2 − 3x); trước so 1 suất nên ra < 1 lần
 Deno.test('lần 223: mua 2 tặng 1 tính theo lượt', () => {
   const b = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
@@ -2364,4 +2375,25 @@ Deno.test('lần 224: khách', () => {
   assert(!L.formatModules(m, now, 'doanh thu tháng này giảm vì sao', f).includes('Xu hướng khách quen'));
   assert(!L.formatModules(m, now, 'tăng giá thêm 2k có mất khách không', f).includes('Xu hướng khách quen'));
   assertStringIncludes(L.formatModules(m, now, 'Khách quen có quay lại đều ko hay đang bỏ đi?', f), 'Xu hướng khách quen');
+});
+
+// lần 225: "hạ giá còn Xk", "mua A tặng B" (món khác), câu không dấu "tuần rồi chạy …"
+Deno.test('lần 225: khuyến mãi mở rộng', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay), L.parseModules({ ...s.modules.thang_nay })] as const; };
+  const [fc, mc] = ld('c'), [fd, md] = ld('d'), [fb, mb] = ld('b');
+  assertStringIncludes(L.baiToanTiepThi(fc, mc, 'ha gia com suon con 37k thi phai ban them may dia/ngay moi bu lai'), 'Cơm sườn (giá 40.000đ, giá vốn 19.200đ, lời 20.800đ/phần) giảm 3.000đ → còn lời 17.800đ/phần');
+  const t = L.baiToanTiepThi(fd, md, 'Mấy hôm nay quán làm mua cơm tấm sườn bì chả tặng ly nước sâm, vậy có hiệu quả không em?');
+  assertStringIncludes(t, 'Mua Cơm tấm sườn bì chả tặng Nước sâm (tính sẵn');
+  assertStringIncludes(t, 'Trong app quán CHƯA có chương trình "Mua Cơm tấm sườn bì chả tặng Nước sâm"');
+  assertStringIncludes(L.baiToanTiepThi(fb, mb, 'tuan roi chay mua 1 tang 1 tra dao cam sa cuoi tuan, co hieu qua ko boom'), 'Trong app quán CHƯA có chương trình mua 1 tặng 1');
+});
+
+// lần 225 (sau chấm mù): khớp đúng tên món; món hỏi chưa có giá vốn thì không tính sang món khác
+Deno.test('lần 225: khớp món và món chưa có giá vốn', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay), L.parseModules({ ...s.modules.thang_nay })] as const; };
+  const [fd, md] = ld('d'), [fa, ma] = ld('a');
+  assertStringIncludes(L.baiToanTiepThi(fd, md, 'tuần rồi chạy mua 3 phần cơm tấm sườn tặng 1 ly nước sâm, có lời ko'), 'Mua 3 Cơm tấm sườn tặng Nước sâm (tính sẵn');
+  const t = L.baiToanTiepThi(fa, ma, 'giảm 20% cà phê sữa đá khung 14-16h có lỗ không');
+  assertStringIncludes(t, 'Cà phê sữa đá chưa có giá vốn');
+  assert(!t.includes('Bạc xỉu (giá'), t.slice(0, 300));
 });

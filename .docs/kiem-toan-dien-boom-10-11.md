@@ -141,3 +141,9 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Mã (khối KHÁCH HÀNG): dòng "Xu hướng khách quen" (cộng dồn ≠ xu hướng, so số đơn kỳ trước, giờ mất nhiều nhất); dòng "Khách lâu chưa ghé" (app không lọc được, nhắn nhóm chi nhiều nhất kèm ưu đãi cụ thể); "Giữ khách": quán có tích điểm → KHÔNG thẻ giấy.
 - Đo 28 cặp (14 câu bị chạm × 2; 5 câu bộ `de_khach` người ngoài viết): **+3,21 ± 1,32**. Người chấm được nhắc 3 sự thật về số (có thể nghiêng); đếm máy: thẻ giấy 5 → 1, "vẫn quay lại đều" 2 → 1. Test 194/194.
 - Chưa làm: "khách ăn sáng hay trưa" quá thận trọng; "có nên làm tích điểm" chung chung.
+
+## 12. Lô B làm lại (lần 225, chưa áp)
+
+- Bản vá lô B cũ + bắt thêm: "hạ giá còn 37k" (giá mới), "mua A tặng B" món khác, câu không dấu "tuần rồi chạy …"; khớp tên món nằm trọn trong câu; món hỏi chưa có giá vốn thì không tính sang món khác.
+- Bộ mới `de_khuyen_mai2` (16 câu người ngoài viết, mã nhận 10): chấm mù 30 cặp (3 lượt) **+2,40 ± 1,73**, cả hai người chấm nghiêng bản mới (201–172, 197–154).
+- Sau chấm sửa 3 dòng tính sẵn sai người chấm bắt (Cơm tấm sườn bị khớp thành sườn bì chả; món chưa có giá vốn bị tính sang Trà đào / Bạc xỉu). Test 197/197.
