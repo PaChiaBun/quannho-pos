@@ -208,3 +208,8 @@ Kiểu lỗi: chung chung 34, lý lẽ sai hướng 21, không trả lời thẳ
 - Sửa 9 dòng tính sẵn (mục 17: 1–9). Chấm mù 48 cặp (24 câu ngẫu nhiên de_kin11 bị chạm × 2): **+0,88 ± 0,47**.
 - Sau chấm sửa thêm: xếp món chọn theo lời / phần (trước chọn theo tiền cả kỳ rồi mới xếp → Cơm tấm sườn bì chả 24.000đ bị loại); "lời ít nhất" xếp từ thấp cả khi hiển thị; hôm nay chưa có dòng doanh thu = 0đ (quán mở 9h). Test 200/200.
 - Còn thấy: dòng "Chi bằng tiền mặt X, chuyển khoản Y" bị cả hai bản đọc thành tiền THU; một dòng khác vẫn gợi ý "thẻ tích ly" khi quán đã có tích điểm; số so cùng kỳ theo nhóm của quán mẫu d tự mâu thuẫn (dữ liệu mẫu).
+
+## 19. Lần 230 (không áp)
+
+- Sửa chữ dòng "Chi bằng tiền mặt / chuyển khoản" (ghi rõ là tiền CHI) và gợi ý ưu đãi giờ (bỏ "thẻ tích ly"; "x2 điểm" bị loại vì app không có — luật `viecAppKhongLam`).
+- Chấm mù 40 cặp (20 câu ngẫu nhiên de_kin11 × 2): **+0,00 ± 0,69**; hai lỗi đích không xuất hiện ở cả hai bản trong mẫu này → chưa đo được tác dụng, không áp. Bản vá: `db-fix/boom_l230_chi_tich_ly_chua_ap.patch`. Muốn đo lại: chọn đúng câu thu chi hỏi tiền mặt / két.
