@@ -323,3 +323,38 @@ Tiêu chí thấp: việc làm 1,32, tìm vấn đề 1,41, lý lẽ 1,45. Kiể
 - Bộ kín MỚI `de_kin17.json` (32 câu: khuyến mãi, giờ mở / đóng, kho hết, giữ khách). Chấm mù 64 cặp: câu bị chạm 46 cặp **+0,78 ± 0,62**; kho +1,29, khuyến mãi +1,2, giữ khách +0,75, giờ mở / đóng ±0; không chạm −0,22.
 - Sau chấm sửa: dòng kho ghi "Bây giờ là 0h" (lấy giờ của mốc đầu ngày) → giờ VN thật (có test).
 - Còn thấy: số khung giờ Boom tự cộng sai khi khung khác dòng tính sẵn (14–16h vs 14–17h); mã giảm trên đơn qua sàn vẫn không được dùng dù có dòng; quán có mã HSSV10 mà vẫn đề xuất mã học sinh mới; người làm quá 48 giờ / tuần không được nhắc ở câu giờ mở.
+
+## 28. Kiểm toàn diện lần 6 (11/11, bản 235)
+
+- Sổ thật (Chủ Quán cho đọc): vẫn 0 lượt thật từ 05/11.
+- Bộ kín MỚI `de_kin18.json` (90 câu, 15 lĩnh vực × 6, người khác viết; 6 câu thời tiết có trời khớp câu). 1 lượt, 2 người chấm mỗi câu.
+- Kết quả: **135/180 dùng được (75%)**, TB **13,06** (lần 5: 78%, 12,97 — bộ khác, coi như ngang). Hai vòng đồng ý 79/90; một người chấm phần 1 nghiêm hơn hẳn (16/30 so với 21/30).
+
+| Lĩnh vực | Dùng được | TB |
+|---|---|---|
+| kho | 5/12 | 12,8 |
+| giờ / ngày | 6/12 | 10,8 |
+| tiếp thị | 7/12 | 12,2 |
+| khách, thời tiết, sàn giao | 8/12 | 12,7–12,9 |
+| ngoài dữ liệu, khuyến mãi | 9/12 | 12,1–13,3 |
+| so kỳ, món, giá lời, nội dung | 10/12 | 12,4–14,7 |
+| nhân sự | 11/12 | 14,4 |
+| thu chi, doanh thu | 12/12 | 13,7–14,1 |
+
+Nội dung lên 10/12 (lần 5: 6/12), khuyến mãi 9/12 (5/12). Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,44. Kiểu lỗi: chung chung 31, không trả lời thẳng 13, lạc đề 12, quá thận trọng 11.
+
+**Lỗi lặp lại:**
+- Kho: hàng ĐÃ HẾT lúc quán đang bán (than) vẫn không dặn nhập ngay hôm nay, có câu dặn "ngày mai"; hỏi hao hụt không quy ra lượng bỏ mỗi ngày (bún, rau, bánh mì) để đặt ít lại; không nêu thứ bán yếu để đặt ít hơn.
+- Giờ / ngày, nhân sự: cuối tuần dùng đơn / giờ trung bình mọi ngày → kết luận "không cần thêm người"; câu ca tối / trưa không ước số, không nhắc người quá 48 giờ / tuần; "chưa có đơn / giờ" dù chia được doanh thu ÷ giá trị đơn.
+- Tiếp thị / khách: hoà vốn tiếp thị tính theo doanh thu (72 ly) dù có lời / ly và % nguyên liệu; đề xuất mã học sinh mới khi đã có HSSV10; "chưa có giá vốn món tặng" dù có.
+- Sàn giao: không ra giá cần tăng khi có phí sàn trong câu (giá mới = (giá vốn + lời cũ) ÷ (1 − phí)).
+
+**Dòng tính sẵn sai:**
+1. `khungHoi` (lần 235): "5 giờ tới 9 giờ" / "4h–8h" chiều tối bị hiểu thành giờ sáng (lỗi của chính lô F; Boom chưa dùng nhưng phải sửa trước).
+2. Dòng người làm Thứ 7 / Chủ nhật: đơn / giờ trung bình mọi ngày ghi như số cuối tuần → "ngang mức thường, không thêm người", trái dòng "So cuối tuần" (~165%).
+3. Bài toán tiền "Mua 2 tặng 1 = giảm 33%" khi món tặng KHÁC món mua (mua 2 cà phê tặng bánh mì trứng ~26%).
+4. Bài toán tiền ghép combo trong combo ("Bánh mì thịt + Combo cà phê sữa + bánh mì thịt").
+5. Dòng người làm ca chiều "gấp ~1,4 lần mức cả kỳ" mà kết luận "ngang mức thường".
+6. Mốc số phần ghi "× 0,4" nhưng tính bằng 0,44 (hệ số ghi làm tròn).
+
+**Kế hoạch lô G:** (a) sửa 1–5; (b) kho: hàng đã hết + quán đang mở → dòng tính sẵn "nhập ngay hôm nay X" cả ở câu thời tiết; hao hụt / ngày tính sẵn; (c) giá trên sàn khi câu có phí: giá mới giữ lời; (d) mã đang chạy cho nhóm khách được hỏi (HSSV…) nêu rõ "đã có mã X". Đo bằng bộ kín mới theo loại câu đích.
