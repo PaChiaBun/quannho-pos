@@ -213,3 +213,39 @@ Kiểu lỗi: chung chung 34, lý lẽ sai hướng 21, không trả lời thẳ
 
 - Sửa chữ dòng "Chi bằng tiền mặt / chuyển khoản" (ghi rõ là tiền CHI) và gợi ý ưu đãi giờ (bỏ "thẻ tích ly"; "x2 điểm" bị loại vì app không có — luật `viecAppKhongLam`).
 - Chấm mù 40 cặp (20 câu ngẫu nhiên de_kin11 × 2): **+0,00 ± 0,69**; hai lỗi đích không xuất hiện ở cả hai bản trong mẫu này → chưa đo được tác dụng, không áp. Bản vá: `db-fix/boom_l230_chi_tich_ly_chua_ap.patch`. Muốn đo lại: chọn đúng câu thu chi hỏi tiền mặt / két.
+
+## 20. Kiểm toàn diện lần 4 (10/11 khuya, bản 229)
+
+- Sổ thật (Chủ Quán cho đọc): vẫn 0 lượt thật từ 05/11.
+- Bộ kín mới `cham_tu_van/thoi_tiet/de_kin12.json`: 90 câu, 15 lĩnh vực × 6, mỗi câu 1 lượt, **2 người chấm độc lập mỗi câu** (6 người chấm, 3 phần × 2 vòng).
+- Kết quả: **132/180 lượt chấm "dùng được" (73%)**, cả hai cùng đồng ý dùng được 62/90 câu; TB 12,72/16. Hai vòng đồng ý kết luận 82/90 câu (91%) → số đo đáng tin hơn các lần trước (8 câu/lĩnh vực, 1 người chấm).
+
+| Lĩnh vực | Dùng được (2 vòng) | TB |
+|---|---|---|
+| kho | 6/12 | 12,6 |
+| khuyến mãi | 7/12 | 11,3 |
+| tiếp thị | 7/12 | 11,9 |
+| khách | 7/12 | 12,6 |
+| doanh thu | 8/12 | 10,5 |
+| nhân sự, món | 8/12 | 11,6–12,3 |
+| sàn giao, giá lời | 9/12 | 12,8–14,3 |
+| so kỳ, thời tiết, nội dung, ngoài dữ liệu | 10/12 | 12,8–13,9 |
+| giờ ngày, thu chi | 11–12/12 | 13,3–14,5 |
+
+Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ 1,57. Kiểu lỗi (số câu): chung chung 28, sai số 13, quá thận trọng 12, không trả lời thẳng 12, lạc đề 12.
+
+**Ba kiểu lỗi lặp lại (đọc lời người chấm):**
+1. **Không trả lời đúng cái được hỏi** — hỏi "nhập chỗ nào nhiều tiền nhất" trả khoản chi Nguyên liệu thay vì tên nhà cung cấp; hỏi giữ khách MỚI / học sinh nhưng việc làm nhắm khách chi nhiều nhất; hỏi "làm sao cho bớt hư" chỉ bảo ghi sổ.
+2. **Quá thận trọng khi số đã đủ để ước** — "chưa có trung bình ngày" dù chia được; "chưa có giá vốn món" dù có; hoà vốn tiếp thị không dùng tỉ lệ nguyên liệu / doanh thu để ước.
+3. **Gán số một phần thành số cả kỳ** — số khung giờ sáng thành số cả ngày; % tổng doanh thu ghi là % trong nhóm; số 1–28 thành "cả tháng".
+
+**Dòng tính sẵn sai người chấm bắt (làm trước, kiểm được bằng phép tính):**
+1. Mua X tặng Y "phải bán gấp ~1,2 lần" chỉ là 6÷5, chưa tính nguyên liệu phần tặng (đúng ~1,42 lần với nguyên liệu 44%).
+2. "SO CÙNG KỲ … TĂNG Ở ĐÂU" (quán d): doanh thu nhóm kỳ trước lẻ, tổng nhóm < doanh thu; chênh từng món ≠ số phần × giá — kỳ trước bị nhân theo tỉ lệ. Cần xem là do quán mẫu hay do mã.
+3. "So cuối tuần – ngày thường" quán b vẫn chia 20 ngày khi by_day rỗng (hôm nay 0 đơn) — xử như dự báo (lần 229).
+4. XẾP MÓN có `itNhat`: câu "lời / phần cao nhất" tính trên 5 món thấp nhất → sai.
+5. Dòng "Từng ngày có đơn trong kỳ… ngày không ghi là không có đơn" hiện khi by_day chỉ có vài ngày → Boom từ chối tính trung bình ngày. Chỉ hiện khi by_day phủ phần lớn kỳ.
+6. % theo nhóm / món tính trên tổng trước giảm giá nhưng ghi "doanh thu"; nhãn "% tổng doanh thu" cần rõ để không bị đọc thành % trong nhóm.
+7. KHO "nhà cung cấp lớn nhất" xếp sai thứ tự (quán b) — và câu hỏi "nhập chỗ nào nhiều nhất" chưa đưa dòng này lên đầu.
+
+**Kế hoạch lô E (mã, đo A/B câu bị chạm de_kin12):** sửa 1, 3, 4, 5, 6, 7; xem 2 (nếu do mã thì sửa). Lỗi 1–3 phần trên (trả lời lệch câu, quá thận trọng, gán số) không có cách bằng mã trực tiếp — chỉ giảm được bằng dòng tính sẵn đúng câu hỏi (vd. trung bình ngày tính sẵn, hoà vốn tiếp thị theo tỉ lệ nguyên liệu khi món thiếu giá vốn).
