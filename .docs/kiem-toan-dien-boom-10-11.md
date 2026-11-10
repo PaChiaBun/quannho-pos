@@ -249,3 +249,10 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 7. KHO "nhà cung cấp lớn nhất" xếp sai thứ tự (quán b) — và câu hỏi "nhập chỗ nào nhiều nhất" chưa đưa dòng này lên đầu.
 
 **Kế hoạch lô E (mã, đo A/B câu bị chạm de_kin12):** sửa 1, 3, 4, 5, 6, 7; xem 2 (nếu do mã thì sửa). Lỗi 1–3 phần trên (trả lời lệch câu, quá thận trọng, gán số) không có cách bằng mã trực tiếp — chỉ giảm được bằng dòng tính sẵn đúng câu hỏi (vd. trung bình ngày tính sẵn, hoà vốn tiếp thị theo tỉ lệ nguyên liệu khi món thiếu giá vốn).
+
+## 21. Lô E (lần 231, chưa áp)
+
+- Sửa (mục 20): mua X tặng Y ghi cả số lần SỐ PHẦN (người chấm đọc 1,2 lần lượt thành số phần); "So cuối tuần" và dòng theo thứ khi hôm nay 0 đơn (by_day rỗng → tiền hôm nay = 0); XẾP MÓN "cao nhất" tìm trên mọi món + ghi rõ "N món lời / phần thấp nhất trong M món" + món lời thấp / cao nhất TỪNG nhóm (câu "mỗi dĩa"); dòng "Trung bình mỗi ngày (tính sẵn)" bỏ ngày dở; "Từng ngày có đơn" chỉ hiện khi by_day phủ ≥ nửa kỳ; "% doanh thu cả quán"; nhà cung cấp xếp theo tiền. Mục 2 (so cùng kỳ quán d) là do dữ liệu quán mẫu, không sửa.
+- Chấm mù trên de_kin12 (bộ đã lộ ở lần kiểm 4): 24 câu ngẫu nhiên × 2 = 48 cặp **+0,27 ± 0,66**; trong đó 28 cặp chỉ đổi nhãn +0,04 ± 0,72. Đo thêm 18 câu bị chạm thật còn lại × 2 = 36 cặp −0,08 ± 0,65 (có thêm phần xếp theo nhóm). Gộp 56 cặp bị chạm thật **+0,16 ± 0,61**; cả 84 cặp **+0,12 ± 0,47** → chưa rõ.
+- Câu nhắm đúng lỗi thắng rõ: trung bình mỗi ngày +6 / +3; lời ít nhất +8.
+- Còn thấy: mốc nấu trân châu chỉ lấy món topping, bỏ trân châu trong ly trà sữa (cả hai bản); so dự báo cả tháng với số 1–28 tháng trước; trung bình ngày chia cả ngày quán nghỉ.

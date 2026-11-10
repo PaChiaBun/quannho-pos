@@ -500,7 +500,7 @@ Deno.test('Số liệu theo nhóm món: kiểm kiểu, ghi rõ nhóm để GPT s
   assert(f.groups?.length === 1);
   const m = buildMessages('nên đẩy món nào', [], null, { facts: f })[1].content;
   assert(m.includes('NHÓM "Đồ ăn" (40 món đang bán): 1500 phần, 89.000.000đ = 50% doanh thu.'), m);
-  assert(m.includes('Mì cay thập cẩm (470 phần, giá 69.000đ, 32.430.000đ = 18,2% doanh thu)'), m);
+  assert(m.includes('Mì cay thập cẩm (470 phần, giá 69.000đ, 32.430.000đ = 18,2% doanh thu cả quán)'), m);
   assert(m.includes('Chưa bán phần nào trong kỳ: 5 món: Lẩu lớn và 4 món khác.'));
   assert(ADVICE_PROMPT.includes('CHỈ so món trong CÙNG nhóm'));
   // Sai kiểu / quá nhiều nhóm / quá 3 món mỗi danh sách → bỏ cả khối
@@ -2430,4 +2430,27 @@ Deno.test('lần 229: lô D dòng tính sẵn', () => {
   assertStringIncludes(L.formatFacts(fd, now, 'món nào lời ít nhất'), 'xếp từ LỜI ÍT NHẤT');
   assert(!/45\.000đ–48\.000đ/.test(L.formatFacts(fa, now, 'nên làm combo gì')));
   assertEquals(L.giaKhacMenu(fa, 'quán đối diện bán cà phê sữa đá 20k, mình có nên giảm không'), '');
+});
+
+// lần 231 (lô E sau kiểm lần 4): các dòng tính sẵn sai người chấm bắt
+Deno.test('lần 231: lô E dòng tính sẵn', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay)!, L.parseModules({ ...s.modules.thang_nay })] as const; };
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  const [fb, mb] = ld('b'), [fd] = ld('d'), [fc] = ld('c');
+  // mua 5 tặng 1, nguyên liệu x: gấp (1 − x)·6 / (5 − 6x) lần số phần
+  assertStringIncludes(L.baiToanTiepThi(fb, mb, 'mua 5 tặng 1 có lỗ không'), 'lần số phần, vì mỗi lượt ra 6 phần');
+  // quán b hôm nay 0 đơn (by_day rỗng): so cuối tuần không còn chia hôm nay
+  assert(Array.isArray(fb.by_day) && !fb.by_day.length);
+  assert(!L.formatFacts(fb, now, 'cuối tuần với ngày thường khác nhau nhiều không').includes('tổng có cả hôm nay chưa hết ngày'));
+  // hỏi lời ít nhất: "cao nhất" tìm trên mọi món có giá vốn
+  // deno-lint-ignore no-explicit-any
+  const ds: any[] = [...fd.top, ...fd.slow, ...(fd.groups ?? []).flatMap((g) => [...g.top, ...g.slow])];
+  const cao = ds.filter((t) => t.cost && t.price).sort((a, b) => (b.price - b.cost) - (a.price - a.cost))[0];
+  assertStringIncludes(L.formatFacts(fd, now, 'món nào lời ít nhất'), `${cao.name} cao nhất`);
+  assertStringIncludes(L.formatFacts(fd, now, 'món nào lời ít nhất trên mỗi dĩa'), 'Cơm tấm: Cơm tấm sườn 18.400đ/phần');
+  // trung bình mỗi ngày tính sẵn; by_day chỉ có hôm nay thì không liệt kê "từng ngày có đơn"
+  const t = L.formatFacts(fc, now, 'trung bình mỗi ngày bán bao nhiêu');
+  assertStringIncludes(t, 'Trung bình mỗi ngày (tính sẵn)');
+  assert(!t.includes('Từng ngày có đơn trong kỳ'), t.slice(0, 300));
+  assertStringIncludes(L.formatFacts(fc, now, 'món nào bán chạy'), '% doanh thu cả quán');
 });

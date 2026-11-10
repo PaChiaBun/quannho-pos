@@ -630,7 +630,7 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     );
     out.push(
       `Nhập hàng trong kỳ: ${nn(k.imports)} phiếu${k.import_total !== undefined ? `, tổng ${vnd(nn(k.import_total))}` : ''}.` +
-        (arr(k.top_suppliers).length ? ` Nhà cung cấp lớn nhất: ${arr(k.top_suppliers).map((x) => `${ss(x.name)} ${vnd(nn(x.amount))}`).join('; ')}.` : ''),
+        (arr(k.top_suppliers).length ? ` Nhà cung cấp lớn nhất (theo tiền nhập, lớn → nhỏ): ${[...arr(k.top_suppliers)].sort((a, b) => nn(b.amount) - nn(a.amount)).map((x) => `${ss(x.name)} ${vnd(nn(x.amount))}`).join('; ')}.` : ''),
     );
     const ls = arr(k.losses);
     out.push(ls.length
@@ -1483,7 +1483,14 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     lines.push(`Doanh thu theo thu ngân trong kỳ (cùng số với Báo cáo): ${[...f.cashiers].sort((a, b) => b.revenue - a.revenue).map((x) => `${x.name} ${vnd(x.revenue)} (${pctTxt((x.revenue / tong) * 100)}%)`).join('; ')}. Đây là người bấm thanh toán, phụ thuộc ca làm, KHÔNG dùng để kết luận ai bán giỏi.`);
   }
   // 06/11: "mỗi ngày bán bao nhiêu" từng trả lời chưa có số từng ngày dù máy chủ đã đọc được
-  if (f.by_day?.length && f.by_day.length <= 31 && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng) ng[àa]y/iu.test(question)) {
+  // lần 231 (kiểm lần 4: Boom nói "chưa có trung bình ngày" dù chia được): trung bình / ngày tính sẵn, bỏ hôm nay đang dở
+  const nKy = f.from && f.to ? Math.round((Date.parse(f.to) - Date.parse(f.from)) / 864e5) + 1 : 0;
+  const nTron = nKy - (todayD >= 0 ? 1 : 0), tienTron = f.revenue - (todayD >= 0 ? f.by_day?.find((x) => x.d === f.to)?.revenue ?? 0 : 0);
+  const tbNgayKy = nTron >= 2 && (todayD < 0 || Array.isArray(f.by_day)) && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng|trung b[iì]nh|tb) (?:m[ộo]t )?ng[àa]y|\/ ?ng[àa]y/iu.test(question)
+    ? `Trung bình mỗi ngày (tính sẵn): ${vnd(Math.round(tienTron / nTron / 1000) * 1000)}/ngày = ${vnd(tienTron)} ÷ ${nTron} ngày${todayD >= 0 ? ' đã trọn (chưa tính hôm nay đang dở)' : ''} trong kỳ, kể cả ngày không có đơn.` : '';
+  if (tbNgayKy) lines.push(tbNgayKy);
+  // chỉ liệt kê khi số từng ngày phủ phần lớn kỳ: thiếu nhiều ngày thì câu "ngày không ghi là không có đơn" làm Boom bỏ trung bình
+  if (f.by_day?.length && f.by_day.length <= 31 && (nKy <= 7 || f.by_day.length * 2 >= nKy) && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng) ng[àa]y/iu.test(question)) {
     lines.push(`Từng ngày có đơn trong kỳ (cùng số với Báo cáo, ngày không ghi là không có đơn${f.by_day.some((x) => x.d === f.to) && todayD >= 0 ? ', hôm nay còn đang dở' : ''}): ${f.by_day.map((x) => `${+x.d.slice(8, 10)}/${+x.d.slice(5, 7)} ${vnd(x.revenue)} (${x.orders} đơn)`).join('; ')}.`);
   } else if (f.by_day?.length && /(?:ng[aà]y|h[oô]m) n[aà]o|ng[aà]y (?:cao|th[aấ]p|đ[oô]ng|v[aắ]ng|nhi[eề]u|[ií]t)/iu.test(question)) {
     // hôm nay chưa hết ngày → không xếp hạng
@@ -1512,7 +1519,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const tbNgay = (x: { v: number; n: number | null }) => (x.n ? x.v / x.n : x.v);
     // hôm nay chưa hết ngày → không đếm ngày dở vào số ngày; thứ chỉ có đúng ngày dở thì chưa xếp hạng được
     // 07/11: QC: "Cao nhất: Thứ 4" khi Thứ 2 cao hơn, vì chia n−1 mà tiền vẫn gồm hôm nay; có số từng ngày thì bỏ tiền hôm nay, không có thì chia đủ n
-    const tienHomNay = f.by_day?.find((y) => y.d === f.to)?.revenue;
+    // lần 231 (kiểm lần 4, quán b): hôm nay 0 đơn thì by_day không có dòng hôm nay → tiền hôm nay = 0, không phải "chưa biết" (như dự báo lần 229)
+    const tienHomNay = f.by_day?.find((y) => y.d === f.to)?.revenue ?? (Array.isArray(f.by_day) ? 0 : undefined);
     const tbXep = (x: { d: string; v: number; n: number | null }) => (todayD >= 0 && x.d === days[todayD].d && x.n ? (x.n > 1 ? (tienHomNay !== undefined ? (x.v - tienHomNay) / (x.n - 1) : x.v / (x.n - 1)) : -1) : tbNgay(x));
     // không có số từng ngày: xếp thấp vẫn chia n−1 để không gọi oan hôm nay là thấp nhất; xếp cao chia đủ n để không thổi hôm nay lên cao nhất
     const tbCao = (x: { d: string; v: number; n: number | null }) => (tienHomNay === undefined && x.n ? x.v / x.n : tbXep(x));
@@ -1657,8 +1665,12 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const xep = coVon.map((t) => ({ t, moi: t.price! - t.cost!, ca: (t.price! - t.cost!) * t.qty })).sort((a, b) => (itNhat ? a.moi - b.moi : b.moi - a.moi)).slice(0, 5); // chọn theo lời / phần (trước chọn theo tiền cả kỳ rồi mới xếp → món lời / phần cao nhất bị loại)
     const banChay = [...coVon].sort((a, b) => b.qty - a.qty)[0];
     // 09/11 lô dạy: kín K18 tụt −4/−3 vì dòng ghi "lời nhiều nhất cả kỳ" như đáp án → Boom kết luận "lời hơn" theo tổng tiền (điều cần tránh)
-    const moiCao = [...xep].sort((a, b) => b.moi - a.moi)[0];
-    lines.push(`XẾP MÓN THEO TIỀN LỜI (tính sẵn, lãi gộp = giá bán − giá vốn; ${xep.length} trong ${coVon.length} món đã có giá vốn${itNhat ? ', xếp từ LỜI ÍT NHẤT' : ', KHÔNG kết luận món lời ít nhất từ danh sách này'}): ${[...xep].sort((a, b) => (itNhat ? a.moi - b.moi : b.moi - a.moi)).map((x) => `${x.t.name} lời ${vnd(x.moi)}/phần (giá vốn ${Math.round((x.t.cost! / x.t.price!) * 100)}%), bán ${qty(x.t.qty)} phần → góp ${vnd(x.ca)} tiền lời cả kỳ`).join('; ')}. "Món lời hơn" = lời mỗi phần: ${moiCao.t.name} cao nhất; tiền lời cả kỳ nhiều chủ yếu do bán nhiều phần, KHÔNG dùng để nói món nào lời hơn${banChay.name !== moiCao.t.name ? `; món bán chạy nhất (${banChay.name}) không phải món lời mỗi phần cao nhất` : ''}. Món chưa có giá vốn không xếp được.`);
+    // lần 231 (kiểm lần 4): hỏi lời ít nhất thì xep là 5 món thấp nhất → "cao nhất" phải tìm trên mọi món có giá vốn
+    const moiCao = coVon.map((t) => ({ t, moi: t.price! - t.cost! })).sort((a, b) => b.moi - a.moi)[0];
+    // lần 231 (chấm mù: "lời ít nhất mỗi dĩa" ra 5 món thêm / nước, "5 trong 10 món" bị đọc thành 5 dĩa cơm chưa có giá vốn): nêu rõ + xếp trong từng nhóm
+    const lp = (t: FactItem) => t.price! - t.cost!;
+    const theoNhom = (f.groups ?? []).map((g) => { const ms = coVon.filter((t) => [...g.top, ...g.slow].some((x) => x.name === t.name)).sort((a, b) => (itNhat ? lp(a) - lp(b) : lp(b) - lp(a))); return ms.length >= 2 ? `${g.name}: ${ms[0].name} ${vnd(lp(ms[0]))}/phần` : ''; }).filter(Boolean);
+    lines.push(`XẾP MÓN THEO TIỀN LỜI (tính sẵn, lãi gộp = giá bán − giá vốn; ${xep.length} món lời / phần ${itNhat ? 'THẤP' : 'CAO'} nhất trong ${coVon.length} món đã có giá vốn${theoNhom.length >= 2 ? `; trong TỪNG nhóm, lời / phần ${itNhat ? 'thấp' : 'cao'} nhất — hỏi "mỗi dĩa / tô / ly" thì dùng nhóm đó: ${theoNhom.join('; ')}` : ''}${itNhat ? ', xếp từ LỜI ÍT NHẤT' : ', KHÔNG kết luận món lời ít nhất từ danh sách này'}): ${[...xep].sort((a, b) => (itNhat ? a.moi - b.moi : b.moi - a.moi)).map((x) => `${x.t.name} lời ${vnd(x.moi)}/phần (giá vốn ${Math.round((x.t.cost! / x.t.price!) * 100)}%), bán ${qty(x.t.qty)} phần → góp ${vnd(x.ca)} tiền lời cả kỳ`).join('; ')}. "Món lời hơn" = lời mỗi phần: ${moiCao.t.name} cao nhất; tiền lời cả kỳ nhiều chủ yếu do bán nhiều phần, KHÔNG dùng để nói món nào lời hơn${banChay.name !== moiCao.t.name ? `; món bán chạy nhất (${banChay.name}) không phải món lời mỗi phần cao nhất` : ''}. Món chưa có giá vốn không xếp được.`);
   }
   // 09/11 chấm mù: có giá vốn mà không tính đơn sàn còn lời bao nhiêu
   if (coVon.length && /s[aà]n\b|grab|shopee|be food|baemin|giao h[aà]ng|app giao/i.test(question)) {
@@ -1789,7 +1801,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const itemBase = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
   const it = (t: FactItem) =>
     `${t.name} (${t.qty} phần${t.price ? `, giá ${vnd(t.price)}` : ''}, ${vnd(t.revenue)}${
-      itemBase > 0 ? ` = ${String(Math.round((t.revenue / itemBase) * 1000) / 10).replace('.', ',')}% doanh thu` : ''
+      // lần 231 (kiểm lần 4: Boom gọi 1% này là "% doanh thu nhóm cà phê"): ghi rõ là % cả quán
+      itemBase > 0 ? ` = ${String(Math.round((t.revenue / itemBase) * 1000) / 10).replace('.', ',')}% doanh thu cả quán` : ''
     }${t.cost && t.price ? `, giá vốn ${vnd(t.cost)} = ${Math.round((t.cost / t.price) * 100)}% giá bán${costTag(t.cost / t.price)}` : ''}${
       t.retail && t.price
         ? `, mua lẻ ${vnd(t.retail)} → combo ${t.price > t.retail ? `ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)}` : t.price === t.retail ? 'bằng giá mua lẻ' : `rẻ hơn mua lẻ ${vnd(t.retail - t.price)} = ${pctTxt(Math.round(((t.retail - t.price) / t.retail) * 1000) / 10)}%`}` +
@@ -2552,7 +2565,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   // 07/11: QC: "mua 1 tặng 1 có lỗ không" trả lời chưa kết luận được, dù đây là phép tính; quán thiếu số thì tính theo khoảng giả định
   if (muaTang && +muaTang[1] > 0 && +muaTang[2] > 0) {
     const mua = +muaTang[1], tang = +muaTang[2], tong = mua + tang;
-    const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round((((1 - x) * mua) / con) * 10) / 10).replace('.', ',')} lần số lượt mới giữ được tiền còn lại sau nguyên liệu`; }; // lần 223: so lời bán thường đủ ${mua} phần khách trả (trước so 1 suất → mua 2 tặng 1 ra 0,7 lần)
+    const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round((((1 - x) * mua) / con) * 10) / 10).replace('.', ',')} lần số lượt mua (tức làm ra gấp ${String(Math.round((((1 - x) * tong) / con) * 100) / 100).replace('.', ',')} lần số phần, vì mỗi lượt ra ${tong} phần) mới giữ được tiền còn lại sau nguyên liệu`; }; // lần 231: người chấm đọc 1,2 lần lượt thành số phần → ghi cả hai // lần 223: so lời bán thường đủ ${mua} phần khách trả (trước so 1 suất → mua 2 tặng 1 ra 0,7 lần)
     const co = c >= 0.15 && c <= 0.8;
     out.push(`Mua ${mua} tặng ${tang} = giảm ${Math.round((tang / tong) * 100)}%. ${co ? `Nguyên liệu ${Math.round(c * 100)}% doanh thu: ${nl(c)}.` : `Quán chưa ghi khoản nguyên liệu; GIẢ SỬ 35%: ${nl(0.35)}; GIẢ SỬ 45%: ${nl(0.45)}; nói rõ là giả định.`} Chưa tính lương, mặt bằng.`);
     // 09/11 web + chấm mù: món hỏi có giá vốn riêng mà vẫn nói "chưa đủ dữ liệu"; 2 phần cơm tấm vốn 43.200đ > giá 40.000đ là lỗ ngay mỗi lượt
