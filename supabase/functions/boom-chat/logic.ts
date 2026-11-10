@@ -557,7 +557,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
         const r = [...sum.values()].map(({ a, m, names }) => {
           const k = a / base, p = Math.round(k * 1000) / 10;
           // lương dưới mốc (quán gia đình) không phải vấn đề → không gắn nhãn
-          const tag = p > m[3] * 100 ? 'cao hơn mốc' : m[1] !== 'Lương' && m[2] > 0 && p < m[2] * 100 ? 'dưới mốc' : 'trong mốc';
+          // lần 215 (kiểm toàn diện 10/11: lương 16,6% bị ghi "trong mốc 20–30%", Boom nói theo): dưới mốc nói đúng là dưới mốc
+          const tag = p > m[3] * 100 ? 'cao hơn mốc' : m[2] > 0 && p < m[2] * 100 ? (m[1] === 'Lương' ? 'dưới mốc, không phải vấn đề' : 'dưới mốc') : 'trong mốc';
           return `${m[1]} (${names.join(' + ')}) = ${pctTxt(p)}% (mốc ${m[2] > 0 ? `${m[2] * 100}–` : 'dưới '}${m[3] * 100}% → ${tag})`;
         });
         if (r.length) out.push(`Tỉ lệ trên doanh thu bán hàng (${vnd(base)}), mốc là kinh nghiệm chung của quán nhỏ (chỉ tính 6 khoản chi lớn nhất): ${r.join('; ')}.`);
@@ -1091,7 +1092,8 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
 }
 
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
-export const HOI_PHAN = /(?:nau|chuan bi|pha|uop|lam|ban|dat|lay)\b.{0,25}(?:bao nhieu|may (?:phan|to|ly|dia|suat|chen|noi|o|cai))|bao nhieu (?:phan|to|ly|dia|suat|chen|o\b)/;
+// lần 215: nhận cả viết tắt "bn" (vd "nấu bn phần")
+export const HOI_PHAN = /(?:nau|chuan bi|pha|uop|lam|ban|dat|lay)\b.{0,25}(?:bao nhieu|\bbn\b|may (?:phan|to|ly|dia|suat|chen|noi|o|cai))|(?:bao nhieu|\bbn) (?:phan|to|ly|dia|suat|chen|o\b)/;
 /** Lần 193–194, lần 204 dùng chung: mốc số phần / ngày của món theo buổi được hỏi (số cả kỳ ÷ ngày mở bán × hệ số thứ). */
 export function mocSoPhan(f: ShopFacts, question: string, moBan: number, heSo: number, thu: string, nhanNgay: string, duoi: string): string {
   if (!f.groups?.length || moBan <= 0) return '';
@@ -1543,8 +1545,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         if (open.length) bn[k] = `${bn[k].split(' (')[0]} (${open[0]}–${open[open.length - 1] + 1}h${off.length ? `, ${off.join(', ')}` : ''})`;
       });
     }
-    const parts = f.by_band.map((b, k) => (b.length ? `${bn[k]}: ${b.map((x) => `${x.name} ${x.qty}`).join(', ')}` : '')).filter(Boolean);
-    if (parts.length) lines.push(`Món bán chạy theo khung giờ (số phần): ${parts.join('; ')}.`);
+    // lần 215 (kiểm toàn diện 10/11: "sáng mai nấu bn phần" → Boom lấy 420 phần cả kỳ làm số một buổi): ghi rõ là cả kỳ, kèm số / ngày
+    const nMo = ngayMoBan(f), mn = (q: number) => (nMo > 0 ? ` (~${pctTxt(Math.round((q / nMo) * 10) / 10)}/ngày)` : '');
+    const parts = f.by_band.map((b, k) => (b.length ? `${bn[k]}: ${b.map((x) => `${x.name} ${x.qty}${mn(x.qty)}`).join(', ')}` : '')).filter(Boolean);
+    if (parts.length) lines.push(`Món bán chạy theo khung giờ (số phần CẢ KỲ${nMo > 0 ? ` ${nMo} ngày mở bán` : ''}, không phải số một ngày): ${parts.join('; ')}.`);
     // lần 74: hỏi về MỘT buổi (D02 "buổi chiều vắng") — GPT lấy "Combo tính sẵn" (món chạy nhất cả ngày = món sáng) cho buổi chiều
     // → tính sẵn việc cho đúng buổi: món bán chạy của khung đó (bỏ món giá vốn cao), ưu đãi chỉ trong khung, mốc doanh thu / ngày
     const { bq, quaTai } = buoiTrongCau(question);
@@ -1641,7 +1645,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       itemBase > 0 ? ` = ${String(Math.round((t.revenue / itemBase) * 1000) / 10).replace('.', ',')}% doanh thu` : ''
     }${t.cost && t.price ? `, giá vốn ${vnd(t.cost)} = ${Math.round((t.cost / t.price) * 100)}% giá bán${costTag(t.cost / t.price)}` : ''}${
       t.retail && t.price
-        ? `, mua lẻ ${vnd(t.retail)} → combo ${t.price > t.retail ? `ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)}` : t.price === t.retail ? 'bằng giá mua lẻ' : `rẻ hơn mua lẻ ${vnd(t.retail - t.price)}`}`
+        ? `, mua lẻ ${vnd(t.retail)} → combo ${t.price > t.retail ? `ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)}` : t.price === t.retail ? 'bằng giá mua lẻ' : `rẻ hơn mua lẻ ${vnd(t.retail - t.price)} = ${pctTxt(Math.round(((t.retail - t.price) / t.retail) * 1000) / 10)}%`}` +
+          // lần 215 (kiểm toàn diện 10/11: Boom nhẩm "hạ 36k xuống 34k = bằng giá lẻ" khi lẻ 38k): khoảng giá combo tính sẵn
+          `; giá combo rẻ hơn lẻ 5–10% = ${vnd(Math.round((t.retail * 0.9) / 1000) * 1000)}–${vnd(Math.round((t.retail * 0.95) / 1000) * 1000)}`
         : ''
     })`;
   for (const g of f.groups ?? []) {

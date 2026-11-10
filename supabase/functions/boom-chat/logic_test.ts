@@ -2221,3 +2221,20 @@ Deno.test('lần 207: kỳ chưa đủ 2 ngày cùng thứ thì mốc ghi rõ d�
   const t = L.formatFacts(f, new Date('2026-11-09T22:00:00+07:00'), 't7 pha bao nhieu ly ca phe sua da');
   assertStringIncludes(t, 'Thứ Bảy (kỳ mới có 1 Thứ Bảy — chưa đủ để tính riêng, dùng trung bình mọi ngày)');
 });
+
+// lần 215 (kiểm toàn diện 10/11): lương dưới mốc, số phần khung giờ là cả kỳ, "bn phần", khoảng giá combo
+Deno.test('lần 215: nhãn lương dưới mốc, khung giờ cả kỳ, bn phần, giá combo', () => {
+  const s = (k: string) => JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url)));
+  const c = s('c'), a = s('a');
+  const ban = L.parseFacts(c.facts.thang_nay)!;
+  const mod = L.formatModules(L.parseModules({ ...c.modules.thang_nay })!, new Date('2026-10-28T09:00:00+07:00'), 'lương có cao không', ban);
+  assertStringIncludes(mod, 'dưới mốc, không phải vấn đề');
+  assert(!/Lương[^;]*→ trong mốc/.test(mod));
+  const fc = L.formatFacts(ban, new Date('2026-10-28T09:00:00+07:00'), 'mon nao ban chay buoi sang');
+  assertStringIncludes(fc, 'số phần CẢ KỲ');
+  assert(/Bún bò Huế 420 \(~\d+(,\d)?\/ngày\)/.test(fc));
+  assert(L.HOI_PHAN.test('sang mai mua thi nau bn phan bun bo'));
+  assert(!L.HOI_PHAN.test('ban hang the nao'));
+  const fa = L.formatFacts(L.parseFacts(a.facts.thang_nay)!, new Date('2026-10-28T09:00:00+07:00'), 'combo ban it');
+  assertStringIncludes(fa, 'mua lẻ 38.000đ → combo rẻ hơn mua lẻ 2.000đ = 5,3%; giá combo rẻ hơn lẻ 5–10% = 34.000đ–36.000đ');
+});
