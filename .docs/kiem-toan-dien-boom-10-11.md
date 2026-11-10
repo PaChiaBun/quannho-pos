@@ -281,3 +281,38 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 - Bộ kín MỚI `de_kin15.json` (24 câu: vay góp, trả một lần, không phải vay). Chấm mù 48 cặp: câu bị chạm 18 cặp **+2,72 ± 2,41** (vay góp +3,5; trả một lần +1,75); không chạm −0,20 ± 0,91.
 - Sau chấm sửa thêm (chưa đo bằng GPT, chỉ có test): "ngày 30 tháng sau" bị đọc thành 30 tháng (câu đó −2 / −7); "trả một cục" chưa nhận là trả một lần; "công ty nợ quán" bị tính như quán đi vay.
 - Còn thấy: tiền hụi / để dành theo tuần, hạn theo ngày (chia mỗi ngày tới 15/12) chưa có dòng tính sẵn; Boom né không tính dù khối có sẵn số.
+
+## 26. Kiểm toàn diện lần 5 (11/11, bản 234)
+
+- Sổ thật (Chủ Quán cho đọc): vẫn 0 lượt thật từ 05/11.
+- Bộ kín MỚI `cham_tu_van/thoi_tiet/de_kin16.json` (90 câu, 15 lĩnh vực × 6, người khác viết; trời gán ngẫu nhiên nên vài câu thời tiết lệch trời). Mỗi câu 1 lượt, 2 người chấm độc lập.
+- Kết quả: **140/180 dùng được (78%)** (lần 4: 73%), cả hai đồng ý dùng được 66/90; TB **12,97** (lần 4: 12,72). Hai vòng đồng ý 82/90.
+
+| Lĩnh vực | Dùng được | TB |
+|---|---|---|
+| khuyến mãi | 5/12 | 11,6 |
+| nội dung (bài đăng, tin nhắn) | 6/12 | 10,7 |
+| giờ / ngày | 7/12 | 11,8 |
+| kho | 8/12 | 13,3 |
+| khách, ngoài dữ liệu | 9/12 | 12,5–12,7 |
+| tiếp thị, doanh thu, so kỳ, thời tiết | 10/12 | 12,4–13,9 |
+| thu chi, nhân sự, sàn giao, giá lời | 11/12 | 13,0–14,8 |
+| món | 12/12 | 14,0 |
+
+Tiêu chí thấp: việc làm 1,32, tìm vấn đề 1,41, lý lẽ 1,45. Kiểu lỗi: chung chung 25, quá thận trọng 15, lạc đề 11, tính sai 8.
+
+**Lỗi theo lĩnh vực yếu:**
+- Khuyến mãi: giảm 33% (mua 2 tặng 1) bị nói NGƯỢC là "lớn hơn phần còn lại sau nguyên liệu" (còn 62,7%) dù dòng tính sẵn đúng; mã giảm trên đơn qua sàn không có phép tính (lời qua sàn 6–8 nghìn/phần, mã bớt 15.000đ/đơn); đề xuất thẻ giấy khi app đã có tích điểm.
+- Nội dung: bài đăng thiếu giá / giờ / mã đang chạy; tin báo "món mới" không có tên món mà không hỏi lại; "bù" khách đơn sàn bằng mã của app (khách sàn không nhập được).
+- Giờ / ngày: "khung 6–7h" bị cộng cả giờ 7h; không tính doanh thu / ngày của một giờ để quyết đóng / mở sớm, không so lương / giờ công; bỏ qua người làm quá giờ.
+- Kho: lúc 9h vẫn dặn nhập "trước khung 6h–13h"; hết ly / than không nói nhập ngay bao nhiêu, gợi ngưng món chủ lực.
+
+**Dòng tính sẵn sai người chấm bắt:**
+1. "Việc nên nhắm" gợi "thẻ tích ly mua 8 tặng 1" trong khi dòng Giữ khách dặn KHÔNG thẻ giấy (quán có tích điểm).
+2. "ĐIỂM CẦN CHÚ Ý": "4 món chưa bán" nhưng chỉ kể 3 tên, không ghi "và 1 món khác".
+3. "MÓN ĐANG HỎI" khớp "Cơm tấm sườn cây" sang "Cơm tấm sườn".
+4. Khung "Sáng (5–11h)" ghi cả cho quán mở 9h.
+5. Thứ của ngày cuối kỳ trước chia n−1 (cắt cùng giờ) mà không ghi rõ → người chấm tưởng chia sai.
+6. Quán mẫu d: số so cùng kỳ theo nhóm / món lẻ, tự mâu thuẫn (dữ liệu mẫu, đã biết).
+
+**Kế hoạch lô F:** (a) mã: sửa dòng 1–5; "khung A–Bh" = giờ A tới trước B; dòng doanh thu / ngày của giờ hỏi đóng / mở + lương / giờ công; mã giảm trên đơn sàn (lời còn lại sau phí sàn − tiền mã); giờ hiện tại trong dòng nhập kho (đã qua giờ mở → "nhập ngay"). (b) kiểm bằng mã: câu trả lời nói "lớn hơn phần còn lại" khi số giảm < phần còn lại; bài đăng thiếu giá khi dòng bài đăng có giá. Đo bằng bộ kín mới theo loại câu đích.
