@@ -2238,3 +2238,19 @@ Deno.test('lần 215: nhãn lương dưới mốc, khung giờ cả kỳ, bn ph�
   const fa = L.formatFacts(L.parseFacts(a.facts.thang_nay)!, new Date('2026-10-28T09:00:00+07:00'), 'combo ban it');
   assertStringIncludes(fa, 'mua lẻ 38.000đ → combo rẻ hơn mua lẻ 2.000đ = 5,3%; giá combo rẻ hơn lẻ 5–10% = 34.000đ–36.000đ');
 });
+
+// lần 216: câu vay / trả nợ — tiền góp / tháng so với thu − chi tính sẵn
+Deno.test('lần 216: vay — tính sẵn tiền góp, số tháng', () => {
+  const v = (q: string) => L.vayTinhSan(q, 130_000_000, 100_000_000, 30); // thu − chi 30tr / tháng
+  assertStringIncludes(v('vay 50tr tra gop 12 thang co noi ko'), 'góp ~4.167.000đ/tháng = 14%');
+  assertStringIncludes(v('tra gop may lam da 80 trieu, moi thang 7tr trong 1 nam'), 'góp ~7.000.000đ/tháng = 23%');
+  assertStringIncludes(v('vay 200tr, moi thang tra 9tr co du ganh ko'), 'góp ~9.000.000đ/tháng (200.000.000đ ÷ 9.000.000đ ≈ 22,2 tháng) = 30%');
+  assertStringIncludes(v('cần 120 triệu mà chỉ có 40 triệu, vay phần còn lại thì bao lâu trả xong'), 'vay 80.000.000đ, thu − chi ~30.000.000đ/tháng → dồn HẾT phần chênh ≈ 2,7 tháng');
+  assertStringIncludes(v('vay 60tr tra 5tr/thang bao lau het no'), '≈ 12 tháng) = 17%');
+  assertStringIncludes(L.vayTinhSan('vay 50tr', 90_000_000, 100_000_000, 30), 'CHI NHIỀU HƠN THU');
+  assertStringIncludes(v('vay ngân hàng 300 triệu, lãi khoảng 10%/năm, mỗi tháng trả bao nhiêu thì an toàn'), 'tiền lãi ~2.500.000đ/tháng (tháng đầu) → dồn HẾT phần chênh ≈ 10,9 tháng; giữ nửa làm dự phòng ≈ 24 tháng (trả ~15.000.000đ/tháng là mức an toàn)');
+  assertStringIncludes(v('vay 200tr, moi thang tra goc lai tam 9tr'), '(đã gồm cả lãi → trả hết 200.000.000đ lâu hơn 22,2 tháng)');
+  assert(!v('mượn em trai 100 trieu, tính trả lại trong 1 năm').includes('tiền lãi'));
+  assertEquals(v('tháng này thu chi thế nào'), '');
+  assertEquals(v('vay 50tr được ko'.replace('50tr', '')), '');
+});

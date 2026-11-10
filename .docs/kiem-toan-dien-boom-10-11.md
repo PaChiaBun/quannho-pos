@@ -67,3 +67,10 @@ Bản đo: máy chủ lần 214 (mã phân tích lần 207, `logic.ts` b0798ce),
 - Đã làm trong `logic.ts`: nhãn lương dưới mốc; dòng khung giờ ghi "số phần CẢ KỲ N ngày" kèm ~số/ngày; combo có % rẻ hơn lẻ và khoảng giá 5–10%; `HOI_PHAN` nhận "bn" (câu "nấu bn phần" trước không có mốc số phần). Test 182/182.
 - Chấm mù 104 cặp (cả 52 câu de_kin9 đều bị chạm vì dòng khung giờ / combo có ở mọi khối): **tổng +0,04 ± 0,36** (không đo ra khác biệt); **thời tiết +1,75 ± 1,42** (đúng chỗ nhắm: mốc ~17 phần thay vì 420); sàn giao +0,62, tiếp thị +0,88 (đều cắt 0); giờ / ngày −0,75 ± 0,89, khuyến mãi −0,62 ± 1,43 (cắt 0). Dùng được 89 → 88 / 104.
 - Kịch bản áp: `db-fix/boom_l215_ap_dung.sh` (chỉ chép logic.ts; đã chạy chế độ kiểm `KHO=1`).
+
+## 5. Lô 2 (lần 216, chưa áp)
+
+- Đếm lỗi thu chi trên bản 215 (8 câu): chỉ câu vay còn lỗi (2/2 lượt không chốt số tháng); phép trừ vô nghĩa 0/8 → lô 2 thu hẹp còn câu vay.
+- Mã: `vayTinhSan()` trong `logic.ts` — dòng "Trả nợ (tính sẵn)": tiền góp / tháng so thu − chi / tháng (quy 30 ngày), tổng + kỳ hạn, "vay phần còn lại", lãi %/năm (đọc trên câu gốc), "gốc lãi".
+- Đo: bộ câu vay 12 câu do người ngoài viết (`de_vay.json`) + T43. Bản đầu (lấy số tiền đầu tiên) +0,77 ± 0,69 và người chấm bắt lỗi lấy sai khoản vay → viết lại; bản sửa **+1,85 ± 0,85** (26 cặp). Sau đó sửa lãi %/năm và "gốc lãi" (2 câu, có test, chưa đo lại).
+- Kịch bản: `db-fix/boom_l216_ap_dung.sh` (đã chạy chế độ kiểm).
