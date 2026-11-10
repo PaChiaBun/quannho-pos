@@ -2349,3 +2349,19 @@ Deno.test('lần 223: mua 2 tặng 1 tính theo lượt', () => {
   const m = /phải bán gấp khoảng ([\d,]+) lần số lượt/.exec(t);
   assert(m && Number(m[1].replace(',', '.')) > 1, t.slice(0, 400));
 });
+
+// lần 224: khách quen rớt hay không (cộng dồn ≠ xu hướng), khách lâu chưa ghé (app không có ngày ghé cuối), đã có tích điểm
+Deno.test('lần 224: khách', () => {
+  const a = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_a.json', import.meta.url)));
+  const f = L.parseFacts(a.facts.thang_nay)!, m = L.parseModules({ ...a.modules.thang_nay })!;
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  const t = L.formatModules(m, now, 'khách quen còn quay lại đều ko hay rớt bớt rồi', f);
+  assertStringIncludes(t, 'là số CỘNG DỒN từ trước tới nay');
+  assertStringIncludes(t, 'CÓ dấu hiệu rớt khách');
+  assertStringIncludes(t, 'KHÔNG đề xuất thẻ giấy');
+  const t2 = L.formatModules(m, now, 'có khách nào lâu rồi ko ghé ko, nhắn họ dc ko', f);
+  assertStringIncludes(t2, 'app KHÔNG có ngày ghé gần nhất');
+  assert(!L.formatModules(m, now, 'doanh thu tháng này giảm vì sao', f).includes('Xu hướng khách quen'));
+  assert(!L.formatModules(m, now, 'tăng giá thêm 2k có mất khách không', f).includes('Xu hướng khách quen'));
+  assertStringIncludes(L.formatModules(m, now, 'Khách quen có quay lại đều ko hay đang bỏ đi?', f), 'Xu hướng khách quen');
+});

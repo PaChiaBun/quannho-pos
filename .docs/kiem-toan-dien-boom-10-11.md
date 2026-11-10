@@ -134,3 +134,10 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Mã: dòng "Giảm giá theo phần" (giảm X đồng / X% → lời còn lại, phải bán gấp mấy lần); dòng "quán CHƯA có chương trình mua X tặng Y" khi câu nói như đang chạy; sửa công thức chung mua X tặng Y (trước so 1 suất với 1 lượt → mua 2 tặng 1 ra 0,7 lần, nay 1,4 lần số lượt).
 - Đo 20 cặp (10 câu bị chạm × 2): **+0,85 ± 1,57 — chưa rõ** (cắt 0). Người chấm: câu đầu vẫn hay không nêu số lần phải bán gấp; mã chưa nhận "mua món này tặng món khác", "hạ giá còn 37k", câu không dấu "tuần rồi chạy mua 1 tặng 1".
 - Công thức mua X tặng Y sửa sau đo (lỗi tính cũ, có test). Test 194/194.
+
+## 11. Lô C đợt 2 (lần 224, chưa áp)
+
+- Đếm lỗi khách bản 221: "khách quen còn đều hay rớt" 2/2 kết luận "vẫn đều" từ 64% cộng dồn khi số đơn −14,8%; "khách lâu chưa ghé, nhắn được ko" 2/2 nói app lọc được (app không có ngày ghé cuối); giữ chân khách 2/2 đề xuất thẻ giấy khi quán đã có tích điểm.
+- Mã (khối KHÁCH HÀNG): dòng "Xu hướng khách quen" (cộng dồn ≠ xu hướng, so số đơn kỳ trước, giờ mất nhiều nhất); dòng "Khách lâu chưa ghé" (app không lọc được, nhắn nhóm chi nhiều nhất kèm ưu đãi cụ thể); "Giữ khách": quán có tích điểm → KHÔNG thẻ giấy.
+- Đo 28 cặp (14 câu bị chạm × 2; 5 câu bộ `de_khach` người ngoài viết): **+3,21 ± 1,32**. Người chấm được nhắc 3 sự thật về số (có thể nghiêng); đếm máy: thẻ giấy 5 → 1, "vẫn quay lại đều" 2 → 1. Test 194/194.
+- Chưa làm: "khách ăn sáng hay trưa" quá thận trọng; "có nên làm tích điểm" chung chung.
