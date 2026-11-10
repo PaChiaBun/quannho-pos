@@ -2454,3 +2454,23 @@ Deno.test('lần 231: lô E dòng tính sẵn', () => {
   assert(!t.includes('Từng ngày có đơn trong kỳ'), t.slice(0, 300));
   assertStringIncludes(L.formatFacts(fc, now, 'món nào bán chạy'), '% doanh thu cả quán');
 });
+
+// lần 232: mốc nấu nguyên liệu có trong tên món khác; kỳ trước chưa trọn tháng; trung bình ngày mở bán
+Deno.test('lần 232: trân châu, cả tháng trước, ngày mở bán', () => {
+  const ld = (k: string) => L.parseFacts(JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  assertStringIncludes(L.formatFacts(ld('b'), now, 'mai nên nấu bao nhiêu trân châu'), 'Trà sữa trân châu đường đen ~32 phần / ngày → mốc nấu phải cộng');
+  const t = L.formatFacts(ld('b'), now, 'dự báo cả tháng này so với tháng trước');
+  assertStringIncludes(t, 'chỉ là 28 ngày đầu tháng trước');
+  assertStringIncludes(t, '~145.705.000đ');
+  assertStringIncludes(L.formatFacts(ld('a'), now, 'trung bình mỗi ngày bán được bao nhiêu'), 'trung bình mỗi ngày CÓ MỞ BÁN: 4.095.000đ/ngày (23 ngày)');
+  assert(!L.formatFacts(ld('c'), now, 'trung bình mỗi ngày bán được bao nhiêu').includes('CÓ MỞ BÁN'));
+});
+
+Deno.test('lần 232b: chỉ câu cả tháng với tháng trước', () => {
+  assert(L.hoiCaThangVoiTruoc('dự báo cả tháng này so với tháng trước'));
+  assert(L.hoiCaThangVoiTruoc('Mình muốn cuối tháng đạt lại mức tháng 9 thì 3 ngày còn lại phải bán bao nhiêu?'));
+  assert(L.hoiCaThangVoiTruoc('het thang chac vuot thang roi ko'));
+  assert(!L.hoiCaThangVoiTruoc('giờ nào tụt so với tháng trước, trưa hay tối'));
+  assert(!L.hoiCaThangVoiTruoc('thang nay ban dc nhiu roi, du tinh het thang dc bn'));
+});

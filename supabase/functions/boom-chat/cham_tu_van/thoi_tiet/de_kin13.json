@@ -1,0 +1,226 @@
+[
+ {
+  "id": "Y01",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Tháng này quán có vượt được tháng 9 không em?"
+ },
+ {
+  "id": "Y02",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "ca_thang_vs_truoc",
+  "q": "cuoi thang nay chac dc hon thang truoc bn tien?"
+ },
+ {
+  "id": "Y03",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Muốn đạt lại doanh thu như tháng 9 thì mấy ngày còn lại phải bán sao?"
+ },
+ {
+  "id": "Y04",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Dự báo hết tháng 10 quán thu bao nhiêu, so tháng trước hơn hay kém?"
+ },
+ {
+  "id": "Y05",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Còn mấy ngày nữa hết tháng, liệu có hụt so với tháng rồi không?"
+ },
+ {
+  "id": "Y06",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Tháng 10 này tính ra có bằng tháng 9 nổi không, hay tụt?"
+ },
+ {
+  "id": "Y07",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "ca_thang_vs_truoc",
+  "q": "thang nay so thang 9 the nao, cuoi thang co kip ko"
+ },
+ {
+  "id": "Y08",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "ca_thang_vs_truoc",
+  "q": "Chị muốn tháng này ít nhất bằng tháng trước, giờ đang thiếu bao nhiêu?"
+ },
+ {
+  "id": "Y09",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "so_thang_truoc_khac",
+  "q": "Khung giờ sáng 7–8h tháng này có giảm so với tháng trước không?"
+ },
+ {
+  "id": "Y10",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "so_thang_truoc_khac",
+  "q": "Món nào bán tụt nhiều nhất so với tháng 9 vậy?"
+ },
+ {
+  "id": "Y11",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "so_thang_truoc_khac",
+  "q": "Sao tháng này bún bò bán ít hơn tháng trước vậy em?"
+ },
+ {
+  "id": "Y12",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "so_thang_truoc_khac",
+  "q": "Thứ Bảy tháng này có đông như tháng trước ko?"
+ },
+ {
+  "id": "Y13",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "so_thang_truoc_khac",
+  "q": "nhom banh mi thang nay tang hay giam so thang truoc"
+ },
+ {
+  "id": "Y14",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "so_thang_truoc_khac",
+  "q": "Buổi tối dạo này vắng hơn tháng trước phải không, giờ nào hụt nhất?"
+ },
+ {
+  "id": "Y15",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "so_thang_truoc_khac",
+  "q": "Đồ uống với món thêm so tháng 9 nhóm nào đi xuống?"
+ },
+ {
+  "id": "Y16",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "so_thang_truoc_khac",
+  "q": "Cơm tấm gà nướng tháng này lên hay xuống so tháng rồi, tại sao?"
+ },
+ {
+  "id": "Y17",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "trung_binh_ngay",
+  "q": "Trung bình một ngày quán bán được bao nhiêu ly?"
+ },
+ {
+  "id": "Y18",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "trung_binh_ngay",
+  "q": "ngay thuong quan thu nhiu, cuoi tuan nhiu?"
+ },
+ {
+  "id": "Y19",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "trung_binh_ngay",
+  "q": "Mỗi ngày bán bao nhiêu tô bún bò là đủ đạt mức tháng trước?"
+ },
+ {
+  "id": "Y20",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "trung_binh_ngay",
+  "q": "Mỗi ngày mở cửa trung bình thu được bao nhiêu tiền?"
+ },
+ {
+  "id": "Y21",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "trung_binh_ngay",
+  "q": "Muốn tháng sau thu 130 triệu thì mỗi ngày cần bán bao nhiêu?"
+ },
+ {
+  "id": "Y22",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "trung_binh_ngay",
+  "q": "Một ngày bình quân có bao nhiêu đơn hả em?"
+ },
+ {
+  "id": "Y23",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "trung_binh_ngay",
+  "q": "1 ngay quan ban dc bn dia com suon"
+ },
+ {
+  "id": "Y24",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "trung_binh_ngay",
+  "q": "Đặt mục tiêu 140 triệu tháng 11 thì một ngày phải bán bao nhiêu phần?"
+ },
+ {
+  "id": "Y25",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "nau_nguyen_lieu",
+  "q": "Mai nên pha sẵn bao nhiêu cà phê cốt cho buổi sáng?"
+ },
+ {
+  "id": "Y26",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "nau_nguyen_lieu",
+  "q": "Mai nấu bao nhiêu trân châu là vừa, khỏi bỏ đi?"
+ },
+ {
+  "id": "Y27",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "nau_nguyen_lieu",
+  "q": "Thịt nướng mai ướp bao nhiêu ký cho cả bún lẫn cơm?"
+ },
+ {
+  "id": "Y28",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "nau_nguyen_lieu",
+  "q": "Hôm nay nướng bao nhiêu miếng sườn cho đủ bán cả ngày?"
+ },
+ {
+  "id": "Y29",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "nau_nguyen_lieu",
+  "q": "mai dat bn o banh mi"
+ },
+ {
+  "id": "Y30",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "nau_nguyen_lieu",
+  "q": "Trà đào với đào ngâm mai chuẩn bị bao nhiêu thì đủ?"
+ },
+ {
+  "id": "Y31",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "nau_nguyen_lieu",
+  "q": "Chả mai làm bao nhiêu, tính luôn phần khách gọi thêm nha"
+ },
+ {
+  "id": "Y32",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "nau_nguyen_lieu",
+  "q": "Bì với chả mai nên làm mấy phần cho cả trưa lẫn tối?"
+ }
+]

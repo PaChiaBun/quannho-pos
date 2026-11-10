@@ -262,3 +262,9 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 - Sửa 3 lỗi còn lại của lô E: mốc nấu nguyên liệu nằm trong tên món khác (trân châu trong "Trà sữa trân châu đường đen"); kỳ trước chỉ là N ngày đầu tháng trước → ước thô cả tháng trước để so với dự báo; trung bình ngày CÓ MỞ BÁN (bỏ thứ quán nghỉ).
 - Chấm mù 46 cặp (23 câu bị chạm ở de_kin10/11/12 × 2): **+0,04 ± 0,84** → không áp. Câu đích "so dự báo với tháng trước" thắng rõ (+6 / +4), nhưng dòng ước tháng trước còn bám vào câu "giờ nào tụt so với tháng trước" (−4 / −10) vì luật bắt chữ quá rộng ("so", "tháng trước"). Trân châu −1 / +1.
 - Bản vá: `db-fix/boom_l232_tran_chau_thang_truoc_khong_ap.patch`. Muốn làm lại: chỉ gắn dòng ước tháng trước khi câu hỏi CẢ dự báo / cuối tháng LẪN tháng trước / mức tháng N, đo bằng bộ kín mới.
+
+## 23. Lần 232b (làm lại, chưa áp)
+
+- Như lần 232, nhưng dòng ước cả tháng trước chỉ gắn khi câu hỏi CẢ tháng / cuối tháng / dự báo LẪN tháng trước / tháng N (`hoiCaThangVoiTruoc`, đọc trên chữ bỏ dấu).
+- Bộ kín MỚI `cham_tu_van/thoi_tiet/de_kin13.json` (32 câu, 4 loại × 8: cả tháng so tháng trước, so tháng trước theo giờ / món, trung bình ngày, nấu nguyên liệu; người khác viết, Claude không đọc trước khi đo). Chấm mù 64 cặp (4 người chấm): câu bị chạm 22 cặp **+2,14 ± 1,48**; câu không chạm 42 cặp +0,50 ± 1,08; cả bộ +1,06 ± 0,89. Cả tháng so tháng trước (chạm) +3,33; so tháng trước theo giờ / món ±0 (hết bám sai).
+- Người chấm còn bắt: câu "tháng này có đạt tháng 9 không" bị coi là hỏi THÁNG KHÁC → mất dòng dự báo (lỗi có từ trước); ước tháng trước theo ngày lịch, quán nghỉ Chủ nhật lệch ~1 điểm %; câu "mục tiêu 130 triệu" bị đọc thành khoản vay; trân châu ở câu không có chữ hỏi số phần vẫn chỉ 13 phần; tháng sau có bao nhiêu ngày mở bán chưa tính sẵn.

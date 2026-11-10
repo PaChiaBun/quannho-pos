@@ -1181,6 +1181,33 @@ export function thoiTietVoiSoQuan(w: ThoiTiet | null, f: ShopFacts | null, quest
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
 // lần 215: nhận cả viết tắt "bn" (vd "nấu bn phần")
 export const HOI_PHAN = /(?:nau|chuan bi|pha|uop|lam|ban|dat|lay)\b.{0,25}(?:bao nhieu|\bbn\b|may (?:phan|to|ly|dia|suat|chen|noi|o|cai))|(?:bao nhieu|\bbn) (?:phan|to|ly|dia|suat|chen|o\b)/;
+/** Lần 232 (chấm mù lô E: trung bình chia cả Chủ nhật quán nghỉ → thấp hơn một ngày có bán): thứ cả kỳ 0đ là ngày nghỉ, thêm trung bình ngày mở bán. */
+function moBanTb(f: ShopFacts, todayD: number, nTron: number, tienTron: number): string {
+  const cnt = weekdayCounts(f.from, f.to);
+  if (!cnt || !f.by_weekday) return '';
+  const nghi = cnt.reduce((s, c, d) => s + (f.by_weekday![d] > 0 ? 0 : c - (d === todayD ? 1 : 0)), 0);
+  const nMo = nTron - nghi;
+  return nghi > 0 && nMo >= 2 ? ` Quán nghỉ ${nghi} ngày (thứ cả kỳ không có đơn) → trung bình mỗi ngày CÓ MỞ BÁN: ${vnd(Math.round(tienTron / nMo / 1000) * 1000)}/ngày (${nMo} ngày); hỏi "mỗi ngày bán được bao nhiêu" thì nêu số này trước.` : '';
+}
+
+/** Lần 232b (chấm mù 232: dòng bám cả "giờ nào tụt so tháng trước" → −4/−10): chỉ câu hỏi CẢ tháng / cuối tháng LẪN tháng trước. */
+export function hoiCaThangVoiTruoc(question: string): boolean {
+  const q = boDau(question.normalize('NFC')).toLowerCase();
+  return /\b(?:du bao|du tinh|uoc|cuoi thang|het thang|ca thang|dat lai|vuot|bang)\b/.test(q) && /\bthang (?:truoc|roi|\d{1,2})\b|\bmuc thang\b/.test(q);
+}
+
+/** Lần 232 (kiểm lần 4: Boom so dự báo cả tháng với số 1–28 tháng trước rồi nói "vượt tháng trước"): kỳ trước chưa trọn tháng → ước cả tháng trước. */
+export function soCaThangTruoc(f: ShopFacts, duBao: number): string {
+  const pf = f.prev_from, pt = f.prev_to;
+  if (f.prev_revenue === null || !pf || !pt || !pf.endsWith('-01')) return '';
+  const cuoi = new Date(Date.UTC(+pf.slice(0, 4), +pf.slice(5, 7), 0)).toISOString().slice(0, 10);
+  if (pt.slice(0, 10) >= cuoi) return '';
+  const nCo = Math.round((Date.parse(pt.slice(0, 10)) - Date.parse(pf)) / 864e5) + 1, nThang = +cuoi.slice(8, 10);
+  if (nCo <= 0) return '';
+  const uoc = Math.round((f.prev_revenue / nCo) * nThang / 1000) * 1000;
+  return ` Số kỳ trước ${vnd(f.prev_revenue)} chỉ là ${nCo} ngày đầu tháng trước, KHÔNG phải cả tháng → KHÔNG so dự báo cả tháng với số này. Ước thô cả tháng trước (${nThang} ngày, theo trung bình ${nCo} ngày đầu): ~${vnd(uoc)} → dự báo tháng này ${duBao >= uoc ? 'cao hơn' : 'thấp hơn'} ~${pctTxt(Math.abs(((duBao - uoc) / uoc) * 100))}% (cả hai đều là ước).`;
+}
+
 /** Lần 193–194, lần 204 dùng chung: mốc số phần / ngày của món theo buổi được hỏi (số cả kỳ ÷ ngày mở bán × hệ số thứ). */
 export function mocSoPhan(f: ShopFacts, question: string, moBan: number, heSo: number, thu: string, nhanNgay: string, duoi: string): string {
   if (!f.groups?.length || moBan <= 0) return '';
@@ -1208,7 +1235,15 @@ export function mocSoPhan(f: ShopFacts, question: string, moBan: number, heSo: n
   const nhom = f.groups.find((g) => [...(g.top ?? []), ...(g.slow ?? [])].length >= 2 && q.includes(boDau(g.name).toLowerCase()));
   const ds = nhom ? [...(nhom.top ?? []), ...(nhom.slow ?? [])] : [];
   const tongNhom = ds.reduce((a, t) => a + t.qty, 0);
-  const caNhom = nhom && tongNhom > 0 ? `; cả nhóm "${nhom.name}" (${ds.length} món, cả ngày) ~${Math.round((tongNhom / moBan) * heSo)} phần / ngày (${tongNhom} phần cả kỳ)` : '';
+  let caNhom = nhom && tongNhom > 0 ? `; cả nhóm "${nhom.name}" (${ds.length} món, cả ngày) ~${Math.round((tongNhom / moBan) * heSo)} phần / ngày (${tongNhom} phần cả kỳ)` : '';
+  // lần 232 (kiểm lần 4: mốc nấu trân châu chỉ lấy món topping ~16, bỏ ~38 ly "Trà sữa trân châu đường đen"): món hỏi là nguyên liệu nằm trong tên món khác → kể cả các món đó
+  const hoi0 = mon.find(hoiMon);
+  if (hoi0) {
+    const tk = boDau(hoi0.name).toLowerCase().split(' ').slice(0, 2).join(' ');
+    const pool = tenBuoi ? mon : f.groups.flatMap((g) => [...(g.top ?? []), ...(g.slow ?? [])]);
+    const kem = [...new Map(pool.filter((t) => { const n = boDau(t.name).toLowerCase(); return n.includes(` ${tk}`) && !n.startsWith(tk); }).map((t) => [t.name, t])).values()];
+    if (kem.length) caNhom += `; món khác có "${hoi0.name.split(' ').slice(0, 2).join(' ')}" trong tên (cũng dùng nguyên liệu này${tenBuoi ? `,${tenBuoi.split(' (')[0]}` : ', cả ngày'}): ${kem.slice(0, 4).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần / ngày → mốc nấu phải cộng cả các món này`;
+  }
   return `Mốc số phần (tính sẵn, ƯỚC = số cả kỳ ÷ ${moBan} ngày mở bán${Math.abs(heSo - 1) >= 0.05 ? ` × ${pctTxt(heSo)} vì ${thu} thường bán ${pctTxt(heSo)} lần ngày trung bình` : ''}): ${nhanNgay}${tenBuoi} ${mon.slice(0, 3).map((t) => `${t.name} ~${Math.round((t.qty / moBan) * heSo)}`).join(', ')} phần / ngày (cả kỳ${tenBuoi ? ` ${tenBuoi.trim().split(' (')[0]}` : ''}: ${mon.slice(0, 3).map((t) => t.qty).join(', ')} phần / ${moBan} ngày mở)${caNhom} → chuẩn bị quanh mốc này${duoi ? `, ${duoi}` : ''}.`;
 }
 
@@ -1487,7 +1522,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const nKy = f.from && f.to ? Math.round((Date.parse(f.to) - Date.parse(f.from)) / 864e5) + 1 : 0;
   const nTron = nKy - (todayD >= 0 ? 1 : 0), tienTron = f.revenue - (todayD >= 0 ? f.by_day?.find((x) => x.d === f.to)?.revenue ?? 0 : 0);
   const tbNgayKy = nTron >= 2 && (todayD < 0 || Array.isArray(f.by_day)) && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng|trung b[iì]nh|tb) (?:m[ộo]t )?ng[àa]y|\/ ?ng[àa]y/iu.test(question)
-    ? `Trung bình mỗi ngày (tính sẵn): ${vnd(Math.round(tienTron / nTron / 1000) * 1000)}/ngày = ${vnd(tienTron)} ÷ ${nTron} ngày${todayD >= 0 ? ' đã trọn (chưa tính hôm nay đang dở)' : ''} trong kỳ, kể cả ngày không có đơn.` : '';
+    ? `Trung bình mỗi ngày (tính sẵn): ${vnd(Math.round(tienTron / nTron / 1000) * 1000)}/ngày = ${vnd(tienTron)} ÷ ${nTron} ngày${todayD >= 0 ? ' đã trọn (chưa tính hôm nay đang dở)' : ''} trong kỳ, kể cả ngày không có đơn.${moBanTb(f, todayD, nTron, tienTron)}` : '';
   if (tbNgayKy) lines.push(tbNgayKy);
   // chỉ liệt kê khi số từng ngày phủ phần lớn kỳ: thiếu nhiều ngày thì câu "ngày không ghi là không có đơn" làm Boom bỏ trung bình
   if (f.by_day?.length && f.by_day.length <= 31 && (nKy <= 7 || f.by_day.length * 2 >= nKy) && /(?:m[ỗo]i|t[ừu]ng|theo|h[àa]ng) ng[àa]y/iu.test(question)) {
@@ -1611,7 +1646,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         // lần 46: hỏi tháng sau / tháng N khác → GPT chép dự báo tháng này làm số tháng đó dù đã dặn (D42) — không đưa số đó
         const hoi = /tháng (?:sau|tới|tiếp|kế)/i.test(question) ? 0 : +(question.match(/tháng\s*(\d{1,2})\b/i)?.[1] ?? +fd.slice(5, 7));
         if (hoi !== +fd.slice(5, 7)) lines.push(`Câu hỏi về tháng khác tháng này: CHƯA có dự báo cho tháng đó; mốc là tháng này đã có ${vnd(f.revenue)}, còn ${n} ngày. Nêu mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt con số / % cho tháng đó.`);
-        else lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày: ${conTxt}): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)}${conNay ? `, gồm ~${vnd(conNay)} phần còn lại của hôm nay` : ''})${todayD >= 0 && !conNay ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi; nêu các ngày còn lại là thứ mấy và mạnh / yếu thế nào.${f.prev_revenue !== null ? ` % so kỳ trước ở trên chỉ là của ${cnt.reduce((a, b) => a + b, 0)} ngày đã có, KHÔNG phải % cả tháng.` : ''} Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
+        else lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày: ${conTxt}): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)}${conNay ? `, gồm ~${vnd(conNay)} phần còn lại của hôm nay` : ''})${todayD >= 0 && !conNay ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi; nêu các ngày còn lại là thứ mấy và mạnh / yếu thế nào.${f.prev_revenue !== null ? ` % so kỳ trước ở trên chỉ là của ${cnt.reduce((a, b) => a + b, 0)} ngày đã có, KHÔNG phải % cả tháng.${hoiCaThangVoiTruoc(question) ? soCaThangTruoc(f, f.revenue + add) : ''}` : ''} Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
       }
     }
   }
