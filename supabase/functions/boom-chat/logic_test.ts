@@ -2341,3 +2341,11 @@ Deno.test('lần 222: món lời nhiều tiền nhất được ưu tiên', () =
   const so = [...dong.matchAll(/lời ([\d.]+)đ\/phần/g)].map((m) => Number(m[1].replace(/\./g, '')));
   assert(so.length >= 2 && so.every((v, i) => i === 0 || so[i - 1] >= v), dong);
 });
+
+// lần 223: mua 2 tặng 1 tính theo lượt: (2 × (1 − x)) / (2 − 3x); trước so 1 suất nên ra < 1 lần
+Deno.test('lần 223: mua 2 tặng 1 tính theo lượt', () => {
+  const b = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
+  const t = L.baiToanTiepThi(L.parseFacts(b.facts.thang_nay), L.parseModules({ ...b.modules.thang_nay }), 'mua 2 tặng 1 có lỗ không');
+  const m = /phải bán gấp khoảng ([\d,]+) lần số lượt/.exec(t);
+  assert(m && Number(m[1].replace(',', '.')) > 1, t.slice(0, 400));
+});

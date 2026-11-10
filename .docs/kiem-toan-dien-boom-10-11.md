@@ -127,3 +127,10 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Quán mẫu: thêm `by_day` hôm nay (ước theo phần bán trước 9h) để mốc thứ của hôm nay chia ngày đã trọn như máy chủ thật; 2 test thời tiết cũ giữ ý bằng cách bỏ `by_day` trong test.
 - Chấm mù 22 cặp: **+1,18 ± 0,75** (món lời +1,70, giữ khách +0,50). Test 192/192.
 - Còn thấy khi chấm: "BÀI TOÁN TIỀN" vẫn chia tổng Thứ 4 cho 4 ngày (gồm hôm nay); caption sàn bảo khách nhập mã của app (GIAOHANG10) trên ShopeeFood / Grab — khách sàn không dùng được.
+
+## 10. Lô B đợt 2 (lần 223, chưa áp — đo chưa rõ)
+
+- Đếm lỗi khuyến mãi bản 221: "giảm 10k cho hs phải bán thêm bn phần" 2/2 không ra số; "chương trình mua 2 tặng 1 tháng này" 2/2 bàn như có thật; tích điểm chung chung 1/2 (thuộc lô C).
+- Mã: dòng "Giảm giá theo phần" (giảm X đồng / X% → lời còn lại, phải bán gấp mấy lần); dòng "quán CHƯA có chương trình mua X tặng Y" khi câu nói như đang chạy; sửa công thức chung mua X tặng Y (trước so 1 suất với 1 lượt → mua 2 tặng 1 ra 0,7 lần, nay 1,4 lần số lượt).
+- Đo 20 cặp (10 câu bị chạm × 2): **+0,85 ± 1,57 — chưa rõ** (cắt 0). Người chấm: câu đầu vẫn hay không nêu số lần phải bán gấp; mã chưa nhận "mua món này tặng món khác", "hạ giá còn 37k", câu không dấu "tuần rồi chạy mua 1 tặng 1".
+- Công thức mua X tặng Y sửa sau đo (lỗi tính cũ, có test). Test 194/194.

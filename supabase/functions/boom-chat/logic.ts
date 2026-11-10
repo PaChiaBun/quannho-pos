@@ -2491,7 +2491,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   // 07/11: QC: "mua 1 tặng 1 có lỗ không" trả lời chưa kết luận được, dù đây là phép tính; quán thiếu số thì tính theo khoảng giả định
   if (muaTang && +muaTang[1] > 0 && +muaTang[2] > 0) {
     const mua = +muaTang[1], tang = +muaTang[2], tong = mua + tang;
-    const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round(((1 - x) / con) * 10) / 10).replace('.', ',')} lần số suất mới giữ được tiền còn lại sau nguyên liệu`; };
+    const nl = (x: number) => { const con = mua - x * tong; return con <= 0 ? `thu không đủ tiền nguyên liệu` : `phải bán gấp khoảng ${String(Math.round((((1 - x) * mua) / con) * 10) / 10).replace('.', ',')} lần số lượt mới giữ được tiền còn lại sau nguyên liệu`; }; // lần 223: so lời bán thường đủ ${mua} phần khách trả (trước so 1 suất → mua 2 tặng 1 ra 0,7 lần)
     const co = c >= 0.15 && c <= 0.8;
     out.push(`Mua ${mua} tặng ${tang} = giảm ${Math.round((tang / tong) * 100)}%. ${co ? `Nguyên liệu ${Math.round(c * 100)}% doanh thu: ${nl(c)}.` : `Quán chưa ghi khoản nguyên liệu; GIẢ SỬ 35%: ${nl(0.35)}; GIẢ SỬ 45%: ${nl(0.45)}; nói rõ là giả định.`} Chưa tính lương, mặt bằng.`);
     // 09/11 web + chấm mù: món hỏi có giá vốn riêng mà vẫn nói "chưa đủ dữ liệu"; 2 phần cơm tấm vốn 43.200đ > giá 40.000đ là lỗ ngay mỗi lượt
