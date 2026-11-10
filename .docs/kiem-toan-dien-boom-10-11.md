@@ -87,3 +87,43 @@ Bản đo: máy chủ lần 214 (mã phân tích lần 207, `logic.ts` b0798ce),
 - Bài đăng: thử trên Demo sau mỗi lần áp lộ dần lỗi — chỗ trống "[giờ mở]" (217b `boChoTrong`), "hôm nay 0 đơn" chặn viết (217c `xinViet`), không có món / giá vì đọc số hôm nay (218 `hoi.ts vietNoiDung` → 30 ngày), câu cụt giờ mở (219 `khungBan`), gọi "mời Anh" (220). Demo cuối: bài có 3 món + giá, giờ 6h–23h, gọi khách "bạn".
 - Lô 4, thử 4 câu sổ thật trên Demo (mã hiện tại): so món hai kỳ đã đi đường tư vấn (còn thiếu số món kỳ so); "món bán chạy" lúc 0 đơn đã lùi kỳ đúng; còn lỗi: (1) câu 0 đơn bị cắt giữa số "0 đơn.305.000đ từ 27 đơn)" (`gonKhiKhongDon`), (2) "tổng thu nhập nhiêu rồi" đọc thành hôm nay (`ky.ts`), (3) 20/11 không nhận ra ngày lễ.
 - Lần 221 sửa cả 3 (ngày lễ: `ngayLe()`, lễ dương lịch; Tết âm / Trung thu chưa có). Chấm mù câu ngày lễ: **+3,38 ± 0,73** (8 cặp, 2 câu × 4 lượt); nhắc ngày lễ cũ 4/8, mới 7/8. Test 191/191.
+
+## 8. Kiểm toàn diện lần 2 (10/11 tối, bản 221) và kế hoạch đợt sau
+
+**Sổ thật:** từ 05/11 tới nay 0 lượt hỏi của quán thật (Chủ Quán cho đọc 10/11, lần 2).
+
+**Bộ kín mới `de_kin10`** (60 câu, 15 lĩnh vực × 4, thêm "viết nội dung" và "so sánh hai kỳ"; người ngoài viết, 4 người chấm): **92/120 dùng được (77%), TB 12,94/16.** Bộ khó hơn và cách chấm nghiêm hơn lần 1 (85/104, 13,83) nên KHÔNG so thẳng được.
+
+| Lĩnh vực | Dùng được | TB | Lỗi chính |
+|---|---|---|---|
+| khách | 3/8 | 9,9 | việc chung chung; dòng "Giữ khách" gọi 64% quay lại là "ít" |
+| khuyến mãi | 3/8 | 10,3 | giảm X đồng cho học sinh không tính số phần phải bán thêm; bàn "mua 2 tặng 1" như có thật; lạc đề |
+| kho | 6/8 | 12,1 | quá thận trọng, chung chung |
+| thời tiết | 5/8 | 12,4 | lấy số buổi sáng làm số cả ngày; bỏ sót mưa cuối tuần |
+| so sánh kỳ | 6/8 | 12,6 | nói "buổi tối giảm" khi không có số giờ kỳ trước |
+| nhân sự | 7/8 | 12,8 | có số theo giờ mà vẫn nói "chưa đủ" |
+| tiếp thị | 5/8 | 13,0 | tờ rơi học sinh dùng mã giao hàng; không có cách cho người mới biết quán |
+| giá / lời | 6/8 | 13,4 | khuyên đẩy món không lời nhất (do dòng tính sẵn) |
+| doanh thu, giờ / ngày, viết nội dung, ngoài dữ liệu, sàn, thu chi, món | 7–8/8 | 13,6–14,8 | — |
+
+Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề 1,52. Kiểu lỗi: chung chung 20, lạc đề 13, không trả lời thẳng 12, quá thận trọng 10.
+
+**Lỗi trong số tính sẵn (người chấm bắt, đã kiểm mã):**
+1. Dòng "Giữ khách" (`logic.ts` ~734) gắn cứng "ít người quay lại" mỗi khi có khách có điểm, kể cả 64% → sai.
+2. Dòng "Món lời nhiều mỗi phần" (~2563) lọc giá vốn ≤ 40% nên món lời nhiều tiền nhất (vốn 48%) bị loại, trái với nhãn.
+3. Trung bình Thứ 4 bị đội lên: chỉ ở bộ đo (quán mẫu thiếu `by_day`); máy chủ thật có `by_day` (`ban_hang.ts:170`) nên đúng → bổ sung `by_day` cho quán mẫu để đo khớp thật.
+
+**Kế hoạch đợt sau (mã, mỗi lô A/B chấm mù rồi mới áp):**
+- Lô A — sửa 2 dòng tính sẵn sai (giữ khách theo tỉ lệ thật; món lời xếp theo tiền lời, ghi rõ giá vốn) + `by_day` cho quán mẫu.
+- Lô B — khuyến mãi: câu "giảm X đồng / X% cho món Y" → tính sẵn lời còn lại / phần và số phần phải bán thêm để giữ lời (như mua X tặng Y đã có); chương trình người hỏi nêu mà không có trong số → nói rõ "quán chưa có chương trình này".
+- Lô C — khách: câu kéo / giữ khách → tính sẵn nhóm khách quen (số khách, % quay lại, khách lâu chưa ghé nếu có số) để việc làm cụ thể.
+- Để sau: "chung chung / lạc đề / quá thận trọng" là lỗi chung nhiều lĩnh vực — chưa có cách bằng mã; lời dặn thêm các lần trước không đo ra lợi ích.
+
+## 9. Lô A đợt 2 (lần 222, chưa áp)
+
+- Dòng "Giữ khách": < 30% mới ghi THẤP / "ít người quay lại"; cao thì ghi KHÁ CAO, việc nhắm khách mới quay lại lần 2.
+- "Món lời nhiều mỗi phần": xếp theo tiền lời / phần (câu "mời thêm" vẫn lọc món nhỏ giá vốn thấp).
+- Khoảng giá combo 5–10%: làm tròn vào trong mốc (35.000–36.000đ từ lẻ 38.000đ).
+- Quán mẫu: thêm `by_day` hôm nay (ước theo phần bán trước 9h) để mốc thứ của hôm nay chia ngày đã trọn như máy chủ thật; 2 test thời tiết cũ giữ ý bằng cách bỏ `by_day` trong test.
+- Chấm mù 22 cặp: **+1,18 ± 0,75** (món lời +1,70, giữ khách +0,50). Test 192/192.
+- Còn thấy khi chấm: "BÀI TOÁN TIỀN" vẫn chia tổng Thứ 4 cho 4 ngày (gồm hôm nay); caption sàn bảo khách nhập mã của app (GIAOHANG10) trên ShopeeFood / Grab — khách sàn không dùng được.

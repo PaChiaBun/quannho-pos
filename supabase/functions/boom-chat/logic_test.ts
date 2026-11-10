@@ -1150,9 +1150,15 @@ Deno.test('lần 99: hỏi cuối tuần với ngày thường → tỉ lệ tí
 Deno.test('lần 100: hỏi khách quay lại → tỉ lệ cộng dồn, không so với khách mới trong kỳ; việc theo tích điểm', () => {
   const m = parseModules({ khach: { period: 'Tháng này', total: 1000, new: 200, returning: 100, with_points: 500, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0 } })!;
   const t = formatModules(m, new Date(), 'khách quay lại quán em nhiều ko');
-  assertStringIncludes(t, 'Giữ khách (tính sẵn): 100 / 1000 khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = 10%; 200 khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so 100 với 200.');
+  assertStringIncludes(t, 'Giữ khách (tính sẵn): 100 / 1000 khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = 10% (THẤP); 200 khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so 100 với 200.');
+  assertStringIncludes(t, 'mà ít người quay lại');
   assertStringIncludes(t, 'mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ 13% sau 2 tháng');
   assert(!formatModules(m, new Date(), 'tháng này bao nhiêu khách mới').includes('Giữ khách'));
+  // lần 222: 64% quay lại không bị gọi là "ít"
+  const m2 = parseModules({ khach: { period: 'Tháng này', total: 1000, new: 200, returning: 641, with_points: 500, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0 } })!;
+  const t2 = formatModules(m2, new Date(), 'khách quay lại quán em nhiều ko');
+  assertStringIncludes(t2, '(KHÁ CAO — đã có nhóm khách quen)');
+  assert(!t2.includes('ít người quay lại'), t2);
 });
 
 Deno.test('kiểm thật 03/11: tồn âm, kỳ ít ngày, chi 0đ, quán chưa lưu khách', () => {
@@ -1971,9 +1977,11 @@ Deno.test('lô A thời tiết (lần 169–172): dòng tính sẵn ghép dự b
   assertStringIncludes(b, 'gồm 19h – đông thứ 2, 18h – đông thứ 3');
   const a = await fx('a');
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_chieu, a, 'Chủ nhật này mưa không?', NOW), 'quán thường NGHỈ Chủ nhật');
-  const tuan = L.thoiTietVoiSoQuan(TROI.mua_sang, a, 'Tuần tới mưa nhiều, nhập hàng sao?', NOW);
+  const tuan = L.thoiTietVoiSoQuan(TROI.mua_sang, { ...a, by_day: undefined }, 'Tuần tới mưa nhiều, nhập hàng sao?', NOW);
   // thứ của hôm nay, không có số từng ngày: không đưa mốc (tổng còn gồm hôm nay dở)
   assert(!/Hôm nay 28\/10 \(/.test(tuan));
+  // lần 222: quán mẫu có số hôm nay (như máy chủ thật) → mốc Thứ 4 chia 3 ngày đã trọn, bỏ tiền hôm nay
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_sang, a, 'Tuần tới mưa nhiều, nhập hàng sao?', NOW), 'Hôm nay 28/10 (Thứ Tư, quán thường bán ~5.331.000đ/ngày, TB 3 ngày)');
   assertStringIncludes(tuan, 'Ngày đáng chuẩn bị nhất: Mai 29/10');
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.nang_nong, await fx('c'), 'Mấy ngày nắng nóng này nên bán gì?', NOW), 'nhóm Đồ uống chiếm 7% doanh thu món');
   assertEquals(L.thoiTietVoiSoQuan(null, a, 'mai mưa không', NOW), '');
@@ -2051,7 +2059,7 @@ Deno.test('lô D (lần 180–182): mốc nhập cả đợt, nắng gắt trùn
   const T = await import('./thoi_tiet.ts');
   const NOW = new Date('2026-10-28T09:00:00+07:00');
   const fx = async (k: string) => L.parseFacts(JSON.parse(await Deno.readTextFile(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))).facts.thang_nay)!;
-  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_sang, await fx('a'), 'Tuần tới mưa nhiều, nhập hàng sao?', NOW), 'Mốc nhập hàng cả đợt: 5 ngày mở bán (Mai 29/10 → Thứ Ba 03/11) quán thường bán tổng ~19.546.000đ; không tính ngày nghỉ Chủ nhật 01/11');
+  assertStringIncludes(L.thoiTietVoiSoQuan(TROI.mua_sang, { ...(await fx('a')), by_day: undefined }, 'Tuần tới mưa nhiều, nhập hàng sao?', NOW), 'Mốc nhập hàng cả đợt: 5 ngày mở bán (Mai 29/10 → Thứ Ba 03/11) quán thường bán tổng ~19.546.000đ; không tính ngày nghỉ Chủ nhật 01/11');
   assertStringIncludes(L.thoiTietVoiSoQuan(TROI.nang_nong, await fx('c'), 'Mai nắng nóng, trưa có vắng khách không?', NOW), 'nắng nóng nhất khoảng 13–16h (tới 36°), khung này thường chiếm 9% doanh thu ngày');
   assertStringIncludes(T.thoiTietChoBoom('tháng sau mưa không', TROI.mua_chieu, null), 'Dự báo chỉ có tới hết 03/11; ngày sau đó (tuần sau nữa, tháng sau…) CHƯA có dự báo');
 });
@@ -2236,7 +2244,7 @@ Deno.test('lần 215: nhãn lương dưới mốc, khung giờ cả kỳ, bn ph�
   assert(L.HOI_PHAN.test('sang mai mua thi nau bn phan bun bo'));
   assert(!L.HOI_PHAN.test('ban hang the nao'));
   const fa = L.formatFacts(L.parseFacts(a.facts.thang_nay)!, new Date('2026-10-28T09:00:00+07:00'), 'combo ban it');
-  assertStringIncludes(fa, 'mua lẻ 38.000đ → combo rẻ hơn mua lẻ 2.000đ = 5,3%; giá combo rẻ hơn lẻ 5–10% = 34.000đ–36.000đ');
+  assertStringIncludes(fa, 'mua lẻ 38.000đ → combo rẻ hơn mua lẻ 2.000đ = 5,3%; giá combo rẻ hơn lẻ 5–10% = 35.000đ–36.000đ');
 });
 
 // lần 216: câu vay / trả nợ — tiền góp / tháng so với thu − chi tính sẵn
@@ -2322,4 +2330,14 @@ Deno.test('lần 221: ngayLe', () => {
   assertStringIncludes(L.ngayLe('8/3 năm sau làm gì', n), '8/3/2027');
   assertEquals(L.ngayLe('ngày 15/11 bán sao', n), '');
   assertEquals(L.ngayLe('doanh thu tháng này', n), '');
+});
+
+// lần 222: món ưu tiên xếp theo TIỀN lời / phần (không loại món giá vốn 48% lời nhiều nhất)
+Deno.test('lần 222: món lời nhiều tiền nhất được ưu tiên', () => {
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const f = L.parseFacts(d.facts.thang_nay)!;
+  const t = L.baiToanTiepThi(f, null, 'món nào lời nhiều nhất trong mấy món cơm tấm, nên đẩy món nào');
+  const dong = t.split('\n').find((l) => l.includes('Món lời nhiều mỗi phần, nên ưu tiên')) ?? '';
+  const so = [...dong.matchAll(/lời ([\d.]+)đ\/phần/g)].map((m) => Number(m[1].replace(/\./g, '')));
+  assert(so.length >= 2 && so.every((v, i) => i === 0 || so[i - 1] >= v), dong);
 });

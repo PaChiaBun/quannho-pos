@@ -20,7 +20,9 @@
 - ✅ Lần 219 ĐÃ ÁP 10/11 20:31 (TS 20261110_203109): dòng bài đăng có giờ bán thật (khungBan, kỳ ≥ 7 ngày). Demo: bài có 3 món + giá, "phục vụ từ 6h đến 23h", không chỗ trống, không câu cụt. Còn: bài gọi "mời Anh ghé" (xưng với chủ quán thay vì khách). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l219_ap_dung.sh 20261110_203109`.
 - ✅ Lần 220 ĐÃ ÁP 10/11 20:35 (TS 20261110_203540): bài đăng gọi khách "bạn" / "cả nhà" (thử 4 quán × 2: gọi "Anh" cũ 3/8, mới 0/8). Demo: "mời bạn ghé… Hẹn gặp bạn tại quán!", đủ món, giá, giờ. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l220_ap_dung.sh 20261110_203540`.
 - ✅ Lần 220 đã commit (48dd7e2). Lô 4 thử trên Demo: 2/4 lỗi sổ thật đã hết ở mã hiện tại; lần 221 ĐÃ ÁP 10/11 20:45 (TS 20261110_204522): cắt giữa số ở câu 0 đơn, "tổng … nhiêu rồi" → tháng, ngày lễ (chấm mù +3,38 ± 0,73). Demo: "tổng thu nhập nhiêu rồi" → tổng thu sổ quỹ tháng 870.000đ, không vỡ chữ; 20/11 → Ngày Nhà giáo, Thứ Sáu. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l221_ap_dung.sh 20261110_204522`.
-- ➡️ Nhận thêm câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới); số món kỳ so khi so món hai tháng.
+- ✅ Kiểm toàn diện lần 2 (bộ kín de_kin10, 60 câu × 2): 92/120 dùng được; yếu khách 3/8, khuyến mãi 3/8; sổ thật 0 lượt từ 05/11.
+- ✅ Lần 222 ĐÃ ÁP 10/11 21:14 (TS 20261110_211436): dòng Giữ khách theo tỉ lệ thật, món ưu tiên theo tiền lời, khoảng giá combo làm tròn vào mốc; quán mẫu thêm by_day hôm nay. Chấm mù 22 cặp +1,18 ± 0,75. Demo: "món nào lời nhiều nhất" phân biệt lời / phần và lời cả kỳ. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l222_ap_dung.sh 20261110_211436`.
+- ➡️ Lô B (khuyến mãi: giảm X đồng → số phần phải bán thêm; chương trình không có thật), lô C (khách); BÀI TOÁN TIỀN chia Thứ 4 gồm hôm nay; caption sàn dùng mã app.
 - ➡️ Lô 4 (đường đi trong app, cần bản mới); mở rộng nhận câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới).
 
 ## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 214 ĐANG CHẠY (gọi song song none + low; 211, 213 đã hoàn tác); 188, 189, 196, 198, 200, 202 bỏ; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)

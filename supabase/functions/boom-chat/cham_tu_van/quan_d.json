@@ -580,6 +580,13 @@
      "revenue": 2532000,
      "prev_revenue": 2270769
     }
+   ],
+   "by_day": [
+    {
+     "d": "2026-10-28",
+     "revenue": 1642000,
+     "orders": 36
+    }
    ]
   },
   "tuan_nay": {

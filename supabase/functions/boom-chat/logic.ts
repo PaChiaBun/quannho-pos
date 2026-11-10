@@ -731,7 +731,9 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     }
     if (/quay l[aạ]i|kh[aá]ch (?:quen|c[uũ])|gi[uữ] (?:ch[aâ]n )?kh[aá]ch|tr[uở] l[aạ]i/i.test(question) && total > 0) {
       const ret = nn(c.returning), wp = nn(c.with_points), muc = Math.ceil((ret / total) * 100 + 3);
-      out.push(`Giữ khách (tính sẵn): ${ret} / ${total} khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = ${pctOf(ret, total)}; ${nn(c.new)} khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so ${ret} với ${nn(c.new)}. ${wp > 0 ? `${wp} khách có điểm (${pctOf(wp, total)} khách đã lưu) → quán ĐÃ có tích điểm mà ít người quay lại (có thể mốc đổi quà xa hoặc khách quên — CHƯA có số để chắc, KHÔNG khẳng định lý do)` : 'Chưa có khách nào có điểm → chưa dùng tích điểm'}. Việc: (1) ${wp > 0 ? 'nhắn khách có điểm lâu chưa ghé: tặng 1 món thêm nhỏ / ly nước lần ghé tới trong 2 tuần' : 'bật tích điểm: mua 8 tặng 1'}; (2) ${wp > 0 ? 'hạ mốc đổi quà cho dễ tới (vd mua 8 lần đổi 1 món)' : 'nhân viên nhắc khách lưu số khi thanh toán'}; mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ ${muc}% sau 2 tháng.`);
+      // lần 222 (kiểm toàn diện lần 2: 64,1% quay lại vẫn bị ghi "ít người quay lại" → Boom khuyên lệch): nhãn theo tỉ lệ thật
+      const it = ret / total < 0.3;
+      out.push(`Giữ khách (tính sẵn): ${ret} / ${total} khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = ${pctOf(ret, total)}${it ? ' (THẤP)' : ' (KHÁ CAO — đã có nhóm khách quen)'}; ${nn(c.new)} khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so ${ret} với ${nn(c.new)}. ${wp > 0 ? `${wp} khách có điểm (${pctOf(wp, total)} khách đã lưu) → quán ĐÃ có tích điểm${it ? ' mà ít người quay lại (có thể mốc đổi quà xa hoặc khách quên — CHƯA có số để chắc, KHÔNG khẳng định lý do)' : ''}` : 'Chưa có khách nào có điểm → chưa dùng tích điểm'}. Việc: (1) ${wp > 0 ? 'nhắn khách có điểm lâu chưa ghé: tặng 1 món thêm nhỏ / ly nước lần ghé tới trong 2 tuần' : 'bật tích điểm: mua 8 tặng 1'}; (2) ${!it ? `kéo ${nn(c.new)} khách mới của kỳ quay lại lần 2 (ưu đãi nhỏ cho lần ghé thứ 2 trong 2 tuần), khách quen ghé thường hơn` : wp > 0 ? 'hạ mốc đổi quà cho dễ tới (vd mua 8 lần đổi 1 món)' : 'nhân viên nhắc khách lưu số khi thanh toán'}; mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ ${muc}% sau 2 tháng.`);
     }
   }
   const p = m.khuyen_mai;
@@ -1758,7 +1760,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       t.retail && t.price
         ? `, mua lẻ ${vnd(t.retail)} → combo ${t.price > t.retail ? `ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)}` : t.price === t.retail ? 'bằng giá mua lẻ' : `rẻ hơn mua lẻ ${vnd(t.retail - t.price)} = ${pctTxt(Math.round(((t.retail - t.price) / t.retail) * 1000) / 10)}%`}` +
           // lần 215 (kiểm toàn diện 10/11: Boom nhẩm "hạ 36k xuống 34k = bằng giá lẻ" khi lẻ 38k): khoảng giá combo tính sẵn
-          `; giá combo rẻ hơn lẻ 5–10% = ${vnd(Math.round((t.retail * 0.9) / 1000) * 1000)}–${vnd(Math.round((t.retail * 0.95) / 1000) * 1000)}`
+          `; giá combo rẻ hơn lẻ 5–10% = ${vnd(Math.ceil((t.retail * 0.9) / 1000) * 1000)}–${vnd(Math.floor((t.retail * 0.95) / 1000) * 1000)}`
         : ''
     })`;
   for (const g of f.groups ?? []) {
@@ -2558,7 +2560,9 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.qty > 0);
   // mời thêm là món nhỏ: "mời thêm cơm tấm bì chả" cho người đã gọi cơm là vô lý
   const moiThem = /m[oờ]i th[eê]m|b[aá]n th[eê]m|mua nhi[eề]u h[oơ]n/.test(q);
-  const tot = mon.filter((t) => t.cost! / t.price! <= 0.4 && (!moiThem || t.price! <= aov * 0.6)).sort((x, y) => y.price! - y.cost! - (x.price! - x.cost!)).slice(0, 3);
+  // lần 222 (kiểm toàn diện lần 2: lọc giá vốn ≤ 40% làm món lời nhiều tiền nhất bị loại, Boom khuyên đẩy món lời ít hơn):
+  // ưu tiên theo TIỀN lời / phần; chỉ câu "mời thêm" mới lọc món nhỏ giá vốn thấp
+  const tot = (moiThem ? mon.filter((t) => t.cost! / t.price! <= 0.4 && t.price! <= aov * 0.6) : mon).sort((x, y) => y.price! - y.cost! - (x.price! - x.cost!)).slice(0, 3);
   const cao = mon.filter((t) => t.cost! / t.price! > 0.45).sort((x, y) => y.qty - x.qty).slice(0, 3);
   if (canTang && !itDon && tot.length) out.push(`${moiThem ? 'Món nhỏ lời tốt, nên mời thêm' : 'Món lời nhiều mỗi phần, nên ưu tiên'}: ${tot.map((t) => `${t.name} lời ${vnd(t.price! - t.cost!)}/phần (giá vốn ${Math.round((t.cost! / t.price!) * 100)}%)`).join('; ')}.${cao.length ? ` Giá vốn cao, đừng giảm giá hay tặng kèm: ${cao.map((t) => `${t.name} ${Math.round((t.cost! / t.price!) * 100)}%`).join('; ')}.` : ''}`);
   return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${out.join(' ')}`;
