@@ -511,7 +511,7 @@ Deno.test('Số liệu theo nhóm món: kiểm kiểu, ghi rõ nhóm để GPT s
   assert(parseFacts(base)?.groups === undefined);
   // % theo tổng tiền món (giảm giá đơn làm doanh thu đơn nhỏ hơn); không quá 100%
   const f2 = parseFacts({ ...base, revenue: 80000000, items_revenue: 178000000, groups: [g] })!;
-  assert(buildMessages('x', [], null, { facts: f2 })[1].content.includes('= 50% doanh thu'));
+  assert(buildMessages('x', [], null, { facts: f2 })[1].content.includes('= 50% tiền món (trước giảm giá)')); // lần 239: ghi đúng tên
   const f3 = parseFacts({ ...base, revenue: 80000000, groups: [g] })!;
   assert(buildMessages('x', [], null, { facts: f3 })[1].content.includes('= 100% doanh thu'));
 });
@@ -2452,7 +2452,7 @@ Deno.test('lần 231: lô E dòng tính sẵn', () => {
   const t = L.formatFacts(fc, now, 'trung bình mỗi ngày bán bao nhiêu');
   assertStringIncludes(t, 'Trung bình mỗi ngày (tính sẵn)');
   assert(!t.includes('Từng ngày có đơn trong kỳ'), t.slice(0, 300));
-  assertStringIncludes(L.formatFacts(fc, now, 'món nào bán chạy'), '% doanh thu cả quán');
+  assertStringIncludes(L.formatFacts(fc, now, 'món nào bán chạy'), '% tiền món cả quán (trước giảm giá)');
 });
 
 // lần 232: mốc nấu nguyên liệu có trong tên món khác; kỳ trước chưa trọn tháng; trung bình ngày mở bán
@@ -2585,4 +2585,19 @@ Deno.test('không lọt ghi chú lần vào khối số liệu', () => {
       assert(!/\(lần \d{2,3}\b|lần \d{3}:/.test(t), `${k}: ${q}: ${(/.{0,60}lần \d{2,3}.{0,40}/.exec(t) ?? [''])[0]}`);
     }
   }
+});
+
+// lần 239: nhóm Nguyên liệu không phải món chưa bán; tỉ lệ trên tiền món trước giảm ghi đúng tên
+Deno.test('lần 239: nhóm nguyên liệu, nhãn tỉ lệ', () => {
+  const g = (name: string) => ({ name, revenue: 1000000, qty: 10, items: 3, unsold: 2, top: [{ name: `${name} A`, qty: 10, revenue: 1000000, price: 100000 }], slow: [], unsold_names: [`${name} X`, `${name} Y`] });
+  const f = parseFacts({ period: 'Tháng này', revenue: 2000000, orders: 40, top: [], slow: [], groups: [g('Đồ uống'), g('Nguyên liệu')] })!;
+  const t = formatFacts(f, new Date('2026-10-28T09:00:00+07:00'), 'món nào nên ẩn');
+  assert(t.includes('Đồ uống X') && !t.includes('Nguyên liệu X'), t);
+});
+
+Deno.test('lần 239: món chưa bán khớp đúng tên dài nhất', () => {
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const f = L.parseFacts(d.facts.thang_nay)!;
+  assertEquals(L.monTrongCau(f, 'cơm tấm sườn cây sao không ai gọi'), 'Cơm tấm sườn cây');
+  assertEquals(L.monTrongCau(f, 'cơm tấm sườn bán sao'), 'Cơm tấm sườn');
 });

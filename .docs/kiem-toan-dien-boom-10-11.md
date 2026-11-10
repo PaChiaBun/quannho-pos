@@ -410,3 +410,10 @@ Tiêu chí thấp: việc làm 1,28, lý lẽ 1,55, tìm vấn đề 1,57. Kiể
 - Còn thấy: tỉ lệ nhóm / món tính trên giá trị trước giảm nhưng ghi "doanh thu"; dòng "giá trị đơn giảm cùng Topping" làm hiểu topping là nguyên nhân chính.
 
 - Demo sau áp: "món nào bán chậm nhất" đúng món ít phần nhất; nhưng vẫn khuyên ẩn mục chưa bán thuộc nhóm "Nguyên liệu" (nhóm không phải món bán) → lần sau: bỏ nhóm nguyên liệu khỏi "món chưa bán".
+
+## 33. Lần 239 (ĐÃ ÁP 11/11 03:15, TS 20261111_031504)
+
+- Tỉ lệ nhóm / món chia trên tiền món trước giảm (items_revenue > revenue) ghi "% tiền món (trước giảm giá)" thay "% doanh thu" (cả dòng nhóm nhỏ, Việc nên nhắm cho nhóm); dòng "giá trị đơn giảm cùng nhóm X" thêm "nhóm này chỉ giải thích ~A trong B giảm mỗi đơn (P%)", dưới 50% → không phải nguyên nhân chính; nhóm Nguyên liệu / vật tư / bao bì không vào "chưa bán" / "ẩn khỏi menu"; nhóm combo không ghép kèm món chủ lực.
+- Bộ kín MỚI `de_kin23.json` (24 câu: giá trị đơn, tỉ lệ món, ẩn món, đối chứng). Chấm mù 48 cặp: **+0,77 ± 0,46**; tỉ lệ món +1,75, giá trị đơn +0,92, ẩn món +0,50, đối chứng −0,08.
+- Sau chấm sửa (có test): `monTrongCau` xét cả tên món chưa bán ("Cơm tấm sườn cây" không còn khớp nhầm "Cơm tấm sườn"); hai dòng nhóm nhỏ còn ghi "% doanh thu", dòng mời kèm combo.
+- Demo sau áp: "món nào nên ẩn khỏi menu" vẫn nhắc nhóm "Nguyên liệu" 0đ vì nhóm còn nằm trong danh sách nhóm → lần sau bỏ hẳn nhóm nguyên liệu khỏi khối bán hàng.
