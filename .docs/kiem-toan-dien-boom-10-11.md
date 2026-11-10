@@ -147,3 +147,10 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Bản vá lô B cũ + bắt thêm: "hạ giá còn 37k" (giá mới), "mua A tặng B" món khác, câu không dấu "tuần rồi chạy …"; khớp tên món nằm trọn trong câu; món hỏi chưa có giá vốn thì không tính sang món khác.
 - Bộ mới `de_khuyen_mai2` (16 câu người ngoài viết, mã nhận 10): chấm mù 30 cặp (3 lượt) **+2,40 ± 1,73**, cả hai người chấm nghiêng bản mới (201–172, 197–154).
 - Sau chấm sửa 3 dòng tính sẵn sai người chấm bắt (Cơm tấm sườn bị khớp thành sườn bì chả; món chưa có giá vốn bị tính sang Trà đào / Bạc xỉu). Test 197/197.
+
+## 13. Sửa nhỏ (lần 226, chưa áp)
+
+- Bài toán tiền: trung bình theo thứ (dòng "Chọn ngày", "Các hướng xếp theo tiền") bỏ ngày dở hôm nay — hàm `tbThuKy` dùng chung.
+- Caption cho ShopeeFood / Grab: không đưa mã giảm của app quán (khách sàn không nhập được).
+- Số lần phải bán gấp ghi 2 chữ số (1,17 thay 1,2 cạnh "thêm 17%").
+- Chấm mù 21 cặp +0,48 ± 1,14 (tổng chưa rõ); đếm máy: bài đăng sàn có mã app cũ 3/3 → mới 0/3. Test 198/198.

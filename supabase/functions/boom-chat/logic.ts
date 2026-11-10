@@ -806,7 +806,7 @@ export function tiepThiTinhSan(question: string, ban: ShopFacts | null, m: Modul
     const ma = act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` đến ${ss(x.end)}` : ''}`);
     // lần 219 (Demo sau 218: "Quán mở cửa." cụt — mô hình để "[giờ]", mã bỏ chỗ trống): giờ bán theo số, kỳ ≥ 7 ngày mới tin được
     const gio = ban && soNgay(ban.period) >= 7 ? khungBan(ban) : [];
-    out.push(`Thông tin THẬT cho bài đăng (tính sẵn): món chủ lực ${mon.length ? mon.map((t) => `${t.name} ${vnd(t.price!)}`).join(', ') : '(chưa có giá món)'}; ${gio.length ? `giờ bán ${gio.join(', ')}` : 'CHƯA có giờ mở cửa → KHÔNG nhắc giờ mở cửa trong bài'}; ${m?.khuyen_mai ? (ma.length ? `ưu đãi đang chạy: ${ma.join('; ')}` : 'quán CHƯA có mã nào đang chạy → KHÔNG đưa ưu đãi vào bài') : 'chưa đọc được mã giảm → KHÔNG đưa ưu đãi vào bài'} → bài viết dùng ĐÚNG món, giá${ma.length ? ', ưu đãi' : ''} này; thông tin không có (địa chỉ, số điện thoại) thì BỎ, KHÔNG để chỗ trống kiểu [Địa chỉ]. Trong BÀI gọi KHÁCH là "bạn" / "cả nhà"; CÁCH GỌI NGƯỜI HỎI chỉ dùng cho câu nói với người hỏi ngoài bài, KHÔNG dùng trong bài.`);
+    out.push(`Thông tin THẬT cho bài đăng (tính sẵn): món chủ lực ${mon.length ? mon.map((t) => `${t.name} ${vnd(t.price!)}`).join(', ') : '(chưa có giá món)'}; ${gio.length ? `giờ bán ${gio.join(', ')}` : 'CHƯA có giờ mở cửa → KHÔNG nhắc giờ mở cửa trong bài'}; ${m?.khuyen_mai ? (ma.length ? `ưu đãi đang chạy: ${ma.join('; ')}` : 'quán CHƯA có mã nào đang chạy → KHÔNG đưa ưu đãi vào bài') : 'chưa đọc được mã giảm → KHÔNG đưa ưu đãi vào bài'} → bài viết dùng ĐÚNG món, giá${ma.length ? ', ưu đãi' : ''} này;${ma.length && /shopee|grab|befood|be food|gojek|\b(?:tren|len|cho|dang) san\b|\bsan giao\b/.test(q) ? ' bài cho ShopeeFood / Grab: mã trên là mã của APP QUÁN, khách đặt trên sàn KHÔNG nhập được → KHÔNG đưa mã vào bài sàn (ưu đãi trên sàn phải tạo trong ứng dụng của sàn);' : ''} thông tin không có (địa chỉ, số điện thoại) thì BỎ, KHÔNG để chỗ trống kiểu [Địa chỉ]. Trong BÀI gọi KHÁCH là "bạn" / "cả nhà"; CÁCH GỌI NGƯỜI HỎI chỉ dùng cho câu nói với người hỏi ngoài bài, KHÔNG dùng trong bài.`);
     // lần 220 (Demo sau 219: bài đăng "mời Anh ghé" — gọi người hỏi thay vì khách)
   }
   // nhóm khách được hỏi → việc làm phải nhắm đúng nhóm (1/2 lượt lạc sang quảng bá chung)
@@ -2479,6 +2479,15 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
       : '';
   }
   const cnt = weekdayCounts(f.from, f.to), bw = f.by_weekday;
+  // lần 226 (chấm mù lần 222: Thứ 4 chia 4 ngày gồm hôm nay dở → 2.875.500đ, khối khác ghi 3.408.667đ): kỳ đang chạy có số hôm nay thì bỏ ngày dở
+  const kyDangChay = /^(?:Tháng này|Tuần này|Hôm nay|\d+ ngày qua)/.test(f.period.normalize('NFC'));
+  const thuNay = f.to ? (new Date(`${f.to}T00:00:00Z`).getUTCDay() + 6) % 7 : -1, tienNay = kyDangChay ? f.by_day?.find((y) => y.d === f.to)?.revenue : undefined;
+  const tbThuKy = (i: number) => {
+    if (!cnt || !bw) return 0;
+    const bo = i === thuNay && tienNay !== undefined && cnt[i] > 1;
+    const v = nn(bw[i]) - (bo ? tienNay! : 0), n = cnt[i] - (bo ? 1 : 0);
+    return n > 0 && v > 0 ? v / n : 0;
+  };
   const ngay = cnt && bw?.some((v) => v > 0) ? cnt.reduce((a, c, i) => a + (nn(bw[i]) > 0 ? c : 0), 0) : soNgay(f.period);
   if (ngay < 1) return '';
   const aov = f.revenue / f.orders, moiNgay = (don: number) => qty(Math.max(1, Math.round((don / ngay) * 10) / 10));
@@ -2503,7 +2512,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   }
   // 06/11: người chấm: cả 4 lượt "ngày nào nên chạy ưu đãi" chọn Thứ 7 vì thấp nhất, ở quán cạnh toà văn phòng; ngày đó khách chính vốn không đi làm
   const mauTuan = !itDon && cnt && bw ? (() => {
-    const tb = (i: number) => (cnt[i] > 0 && nn(bw[i]) > 0 ? nn(bw[i]) / cnt[i] : 0);
+    const tb = (i: number) => tbThuKy(i);
     const thu = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
     const tg = [0, 1, 2, 3, 4].filter((i) => tb(i) > 0), ct = [5, 6].filter((i) => tb(i) > 0);
     if (!tg.length) return null;
@@ -2541,7 +2550,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const dong = ds.filter((t) => (giamTien.con ? t.price! - giamTien.con : 1) > 0).map((t) => {
       const g = giamTien.con ? t.price! - giamTien.con : giamTien.pt ? (t.price! * giamTien.so) / 100 : giamTien.so * (giamTien.so < 1000 ? 1000 : 1);
       const cu = t.price! - t.cost!, moi = cu - g;
-      return `${t.name} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}, lời ${vnd(cu)}/phần) giảm ${vnd(g)} → ${moi <= 0 ? `LỖ hoặc hết lời (${vnd(moi)}/phần): KHÔNG nên giảm mức này` : `còn lời ${vnd(moi)}/phần → phải bán gấp ${pctTxt(Math.round((cu / moi) * 10) / 10)} lần số phần (thêm ${Math.round((cu / moi - 1) * 100)}%) mới giữ nguyên tiền lời`}`;
+      return `${t.name} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}, lời ${vnd(cu)}/phần) giảm ${vnd(g)} → ${moi <= 0 ? `LỖ hoặc hết lời (${vnd(moi)}/phần): KHÔNG nên giảm mức này` : `còn lời ${vnd(moi)}/phần → phải bán gấp ${String(Math.round((cu / moi) * 100) / 100).replace('.', ',')} lần số phần (thêm ${Math.round((cu / moi - 1) * 100)}%) mới giữ nguyên tiền lời`}`;
     });
     if (dong.length) out.push(`Giảm giá theo phần (tính sẵn, chưa tính lương, mặt bằng): ${dong.join('; ')}. Giảm cho một nhóm khách (học sinh…) thì chỉ phần đơn của nhóm đó phải tăng như trên. Câu đầu nêu số lần phải bán gấp này.`);
     else out.push(`Giảm giá theo phần: ${hoi.length ? `${hoi[0].t.name} chưa có giá vốn` : 'món trong câu chưa có giá vốn'} → nói rõ cần nhập giá vốn món đó (Kho hàng → món → Giá vốn) mới tính được số phần phải bán thêm; KHÔNG tự đoán giá vốn, KHÔNG lấy món khác thay.`);
@@ -2585,7 +2594,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
     const { bq } = buoiTrongCau(question), KHUNG = [[0, 11], [11, 14], [14, 17], [17, 24]], TEN_BUOI = ['sáng', 'trưa', 'chiều', 'tối'];
     const ngoaiBuoi = (i: number) => bq >= 0 && (i < KHUNG[bq][0] || i >= KHUNG[bq][1]);
     if (cnt && bw) {
-      const tb = bw.map((v, i) => ({ i, a: nn(v) > 0 && cnt[i] > 0 ? nn(v) / cnt[i] : 0 })).filter((x) => x.a > 0 && !(mauTuan?.cuoiThap && x.i >= 5)).sort((x, y) => x.a - y.a);
+      const tb = bw.map((_, i) => ({ i, a: tbThuKy(i) })).filter((x) => x.a > 0 && !(mauTuan?.cuoiThap && x.i >= 5)).sort((x, y) => x.a - y.a);
       if (tb.length >= 3) {
         const giua = tb[Math.floor(tb.length / 2)].a, it = tb[0];
         if (it.a < giua * 0.8) co.push({ t: `${tenThu[it.i]} (${vnd(it.a)}/ngày) lên nửa khoảng cách với ngày giữa (${vnd(giua)}/ngày)`, v: ((giua - it.a) / 2) * cnt[it.i] });

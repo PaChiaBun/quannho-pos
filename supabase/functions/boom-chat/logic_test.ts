@@ -2347,7 +2347,7 @@ Deno.test('lần 223: khuyến mãi tính sẵn', () => {
   const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
   const f = L.parseFacts(d.facts.thang_nay)!, m = L.parseModules({ ...d.modules.thang_nay });
   const t = L.baiToanTiepThi(f, m, 'giảm 10k cho hs thì phải bán thêm bn phần mới hòa');
-  assert(/Cơm tấm sườn \(giá 40\.000đ, giá vốn 21\.600đ, lời 18\.400đ\/phần\) giảm 10\.000đ → còn lời 8\.400đ\/phần → phải bán gấp 2,2 lần/.test(t), t.slice(0, 400));
+  assert(/Cơm tấm sườn \(giá 40\.000đ, giá vốn 21\.600đ, lời 18\.400đ\/phần\) giảm 10\.000đ → còn lời 8\.400đ\/phần → phải bán gấp 2,19 lần/.test(t), t.slice(0, 400));
   assertStringIncludes(L.baiToanTiepThi(f, m, 'chương trình mua 2 tặng 1 tháng này có lời không'), 'Trong app quán CHƯA có chương trình mua 2 tặng 1');
   assert(!L.baiToanTiepThi(f, m, 'có nên làm mua 1 tặng 1 không, có lời không').includes('CHƯA có chương trình'));
   assert(!L.baiToanTiepThi(f, m, 'tháng này doanh thu sao').includes('Giảm giá theo phần'));
@@ -2396,4 +2396,15 @@ Deno.test('lần 225: khớp món và món chưa có giá vốn', () => {
   const t = L.baiToanTiepThi(fa, ma, 'giảm 20% cà phê sữa đá khung 14-16h có lỗ không');
   assertStringIncludes(t, 'Cà phê sữa đá chưa có giá vốn');
   assert(!t.includes('Bạc xỉu (giá'), t.slice(0, 300));
+});
+
+// lần 226: trung bình theo thứ trong bài toán tiền bỏ ngày dở; caption sàn không dùng mã app
+Deno.test('lần 226: thứ của hôm nay, caption sàn', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay)!, L.parseModules({ ...s.modules.thang_nay })] as const; };
+  const [fd, md] = ld('d');
+  assertStringIncludes(L.tiepThiTinhSan('viết caption đăng shopeefood cho cơm tấm', fd, md).join(), 'KHÔNG đưa mã vào bài sàn');
+  assert(!L.tiepThiTinhSan('viết bài đăng fb, món có sẵn', fd, md).join().includes('bài sàn'));
+  const [fc, mc] = ld('c');
+  const t = L.baiToanTiepThi(fc, mc, 'nên chạy khuyến mãi ngày nào trong tuần');
+  assert(!t.includes('2.875.500đ'), t.slice(0, 500));
 });
