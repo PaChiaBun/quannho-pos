@@ -154,3 +154,9 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Caption cho ShopeeFood / Grab: không đưa mã giảm của app quán (khách sàn không nhập được).
 - Số lần phải bán gấp ghi 2 chữ số (1,17 thay 1,2 cạnh "thêm 17%").
 - Chấm mù 21 cặp +0,48 ± 1,14 (tổng chưa rõ); đếm máy: bài đăng sàn có mã app cũ 3/3 → mới 0/3. Test 198/198.
+
+## 14. Luật kiểm "khuyên giảm giá món giá vốn cao" (lần 227, KHÔNG áp)
+
+- Soát 29 câu bị luật bắt: ~25 vế là bắt nhầm (đang tính "giảm 20% thì … còn", khuyên ngược "chưa / tránh giảm", nhắc chương trình người hỏi hỏi). Sửa luật bỏ các vế đó → còn 2 / 29.
+- Chấm mù 24 cặp (8 câu luật cũ từng bắt × 3): **−0,08 ± 0,54 — không đổi**; viết lại 19 → 14 / 24. Không áp (đường low trên máy chủ vốn không viết lại khi bắt lỗi). Bản vá: `db-fix/boom_l227_luat_kiem_khong_ap.patch`.
+- Thấy thêm: "giảm giá trên Grab" — tính lời không trừ phí sàn (cả hai bản sai).
