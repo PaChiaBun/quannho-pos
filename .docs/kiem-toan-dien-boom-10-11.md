@@ -316,3 +316,10 @@ Tiêu chí thấp: việc làm 1,32, tìm vấn đề 1,41, lý lẽ 1,45. Kiể
 6. Quán mẫu d: số so cùng kỳ theo nhóm / món lẻ, tự mâu thuẫn (dữ liệu mẫu, đã biết).
 
 **Kế hoạch lô F:** (a) mã: sửa dòng 1–5; "khung A–Bh" = giờ A tới trước B; dòng doanh thu / ngày của giờ hỏi đóng / mở + lương / giờ công; mã giảm trên đơn sàn (lời còn lại sau phí sàn − tiền mã); giờ hiện tại trong dòng nhập kho (đã qua giờ mở → "nhập ngay"). (b) kiểm bằng mã: câu trả lời nói "lớn hơn phần còn lại" khi số giảm < phần còn lại; bài đăng thiếu giá khi dòng bài đăng có giá. Đo bằng bộ kín mới theo loại câu đích.
+
+## 27. Lô F — lần 235 (ĐÃ ÁP 11/11 01:41, TS 20261111_014105)
+
+- Bỏ gợi ý thẻ tích ly giấy (Việc nên nhắm, mucBot); "N món chưa bán" ghi "và K món khác" khi tên bị cắt; nhãn khung buổi luôn theo giờ bán thật; dòng kho thêm giờ hiện tại khi hỏi hết / nhập (đã qua giờ mở → nhập ngay, không ngưng món chủ lực); `khungHoi()` tính sẵn khung giờ được hỏi ("6–7h" = giờ 6h, không gồm 7h; giờ đơn khi hỏi mở / đóng / về sớm) + doanh thu / ngày mở bán; `giamNoiNguoc()` bắt câu nói mức giảm "lớn hơn phần còn lại" khi thật ra nhỏ hơn. Không sửa "MÓN ĐANG HỎI" khớp gần (Boom vẫn trả lời đúng món).
+- Bộ kín MỚI `de_kin17.json` (32 câu: khuyến mãi, giờ mở / đóng, kho hết, giữ khách). Chấm mù 64 cặp: câu bị chạm 46 cặp **+0,78 ± 0,62**; kho +1,29, khuyến mãi +1,2, giữ khách +0,75, giờ mở / đóng ±0; không chạm −0,22.
+- Sau chấm sửa: dòng kho ghi "Bây giờ là 0h" (lấy giờ của mốc đầu ngày) → giờ VN thật (có test).
+- Còn thấy: số khung giờ Boom tự cộng sai khi khung khác dòng tính sẵn (14–16h vs 14–17h); mã giảm trên đơn qua sàn vẫn không được dùng dù có dòng; quán có mã HSSV10 mà vẫn đề xuất mã học sinh mới; người làm quá 48 giờ / tuần không được nhắc ở câu giờ mở.

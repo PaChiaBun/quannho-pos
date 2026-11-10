@@ -646,7 +646,9 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     out.push(
       `[KHO — ${ss(k.period)}] Theo dõi ${nn(k.items)} mặt hàng${k.stock_value !== undefined ? `, giá trị tồn theo giá vốn ${vnd(nn(k.stock_value))}` : ''}. ` +
         `${nn(k.low_count)} mặt hàng ở / dưới mức tối thiểu, trong đó ${nn(k.out_count)} đã hết.` +
-        (low.length ? ` Sắp hết / hết: ${low.map((x) => `${ss(x.name)} còn ${qty(x.qty)} ${ss(x.unit)} (tối thiểu ${qty(x.min)})`).join('; ')}.` : ''),
+        (low.length ? ` Sắp hết / hết: ${low.map((x) => `${ss(x.name)} còn ${qty(x.qty)} ${ss(x.unit)} (tối thiểu ${qty(x.min)})`).join('; ')}.` : '') +
+        // lần 235 (kiểm lần 5: lúc 9h quán đang bán vẫn dặn "nhập trước khung 6h–13h"; hết ly / than không nói nhập ngay): giờ hiện tại
+        (low.length && /h[eế]t|nh[aậ]p|thi[eế]u|c[oò]n (?:đ[uủ]|bao)|kho|b[aá]n sao/iu.test(question) ? ` Bây giờ là ${new Date(now.getTime() + 7 * 3600_000).getUTCHours()}h: món ĐÃ HẾT mà quán đang / sắp bán → nhập NGAY hôm nay (nói số lượng tối thiểu cần nhập = mức tối thiểu − còn lại) và cách xoay tạm trong lúc chờ; KHÔNG dặn "nhập trước giờ mở" khi đã qua giờ mở, KHÔNG khuyên ngưng món chủ lực.` : ''),
     );
     out.push(
       `Nhập hàng trong kỳ: ${nn(k.imports)} phiếu${k.import_total !== undefined ? `, tổng ${vnd(nn(k.import_total))}` : ''}.` +
@@ -1216,6 +1218,26 @@ export function hoiCaThangVoiTruoc(question: string): boolean {
   return /\b(?:du bao|du tinh|uoc|cuoi thang|het thang|ca thang|dat lai|vuot|bang)\b/.test(q) && /\bthang (?:truoc|roi|\d{1,2})\b|\bmuc thang\b/.test(q);
 }
 
+/** Lần 235 (kiểm lần 5: "khung 6–7h" bị cộng cả giờ 7h; câu mở / đóng sớm không có doanh thu / ngày của giờ đó): tính sẵn khung giờ được hỏi. */
+export function khungHoi(f: ShopFacts, question: string): string {
+  const h = f.by_hour;
+  if (!h || !h.some((v) => v > 0)) return '';
+  // boDau bỏ dấu gạch nối ("6-7h" → "6 7h") → bỏ dấu thanh nhưng giữ dấu câu
+  const q = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  let a = -1, b = -1;
+  const r = /\b(\d{1,2})\s*(?:h|gio)?\s*(?:-|–|den|toi)\s*(\d{1,2})\s*(?:h|gio)\b/.exec(q.replace(/[–]/g, '-'));
+  if (r) { a = +r[1]; b = +r[2]; }
+  else {
+    // một giờ đơn lẻ khi hỏi mở / đóng / về sớm: "mở lúc 9h", "đóng 21h", "giờ 14h cho về"
+    const m = /\b(?:mo|dong|ve som|nghi|bo|cat|giu)\b[^.?]{0,25}?\b(\d{1,2})\s*(?:h|gio)\b|\b(\d{1,2})\s*(?:h|gio)\b[^.?]{0,25}?\b(?:mo|dong|ve som|nghi|bo|cat|giu)\b/.exec(q);
+    if (m) { a = +(m[1] ?? m[2]); b = a + 1; }
+  }
+  if (a < 0 || a > 23 || b <= a || b > 24) return '';
+  const tong = h.reduce((x, v) => x + v, 0), t = h.slice(a, b).reduce((x, v) => x + v, 0), n = ngayMoBan(f);
+  const gio = b - a === 1 ? `giờ ${a}h (${a}:00–${a}:59)` : `khung ${a}–${b}h (các giờ ${Array.from({ length: b - a }, (_, i) => `${a + i}h`).join(', ')}; KHÔNG gồm ${b}h)`;
+  return `Khung giờ đang hỏi (tính sẵn): ${gio} cả kỳ ${vnd(t)}${n > 0 ? ` = ~${vnd(Math.round(t / n / 1000) * 1000)}/ngày mở bán (${n} ngày)` : ''}, ${pctTxt(tong > 0 ? (t / tong) * 100 : 0)}% doanh thu. Quyết mở / đóng / bớt người giờ này: so số ~/ngày này với tiền lương + điện của giờ đó.`;
+}
+
 /** Lần 232 (kiểm lần 4: Boom so dự báo cả tháng với số 1–28 tháng trước rồi nói "vượt tháng trước"): kỳ trước chưa trọn tháng → ước cả tháng trước. */
 export function soCaThangTruoc(f: ShopFacts, duBao: number): string {
   const pf = f.prev_from, pt = f.prev_to;
@@ -1508,7 +1530,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
           const ngay = ngayMoBan(f);
           const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
           // lần 67: việc chép thiếu MỨC ưu đãi / mục tiêu (l66) → ghi sẵn mức làm thử và ngưỡng giữ
-          if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}. Mức làm thử: thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong ${hs.map((x) => `${x.h}h`).join(', ')}, chạy 2 tuần${ngay ? `; giữ nếu doanh thu các giờ đó lên lại ≥ ${vnd(Math.round(hs.reduce((t, x) => t + x.v + x.p, 0) / 2 / ngay / 1000) * 1000)} / ngày (nửa đường về mức cũ)` : ''}.`;
+          if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}. Mức làm thử (lần 235: bỏ thẻ tích ly — quán có tích điểm trong app thì thẻ giấy chồng chéo): bớt 2.000đ / đơn cho đơn trong ${hs.map((x) => `${x.h}h`).join(', ')}, chạy 2 tuần${ngay ? `; giữ nếu doanh thu các giờ đó lên lại ≥ ${vnd(Math.round(hs.reduce((t, x) => t + x.v + x.p, 0) / 2 / ngay / 1000) * 1000)} / ngày (nửa đường về mức cũ)` : ''}.`;
           // lần 78: câu "làm gì cho tăng" chỉ ra 1 việc (thẻ tích ly), bỏ sót combo đắt hơn mua lẻ (chấm l77) → việc thứ hai tính sẵn
           const cb = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).find((t) => t.retail && t.price && t.price > t.retail);
           if (hs.length && cb) viec += ` Việc thứ hai (tính sẵn): hạ giá "${cb.name}" từ ${vnd(cb.price!)} xuống ≤ ${vnd(cb.retail!)} (bằng hoặc dưới mua lẻ) — combo đang đắt hơn mua lẻ thì khách bỏ combo; mốc đo: nay ${cb.qty} phần combo trong kỳ.`;
@@ -1758,12 +1780,15 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const ca = x.cost && y.cost;
     lines.push(`So 2 món (tính sẵn): ${[x, y].map((t) => `${t.name} ${t.qty} phần, ${vnd(t.revenue)} (${von(t)})`).join('; ')} → bán nhiều phần hơn: ${x.qty >= y.qty ? x.name : y.name}; doanh thu cao hơn: ${x.revenue >= y.revenue ? x.name : y.name}; ${ca ? `lãi gộp / phần cao hơn: ${x.price! - x.cost! >= y.price! - y.cost! ? x.name : y.name}` : 'CHƯA so được món nào lời hơn (thiếu giá vốn) — xin nhập giá vốn món còn thiếu'}. "Ngon hơn" app không đo được → nói theo số bán, khách chọn nhiều hơn.`);
   }
+  const kh = khungHoi(f, question);
+  if (kh) lines.push(kh);
   if (f.by_band) {
     const bn = ['Sáng (5–11h)', 'Trưa (11–14h)', 'Chiều (14–17h)', 'Tối (từ 17h)'];
     // lần 56: quán nghỉ giữa ngày (vd 14–16h) — nhãn cố định "Chiều (14–17h)" làm GPT đẩy ưu đãi vào giờ quán đóng (D18, D28)
     const hrs = (f.by_hour ?? []).map((v, h) => (v > 0 ? h : -1)).filter((h) => h >= 0);
     const gaps = hrs.slice(1).map((h, i) => [hrs[i] + 1, h]).filter(([a, b]) => b > a);
-    if (gaps.length) {
+    // lần 235 (kiểm lần 5: quán mở 9h vẫn ghi "Sáng (5–11h)"): luôn ghi giờ bán thật của từng khung
+    if (hrs.length) {
       const rng = [[5, 11], [11, 14], [14, 17], [17, 24]];
       rng.forEach(([lo, hi], k) => {
         const open = hrs.filter((h) => h >= lo && h < hi);
@@ -1902,7 +1927,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const base = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
     if (/topping|món thêm|thêm|ăn kèm|phụ/i.test(g.name) && base > 0 && g.revenue / base < 0.05) alerts.push(`nhóm "${g.name}" chỉ ${pctTxt((g.revenue / base) * 100)}% doanh thu`);
     // lần 50: GPT hay khuyên giảm giá / quảng bá món cả kỳ không ai gọi (Claude chấm l46, l48) → ghi sẵn hướng đúng
-    if (g.unsold && !shortPeriod) alerts.push(`nhóm "${g.name}": ${g.unsold} món cả kỳ chưa bán phần nào${g.unsold_names.length ? ` (${g.unsold_names.join(', ')})` : ''} → hướng đúng là ẨN khỏi menu / bớt nhập nguyên liệu riêng của món đó (món mới thêm thì chờ thêm 2 tuần); KHÔNG giảm giá / quảng bá món này`);
+    if (g.unsold && !shortPeriod) alerts.push(`nhóm "${g.name}": ${g.unsold} món cả kỳ chưa bán phần nào${g.unsold_names.length ? ` (${g.unsold_names.join(', ')}${g.unsold > g.unsold_names.length ? ` và ${g.unsold - g.unsold_names.length} món khác` : ''})` : ''} → hướng đúng là ẨN khỏi menu / bớt nhập nguyên liệu riêng của món đó (món mới thêm thì chờ thêm 2 tuần); KHÔNG giảm giá / quảng bá món này`);
   }
   // ưu tiên: combo đắt → giá vốn cao → nhóm nhỏ → món chưa bán
   const rank = (x: string) => (x.startsWith('combo') ? 0 : x.includes('giá vốn') ? 1 : x.includes('% doanh thu') ? 2 : 3);
@@ -2824,7 +2849,7 @@ export function buoiTrongCau(question: string): { bq: number; quaTai: number } {
 function mucBot(f: ShopFacts, mon: string[], uong: boolean): string {
   const gia = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => mon.includes(t.name) && t.price).map((t) => t.price!);
   const thap = gia.length ? Math.min(...gia) : 0;
-  const tich = uong ? 'thẻ tích ly giờ này' : 'thẻ tích điểm giờ này';
+  const tich = 'ưu đãi khách quen đúng giờ này'; // lần 235: không gợi thẻ giấy (app đã tích điểm)
   if (!thap) return `ưu đãi nhỏ, hoặc ${tich}`;
   const bot = Math.min(5000, Math.floor((thap * 0.15) / 1000) * 1000);
   return bot >= 1000 ? `${uong ? 'mua 2 ly' : 'mỗi phần'} bớt ${vnd(bot)}, hoặc ${tich}` : tich;
@@ -3873,7 +3898,9 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const ngayBuoi = tienNgayGoiBuoi(answer, ref);
   const dgKhung = donGioSaiKhung(answer, ref);
   const csNgay = chuaCoSoNgay(answer, ref);
+  const gNguoc = giamNoiNguoc(answer, ref);
   return [
+    ...(gNguoc ? [gNguoc] : []),
     ...(ttSai.length ? [`số thời tiết không có trong dự báo (${ttSai.join(', ')}) → chỉ dùng đúng nhiệt độ / % trong khối dự báo; quán CHƯA có số ngày mưa nên KHÔNG nói mưa / nắng làm tăng giảm bao nhiêu %`] : []),
     ...(ttChi.length ? [`khuyên chi tiền chỉ vì dự báo ("${ttChi.join('"; "')}") → đổi thành chuẩn bị nhẹ / thử nhỏ có hạn mức và theo dõi; nói rõ dự báo có thể sai`] : []),
     ...(ttLoi ? ['đổ doanh thu giảm cho thời tiết mà không có số thời tiết nào → bỏ ý đó, giải thích bằng số bán hàng (giờ, thứ, món, số đơn)'] : []),
@@ -3912,6 +3939,17 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...loiLapLuan(answer, ref),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
+}
+
+/** Lần 235 (kiểm lần 5: "giảm 33% lớn hơn phần còn lại sau nguyên liệu" trong khi còn 62,7%): mức giảm nhỏ hơn phần còn lại mà câu trả lời nói ngược. */
+export function giamNoiNguoc(answer: string, ref: string): string {
+  const nl = /Nguyên liệu (\d+(?:,\d+)?)% doanh thu/.exec(ref);
+  const g = /giảm (\d+(?:,\d+)?)%/.exec(ref);
+  if (!nl || !g) return '';
+  const con = 100 - Number(nl[1].replace(',', '.')), giam = Number(g[1].replace(',', '.'));
+  if (giam >= con) return '';
+  const c = answer.split(/(?<=[.!?\n])/).find((x) => /(?:lớn hơn|vượt|cao hơn|nhiều hơn|ăn hết|ăn sạch)[^.!?]{0,40}phần (?:còn lại|lời|lãi)|(?:lỗ|âm) ngay/iu.test(x));
+  return c ? `nói ngược mức giảm ("${c.trim().slice(0, 90)}"): giảm ${pctTxt(giam)}% NHỎ hơn phần còn lại sau nguyên liệu (${pctTxt(con)}%) nên chưa lỗ ngay, chỉ phải bán thêm như dòng tính sẵn → sửa câu đó theo đúng số lần phải bán gấp, KHÔNG viết thêm câu giải thích về lỗi này` : '';
 }
 
 /** Lời nhắc hỏi lại khi kiemTraLoi có lỗi. */

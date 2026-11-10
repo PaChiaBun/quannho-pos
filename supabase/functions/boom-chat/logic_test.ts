@@ -1043,7 +1043,7 @@ Deno.test('Lần 56: quán nghỉ giữa ngày → nhãn khung giờ theo giờ 
   assert(t.includes('Sáng (6–11h): Bún bò 8; Trưa (11–14h): Cơm sườn 10; Chiều (16–17h, quán nghỉ 14–16h): Cơm sườn 1; Tối (17–20h): Bún thịt nướng 5'), t);
   // không nghỉ giữa ngày → giữ nhãn cũ
   const h2 = h.map((v, i) => (i >= 6 && i <= 19 ? 100 : 0));
-  assert(formatFacts(parseFacts({ ...base, by_hour: h2 })!).includes('Sáng (5–11h): Bún bò 8'));
+  assert(formatFacts(parseFacts({ ...base, by_hour: h2 })!).includes('Sáng (6–11h): Bún bò 8')); // lần 235: luôn theo giờ bán thật
 });
 
 Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giảm ở giờ, thứ, nhóm, món', () => {
@@ -1123,7 +1123,7 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   const tm = formatFacts(fm, new Date(), 'so với tháng trước thì món nào giảm nhiều nhất');
   assert(tm.includes('Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): Cà phê sữa đá kỳ trước 30 → nay 20 phần — GIỮ GIÁ') && tm.includes('ở khung sáng (khung món này bán chạy)') && tm.includes('mốc đo: nay ~5 phần / tuần, mục tiêu ~6 phần / tuần') && !tm.includes('kéo khách lại đúng'), tm);
   // lần 67: ghi sẵn mức làm thử và mục tiêu số
-  assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong 7h, 8h, chạy 2 tuần; giữ nếu doanh thu các giờ đó lên lại ≥ 0đ / ngày'));
+  assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('bớt 2.000đ / đơn cho đơn trong 7h, 8h, chạy 2 tuần; giữ nếu doanh thu các giờ đó lên lại ≥ 0đ / ngày'));
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('mục tiêu sau 2 tuần 0,54 phần / đơn (+30%), không giảm giá Món thêm'));
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes(t) && !formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('GIẢM Ở ĐÂU'));
   // app cũ (không có số kỳ trước chia nhỏ) → không có dòng
@@ -2509,4 +2509,20 @@ Deno.test('lần 234: vay đọc đúng câu', () => {
   assertStringIncludes(h, 'Trả nợ MỘT LẦN (tính sẵn, SƠ BỘ): sau 1 tháng');
   assertStringIncludes(v('vay nóng 20 triệu lãi 3%/tháng, 2 tháng sau trả một cục'), 'phải trả 21.200.000đ');
   assertEquals(v('công ty kia còn nợ quán 7 triệu tiền cơm, bao giờ đòi'), '');
+});
+
+// lần 235: lô F — khung giờ hỏi, kho theo giờ, thẻ giấy, món chưa bán đủ số, nói ngược mức giảm
+Deno.test('lần 235: lô F', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay)!, L.parseModules({ ...s.modules.thang_nay })!] as const; };
+  const [fd] = ld('d'), [fb] = ld('b');
+  assertStringIncludes(L.khungHoi(fd, 'khung 6-7h sáng bán được bao nhiêu'), 'giờ 6h (6:00–6:59) cả kỳ 11.670.000đ');
+  assertStringIncludes(L.khungHoi(fd, 'từ 6h đến 9h bán sao'), 'KHÔNG gồm 9h');
+  assertStringIncludes(L.khungHoi(fb, 'có nên mở cửa lúc 9h nữa không'), '~78.000đ/ngày');
+  assertEquals(L.khungHoi(fb, 'doanh thu tháng này sao'), '');
+  const [, mb] = ld('b');
+  assertStringIncludes(L.formatModules(mb, new Date('2026-10-28T09:00:00+07:00'), 'hết ly rồi giờ sao'), 'Bây giờ là 9h');
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  assert(!L.formatFacts(fb, now, 'sáng nay vắng quá làm gì').includes('Sáng (5–11h)'));
+  assertStringIncludes(L.giamNoiNguoc('Mua 2 tặng 1 tức giảm 33%, lớn hơn phần còn lại sau nguyên liệu nên lỗ.', 'Mua 2 tặng 1 = giảm 33%. Nguyên liệu 37% doanh thu: phải bán gấp'), 'nói ngược mức giảm');
+  assertEquals(L.giamNoiNguoc('Giảm 33% nhỏ hơn phần còn lại, phải bán gấp 1,4 lần.', 'Mua 2 tặng 1 = giảm 33%. Nguyên liệu 37% doanh thu'), '');
 });
