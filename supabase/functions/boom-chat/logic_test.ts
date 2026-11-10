@@ -2408,3 +2408,12 @@ Deno.test('lần 226: thứ của hôm nay, caption sàn', () => {
   const t = L.baiToanTiepThi(fc, mc, 'nên chạy khuyến mãi ngày nào trong tuần');
   assert(!t.includes('2.875.500đ'), t.slice(0, 500));
 });
+
+// lần 228: giảm giá trên sàn trừ phí; "giảm 10% trên Grab" không phải phí sàn 10%
+Deno.test('lần 228: giảm giá qua sàn', () => {
+  assertEquals(L.phiSanTrongCau('giảm 10% trên Grab'), null);
+  assertEquals(L.phiSanTrongCau('sàn ăn 25% thì sao'), 25);
+  const s = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const t = L.baiToanTiepThi(L.parseFacts(s.facts.thang_nay), L.parseModules({ ...s.modules.thang_nay }), 'giảm 10% cơm tấm sườn trên Grab có lỗ không');
+  assertStringIncludes(t, 'phí 25% → chưa giảm còn 8.400đ/phần, giảm 4.000đ còn 5.400đ/phần (phải bán gấp 1,56 lần)');
+});

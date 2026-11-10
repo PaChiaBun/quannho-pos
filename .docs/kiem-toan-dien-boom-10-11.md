@@ -160,3 +160,9 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - Soát 29 câu bị luật bắt: ~25 vế là bắt nhầm (đang tính "giảm 20% thì … còn", khuyên ngược "chưa / tránh giảm", nhắc chương trình người hỏi hỏi). Sửa luật bỏ các vế đó → còn 2 / 29.
 - Chấm mù 24 cặp (8 câu luật cũ từng bắt × 3): **−0,08 ± 0,54 — không đổi**; viết lại 19 → 14 / 24. Không áp (đường low trên máy chủ vốn không viết lại khi bắt lỗi). Bản vá: `db-fix/boom_l227_luat_kiem_khong_ap.patch`.
 - Thấy thêm: "giảm giá trên Grab" — tính lời không trừ phí sàn (cả hai bản sai).
+
+## 15. Giảm giá qua sàn (lần 228, chưa áp)
+
+- `phiSanTrongCau()`: chỉ % đi với phí / chiết khấu / hoa hồng / sàn lấy-ăn-thu là phí sàn (trước "giảm 10% trên Grab" thành phí 10%).
+- Dòng "Giảm giá khi bán QUA SÀN": (giá − giảm) × (1 − phí) − giá vốn, so chưa giảm, số lần phải bán gấp.
+- Chấm mù 20 cặp (5 câu × 4): **+4,65 ± 1,65**; đếm máy lẫn "giảm 10%" thành phí: 6/20 → 1/20. Bộ `de_san_giam` (8 câu người ngoài): 7 câu bản cũ đã đúng (phí nêu rõ, hoặc món chưa có giá vốn), chỉ 1 câu bị chạm. Test 199/199.

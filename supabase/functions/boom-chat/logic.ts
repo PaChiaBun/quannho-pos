@@ -1281,6 +1281,12 @@ export function ngayLe(question: string, now: Date): string {
   return `NGÀY LỄ (tính sẵn): ${le[0]}/${le[1]}/${y} là ngày ${le[2]}, rơi vào ${thu}; kinh nghiệm chung: ${le[4]} → nói rõ đây là ngày lễ, nêu con số mốc của ${thu} thường (số bán, số phần trong khối) rồi chỉnh theo việc quán có gần nhóm khách đó không; KHÔNG bịa số tăng %.`;
 }
 
+/** % phí sàn người hỏi nêu ("sàn ăn 25%", "phí grab 30%"); null nếu không nêu. "giảm 10% trên Grab" là mức giảm, không phải phí. */
+export function phiSanTrongCau(question: string): number | null {
+  const m = /(?:ph[ií]|chi[eế]t kh[aấ]u|hoa h[oồ]ng|s[aà]n (?:l[aấ]y|[aă]n|thu|tr[uừ]))[^\d%]{0,20}(\d{1,2})\s*%/iu.exec(question.normalize('NFC'));
+  return m ? +m[1] : null;
+}
+
 /** Khung giờ có bán liền nhau ("6h–14h", "16h–20h": quán nghỉ trưa) theo doanh thu từng giờ.
  *  Khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó. */
 export function khungBan(f: ShopFacts): string[] {
@@ -1641,8 +1647,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   // 09/11 chấm mù: có giá vốn mà không tính đơn sàn còn lời bao nhiêu
   if (coVon.length && /s[aà]n\b|grab|shopee|be food|baemin|giao h[aà]ng|app giao/i.test(question)) {
     const m = monTrongCau(f, question), ds = m ? coVon.filter((t) => t.name === m) : [...coVon].sort((a, b) => b.qty - a.qty).slice(0, 2);
-    const phi = /(\d{1,2})\s*%/.exec(question), muc = phi ? [+phi[1]] : [25, 30];
-    if (ds.length) lines.push(`BÁN QUA SÀN (tính sẵn, phí sàn ${phi ? `${muc[0]}% theo câu hỏi` : 'GIẢ SỬ 25–30%, nói rõ là giả định'}, chưa tính bao bì): ${ds.map((t) => `${t.name} giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)} → tại quán lời ${vnd(t.price! - t.cost!)}/phần, qua sàn còn ${muc.map((p) => vnd(t.price! * (1 - p / 100) - t.cost!)).join('–')}/phần`).join('; ')}.`);
+    // lần 228: "giảm 10% trên Grab" từng bị đọc thành phí sàn 10% — chỉ lấy % đi với chữ phí / chiết khấu / hoa hồng
+    const phi = phiSanTrongCau(question), muc = phi ? [phi] : [25, 30];
+    if (ds.length) lines.push(`BÁN QUA SÀN (tính sẵn, phí sàn ${phi ? `${phi}% theo câu hỏi` : 'GIẢ SỬ 25–30%, nói rõ là giả định'}, chưa tính bao bì): ${ds.map((t) => `${t.name} giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)} → tại quán lời ${vnd(t.price! - t.cost!)}/phần, qua sàn còn ${muc.map((p) => vnd(t.price! * (1 - p / 100) - t.cost!)).join('–')}/phần`).join('; ')}.`);
   }
   // lần 92: so HAI MÓN (D39 "bún bò với cơm sườn món nào ngon ăn hơn") — GPT né câu hỏi, không nói chỉ một món có giá vốn
   const monQ = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => [t.name, t])).values()].filter((t) => {
@@ -2552,6 +2559,15 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
       const cu = t.price! - t.cost!, moi = cu - g;
       return `${t.name} (giá ${vnd(t.price!)}, giá vốn ${vnd(t.cost!)}, lời ${vnd(cu)}/phần) giảm ${vnd(g)} → ${moi <= 0 ? `LỖ hoặc hết lời (${vnd(moi)}/phần): KHÔNG nên giảm mức này` : `còn lời ${vnd(moi)}/phần → phải bán gấp ${String(Math.round((cu / moi) * 100) / 100).replace('.', ',')} lần số phần (thêm ${Math.round((cu / moi - 1) * 100)}%) mới giữ nguyên tiền lời`}`;
     });
+    // lần 228 (chấm mù lần 227: "giảm 10% trên Grab" cả hai bản tính lời không trừ phí sàn)
+    if (/s[aà]n\b|grab|shopee|be ?food|gojek|app giao/i.test(question)) {
+      const phi = phiSanTrongCau(question), muc = phi ? [phi] : [25, 30];
+      const sd = ds.filter((t) => (giamTien.con ? t.price! - giamTien.con : 1) > 0).map((t) => {
+        const g = giamTien.con ? t.price! - giamTien.con : giamTien.pt ? (t.price! * giamTien.so) / 100 : giamTien.so * (giamTien.so < 1000 ? 1000 : 1);
+        return `${t.name}: ${muc.map((p) => { const cu = t.price! * (1 - p / 100) - t.cost!, moi = (t.price! - g) * (1 - p / 100) - t.cost!; return `phí ${p}% → chưa giảm còn ${vnd(cu)}/phần, giảm ${vnd(g)} còn ${vnd(moi)}/phần${moi <= 0 ? ' (LỖ)' : cu > 0 ? ` (phải bán gấp ${String(Math.round((cu / moi) * 100) / 100).replace('.', ',')} lần)` : ''}`; }).join('; ')}`;
+      });
+      if (sd.length) out.push(`Giảm giá khi bán QUA SÀN (tính sẵn, ${phi ? `phí ${phi}% theo câu hỏi` : 'GIẢ SỬ phí 25–30%, nói rõ là giả định'}, phí tính trên giá sau giảm, chưa tính bao bì): ${sd.join(' | ')}. Câu hỏi về sàn thì dùng số QUA SÀN này, không dùng số bán tại quán.`);
+    }
     if (dong.length) out.push(`Giảm giá theo phần (tính sẵn, chưa tính lương, mặt bằng): ${dong.join('; ')}. Giảm cho một nhóm khách (học sinh…) thì chỉ phần đơn của nhóm đó phải tăng như trên. Câu đầu nêu số lần phải bán gấp này.`);
     else out.push(`Giảm giá theo phần: ${hoi.length ? `${hoi[0].t.name} chưa có giá vốn` : 'món trong câu chưa có giá vốn'} → nói rõ cần nhập giá vốn món đó (Kho hàng → món → Giá vốn) mới tính được số phần phải bán thêm; KHÔNG tự đoán giá vốn, KHÔNG lấy món khác thay.`);
   }
