@@ -401,3 +401,12 @@ Tiêu chí thấp: việc làm 1,28, lý lẽ 1,55, tìm vấn đề 1,57. Kiể
 **Lỗi câu trả lời lặp lại:** món bán chậm nhất gọi sai (bỏ món ít phần hơn); bảng giá in combo dạng khoảng giá (không treo được); khuyến mãi không dùng lời qua sàn / tỉ lệ đơn dùng mã; 640 khách cộng dồn gọi là "tháng này"; nói chưa có số nạp ví dù có.
 
 **Kế hoạch lô H:** sửa 1–6; bảng giá / bài đăng: combo dùng MỘT giá (giá đang bán, đề xuất để sau); dòng "món bán chậm nhất" xếp đủ mọi món có bán; khuyến mãi: tỉ lệ đơn dùng mã + số đơn đổi → "mã chủ yếu bớt cho khách sẵn có"; số khách cộng dồn ghi rõ trong mọi dòng khách.
+
+## 32. Lô H — lần 238 (ĐÃ ÁP 11/11 02:58, TS 20261111_025839)
+
+- Bỏ ghi chú "(lần 235 …)" lọt vào chữ gửi Boom + test quét mọi khối của 4 quán mẫu không có "(lần NNN"; "Việc nên nhắm cho Thứ X" bỏ ngày dở (thứ của hôm nay chia n−1 ngày đã trọn); BÀI TOÁN TIỀN "món lời nhiều, nên ưu tiên" chỉ món giá vốn ≤ 40% (không còn món nào thì bỏ dòng); "quảng bá thêm chỉ làm mỏng lời" sửa thành "giảm giá / tặng kèm làm mỏng lời hơn"; xin bảng giá / menu / bài đăng → "Giá combo ĐANG BÁN (in đúng một giá)"; hỏi món chậm / ít nhất → món ít phần nhất trên mọi nhóm; khuyến mãi: ≥ 20% đơn dùng mã mà số đơn giảm → "mã chủ yếu bớt tiền cho khách vốn đã mua"; số khách ghi "CỘNG DỒN, không phải của riêng kỳ".
+- Bộ kín MỚI `de_kin22.json` (30 câu: thứ yếu, mã giảm, món chậm, bảng giá, khách; mọi câu đều bị chạm vì dòng khách đổi chữ). Chấm mù 60 cặp: **+0,82 ± 0,50**; thứ yếu +1,5, mã giảm +0,92, khách +0,67, bảng giá +0,58, món chậm +0,42.
+- Sau chấm sửa (có test): món giá vốn > 40% không còn lọt vào "nên ưu tiên" khi là món duy nhất có giá vốn.
+- Còn thấy: tỉ lệ nhóm / món tính trên giá trị trước giảm nhưng ghi "doanh thu"; dòng "giá trị đơn giảm cùng Topping" làm hiểu topping là nguyên nhân chính.
+
+- Demo sau áp: "món nào bán chậm nhất" đúng món ít phần nhất; nhưng vẫn khuyên ẩn mục chưa bán thuộc nhóm "Nguyên liệu" (nhóm không phải món bán) → lần sau: bỏ nhóm nguyên liệu khỏi "món chưa bán".

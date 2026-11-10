@@ -2560,3 +2560,29 @@ Deno.test('lần 237: hoà vốn tiếp thị', () => {
   assertStringIncludes(L.chiTiepThi(f, m, 'chạy quảng cáo fb 500k/ngày trong 5 ngày, tổng 2,5 triệu'), 'Chi 2.500.000đ');
   assertStringIncludes(L.chiTiepThi(f, m, 'thuê kol 4 triệu rưỡi có đáng ko'), 'Chi 4.500.000đ');
 });
+
+// lần 238: lô H
+Deno.test('lần 238: lô H', () => {
+  const ld = (k: string) => { const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url))); return [L.parseFacts(s.facts.thang_nay)!, L.parseModules({ ...s.modules.thang_nay })!] as const; };
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  const [fa] = ld('a'), [fc] = ld('c');
+  assertStringIncludes(L.formatFacts(fa, now, 'làm giúp bảng giá để treo'), 'Giá combo ĐANG BÁN');
+  assertStringIncludes(L.formatFacts(fc, now, 'món nào bán chậm nhất'), 'Món bán ÍT PHẦN NHẤT');
+  const t = L.formatFacts(fc, now, 'thứ 4 sao vắng vậy, làm gì');
+  assert(!t.includes('2.875.500đ'), t.slice(0, 300));
+  assert(!/\(lần 2\d\d/.test(L.formatFacts(fa, now, 'tháng này sao giảm')), 'lọt ghi chú nội bộ');
+});
+
+// lần 238: ghi chú nội bộ "(lần 2xx …)" không được lọt vào chữ gửi Boom
+Deno.test('không lọt ghi chú lần vào khối số liệu', () => {
+  const now = new Date('2026-10-28T09:00:00+07:00');
+  const qs = ['tháng này sao giảm vậy', 'nên làm khuyến mãi gì', 'khách quen còn quay lại không', 'hết ly rồi giờ sao', 'mua 2 tặng 1 có lỗ không', 'chạy ads fb 2 triệu được ko', 'ca tối từ 5 giờ tới 9 giờ có nên đóng sớm', 'làm bảng giá treo quán', 'thứ 4 vắng làm gì'];
+  for (const k of ['a', 'b', 'c', 'd']) {
+    const s = JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${k}.json`, import.meta.url)));
+    const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay })!;
+    for (const q of qs) {
+      const t = `${L.formatFacts(f, now, q)}\n${L.formatModules(m, now, q, f)}\n${L.baiToanTiepThi(f, m, q)}`;
+      assert(!/\(lần \d{2,3}\b|lần \d{3}:/.test(t), `${k}: ${q}: ${(/.{0,60}lần \d{2,3}.{0,40}/.exec(t) ?? [''])[0]}`);
+    }
+  }
+});
