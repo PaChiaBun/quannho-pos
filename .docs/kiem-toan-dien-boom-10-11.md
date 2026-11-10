@@ -372,3 +372,32 @@ Nội dung lên 10/12 (lần 5: 6/12), khuyến mãi 9/12 (5/12). Tiêu chí th�
 - Bộ kín MỚI `de_kin20.json` (30 câu: chi tiếp thị có số tiền, giờ / đơn, tiếp thị chung đối chứng). Chấm mù 60 cặp: câu bị chạm 34 cặp **+2,79 ± 1,23**; chi tiếp thị +4,39, giờ / đơn +1,0; không chạm +0,19.
 - Sau chấm sửa (có test): đọc số tiền "1 triệu 2", "4 triệu rưỡi", "500k/ngày × 5 ngày" (trước lấy 1 triệu / 4 triệu / 500k).
 - Còn thấy: dòng "món lời nhiều, nên ưu tiên" vẫn đưa món giá vốn 45–48% (mâu thuẫn điểm cần chú ý); câu đóng sớm không tách số giờ sẽ mất (vd 19h).
+
+## 31. Kiểm toàn diện lần 7 (11/11, bản 237)
+
+- Sổ thật (Chủ Quán cho đọc): vẫn 0 lượt thật từ 05/11.
+- Bộ kín MỚI `de_kin21.json` (90 câu, 15 lĩnh vực × 6, người khác viết). 1 lượt, 2 người chấm mỗi câu; đồng ý 82/90.
+- Kết quả: **132/180 dùng được (73%)**, TB **13,40** (cao nhất từ trước tới giờ; lần 6: 75%, 13,06). Kho lên 11/12 (lần 6: 5/12).
+
+| Lĩnh vực | Dùng được | TB |
+|---|---|---|
+| giờ / ngày | 6/12 | 13,3 |
+| khuyến mãi, thời tiết | 7/12 | 11,8–13,4 |
+| món, doanh thu, giá lời | 8/12 | 12,7–13,8 |
+| ngoài dữ liệu, thu chi, nhân sự | 9/12 | 13,5–14,1 |
+| khách, tiếp thị, sàn giao, nội dung, so kỳ | 10/12 | 12,8–14,8 |
+| kho | 11/12 | 12,9 |
+
+Tiêu chí thấp: việc làm 1,28, lý lẽ 1,55, tìm vấn đề 1,57. Kiểu lỗi: chung chung 32, dài 13, quá thận trọng 13.
+
+**Dòng tính sẵn / lỗi mã:**
+1. Ghi chú nội bộ "(lần 235: bỏ thẻ tích ly …)" lọt vào chữ gửi Boom (dòng Việc nên nhắm) — lỗi của lô F.
+2. "Việc nên nhắm cho Thứ X" (thứ yếu bất thường) chia cả hôm nay dở (2.875.500đ thay 3.408.667đ) → 55% / −40% sai.
+3. BÀI TOÁN TIỀN "món lời nhiều, nên ưu tiên" đưa món giá vốn 45–48%, trái "ĐIỂM CẦN CHÚ Ý"; câu "quảng bá thêm chỉ làm mỏng lời" sai lý (giữ giá thì lời / phần không đổi).
+4. "Việc nên nhắm cho buổi sáng" chọn Trà đá, bỏ món chính bán chạy nhất khung (bị lọc vì giá vốn cao) → dễ hiểu nhầm.
+5. Câu quá tải trưa vẫn có dòng ưu đãi kéo thêm khách.
+6. Đơn / giờ ghi "÷ 32.000đ" (làm tròn) mà số tính bằng 31.501đ.
+
+**Lỗi câu trả lời lặp lại:** món bán chậm nhất gọi sai (bỏ món ít phần hơn); bảng giá in combo dạng khoảng giá (không treo được); khuyến mãi không dùng lời qua sàn / tỉ lệ đơn dùng mã; 640 khách cộng dồn gọi là "tháng này"; nói chưa có số nạp ví dù có.
+
+**Kế hoạch lô H:** sửa 1–6; bảng giá / bài đăng: combo dùng MỘT giá (giá đang bán, đề xuất để sau); dòng "món bán chậm nhất" xếp đủ mọi món có bán; khuyến mãi: tỉ lệ đơn dùng mã + số đơn đổi → "mã chủ yếu bớt cho khách sẵn có"; số khách cộng dồn ghi rõ trong mọi dòng khách.
