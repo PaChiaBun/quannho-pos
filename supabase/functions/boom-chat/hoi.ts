@@ -1,7 +1,7 @@
 // Chế độ 'ask' (03/11/2026, thiết kế .docs/thiet-ke-boom-may-chu-lay-so.md): app chỉ gửi câu hỏi; máy chủ đọc kỳ bằng luật
 // (ky.ts), đọc ĐỦ số người hỏi được xem bằng vé của chính họ (lay_so.ts, RLS), đệm theo (người hỏi, quán, kỳ).
 // Đo 03/11: gửi đủ 5 mục không làm Boom kém đi (12,50 → 12,45 / 16), câu app không gửi số 9,2 → 11,6.
-import { coNeuKy, docKy, ky30Ngay, type Ky } from './ky.ts';
+import { boDau, coNeuKy, docKy, ky30Ngay, type Ky } from './ky.ts';
 import { docBanHang } from './ban_hang.ts';
 import { type Ctx, docMuc, docQuyen, xemDuocBanHang } from './lay_so.ts';
 import { type ModuleFacts, parseFacts, parseModules, type ShopFacts } from './logic.ts';
@@ -17,12 +17,21 @@ function hanDem(ky: Ky, now: number): number {
 }
 
 export async function laySoChoCau(ctx: Ctx, question: string, now = new Date(), cauTruoc?: string | null): Promise<SoCuaCau> {
-  const ky = docKy(question, now, cauTruoc);
+  // lần 218 (Demo 10/11: "viết bài đăng fb hôm nay" → số hôm nay 0 đơn → bài không món, không giá): câu xin viết thì
+  // "hôm nay" là lúc đăng, không phải kỳ số liệu → đọc 30 ngày qua để có món chủ lực + giá
+  const ky = vietNoiDung(question) ? ky30Ngay(now) : docKy(question, now, cauTruoc);
   const so = await laySoTheoKy(ctx, ky, now);
   // 09/11 web Demo ngày 9: không nêu kỳ → "tháng này" 12 đơn → khuyên tăng giá theo 5 ly, mã giảm không có số. Ít đơn thì đọc lại 30 ngày qua.
   const macDinh = !coNeuKy(question, now) && !(cauTruoc && coNeuKy(cauTruoc, now)) && /^Tháng này/.test(ky.nhan);
   if (macDinh && so.facts && so.facts.orders < IT_DON_KY) return await laySoTheoKy(ctx, ky30Ngay(now), now);
   return so;
+}
+
+/** Câu xin nội dung đăng / gửi khách (không phải báo cáo số): "viết báo cáo doanh thu hôm nay" vẫn theo kỳ trong câu. */
+export function vietNoiDung(question: string): boolean {
+  const q = boDau(question.normalize('NFC')).toLowerCase();
+  return /\b(?:bai dang|bai post|caption|status|content|to roi|tin nhan|nhan zalo|kich ban|clip|dang (?:bai|fb|facebook|face|zalo|tiktok|insta))\b/.test(q) &&
+    !/\b(?:bao cao|doanh thu|so lieu|thu chi|tong ket)\b/.test(q);
 }
 
 /** Dưới mức này kỳ mặc định chưa đủ để nói giờ, thứ, món nào yếu (như IT_DON trong logic.ts). */

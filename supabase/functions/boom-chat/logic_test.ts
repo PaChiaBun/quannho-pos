@@ -2283,3 +2283,12 @@ Deno.test('lần 217c: xin viết bài khi 0 đơn', () => {
   assert(!L.formatFacts(f, now, 'viet giup bai dang fb hom nay').includes('NGÀY NÀY KHÔNG CÓ ĐƠN'));
   assertStringIncludes(L.formatFacts(f, now, 'hom nay ban duoc bao nhieu'), 'NGÀY NÀY KHÔNG CÓ ĐƠN');
 });
+
+// lần 218: câu xin nội dung đăng → máy chủ đọc 30 ngày qua (có món + giá), câu báo cáo vẫn theo kỳ
+Deno.test('lần 218: vietNoiDung', async () => {
+  const { vietNoiDung } = await import('./hoi.ts');
+  assert(vietNoiDung('viet giup bai dang fb hom nay'));
+  assert(vietNoiDung('Soạn tin nhắn Zalo gửi khách quen chiều nay'));
+  assert(!vietNoiDung('viết báo cáo doanh thu hôm nay'));
+  assert(!vietNoiDung('hôm nay bán được bao nhiêu'));
+});
