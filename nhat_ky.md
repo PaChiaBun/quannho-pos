@@ -30,6 +30,8 @@
 - ✅ Lần 228 ĐÃ ÁP 10/11 22:20 (TS 20261110_222033): giảm giá qua sàn trừ phí sàn; "giảm 10% trên Grab" không còn đọc thành phí 10%. Chấm mù 20 cặp +4,65 ± 1,65. Demo: "giảm 10% cà phê sữa đá trên Grab" → còn lời 5.750–6.875đ/ly (phí giả định 25–30%). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l228_ap_dung.sh 20261110_222033`.
 - ➡️ Hết danh sách lỗi kiểm lần 2 làm được bằng mã ("sáng hay trưa" là mô hình quá thận trọng 1/2; "tích điểm" cần lần màn hình app trước). Gợi ý: kiểm toàn diện lần 3 bằng bộ kín mới.
 - ✅ Kiểm toàn diện lần 3 (de_kin11, bản 228): 79/120 (66%), TB 12,79; lĩnh vực yếu đổi hẳn so lần 2 (8 câu / lĩnh vực dao động mạnh). Người chấm bắt 10 dòng tính sẵn sai (tăng giá hoà vốn theo doanh thu, xếp món lời bỏ món nhỏ, dự báo tháng thiếu hôm nay, combo 48k, điện nước bỏ than gas…) → kế hoạch lô D trong .docs mục 17.
+- ✅ Lần 229 ĐÃ ÁP 10/11 23:19 (TS 20261110_231947): lô D sửa 9 dòng tính sẵn (tăng giá theo lãi gộp, xếp món theo lời / phần, dự báo tháng cộng phần còn lại hôm nay, combo, cuối tuần, than gas, lời nhóm, khung mưa, giá quán khác). Chấm mù 48 cặp +0,88 ± 0,47. Demo (kỳ 10 ngày < 14): không có dự báo tháng, Boom nói chưa ước được — đúng thiết kế. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l229_ap_dung.sh 20261110_231947`.
+- ➡️ "Chi bằng tiền mặt / chuyển khoản" bị đọc thành tiền thu; dòng khác còn gợi ý thẻ tích ly khi đã có tích điểm.
 - ➡️ Lô 4 (đường đi trong app, cần bản mới); mở rộng nhận câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới).
 
 ## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 214 ĐANG CHẠY (gọi song song none + low; 211, 213 đã hoàn tác); 188, 189, 196, 198, 200, 202 bỏ; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)

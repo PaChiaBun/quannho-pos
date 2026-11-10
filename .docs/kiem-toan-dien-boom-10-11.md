@@ -202,3 +202,9 @@ Kiểu lỗi: chung chung 34, lý lẽ sai hướng 21, không trả lời thẳ
 10. Quán mẫu d: số so cùng kỳ theo nhóm / món tự mâu thuẫn (có thể do dữ liệu quán mẫu).
 
 **Kế hoạch:** lô D sửa 1–9 (từng dòng có test; đo A/B câu bị chạm). Lỗi chung chung / lạc đề / quá thận trọng vẫn không có cách bằng mã.
+
+## 18. Lô D (lần 229, chưa áp)
+
+- Sửa 9 dòng tính sẵn (mục 17: 1–9). Chấm mù 48 cặp (24 câu ngẫu nhiên de_kin11 bị chạm × 2): **+0,88 ± 0,47**.
+- Sau chấm sửa thêm: xếp món chọn theo lời / phần (trước chọn theo tiền cả kỳ rồi mới xếp → Cơm tấm sườn bì chả 24.000đ bị loại); "lời ít nhất" xếp từ thấp cả khi hiển thị; hôm nay chưa có dòng doanh thu = 0đ (quán mở 9h). Test 200/200.
+- Còn thấy: dòng "Chi bằng tiền mặt X, chuyển khoản Y" bị cả hai bản đọc thành tiền THU; một dòng khác vẫn gợi ý "thẻ tích ly" khi quán đã có tích điểm; số so cùng kỳ theo nhóm của quán mẫu d tự mâu thuẫn (dữ liệu mẫu).
