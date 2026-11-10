@@ -1249,7 +1249,7 @@ export function khungHoi(f: ShopFacts, question: string): string {
   if (a < 0 || a > 23 || b <= a || b > 24) return '';
   const tong = h.reduce((x, v) => x + v, 0), t = h.slice(a, b).reduce((x, v) => x + v, 0), n = ngayMoBan(f);
   const gio = b - a === 1 ? `giờ ${a}h (${a}:00–${a}:59)` : `khung ${a}–${b}h (các giờ ${Array.from({ length: b - a }, (_, i) => `${a + i}h`).join(', ')}; KHÔNG gồm ${b}h)`;
-  return `Khung giờ đang hỏi (tính sẵn): ${gio} cả kỳ ${vnd(t)}${n > 0 ? ` = ~${vnd(Math.round(t / n / 1000) * 1000)}/ngày mở bán (${n} ngày)` : ''}, ${pctTxt(tong > 0 ? (t / tong) * 100 : 0)}% doanh thu. Quyết mở / đóng / bớt người giờ này: so số ~/ngày này với tiền lương + điện của giờ đó.`;
+  return `Khung giờ đang hỏi (tính sẵn): ${gio} cả kỳ ${vnd(t)}${n > 0 ? ` = ~${vnd(Math.round(t / n / 1000) * 1000)}/ngày mở bán (${n} ngày)` : ''}, ${pctTxt(tong > 0 ? (t / tong) * 100 : 0)}% doanh thu${n > 0 && f.orders > 0 ? `; ước ~${pctTxt(Math.round((t / n / (f.revenue / f.orders) / (b - a)) * 10) / 10)} đơn/giờ (= doanh thu ÷ đơn trung bình ${vnd(Math.round(f.revenue / f.orders / 1000) * 1000)}, ước)` : ''}. Quyết mở / đóng / bớt người giờ này: so số ~/ngày này với tiền lương + điện của giờ đó.`;
 }
 
 /** Lần 232 (kiểm lần 4: Boom so dự báo cả tháng với số 1–28 tháng trước rồi nói "vượt tháng trước"): kỳ trước chưa trọn tháng → ước cả tháng trước. */
@@ -2585,6 +2585,30 @@ export function soNguoiCan(question: string): string {
 }
 
 /** 06/11: câu tiếp thị đã bám số nhưng không nói việc đó đáng bao nhiêu tiền ("giảm 10% có lời không" → chưa kết luận). Mã tính, không thêm lời dặn. */
+/** Lần 237 (kiểm lần 6: "chi 2 triệu quảng cáo / KOL" → Boom chia theo giá bán ra 72 ly, đúng phải chia theo tiền LỜI ~91–115 ly): bù chi phí tiếp thị theo lãi gộp. */
+export function chiTiepThi(f: ShopFacts | null, m: ModuleFacts | null, question: string): string {
+  if (!f || f.orders <= 0) return '';
+  const qs = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  if (!/quang cao|\bads?\b|kol|koc|review|tiktok|facebook|fb|to roi|banner|bang hieu|livestream|influencer|tiep thi|marketing|chay (?:ads|quang)|booking/.test(qs)) return '';
+  // lần 237 (chấm mù: "1 triệu 2" đọc thành 1 triệu; "500k/ngày … 5 ngày" lấy 500k): "X triệu Y" = X,Y triệu; tiền / ngày × số ngày; lấy khoản lớn nhất
+  const qn = qs.replace(/(\d+)\s*(tr|trieu|cu)\s*ruoi\b/g, '$1,5 $2').replace(/(\d+)\s*(tr|trieu|cu)\s*(\d)(?![\d.,%])/g, '$1,$3 $2'); // "4 triệu rưỡi" = 4,5
+  const ngayN = /(\d+)\s*(?:ngay|hom)\b/.exec(qn);
+  const cac = [...qn.matchAll(/(\d+(?:[.,]\d+)?)\s*(tr|trieu|cu|k|nghin|ngan)\b(\s*(?:\/|moi|1|mot)\s*ngay)?/g)].map((x) => Number(x[1].replace(',', '.')) * (/^(?:tr|trieu|cu)$/.test(x[2]) ? 1e6 : 1e3) * (x[3] && ngayN ? +ngayN[1] : 1));
+  if (!cac.length) return '';
+  const tien = Math.max(...cac);
+  if (tien < 100_000) return '';
+  const ds = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => [t.name, t])).values()];
+  const hoi = ds.filter((t) => t.price && ` ${boDauVc(question)} `.includes(` ${boDauVc(t.name).trim()} `)).sort((a, b) => b.name.length - a.name.length)[0];
+  const lieu = arr((m?.finance as Row | undefined)?.top_expense).find((x) => /nguy[eê]n li[eệ]u|nh[aậ]p h[aà]ng/iu.test(ss(x.name)));
+  const c = lieu ? nn(lieu.amount) / f.revenue : 0, aov = f.revenue / f.orders;
+  const parts: string[] = [];
+  if (hoi && hoi.cost) parts.push(`${hoi.name} lời ${vnd(hoi.price! - hoi.cost)}/phần → phải bán THÊM ~${Math.ceil(tien / (hoi.price! - hoi.cost))} phần mới thu lại ${vnd(tien)}`);
+  else if (hoi && c >= 0.15 && c <= 0.8) parts.push(`${hoi.name} giá ${vnd(hoi.price!)}, nguyên liệu quán ~${Math.round(c * 100)}% doanh thu → còn ~${vnd(hoi.price! * (1 - c))}/phần → phải bán THÊM ~${Math.ceil(tien / (hoi.price! * (1 - c)))} phần`);
+  if (c >= 0.15 && c <= 0.8) parts.push(`tính theo đơn: mỗi đơn ~${vnd(aov)} còn ~${vnd(aov * (1 - c))} sau nguyên liệu → cần THÊM ~${Math.ceil(tien / (aov * (1 - c)))} đơn`);
+  else parts.push(`quán chưa ghi khoản nguyên liệu; GIẢ SỬ nguyên liệu 35–45%: mỗi đơn ~${vnd(aov)} còn ~${vnd(aov * 0.55)}–${vnd(aov * 0.65)} → cần THÊM ~${Math.ceil(tien / (aov * 0.65))}–${Math.ceil(tien / (aov * 0.55))} đơn (nói rõ là giả định)`);
+  return `Chi ${vnd(tien)} cho tiếp thị — HOÀ VỐN tính theo TIỀN LỜI, KHÔNG chia cho giá bán (chia giá bán ra số nhỏ hơn, sai): ${parts.join('; ')}. Chưa tính lương, mặt bằng; mốc đo: đếm đơn / phần tăng thêm trong thời gian chạy so với cùng thứ tuần trước.`;
+}
+
 export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts | null | undefined, question: string): string {
   const q = question.normalize('NFC').toLowerCase();
   if (!f || f.revenue <= 0 || f.orders <= 0) return '';
@@ -2621,6 +2645,8 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const tangKhac = !!tangLa && tangLa.length >= 3 && !` ${boDauVc(mk![1])} `.includes(` ${tangLa} `);
   // lần 225: chương trình đã / đang chạy, cả câu không dấu ("tuần rồi chạy mua 1 tặng 1", "mấy hôm nay quán làm")
   const daChay = /(?:dang (?:chay|lam|co)|hien (?:tai|dang|co)|thang nay|tuan nay|tuan (?:roi|truoc|qua)|da chay|vua chay|da lam|may hom nay|hom nay)/.test(boDau(question.normalize('NFC')).toLowerCase());
+  const chiTT = chiTiepThi(f, m ?? null, question);
+  if (chiTT && !canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang && !giamTien && !muaKhac) return `BÀI TOÁN TIỀN (mã tính sẵn): ${chiTT}`;
   if (!canTang && !toanMenu && !hoiMa && !hoiNgay && !muaTang && !giamTien && !muaKhac) {
     // 08/11 web Demo 12 đơn: câu "tháng này thế nào, nên làm gì" không phải câu tiếp thị nên thiếu dòng ít đơn, vẫn khuyên ưu đãi 14–17h
     return f.orders < IT_DON && /n[eê]n (?:l[aà]m|thay|c[aả]i|t[aậ]p)|l[aà]m (?:sao|g[iì])|c[aá]ch n[aà]o|g[oợ]i [yý]|t[uư] v[aấ]n|khuy[eê]n|c[aả]i thi[eệ]n|kh[aắ]c ph[uụ]c/.test(q)
@@ -2788,7 +2814,7 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
   const tot = (moiThem ? mon.filter((t) => t.cost! / t.price! <= 0.4 && t.price! <= aov * 0.6) : mon).sort((x, y) => y.price! - y.cost! - (x.price! - x.cost!)).slice(0, 3);
   const cao = mon.filter((t) => t.cost! / t.price! > 0.45).sort((x, y) => y.qty - x.qty).slice(0, 3);
   if (canTang && !itDon && tot.length) out.push(`${moiThem ? 'Món nhỏ lời tốt, nên mời thêm' : 'Món lời nhiều mỗi phần, nên ưu tiên'}: ${tot.map((t) => `${t.name} lời ${vnd(t.price! - t.cost!)}/phần (giá vốn ${Math.round((t.cost! / t.price!) * 100)}%)`).join('; ')}.${cao.length ? ` Giá vốn cao, đừng giảm giá hay tặng kèm: ${cao.map((t) => `${t.name} ${Math.round((t.cost! / t.price!) * 100)}%`).join('; ')}.` : ''}`);
-  return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${out.join(' ')}`;
+  return `BÀI TOÁN TIỀN (mã tính sẵn, là phép tính, không phải dự báo; chỉ dùng số hợp câu hỏi, ghi kèm việc làm để chủ quán biết đáng bao nhiêu tiền): ${chiTT ? `${chiTT} ` : ''}${out.join(' ')}`;
 }
 
 /** 06/11: Boom khuyên "nhắn khách lâu chưa ghé", thẻ tích ly, mã theo giờ mà app không làm được. Đã lần loyalty_screen, bảng customers không có ngày ghé cuối. */

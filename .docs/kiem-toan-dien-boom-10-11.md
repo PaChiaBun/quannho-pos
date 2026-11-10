@@ -365,3 +365,10 @@ Nội dung lên 10/12 (lần 5: 6/12), khuyến mãi 9/12 (5/12). Tiêu chí th�
 - Bộ kín MỚI `de_kin19.json` (30 câu: kho hết, giờ ca, giá sàn, nhóm khách, tặng món). Chấm mù 60 cặp: câu bị chạm 26 cặp **+1,15 ± 0,94**; giờ ca +1,4, giá sàn +0,88; không chạm −0,44 ± 0,66.
 - Sau chấm sửa (có test, chưa đo lại bằng GPT): "trân châu đường đen" khớp nhầm topping "Trân châu đen" (giảm 68%); "tặng 1 trà tắc" tính như tặng bạc xỉu; "Chủ nhật có bán" khi quán nghỉ Chủ nhật.
 - Còn thấy: Boom vẫn né giá sàn ở vài câu dù có dòng; ước lượng hàng cần nhập từ số ly bán / ngày chưa có dòng.
+
+## 30. Lần 237 (ĐÃ ÁP 11/11 02:28, TS 20261111_022855)
+
+- `chiTiepThi()`: câu có số tiền chi cho quảng cáo / KOL / tờ rơi / livestream → hoà vốn theo TIỀN LỜI (món có giá vốn: tiền ÷ lời / phần; không thì theo % nguyên liệu: tiền ÷ (đơn TB × (1 − %NL))), ghi rõ KHÔNG chia cho giá bán; gắn vào BÀI TOÁN TIỀN. `khungHoi` thêm đơn / giờ ước (= doanh thu ÷ đơn TB).
+- Bộ kín MỚI `de_kin20.json` (30 câu: chi tiếp thị có số tiền, giờ / đơn, tiếp thị chung đối chứng). Chấm mù 60 cặp: câu bị chạm 34 cặp **+2,79 ± 1,23**; chi tiếp thị +4,39, giờ / đơn +1,0; không chạm +0,19.
+- Sau chấm sửa (có test): đọc số tiền "1 triệu 2", "4 triệu rưỡi", "500k/ngày × 5 ngày" (trước lấy 1 triệu / 4 triệu / 500k).
+- Còn thấy: dòng "món lời nhiều, nên ưu tiên" vẫn đưa món giá vốn 45–48% (mâu thuẫn điểm cần chú ý); câu đóng sớm không tách số giờ sẽ mất (vd 19h).

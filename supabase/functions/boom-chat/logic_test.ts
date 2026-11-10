@@ -2545,3 +2545,18 @@ Deno.test('lần 236: lô G', () => {
   const b2 = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
   assert(!L.baiToanTiepThi(L.parseFacts(b2.facts.thang_nay)!, L.parseModules({ ...b2.modules.thang_nay }), 'mua 2 ly trà sữa trân châu đường đen tặng 1 khoai tây chiên được không').includes('Trân châu đen'));
 });
+
+// lần 237: chi tiền tiếp thị → hoà vốn theo tiền lời
+Deno.test('lần 237: hoà vốn tiếp thị', () => {
+  const s = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_b.json', import.meta.url)));
+  const f = L.parseFacts(s.facts.thang_nay)!, m = L.parseModules({ ...s.modules.thang_nay });
+  const t = L.baiToanTiepThi(f, m, 'thuê kol review 2 triệu cho trà đào cam sả thì phải bán thêm bao nhiêu ly mới hòa');
+  assertStringIncludes(t, 'Trà đào cam sả lời 22.000đ/phần → phải bán THÊM ~91 phần');
+  assertStringIncludes(L.baiToanTiepThi(f, m, 'chay ads fb 1tr5 duoc ko'), 'Chi 1.500.000đ cho tiếp thị');
+  assertEquals(L.chiTiepThi(f, m, 'tháng này bán sao'), '');
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  assertStringIncludes(L.khungHoi(L.parseFacts(d.facts.thang_nay)!, 'khung 6-7h bán sao'), 'đơn/giờ (= doanh thu ÷ đơn trung bình');
+  assertStringIncludes(L.chiTiepThi(f, m, 'in tờ rơi hết 1 triệu 2 có đáng ko'), 'Chi 1.200.000đ');
+  assertStringIncludes(L.chiTiepThi(f, m, 'chạy quảng cáo fb 500k/ngày trong 5 ngày, tổng 2,5 triệu'), 'Chi 2.500.000đ');
+  assertStringIncludes(L.chiTiepThi(f, m, 'thuê kol 4 triệu rưỡi có đáng ko'), 'Chi 4.500.000đ');
+});
