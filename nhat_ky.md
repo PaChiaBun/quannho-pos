@@ -28,7 +28,7 @@
 - ✅ Lần 226 ĐÃ ÁP 10/11 22:03 (TS 20261110_220356): bài toán tiền bỏ ngày dở khi tính trung bình thứ; caption sàn không dùng mã app (đếm máy cũ 3/3 → mới 0/3); số lần bán gấp 2 chữ số. Chấm mù tổng +0,48 ± 1,14. Demo: caption GrabFood có giá 35.000đ, không mã app. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l226_ap_dung.sh 20261110_220356`.
 - ✅ Lần 226 đã commit (a81b04a). Lần 227 (luật kiểm "khuyên giảm giá món giá vốn cao" bỏ vế tính toán / khuyên ngược: bắt nhầm 29 → 2) chấm mù −0,08 ± 0,54, KHÔNG áp; bản vá `db-fix/boom_l227_luat_kiem_khong_ap.patch`.
 - ✅ Lần 228 ĐÃ ÁP 10/11 22:20 (TS 20261110_222033): giảm giá qua sàn trừ phí sàn; "giảm 10% trên Grab" không còn đọc thành phí 10%. Chấm mù 20 cặp +4,65 ± 1,65. Demo: "giảm 10% cà phê sữa đá trên Grab" → còn lời 5.750–6.875đ/ly (phí giả định 25–30%). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l228_ap_dung.sh 20261110_222033`.
-- ➡️ Khách ăn sáng hay trưa; có nên làm tích điểm.
+- ➡️ Hết danh sách lỗi kiểm lần 2 làm được bằng mã ("sáng hay trưa" là mô hình quá thận trọng 1/2; "tích điểm" cần lần màn hình app trước). Gợi ý: kiểm toàn diện lần 3 bằng bộ kín mới.
 - ➡️ Lô 4 (đường đi trong app, cần bản mới); mở rộng nhận câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới).
 
 ## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 214 ĐANG CHẠY (gọi song song none + low; 211, 213 đã hoàn tác); 188, 189, 196, 198, 200, 202 bỏ; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)

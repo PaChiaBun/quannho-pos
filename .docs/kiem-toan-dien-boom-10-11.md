@@ -166,3 +166,9 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - `phiSanTrongCau()`: chỉ % đi với phí / chiết khấu / hoa hồng / sàn lấy-ăn-thu là phí sàn (trước "giảm 10% trên Grab" thành phí 10%).
 - Dòng "Giảm giá khi bán QUA SÀN": (giá − giảm) × (1 − phí) − giá vốn, so chưa giảm, số lần phải bán gấp.
 - Chấm mù 20 cặp (5 câu × 4): **+4,65 ± 1,65**; đếm máy lẫn "giảm 10%" thành phí: 6/20 → 1/20. Bộ `de_san_giam` (8 câu người ngoài): 7 câu bản cũ đã đúng (phí nêu rõ, hoặc món chưa có giá vốn), chỉ 1 câu bị chạm. Test 199/199.
+
+## 16. Hai việc còn lại — không làm bằng mã
+
+- "Khách ăn sáng hay trưa": dòng DOANH THU THEO BUỔI (`caBan`) đã bật đúng cả câu không dấu; lỗi 1/2 lượt là mô hình quá thận trọng — chỉ sửa được bằng lời dặn / luật kiểm, các lần trước không đo ra lợi ích; mới 1 lượt nên không làm.
+- "Có nên làm tích điểm": việc cụ thể cần đường dẫn thật trong app (bài học "có mã chưa chắc mở được") — cần lần màn hình Khách hàng / điểm thưởng trước.
+- Gợi ý tiếp: kiểm toàn diện lần 3 bằng bộ kín mới khi có thêm lượt hỏi thật (sổ thật vẫn 0 lượt từ 05/11).
