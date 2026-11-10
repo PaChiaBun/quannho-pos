@@ -792,7 +792,9 @@ export function tiepThiTinhSan(question: string, ban: ShopFacts | null, m: Modul
     const mon = (ban?.groups ?? []).flatMap((g) => g.top).filter((t) => t.price).sort((a, b) => b.qty - a.qty).slice(0, 3);
     const act = arr(m?.khuyen_mai?.active);
     const ma = act.map((x) => `${ss(x.code)} ${x.type === 'percent' ? `giảm ${nn(x.value)}%` : `giảm ${vnd(nn(x.value))}`}${x.min_order ? ` đơn từ ${vnd(nn(x.min_order))}` : ''}${x.max_discount ? ` tối đa ${vnd(nn(x.max_discount))}` : ''}${x.end ? ` đến ${ss(x.end)}` : ''}`);
-    out.push(`Thông tin THẬT cho bài đăng (tính sẵn): món chủ lực ${mon.length ? mon.map((t) => `${t.name} ${vnd(t.price!)}`).join(', ') : '(chưa có giá món)'}; ${m?.khuyen_mai ? (ma.length ? `ưu đãi đang chạy: ${ma.join('; ')}` : 'quán CHƯA có mã nào đang chạy → KHÔNG đưa ưu đãi vào bài') : 'chưa đọc được mã giảm → KHÔNG đưa ưu đãi vào bài'} → bài viết dùng ĐÚNG món, giá${ma.length ? ', ưu đãi' : ''} này; thông tin không có (địa chỉ, số điện thoại) thì BỎ, KHÔNG để chỗ trống kiểu [Địa chỉ].`);
+    // lần 219 (Demo sau 218: "Quán mở cửa." cụt — mô hình để "[giờ]", mã bỏ chỗ trống): giờ bán theo số, kỳ ≥ 7 ngày mới tin được
+    const gio = ban && soNgay(ban.period) >= 7 ? khungBan(ban) : [];
+    out.push(`Thông tin THẬT cho bài đăng (tính sẵn): món chủ lực ${mon.length ? mon.map((t) => `${t.name} ${vnd(t.price!)}`).join(', ') : '(chưa có giá món)'}; ${gio.length ? `giờ bán ${gio.join(', ')}` : 'CHƯA có giờ mở cửa → KHÔNG nhắc giờ mở cửa trong bài'}; ${m?.khuyen_mai ? (ma.length ? `ưu đãi đang chạy: ${ma.join('; ')}` : 'quán CHƯA có mã nào đang chạy → KHÔNG đưa ưu đãi vào bài') : 'chưa đọc được mã giảm → KHÔNG đưa ưu đãi vào bài'} → bài viết dùng ĐÚNG món, giá${ma.length ? ', ưu đãi' : ''} này; thông tin không có (địa chỉ, số điện thoại) thì BỎ, KHÔNG để chỗ trống kiểu [Địa chỉ].`);
   }
   // nhóm khách được hỏi → việc làm phải nhắm đúng nhóm (1/2 lượt lạc sang quảng bá chung)
   const nhom: [RegExp, string][] = [
@@ -1238,6 +1240,19 @@ function numList(v: unknown, len: number): number[] | null {
 const vnd = (n: number) => `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
 
 /** Hồ sơ quán tự suy (lần 38): loại quán theo nhóm món, giá trung bình mỗi phần, giờ có bán, ngày nghỉ, số đơn mỗi ngày. */
+/** Khung giờ có bán liền nhau ("6h–14h", "16h–20h": quán nghỉ trưa) theo doanh thu từng giờ.
+ *  Khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó. */
+export function khungBan(f: ShopFacts): string[] {
+  const spans: string[] = [];
+  let st = -1;
+  const tongGio = (f.by_hour ?? []).reduce((a, v) => a + Math.max(0, v), 0);
+  (f.by_hour ?? []).concat(0).forEach((v, h) => {
+    if (v > 0 && st < 0) st = h;
+    if (v <= 0 && st >= 0) { if (f.by_hour!.slice(st, h).reduce((a, x) => a + x, 0) >= tongGio * 0.03) spans.push(`${st}h–${h}h`); st = -1; }
+  });
+  return spans;
+}
+
 export function shopProfile(f: ShopFacts): string {
   const out: string[] = [];
   const gs = f.groups ?? [];
@@ -1255,15 +1270,7 @@ export function shopProfile(f: ShopFacts): string {
     if (qty > 0 && f.items_revenue) out.push(`giá trung bình mỗi phần ${vnd(f.items_revenue / qty)}`);
   }
   if (f.orders > 0) out.push(`mỗi đơn trung bình ${vnd(f.revenue / f.orders)}`);
-  // khung giờ có bán liền nhau ("6h–14h, 16h–20h": quán nghỉ trưa)
-  const spans: string[] = [];
-  let st = -1;
-  // khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó
-  const tongGio = (f.by_hour ?? []).reduce((a, v) => a + Math.max(0, v), 0);
-  (f.by_hour ?? []).concat(0).forEach((v, h) => {
-    if (v > 0 && st < 0) st = h;
-    if (v <= 0 && st >= 0) { if (f.by_hour!.slice(st, h).reduce((a, x) => a + x, 0) >= tongGio * 0.03) spans.push(`${st}h–${h}h`); st = -1; }
-  });
+  const spans = khungBan(f);
   // lần 53: kỳ hôm nay chưa hết ngày → giờ cuối chỉ là "tới giờ này", không phải giờ đóng cửa (D48: GPT bỏ qua ca tối)
   // 06/11: kỳ ngắn, ít đơn thì đây chỉ là giờ có đơn: Boom từng ghi "quán bán từ 14h–15h" vào bài đăng, mã kiểm giờ cũng dựa dòng này
   const homNay = /^hôm nay/i.test(f.period.normalize('NFC')), ngayKy = soNgay(f.period);

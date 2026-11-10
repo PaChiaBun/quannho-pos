@@ -17,7 +17,8 @@
 - ✅ Lần 217b ĐÃ ÁP 10/11 20:19 (TS 20261110_201910): `boChoTrong()` bỏ chỗ trống [..] (Demo sau 217 ra "Giờ mở cửa: [giờ mở]"; soát 446 câu: chạm 4, đều đúng).
 - ⚠️ Demo sau 217b: "viết bài đăng fb hôm nay" lúc 0 đơn → chỉ báo "chưa có đơn". Lần 217c ĐÃ ÁP 10/11 20:22 (TS 20261110_202242): câu xin viết không áp luật 0 đơn (thử 4 quán: cũ 2/4 không viết, mới 4/4). Demo: đã viết bài, không chỗ trống, nhưng nhạt (hôm nay 0 đơn → không có món / giá). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l217c_ap_dung.sh 20261110_202242`.
 - ✅ Lần 218 ĐÃ ÁP 10/11 20:26 (TS 20261110_202655): `hoi.ts` vietNoiDung() — câu xin bài đăng / tin nhắn / caption → máy chủ đọc số 30 ngày qua ("hôm nay" là lúc đăng). Demo: bài có Cà phê sữa đá 25.000đ, Trà đào cam sả 35.000đ, Bún bò Huế đặc biệt 55.000đ; còn câu cụt "Quán mở cửa." (sau khi bỏ chỗ trống giờ). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l218_ap_dung.sh 20261110_202655`.
-- ➡️ Đưa giờ mở thật (từ doanh thu theo giờ) vào dòng bài đăng để khỏi câu cụt; lô 4 (đường đi trong app).
+- ✅ Lần 219 ĐÃ ÁP 10/11 20:31 (TS 20261110_203109): dòng bài đăng có giờ bán thật (khungBan, kỳ ≥ 7 ngày). Demo: bài có 3 món + giá, "phục vụ từ 6h đến 23h", không chỗ trống, không câu cụt. Còn: bài gọi "mời Anh ghé" (xưng với chủ quán thay vì khách). Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l219_ap_dung.sh 20261110_203109`.
+- ➡️ Bài đăng gọi khách đúng (không gọi tên chủ quán); lô 4 (đường đi trong app, cần bản mới).
 - ➡️ Lô 4 (đường đi trong app, cần bản mới); mở rộng nhận câu clip / tin nhắn Zalo / "giữ chân" nhóm khách (đo bằng bộ mới).
 
 ## 2026-11-09 — Thời tiết làm lại theo app thật + xem từng ngày + dạy Boom tư vấn theo thời tiết (Boom lần 214 ĐANG CHẠY (gọi song song none + low; 211, 213 đã hoàn tác); 188, 189, 196, 198, 200, 202 bỏ; web /pos đã lên 1.0.7 build 31; APK / Windows chưa đưa lên)

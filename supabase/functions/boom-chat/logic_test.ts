@@ -2292,3 +2292,12 @@ Deno.test('lần 218: vietNoiDung', async () => {
   assert(!vietNoiDung('viết báo cáo doanh thu hôm nay'));
   assert(!vietNoiDung('hôm nay bán được bao nhiêu'));
 });
+
+// lần 219: dòng bài đăng có giờ bán thật (kỳ ≥ 7 ngày), kỳ ngắn thì dặn không nhắc giờ
+Deno.test('lần 219: giờ bán trong dòng bài đăng', () => {
+  const a = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_a.json', import.meta.url)));
+  const f = L.parseFacts(a.facts.thang_nay)!;
+  assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', { ...f, period: '30 ngày qua (12/10/2026–10/11/2026)' }, null).join(), 'giờ bán 6h–18h');
+  assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', { ...f, period: 'Hôm nay' }, null).join(), 'KHÔNG nhắc giờ mở cửa');
+  assertEquals(L.khungBan(f), ['6h–18h']);
+});
