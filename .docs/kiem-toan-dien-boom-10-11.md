@@ -172,3 +172,33 @@ Tiêu chí thấp: việc làm 1,38, lý lẽ 1,47, gọn 1,47, tìm vấn đề
 - "Khách ăn sáng hay trưa": dòng DOANH THU THEO BUỔI (`caBan`) đã bật đúng cả câu không dấu; lỗi 1/2 lượt là mô hình quá thận trọng — chỉ sửa được bằng lời dặn / luật kiểm, các lần trước không đo ra lợi ích; mới 1 lượt nên không làm.
 - "Có nên làm tích điểm": việc cụ thể cần đường dẫn thật trong app (bài học "có mã chưa chắc mở được") — cần lần màn hình Khách hàng / điểm thưởng trước.
 - Gợi ý tiếp: kiểm toàn diện lần 3 bằng bộ kín mới khi có thêm lượt hỏi thật (sổ thật vẫn 0 lượt từ 05/11).
+
+## 17. Kiểm toàn diện lần 3 (10/11 khuya, bản 228)
+
+**Bộ kín `de_kin11`** (60 câu, 15 lĩnh vực × 4, người ngoài viết, 4 người chấm): **79/120 dùng được (66%), TB 12,79/16.** Lần 2 (bộ khác, bản 221) 92/120, 12,94. Người chấm lần này nghiêm hơn và lĩnh vực yếu đổi hẳn giữa hai bộ (doanh thu 8/8 → 3/8, khách 3/8 → 7/8) → điểm theo lĩnh vực với 8 câu dao động mạnh, KHÔNG dùng một mình để chọn lô.
+
+| Lĩnh vực | Dùng được | TB |
+|---|---|---|
+| doanh thu | 3/8 | 10,0 |
+| giờ / ngày | 5/8 | 11,9 |
+| khuyến mãi, thu chi, ngoài dữ liệu | 4/8 | 12,0–12,1 |
+| viết nội dung | 5/8 | 12,1 |
+| thời tiết | 5/8 | 12,4 |
+| tiếp thị | 4/8 | 12,5 |
+| các lĩnh vực khác | 6–7/8 | 12,8–14,4 |
+
+Kiểu lỗi: chung chung 34, lý lẽ sai hướng 21, không trả lời thẳng 14, sai số 13, lạc đề 11, quá thận trọng 10. Tiêu chí thấp: việc làm 1,26, lý lẽ 1,40, tìm vấn đề 1,43.
+
+**Dòng tính sẵn sai người chấm bắt (kiểm được bằng phép tính — nên làm trước):**
+1. Kịch bản tăng giá: món CÓ giá vốn vẫn tính điểm hoà theo doanh thu (giảm 9,4% số ly là hoà) thay vì lãi gộp (~15,8%).
+2. "XẾP MÓN THEO TIỀN LỜI" chỉ lấy món trong top / slow của nhóm, bỏ món nhỏ có giá vốn (Trứng ốp thêm lời 2.800đ) → Boom nói sai "lời ít nhất".
+3. Dự báo cả tháng: cộng các ngày còn lại nhưng bỏ phần còn lại của hôm nay (thiếu ~2 triệu).
+4. "Combo tính sẵn" (dòng riêng) 45.000–48.000đ — chưa làm tròn vào mốc như dòng nhóm (lần 222).
+5. "So cuối tuần – ngày thường": ngày thường chia cả hôm nay dở.
+6. Tỉ lệ "Điện nước / gas" bỏ sót khoản "Than, gas".
+7. "Tính sẵn lời theo nhóm" kết luận "thiếu giá vốn phần lớn món" khi 10/12 món đã có.
+8. "Ngày đáng chuẩn bị nhất": ~2.284.000đ trong khung mưa ≠ 55% × 5.228.000đ.
+9. "GIÁ TRONG CÂU KHÁC MENU" khớp giá quán đối diện với món của quán mình.
+10. Quán mẫu d: số so cùng kỳ theo nhóm / món tự mâu thuẫn (có thể do dữ liệu quán mẫu).
+
+**Kế hoạch:** lô D sửa 1–9 (từng dòng có test; đo A/B câu bị chạm). Lỗi chung chung / lạc đề / quá thận trọng vẫn không có cách bằng mã.
