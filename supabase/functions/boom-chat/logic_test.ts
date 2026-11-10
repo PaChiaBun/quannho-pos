@@ -2494,3 +2494,19 @@ Deno.test('lần 233: đầu tháng, tháng N làm mốc, muốn ≠ mượn', (
   assertStringIncludes(u, 'Ước thô cả tháng (tính sẵn');
   assertStringIncludes(u, 'KHÔNG nói "có khả năng vượt tháng trước"');
 });
+
+// lần 234: vay — số có dấu phẩy, lãi %/tháng góp đều, trả một lần
+Deno.test('lần 234: vay đọc đúng câu', () => {
+  const v = (q: string) => L.vayTinhSan(q, 130_000_000, 100_000_000, 30);
+  assertStringIncludes(v('Mua tủ mát 10 triệu trả góp 2,5 triệu/tháng có nổi không'), 'góp ~2.500.000đ/tháng');
+  assertStringIncludes(v('vay 50 triệu lãi 1%/tháng trả trong 12 tháng'), 'góp ~4.442.000đ/tháng (góp đều cả gốc lẫn lãi 1%/tháng');
+  const t = v('vay nóng 15 triệu lãi 3%/tháng, 2 tháng sau trả một lần được không');
+  assertStringIncludes(t, 'phải trả 15.900.000đ (gốc 15.000.000đ + lãi 900.000đ)');
+  assertStringIncludes(t, '≈ 36%/năm');
+  assertStringIncludes(v('nợ nhà cung cấp 25 triệu, cuối tháng phải trả, có kịp không'), 'Trả nợ MỘT LẦN');
+  assertStringIncludes(v('tra gop tu dong 12 thang moi thang 2tr5 co noi ko'), 'góp ~2.500.000đ/tháng');
+  const h = v('nợ 32 triệu, hạn ngày 30 tháng sau phải trả, có kịp không');
+  assertStringIncludes(h, 'Trả nợ MỘT LẦN (tính sẵn, SƠ BỘ): sau 1 tháng');
+  assertStringIncludes(v('vay nóng 20 triệu lãi 3%/tháng, 2 tháng sau trả một cục'), 'phải trả 21.200.000đ');
+  assertEquals(v('công ty kia còn nợ quán 7 triệu tiền cơm, bao giờ đòi'), '');
+});

@@ -490,31 +490,48 @@ export function vayTinhSan(question: string, inc: number, exp: number, nKy: numb
   // lần 233 (chấm mù: "muốn đạt 130 triệu" bỏ dấu thành "muon" → tính trả nợ 130 triệu): câu có dấu thì đọc trên chữ gốc
   const coDau = /[^\x00-\x7F]/.test(question); // boDau còn bỏ dấu phẩy, "%" nên không so chuỗi được
   const laVay = coDau ? /(?<!\p{L})(?:vay|mượn|trả góp|nợ|hụi|hụn)(?!\p{L})/iu.test(question) : /\b(?:vay|tra gop|hun|hui|tra no|tra vay|muon tien|no (?:ngan hang|tien|nha cung cap))\b/.test(q);
-  if (!laVay || exp <= 0) return '';
-  const so = (s: string, dv: string) => Number(s.replace(',', '.')) * (/^t[yi]$/.test(dv) ? 1e9 : 1e6);
+  // lần 234: người khác nợ QUÁN (khách, công ty nợ tiền hàng) không phải quán đi vay
+  const hoNo = /\bno (?:quan|minh|tien (?:quan|cua quan|cua minh))\b|\b(?:quan|minh) cho .{0,20}\bno\b/.test(q);
+  if (!laVay || hoNo || exp <= 0) return '';
+  const so = (s: string, dv: string) => Number(s.replace(',', '.')) * (/^t[yi]$/.test(dv) ? 1e9 : 1e6), tr0 = (x: number) => vnd(Math.round(x / 1000) * 1000);
   const tong: number[] = []; let gop = 0;
-  for (const m of q.matchAll(/(\d+(?:[.,]\d+)?)\s*(tr|trieu|cu|ty|ti)\b/g)) {
+  // lần 234 (chấm mù: "góp 2,5 triệu/tháng" → boDau bỏ dấu phẩy thành "2 5 trieu" → góp 5 triệu): số đọc trên chữ bỏ dấu GIỮ dấu câu
+  const qs = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').replace(/(\d+)\s*(tr|trieu|cu)\s*(\d)(?![\d.,])/g, '$1,$3 $2'); // "2tr5" = 2,5 triệu
+  for (const m of qs.matchAll(/(\d+(?:[.,]\d+)?)\s*(tr|trieu|cu|ty|ti)\b/g)) {
     // boDau bỏ dấu phẩy: "80 triệu, mỗi tháng 7tr" → "80 trieu moi thang 7tr" — 80tr là tổng, không phải tiền góp
-    const truoc = q.slice(Math.max(0, m.index! - 35), m.index), sau = q.slice(m.index! + m[0].length);
+    const truoc = qs.slice(Math.max(0, m.index! - 35), m.index), sau = qs.slice(m.index! + m[0].length);
     const gopSau = /^\s*(?:\/|mot |1 )\s*thang/.test(sau) || (/^\s*moi thang/.test(sau) && !/^\s*moi thang\s*(?:tra\s*)?(?:goc lai\s*)?(?:tam\s*)?\d/.test(sau));
     if (gopSau || /moi thang\b[^\d]*$/.test(truoc)) gop = gop || so(m[1], m[2]);
     else tong.push(so(m[1], m[2]));
   }
   if (!tong.length && !gop) return '';
-  const ky = /(\d+)\s*thang\b/.exec(q.replace(/\d+(?:[.,]\d+)?\s*(?:tr|trieu|cu|ty|ti)\s*\/?\s*thang/g, '')), nam = /(\d+|mot) nam\b/.exec(q);
+  // lần 234: "ngày 30 tháng sau" là hạn, không phải 30 tháng
+  const ky = /(?<!ngay )(?<!\d)(\d+)\s*thang\b/.exec(q.replace(/ngay \d+ thang \d+/g, '').replace(/\d+(?:[.,]\d+)?\s*(?:tr|trieu|cu|ty|ti)\s*\/?\s*thang/g, '')), nam = /(\d+|mot) nam\b/.exec(q);
   const kyThang = ky ? +ky[1] : nam ? (nam[1] === 'mot' ? 1 : +nam[1]) * 12 : 0;
   // "cần 120tr, có 40tr, vay phần còn lại" → khoản vay = lớn − nhỏ
   const vay = tong.length === 1 ? tong[0] : tong.length === 2 && /con lai|phan con|con thieu/.test(q) ? Math.max(...tong) - Math.min(...tong) : 0;
   // lãi %/năm trong câu → cộng tiền lãi tháng đầu (dư nợ cao nhất) vào khoản góp; tiền góp đã "gốc lãi" thì không chia ra số tháng
   // boDau bỏ "%" → đọc lãi suất trên câu gốc ("trả lại trong 1 năm" không phải lãi 1%)
-  const lai = /(\d+(?:[.,]\d+)?)\s*(?:%|phần trăm|phan tram)\s*(?:\/\s*|một |mỗi |mot |moi )?n[aă]m/i.exec(question), tienLai = lai && vay ? (vay * Number(lai[1].replace(',', '.'))) / 100 / 12 : 0;
+  const lai = /(\d+(?:[.,]\d+)?)\s*(?:%|phần trăm|phan tram)\s*(?:\/\s*|một |mỗi |mot |moi )?n[aă]m/i.exec(question), tienLaiNam = lai && vay ? (vay * Number(lai[1].replace(',', '.'))) / 100 / 12 : 0;
   const gocLai = /goc (?:va |lan |\+ )?lai/.test(q);
-  if (!gop && vay && kyThang) gop = vay / kyThang + tienLai;  const s = nKy > 0 ? ((inc - exp) / nKy) * 30 : inc - exp, tr = (x: number) => vnd(Math.round(x / 1000) * 1000), mo = (x: number) => pctTxt(Math.round(x * 10) / 10);
+  // lần 234: lãi %/tháng (vay nóng, vay quen) — trước chỉ đọc %/năm nên bỏ hẳn lãi
+  const laiT = /(\d+(?:[.,]\d+)?)\s*(?:%|phần trăm|phan tram)\s*(?:\/\s*|một |mỗi |mot |moi )?th[aá]ng/i.exec(question), rT = laiT ? Number(laiT[1].replace(',', '.')) / 100 : lai ? Number(lai[1].replace(',', '.')) / 100 / 12 : 0;
+  const tienLai = laiT && vay ? vay * rT : tienLaiNam;
+  const canhBao = laiT && rT >= 0.02 ? ` Lãi ${pctTxt(rT * 100)}%/tháng ≈ ${pctTxt(Math.round(rT * 1200))}%/năm — rất cao so với vay ngân hàng, nêu rõ.` : '';
+  // lần 234: trả MỘT LẦN (vay nóng hẹn ngày, nợ nhà cung cấp trả cuối tháng) — trước bị chia đều như trả góp
+  const motLan = vay && !gop && /tra (?:mot|1) (?:lan|cuc)|(?:mot|1) cuc|tra (?:het|luon|gon)|cuoi thang (?:phai )?tra|den han|toi han|hen tra|ngay \d+ thang (?:sau|toi)/.test(q);
+  if (motLan) {
+    const n = kyThang || 1, phai = vay * (1 + rT * n), co = (nKy > 0 ? ((inc - exp) / nKy) * 30 : inc - exp) * n;
+    return `Trả nợ MỘT LẦN (tính sẵn, SƠ BỘ): sau ${n} tháng phải trả ${tr0(phai)}${rT ? ` (gốc ${tr0(vay)} + lãi ${tr0(phai - vay)})` : ''}; thu − chi ${n} tháng ~${tr0(co)} → ${co <= 0 ? 'CHI NHIỀU HƠN THU, chưa có tiền trả' : phai <= co * 0.5 ? 'đủ và vẫn chừa dự phòng' : phai <= co ? 'SÁT: gần hết phần dư' : 'KHÔNG đủ từ phần chênh hiện tại'}.${canhBao} Câu đầu nêu kết luận này kèm điều kiện: thu − chi là chênh lệch sổ quỹ; KHÔNG khuyên vay hay không.`;
+  }
+  // góp đều cả gốc lẫn lãi khi biết lãi suất và số tháng (trước: gốc ÷ tháng + lãi tháng đầu, hoặc bỏ lãi)
+  const vayGop = !!gop;
+  if (!gop && vay && kyThang) gop = rT ? (vay * rT) / (1 - Math.pow(1 + rT, -kyThang)) : vay / kyThang;  const s = nKy > 0 ? ((inc - exp) / nKy) * 30 : inc - exp, tr = (x: number) => vnd(Math.round(x / 1000) * 1000), mo = (x: number) => pctTxt(Math.round(x * 10) / 10);
   if (s <= 0) return `Trả nợ (tính sẵn): kỳ này CHI NHIỀU HƠN THU → chưa có phần dư để trả nợ; câu đầu nói rõ điều này, KHÔNG khuyên vay hay không.`;
   const dk = 'kèm điều kiện: thu − chi là chênh lệch sổ quỹ (còn hàng tồn, khoản chưa ghi), chưa tính lãi nếu câu chưa nói; KHÔNG khuyên vay hay không';
   if (gop) {
     const p = (gop / s) * 100;
-    return `Trả nợ (tính sẵn, SƠ BỘ): góp ~${tr(gop)}/tháng${tienLai && kyThang ? ` (gồm ~${tr(tienLai)} tiền lãi tháng đầu)` : ''}${vay && !kyThang && !gocLai ? ` (${tr(vay)} ÷ ${tr(gop)} ≈ ${mo(vay / gop)} tháng)` : gocLai && vay ? ` (đã gồm cả lãi → trả hết ${tr(vay)} lâu hơn ${mo(vay / gop)} tháng)` : ''} = ${pctTxt(Math.round(p))}% phần thu − chi ~${tr(s)}/tháng → ${p <= 50 ? 'gánh được và vẫn chừa phần dự phòng' : p <= 100 ? 'SÁT: gần hết phần dư, ít dự phòng' : 'KHÔNG gánh nổi từ phần chênh hiện tại'}. Câu đầu nêu kết luận này ${dk}.`;
+    return `Trả nợ (tính sẵn, SƠ BỘ): góp ~${tr(gop)}/tháng${rT && kyThang && !vayGop ? ` (góp đều cả gốc lẫn lãi ${pctTxt(Math.round(rT * 1000) / 10)}%/tháng trong ${kyThang} tháng, tổng trả ~${tr(gop * kyThang)})` : ''}${vay && !kyThang && !gocLai ? ` (${tr(vay)} ÷ ${tr(gop)} ≈ ${mo(vay / gop)} tháng)` : gocLai && vay ? ` (đã gồm cả lãi → trả hết ${tr(vay)} lâu hơn ${mo(vay / gop)} tháng)` : ''} = ${pctTxt(Math.round(p))}% phần thu − chi ~${tr(s)}/tháng → ${p <= 50 ? 'gánh được và vẫn chừa phần dự phòng' : p <= 100 ? 'SÁT: gần hết phần dư, ít dự phòng' : 'KHÔNG gánh nổi từ phần chênh hiện tại'}. Câu đầu nêu kết luận này ${dk}.${canhBao}`;
   }
   if (vay) {
     // có lãi: tiền lãi tháng đầu ăn bớt phần chênh dùng trả gốc

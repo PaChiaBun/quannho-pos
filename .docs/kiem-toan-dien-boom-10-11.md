@@ -274,3 +274,10 @@ Tiêu chí thấp: việc làm 1,31, tìm vấn đề 1,45, gọn 1,46, lý lẽ
 - Ước thô cả tháng khi kỳ tháng < 14 ngày (Demo ngày 11 nói "có khả năng vượt" khi đang giảm 3,3%) — chỉ thử được trên Demo vì quán mẫu là ngày 28; câu "tháng này có đạt tháng 9 không" không còn bị coi là hỏi tháng khác; "muốn đạt 130 triệu" không còn bị đọc thành vay (câu có dấu đọc trên chữ gốc); ước cả tháng trước theo ngày mở bán (quán nghỉ Chủ nhật).
 - Bộ kín MỚI `de_kin14.json` (24 câu: mục tiêu tiền, so tháng N, vay thật; người khác viết). Chấm mù 48 cặp: câu bị chạm 14 cặp **+1,79 ± 1,89** (so tháng N +3,75; mục tiêu tiền −0,83 trên 6 cặp); không chạm +0,21; cả bộ +0,67 ± 0,73. Vay thật không bị chạm (không hại).
 - Người chấm bắt lỗi vay có sẵn: tiền góp "2,5 triệu/tháng" trong câu bị đọc sai (~278.000đ); vay có lãi chỉ chia gốc; vay nóng trả MỘT LẦN bị chia như trả góp; nợ trả cuối tháng bị coi là trả góp.
+
+## 25. Lần 234 — dòng trả nợ (chưa áp)
+
+- Đọc số trên chữ bỏ dấu GIỮ dấu phẩy ("2,5 triệu" trước thành 5 triệu; "2tr5" = 2,5 triệu); lãi %/tháng (trước chỉ %/năm); góp đều cả gốc lẫn lãi khi biết lãi và số tháng; trả MỘT LẦN (vay nóng, nợ nhà cung cấp, hạn cuối tháng) = gốc + lãi so với thu − chi tới hạn, cảnh báo lãi ≥ 2%/tháng quy ra %/năm.
+- Bộ kín MỚI `de_kin15.json` (24 câu: vay góp, trả một lần, không phải vay). Chấm mù 48 cặp: câu bị chạm 18 cặp **+2,72 ± 2,41** (vay góp +3,5; trả một lần +1,75); không chạm −0,20 ± 0,91.
+- Sau chấm sửa thêm (chưa đo bằng GPT, chỉ có test): "ngày 30 tháng sau" bị đọc thành 30 tháng (câu đó −2 / −7); "trả một cục" chưa nhận là trả một lần; "công ty nợ quán" bị tính như quán đi vay.
+- Còn thấy: tiền hụi / để dành theo tuần, hạn theo ngày (chia mỗi ngày tới 15/12) chưa có dòng tính sẵn; Boom né không tính dù khối có sẵn số.
