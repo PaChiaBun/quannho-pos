@@ -2300,4 +2300,6 @@ Deno.test('lần 219: giờ bán trong dòng bài đăng', () => {
   assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', { ...f, period: '30 ngày qua (12/10/2026–10/11/2026)' }, null).join(), 'giờ bán 6h–18h');
   assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', { ...f, period: 'Hôm nay' }, null).join(), 'KHÔNG nhắc giờ mở cửa');
   assertEquals(L.khungBan(f), ['6h–18h']);
+  // lần 220: trong bài gọi khách, không gọi người hỏi
+  assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', f, null).join(), 'Trong BÀI gọi KHÁCH là "bạn" / "cả nhà"');
 });
