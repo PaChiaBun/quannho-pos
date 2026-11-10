@@ -1241,6 +1241,34 @@ function numList(v: unknown, len: number): number[] | null {
 const vnd = (n: number) => `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
 
 /** Hồ sơ quán tự suy (lần 38): loại quán theo nhóm món, giá trung bình mỗi phần, giờ có bán, ngày nghỉ, số đơn mỗi ngày. */
+// lần 221 (sổ thật 04/11: "20/11 sắp tới quán có đông hơn không" — Boom chỉ dùng trung bình Thứ Sáu, không biết là
+// Ngày Nhà giáo). Lễ dương lịch hay ảnh hưởng quán ăn uống; Tết âm / Trung thu cần lịch âm nên chưa có.
+const LE: [number, number, string, RegExp, string][] = [
+  [1, 1, 'Tết Dương lịch (nghỉ lễ)', /tet duong/, 'nhiều người nghỉ, đi chơi'],
+  [14, 2, 'Valentine', /valentine|le tinh nhan/, 'cặp đôi, nhóm bạn trẻ buổi tối'],
+  [8, 3, 'Quốc tế Phụ nữ', /quoc te phu nu/, 'tặng quà, đi ăn uống theo nhóm'],
+  [30, 4, 'Giải phóng miền Nam (nghỉ lễ)', /30 thang 4/, 'nghỉ lễ dài, khu văn phòng / trường vắng, khu dân cư / du lịch đông'],
+  [1, 5, 'Quốc tế Lao động (nghỉ lễ)', /quoc te lao dong/, 'nghỉ lễ dài, khu văn phòng / trường vắng'],
+  [1, 6, 'Quốc tế Thiếu nhi', /thieu nhi/, 'gia đình có trẻ em'],
+  [2, 9, 'Quốc khánh (nghỉ lễ)', /quoc khanh/, 'nghỉ lễ, khu văn phòng / trường vắng'],
+  [20, 10, 'Phụ nữ Việt Nam', /phu nu viet nam/, 'tặng quà, đi ăn uống theo nhóm'],
+  [20, 11, 'Nhà giáo Việt Nam', /nha giao/, 'học sinh, phụ huynh mua quà / đãi thầy cô; quán gần trường có thể đông, có trường cho nghỉ'],
+  [24, 12, 'Giáng sinh (đêm Noel)', /giang sinh|noel/, 'buổi tối đông, nhóm bạn trẻ, gia đình'],
+  [31, 12, 'Giao thừa Dương lịch', /giao thua duong/, 'tối muộn đông'],
+];
+/** Dòng tính sẵn khi câu hỏi nhắc ngày lễ (theo ngày "20/11" hoặc tên lễ); '' nếu không. */
+export function ngayLe(question: string, now: Date): string {
+  const q = boDau(question.normalize('NFC')).toLowerCase();
+  const d = /\b(\d{1,2})\s*\/\s*(\d{1,2})\b/.exec(question);
+  const le = LE.find(([n, t, , rx]) => (d && +d[1] === n && +d[2] === t) || rx.test(q));
+  if (!le) return '';
+  const vn = new Date(now.getTime() + 7 * 3600_000);
+  let y = vn.getUTCFullYear();
+  if (Date.UTC(y, le[1] - 1, le[0]) < Date.UTC(y, vn.getUTCMonth(), vn.getUTCDate())) y++;
+  const thu = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][new Date(Date.UTC(y, le[1] - 1, le[0])).getUTCDay()];
+  return `NGÀY LỄ (tính sẵn): ${le[0]}/${le[1]}/${y} là ngày ${le[2]}, rơi vào ${thu}; kinh nghiệm chung: ${le[4]} → nói rõ đây là ngày lễ, nêu con số mốc của ${thu} thường (số bán, số phần trong khối) rồi chỉnh theo việc quán có gần nhóm khách đó không; KHÔNG bịa số tăng %.`;
+}
+
 /** Khung giờ có bán liền nhau ("6h–14h", "16h–20h": quán nghỉ trưa) theo doanh thu từng giờ.
  *  Khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó. */
 export function khungBan(f: ShopFacts): string[] {
@@ -1323,6 +1351,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     lines.push('NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu: nói ngày đó 0đ, 0 đơn (nếu là hôm nay thì "tới giờ này"), nêu số của kỳ so sánh nếu có, rồi hỏi quán có nghỉ hay bán ngoài app không. KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG nhắc món, giá vốn, nguyên liệu.');
   }
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
+  const le = ngayLe(question, now);
+  if (le) lines.push(le);
   const prof = shopProfile(f);
   if (prof) lines.unshift(`HỒ SƠ QUÁN (tự suy từ số liệu): ${prof}`);
   // lần 204 (bộ kín độc lập 09/11 + Demo "t7 … chuẩn bị": "chưa có số bán riêng Thứ Bảy" dù chia ra được): câu hỏi lượng KHÔNG nói trời
@@ -3487,7 +3517,8 @@ export function kyKhongDonDai(answer: string, ref: string): string {
 /** Chốt bằng mã sau lần viết lại: vẫn dài thì giữ đoạn đầu, bỏ câu "giảm 100%", thêm câu hỏi đã mở bán chưa. */
 export function gonKhiKhongDon(answer: string, ref: string): string {
   if (!kyKhongDonDai(answer, ref)) return answer;
-  let dau = answer.split(/\n\s*\n/)[0].replace(/[,;]?\s*(?:nên\s+)?[^.,;]*giảm 100\s*%[^.;]*/giu, '').trim();
+  // lần 221 (Demo 10/11: "0 đơn.305.000đ từ 27 đơn)" — dấu chấm trong "2.305.000đ" bị coi là hết câu, cắt giữa số)
+  let dau = answer.split(/\n\s*\n/)[0].replace(/[,;]?\s*(?:nên\s+)?(?:[^.,;]|(?<=\d)[.,](?=\d))*giảm 100\s*%(?:[^.;]|(?<=\d)\.(?=\d))*/giu, '').trim();
   if (!/[.!?]$/.test(dau)) dau += '.';
   return /m[ởo] b[áa]n|b[áa]n ngo[àa]i app/iu.test(dau) ? dau : `${dau} Quán đã mở bán chưa, hay đang bán ngoài app ạ?`;
 }

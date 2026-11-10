@@ -81,3 +81,9 @@ Bản đo: máy chủ lần 214 (mã phân tích lần 207, `logic.ts` b0798ce),
 - Mã: `tiepThiTinhSan()` — dòng "Thông tin THẬT cho bài đăng" (món + giá + mã đang chạy), "Nhóm khách được hỏi", "cho đắt = bán chạy hơn".
 - Đo: bộ `de_tiep_thi.json` 16 câu người ngoài viết (mã nhận 8) + 6 câu bộ kín cũ, 2 lượt: **+1,43 ± 0,92** (28 cặp); bài đăng +3,88, nhóm khách +0,69, đắt hàng −0,50 (4 cặp, bản mới hiểu đúng ý 2/2).
 - Chưa bắt: kịch bản clip TikTok, tin nhắn Zalo, câu "giữ chân" nhóm khách → lô sau, đo bằng bộ mới.
+
+## 7. Bài đăng (lần 217b–220, đã áp) và lô 4 (lần 221, chưa áp)
+
+- Bài đăng: thử trên Demo sau mỗi lần áp lộ dần lỗi — chỗ trống "[giờ mở]" (217b `boChoTrong`), "hôm nay 0 đơn" chặn viết (217c `xinViet`), không có món / giá vì đọc số hôm nay (218 `hoi.ts vietNoiDung` → 30 ngày), câu cụt giờ mở (219 `khungBan`), gọi "mời Anh" (220). Demo cuối: bài có 3 món + giá, giờ 6h–23h, gọi khách "bạn".
+- Lô 4, thử 4 câu sổ thật trên Demo (mã hiện tại): so món hai kỳ đã đi đường tư vấn (còn thiếu số món kỳ so); "món bán chạy" lúc 0 đơn đã lùi kỳ đúng; còn lỗi: (1) câu 0 đơn bị cắt giữa số "0 đơn.305.000đ từ 27 đơn)" (`gonKhiKhongDon`), (2) "tổng thu nhập nhiêu rồi" đọc thành hôm nay (`ky.ts`), (3) 20/11 không nhận ra ngày lễ.
+- Lần 221 sửa cả 3 (ngày lễ: `ngayLe()`, lễ dương lịch; Tết âm / Trung thu chưa có). Chấm mù câu ngày lễ: **+3,38 ± 0,73** (8 cặp, 2 câu × 4 lượt); nhắc ngày lễ cũ 4/8, mới 7/8. Test 191/191.

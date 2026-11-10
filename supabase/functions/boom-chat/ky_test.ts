@@ -195,3 +195,10 @@ Deno.test('kỳ 09/11: tương lai dùng 30 ngày qua; đầu tuần so trọn t
   assertEquals(docKy('Tuần này so với tuần trước thế nào?', new Date('2026-11-12T03:30:00Z')).nhanTruoc.startsWith('cùng kỳ'), true);
   assertEquals(ky30Ngay(T2).nhan.startsWith('30 ngày qua'), true);
 });
+
+// lần 221: "tổng … nhiêu rồi" là hỏi cộng dồn → kỳ mặc định (tháng này), "bán được nhiêu rồi" vẫn là hôm nay
+Deno.test('lần 221: tổng … nhiêu rồi', () => {
+  const n = new Date('2026-11-10T20:38:00+07:00');
+  assertEquals(docKy('tổng thu nhập nhiêu rồi', n).nhan.startsWith('Tháng này'), true);
+  assertEquals(docKy('ban duoc nhieu roi', n).nhan, 'Hôm nay');
+});

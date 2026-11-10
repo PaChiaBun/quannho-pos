@@ -2303,3 +2303,23 @@ Deno.test('lần 219: giờ bán trong dòng bài đăng', () => {
   // lần 220: trong bài gọi khách, không gọi người hỏi
   assertStringIncludes(L.tiepThiTinhSan('viet bai dang fb', f, null).join(), 'Trong BÀI gọi KHÁCH là "bạn" / "cả nhà"');
 });
+
+// lần 221: rút gọn câu 0 đơn không cắt giữa số "2.305.000đ"
+Deno.test('lần 221: gonKhiKhongDon giữ nguyên số có dấu chấm', () => {
+  const ref = 'NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu';
+  const a = 'Dạ Anh, tới giờ này doanh thu hôm nay là 0đ từ 0 đơn, giảm 100% so với cùng giờ hôm qua (2.305.000đ từ 27 đơn). Quán hôm nay nghỉ hay đang bán ngoài app ạ?';
+  const g = L.gonKhiKhongDon(a, ref);
+  assert(!g.includes('.305.000đ') || g.includes('2.305.000đ'), g);
+  assert(!g.includes('giảm 100%'), g);
+  assertEquals(g, 'Dạ Anh, tới giờ này doanh thu hôm nay là 0đ từ 0 đơn. Quán hôm nay nghỉ hay đang bán ngoài app ạ?');
+});
+
+// lần 221: ngày lễ sắp tới
+Deno.test('lần 221: ngayLe', () => {
+  const n = new Date('2026-11-10T20:00:00+07:00');
+  assertStringIncludes(L.ngayLe('20/11 sắp tới quán có đông hơn không', n), '20/11/2026 là ngày Nhà giáo Việt Nam, rơi vào Thứ Sáu');
+  assertStringIncludes(L.ngayLe('noel nên chuẩn bị gì', n), '24/12/2026');
+  assertStringIncludes(L.ngayLe('8/3 năm sau làm gì', n), '8/3/2027');
+  assertEquals(L.ngayLe('ngày 15/11 bán sao', n), '');
+  assertEquals(L.ngayLe('doanh thu tháng này', n), '');
+});

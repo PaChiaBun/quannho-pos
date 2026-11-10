@@ -340,7 +340,8 @@ export function docKy(question: string, now: Date = new Date(), cauTruoc?: strin
     so = kySo(chinh, k, f);
   } else {
     // "được nhiêu rồi": không nêu kỳ mà hỏi số tới lúc này thì hiểu là hôm nay; đã có kỳ câu trước thì giữ kỳ đó
-    chinh = ds[0]?.doan ?? (f.split(' ').length <= 6 && /\b(?:nhieu|bn) r(?:oi)?$/.test(f) ? kyCo('hom_nay', vn) : macDinh(vn, TUONG_LAI.test(f)));
+    // lần 221 (sổ thật 04/11 + Demo 10/11: "tổng thu nhập nhiêu rồi" ra số hôm nay 0 đơn): có "tổng" là hỏi cộng dồn → kỳ mặc định
+    chinh = ds[0]?.doan ?? (f.split(' ').length <= 6 && /\b(?:nhieu|bn) r(?:oi)?$/.test(f) && !/\btong\b/.test(f) ? kyCo('hom_nay', vn) : macDinh(vn, TUONG_LAI.test(f)));
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
     so = k2 ? kySo(chinh, k2, f) : chinh.truoc();
   }
