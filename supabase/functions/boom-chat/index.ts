@@ -22,7 +22,7 @@ import { laySoChoCau } from './hoi.ts';
 import { chonBai, soTayChoBoom } from './so_tay.ts';
 import { docBanHang, docDoanhThuNgay } from './ban_hang.ts';
 import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
-import { boNhoChoBoom, coTheRut, docRutGhiNho, type GhiNho, keHoachGhi, laHoiNho, locUngVien, loiDanRutGhiNho } from './bo_nho_quan.ts';
+import { boNhoChoBoom, coTheRut, docRutGhiNho, dsChoRut, type GhiNho, keHoachGhi2, laHoiNho, loiDanRutGhiNho } from './bo_nho_quan.ts';
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_MUA_BAN, HOI_THOI_TIET, HOI_THOI_TIET_RO, layMuaDaQua, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
@@ -205,7 +205,7 @@ async function docBoNho(storeId: string): Promise<GhiNho[] | null> {
     const sig = AbortSignal.timeout(1200);
     const [hs, ds] = await Promise.all([
       rest(`boom_quan_ho_so?select=tat&store_id=eq.${storeId}&limit=1`, { signal: sig }),
-      rest(`boom_quan_ghi_nho?select=id,noi_dung,loai,nguon,trang_thai,muc_xem&store_id=eq.${storeId}&trang_thai=neq.het_hieu_luc&order=cap_nhat.desc&limit=200`, { signal: sig }),
+      rest(`boom_quan_ghi_nho?select=id,noi_dung,loai,nguon,trang_thai,muc_xem,hang_muc,thay_cho&store_id=eq.${storeId}&trang_thai=neq.het_hieu_luc&order=cap_nhat.desc&limit=200`, { signal: sig }),
     ]);
     if (Array.isArray(hs) && hs[0]?.tat === true) return null;
     return Array.isArray(ds) ? ds as GhiNho[] : [];
@@ -233,13 +233,14 @@ async function ghiBoNho(storeId: string, userId: string, laChu: boolean, questio
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        ...(DOI_MOI ? { max_completion_tokens: 400, reasoning_effort: REASONING } : { temperature: 0, max_tokens: 300 }),
-        messages: [{ role: 'user', content: loiDanRutGhiNho(question) }],
+        ...(DOI_MOI ? { max_completion_tokens: 600, reasoning_effort: REASONING } : { temperature: 0, max_tokens: 500 }),
+        // lần 243: đưa kèm điều đã nhớ để mô hình chọn thêm / sửa / hết hiệu lực / bỏ qua (kiểu Mem0)
+        messages: [{ role: 'user', content: loiDanRutGhiNho(question, dsChoRut(cu, laChu)) }],
       }),
     });
     if (!res.ok) return void (await res.body?.cancel());
     const d = await res.json();
-    const kq = keHoachGhi(locUngVien(docRutGhiNho(String(d?.choices?.[0]?.message?.content ?? '')), laChu), cu);
+    const kq = keHoachGhi2(docRutGhiNho(String(d?.choices?.[0]?.message?.content ?? '')), cu, laChu);
     const ghi = (path: string, method: string, body: unknown) =>
       fetch(`${SB_URL}/rest/v1/${path}`, { method, headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify(body), signal: AbortSignal.timeout(3000) })
         .then((x) => x.body?.cancel());
@@ -366,17 +367,20 @@ async function recall(storeId: string, userId: string, since: Date): Promise<{ t
   }
 }
 
-/** Việc đã gợi ý 30 ngày qua (câu tư vấn có số liệu, cũ hơn trí nhớ ngắn) — sổ chậm / lỗi → bỏ qua. */
-async function viecDaGoiY(storeId: string, userId: string, before: Date): Promise<ViecCu[]> {
+/**
+ * Việc đã gợi ý 30 ngày qua (câu tư vấn có số liệu, cũ hơn trí nhớ ngắn) — sổ chậm / lỗi → bỏ qua.
+ * Lần 242: chủ quán thấy cả việc đã gợi ý cho nhân viên; nhân viên chỉ thấy việc của mình (câu trả lời cho chủ có số nhân viên không được xem).
+ */
+async function viecDaGoiY(storeId: string, userId: string, before: Date, laChu: boolean): Promise<ViecCu[]> {
   try {
     const from = new Date(Date.now() - VIEC_CU_NGAY * 86400_000);
     const rows = await rest(
-      `boom_qa_log?select=question,answer,rating,created_at&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&model=like.*so_lieu*` +
+      `boom_qa_log?select=question,answer,rating,created_at,user_id${laChu ? '' : `&user_id=eq.${userId}`}&store_id=eq.${storeId}&status=eq.ok&model=like.*so_lieu*` +
         `&answer=not.is.null&created_at=gte.${encodeURIComponent(from.toISOString())}&created_at=lt.${encodeURIComponent(before.toISOString())}` +
         `&order=created_at.desc&limit=20`,
       { signal: AbortSignal.timeout(1500) },
     );
-    return Array.isArray(rows) ? chonViecCu(rows) : [];
+    return Array.isArray(rows) ? chonViecCu(rows, userId) : [];
   } catch {
     return [];
   }
@@ -703,7 +707,7 @@ Deno.serve(async (req) => {
       ? recall(r.store_id, user, since)
       : Promise.resolve({ turns: [] as MemoryTurn[], hasData: false }),
     // chỉ câu tư vấn có số liệu: việc cũ đo được bằng số mới
-    r.mode === 'advice' && (r.facts || r.modules) ? viecDaGoiY(r.store_id, user, since) : Promise.resolve([] as ViecCu[]),
+    r.mode === 'advice' && (r.facts || r.modules) ? viecDaGoiY(r.store_id, user, since, laChu) : Promise.resolve([] as ViecCu[]),
   ]);
   if (locViecCu(r.question, viecCu, r.facts).length) kind += '+viec_cu';
   const memory = mem.turns;

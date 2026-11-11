@@ -7,6 +7,15 @@
 
 
 
+## 2026-11-11 — Bộ nhớ quán bản 2, giai đoạn 1 (lần 240) ĐÃ ÁP
+
+- ✅ Thiết kế bộ nhớ quán bản 2: `.docs/thiet-ke-bo-nho-quan-boom.md` (hai tầng hồ sơ / sổ ghi nhớ, 9 hạng mục, ghi kiểu Mem0, dọn hằng đêm, 6 giai đoạn). Giai đoạn 0: bộ nhớ bật từ 09/11 nhưng cả 3 bảng 0 dòng — quán thật không hỏi từ 05/11, Demo bị bỏ qua.
+- ✅ Lần 240 ĐÃ ÁP 11/11 14:24 (TS 20261111_142433): migration `20261111_boom_bo_nho_quan_v2` (cột hang_muc, chi_tiet; test 8/8 trên máy chủ) + `bo_nho_quan.ts` (rút có hạng mục, chi tiết việc đã thử / tiếp thị, mức xem theo hạng mục). Bộ kín bn_kin1 70 câu × 2 lượt, chấm bằng mã: rút đúng 60% → 82%, rác 28 → 18, mức xem đúng 62% → 93%, không lọt nhạy cảm. Demo trả lời bình thường (Demo bỏ qua bộ nhớ nên chưa thử được đường ghi thật). Hoàn tác `ROLLBACK=1 bash db-fix/boom_l240_ap_dung.sh 20261111_142433`.
+- ✅ Lần 241 ĐÃ ÁP 11/11 14:50 (TS 20261111_145039): bỏ cổng luật chữ `coTheRut`, rút ghi nhớ cho mọi câu tư vấn ≥ 3 từ. Bộ kín MỚI bn_kin2 60 câu × 3 lượt: rút đúng 22% → 86%, rác 0 → 15, câu không đáng nhớ vẫn 0 ghi, lượt mô hình 11 → 58 / 60 câu. Demo trả lời bình thường. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l241_ap_dung.sh 20261111_145039`. ➡️ Giờ giấc vẫn yếu (17/30); giai đoạn 2; cần quán thật để thấy ghi nhớ chạy.
+- ✅ Lần 242 ĐÃ ÁP 11/11 15:21 (TS 20261111_152141; chép logic.ts + index.ts — index.ts = bản 214 + sửa này): chủ quán thấy việc Boom đã gợi ý cho nhân viên ("nhân viên có hỏi…"), nhân viên chỉ thấy việc của mình. Chấm mù bộ kín MỚI vc_kin1 64 cặp: +0,28 ± 0,38 / 6 (chưa rõ), chọn mới 40 / 17; đúng −5 (việc cũ có giá vốn lệch số quán → "xin sửa"). Chủ Quán duyệt áp dù chưa rõ. Demo trả lời bình thường. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l242_ap_dung.sh 20261111_152141`.
+- ✅ Lần 243 ĐÃ ÁP 11/11 15:44 (TS 20261111_154422; chép bo_nho_quan.ts + index.ts): bộ nhớ quán cập nhật kiểu Mem0 — lượt rút thấy điều đã nhớ, tự chọn thêm / sửa / hết hiệu lực / bỏ qua, mã kiểm quyền. Bộ kín MỚI cn_kin1 50 câu × 3 lượt, chấm bằng mã: hết hiệu lực đúng 12% → 78%, xoá nhầm 6 → 0, ghi đúng điều mới 56% → 72%, thêm trùng 16 → 3 / 24, hỏi lại khi nhân viên nói trái 21% → 54%. Demo trả lời bình thường. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l243_ap_dung.sh 20261111_154422`. ➡️ Hỏi lại khi nhân viên nói trái còn yếu.
+- ⚠️ Lần 244 (giai đoạn 3: hồ sơ quán luôn đưa, điều chi tiết chọn theo loại câu hỏi) KHÔNG ÁP: bộ kín dn_kin1 +0,24 ± 0,42; sửa rồi đo bộ kín MỚI dn_kin2 −0,01 ± 0,29 / 6 (bớt lạc đề 98% → 62% nhưng bỏ sót điều cần 97% → 90%). Bộ nhớ một quán còn nhỏ thì đưa hết đã đủ. Mã trả về bản 243; script đổi tên `boom_l244_ap_dung.sh.khong_ap`. Xét lại khi quán thật nhớ quá 12 dòng.
+
 ## 2026-11-10 — App báo rõ khi Boom hết lượt + kiểm toàn diện Boom + lần 215 ĐANG CHẠY
 
 - ✅ Kiểm toàn diện lần 4 (bản 229, bộ kín mới de_kin12 90 câu, 2 người chấm mỗi câu): 132/180 dùng được (73%), hai vòng đồng ý 82/90. Yếu: kho 6/12, khuyến mãi / tiếp thị / khách 7/12, doanh thu TB 10,5. 7 dòng tính sẵn sai (mua X tặng Y chưa tính nguyên liệu phần tặng, so cuối tuần khi by_day rỗng, XẾP MÓN "cao nhất", dòng "từng ngày có đơn"…). ➡️ Lô E — mục 20 `.docs/kiem-toan-dien-boom-10-11.md`.

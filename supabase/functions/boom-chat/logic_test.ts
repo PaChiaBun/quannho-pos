@@ -1239,6 +1239,25 @@ Deno.test('việc đã gợi ý (3.2 + 4.3 gọn): rút "Việc tuần này" t�
   assert(soLieuGoc('chiều vắng', { viecCu: v }).includes('5.000đ/phần'));
 });
 
+Deno.test('lần 242: chủ quán thấy việc đã gợi ý cho nhân viên, ghi rõ nhân viên hỏi', () => {
+  const tl = 'Dạ.\n\nViệc tuần này:\n- 14–17h, thử bớt 5.000đ/phần Cà phê máy số 2 trong 2 tuần.';
+  const rows = [
+    { question: 'chiều vắng quá làm sao', answer: tl, created_at: '2026-11-09T03:00:00Z', user_id: 'nv' },
+    { question: 'chiều nay vắng ghê', answer: tl, created_at: '2026-11-08T03:00:00Z', user_id: 'chu' },
+  ];
+  const v = chonViecCu(rows, 'chu');
+  assertEquals(v.map((x) => !!x.nguoiKhac), [true, false]);
+  assertEquals(chonViecCu(rows).map((x) => !!x.nguoiKhac), [false, false], 'không biết người hỏi thì không đánh dấu');
+  const msg = buildMessages('chiều vẫn vắng', [], null, { facts: parseFacts({ period: 'Tuần này', revenue: 1, orders: 1, top: [], slow: [] }), viecCu: v })[1].content;
+  assertStringIncludes(msg, '- 9/11 (hỏi "chiều vắng quá làm sao"; NHÂN VIÊN hỏi, không phải người đang hỏi): 14–17h');
+  assertStringIncludes(msg, 'nhân viên có hỏi, Bé Boom gợi ý');
+  assert(msg.includes('- 8/11 (hỏi "chiều nay vắng ghê"): 14–17h'), msg);
+  // không có việc của nhân viên → lời dặn không đổi
+  assert(!buildMessages('chiều vẫn vắng', [], null, { facts: parseFacts({ period: 'Tuần này', revenue: 1, orders: 1, top: [], slow: [] }), viecCu: v.slice(1) })[1].content.includes('nhân viên có hỏi'));
+  // kiểm câu trả lời vẫn nhận ra danh sách việc cũ
+  assertEquals(loiLapLuan('Dạ.\nNgày 9/11 nhân viên có hỏi, Bé Boom gợi ý bớt 5.000đ chiều.', soLieuGoc('chiều vắng', { viecCu: v })).filter((x) => x.includes('danh sách việc')), []);
+});
+
 Deno.test('lô B: việc thiếu số / thời hạn, giờ / tuần mỗi người, chia theo ngày mở, ước lượng dùng', () => {
   const thieu = loiLapLuan('Dạ.\n\nViệc tuần này:\n- Theo dõi doanh thu và đối chiếu chi phí.\n- Thử bớt 5.000đ khung 14–17h trong 2 tuần.', 'x');
   assert(thieu.some((x) => x.includes('việc làm thiếu con số') && x.includes('Theo dõi doanh thu')) && !thieu.some((x) => x.includes('Thử bớt')), thieu.join('|'));
