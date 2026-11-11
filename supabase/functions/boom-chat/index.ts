@@ -22,7 +22,8 @@ import { laySoChoCau } from './hoi.ts';
 import { chonBai, soTayChoBoom } from './so_tay.ts';
 import { docBanHang, docDoanhThuNgay } from './ban_hang.ts';
 import { giaTriChiSo, ketQuaChoBoom, kyDo, type LoiKhuyenDaLuu, ngayVN, rutLoiKhuyen, traLoiCoLam } from './loi_khuyen.ts';
-import { boNhoChoBoom, coTheRut, docRutGhiNho, dsChoRut, type GhiNho, keHoachGhi2, laHoiNho, loiDanRutGhiNho } from './bo_nho_quan.ts';
+import { canDon, docDon, keHoachDon, loiDanDon, toiLuotDon } from './don_dem.ts';
+import { boNhoChoBoom, coTheRut, docRutGhiNho, dongGhiNho, dsChoRut, type GhiNho, keHoachGhi2, type KeHoachGhi, laHoiNho, lenhBoNho, loiDanRutGhiNho } from './bo_nho_quan.ts';
 import { cauHinh as cauHinhThoiTiet, ghiNguonThoiTiet, HOI_MUA_BAN, HOI_THOI_TIET, HOI_THOI_TIET_RO, layMuaDaQua, layNguon, layThoiTiet, parseViTri, thoiTietChoBoom, type ViTri } from './thoi_tiet.ts';
 import { canGiuKy, cauGiuKy } from './ky.ts';
 import {
@@ -223,9 +224,12 @@ async function laChuQuan(storeId: string, userId: string): Promise<boolean> {
   return (Array.isArray(o) && o.length > 0) || (Array.isArray(m) && m.length > 0);
 }
 
-/** Sau khi đã trả lời: rút điều lâu dài về quán từ câu hỏi, lọc, rồi ghi. Lỗi thì bỏ qua, không ảnh hưởng câu trả lời. */
-async function ghiBoNho(storeId: string, userId: string, laChu: boolean, question: string, cu: GhiNho[]): Promise<void> {
-  if (!coTheRut(question)) return;
+/**
+ * Rút điều lâu dài về quán từ câu hỏi và lập kế hoạch ghi (chưa ghi). Lần 245: chạy song song với lúc trả lời để báo ngay
+ * trong câu trả lời; chỉ ghi (apBoNho) khi câu trả lời đã xong. Lỗi → null, không ảnh hưởng câu trả lời.
+ */
+async function rutBoNho(laChu: boolean, question: string, cu: GhiNho[]): Promise<KeHoachGhi | null> {
+  if (!coTheRut(question)) return null;
   try {
     const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -235,12 +239,20 @@ async function ghiBoNho(storeId: string, userId: string, laChu: boolean, questio
         model: MODEL,
         ...(DOI_MOI ? { max_completion_tokens: 600, reasoning_effort: REASONING } : { temperature: 0, max_tokens: 500 }),
         // lần 243: đưa kèm điều đã nhớ để mô hình chọn thêm / sửa / hết hiệu lực / bỏ qua (kiểu Mem0)
-        messages: [{ role: 'user', content: loiDanRutGhiNho(question, dsChoRut(cu, laChu)) }],
+        messages: [{ role: 'user', content: loiDanRutGhiNho(question, dsChoRut(cu, laChu), laChu) }],
       }),
     });
-    if (!res.ok) return void (await res.body?.cancel());
+    if (!res.ok) return (await res.body?.cancel(), null);
     const d = await res.json();
-    const kq = keHoachGhi2(docRutGhiNho(String(d?.choices?.[0]?.message?.content ?? '')), cu, laChu);
+    return keHoachGhi2(docRutGhiNho(String(d?.choices?.[0]?.message?.content ?? '')), cu, laChu);
+  } catch {
+    return null;
+  }
+}
+
+async function apBoNho(storeId: string, userId: string, kq: KeHoachGhi | null): Promise<void> {
+  if (!kq) return;
+  try {
     const ghi = (path: string, method: string, body: unknown) =>
       fetch(`${SB_URL}/rest/v1/${path}`, { method, headers: { ...svcHeaders(), Prefer: 'return=minimal' }, body: JSON.stringify(body), signal: AbortSignal.timeout(3000) })
         .then((x) => x.body?.cancel());
@@ -250,6 +262,41 @@ async function ghiBoNho(storeId: string, userId: string, laChu: boolean, questio
     if (moi.length) await ghi('boom_quan_ghi_nho', 'POST', moi);
   } catch {
     // ghi nhớ là phần thêm; lỗi không được làm hỏng gì
+  }
+}
+
+/**
+ * Lần 248 (giai đoạn 5): dọn bộ nhớ quán, mỗi quán tối đa một lần / 20 giờ, chạy nền sau câu trả lời (không cron).
+ * Ghi mốc trước khi dọn để hai câu cùng lúc không dọn hai lần. Lỗi thì bỏ, lần sau dọn.
+ */
+async function donBoNho(storeId: string): Promise<void> {
+  try {
+    const sig = () => AbortSignal.timeout(3000);
+    const hs = await rest(`boom_quan_ho_so?select=don_luc&store_id=eq.${storeId}&limit=1`, { signal: sig() });
+    if (!toiLuotDon(Array.isArray(hs) ? hs[0]?.don_luc : null)) return;
+    const ghi = (path: string, method: string, body: unknown, prefer = 'return=minimal') =>
+      fetch(`${SB_URL}/rest/v1/${path}`, { method, headers: { ...svcHeaders(), Prefer: prefer }, body: JSON.stringify(body), signal: sig() })
+        .then((x) => { void x.body?.cancel(); if (!x.ok) throw new Error(`REST_${x.status}`); });
+    await ghi('boom_quan_ho_so?on_conflict=store_id', 'POST', { store_id: storeId, don_luc: new Date().toISOString() }, 'resolution=merge-duplicates,return=minimal');
+    const ds = await rest(`boom_quan_ghi_nho?select=id,noi_dung,loai,nguon,trang_thai,muc_xem,hang_muc,chi_tiet,tu_ngay&store_id=eq.${storeId}&trang_thai=neq.het_hieu_luc&order=tao_luc.asc&limit=60`, { signal: sig() });
+    if (!Array.isArray(ds) || !canDon(ds)) return;
+    const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(30_000),
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        ...(DOI_MOI ? { max_completion_tokens: 900, reasoning_effort: REASONING } : { temperature: 0, max_tokens: 700 }),
+        messages: [{ role: 'user', content: loiDanDon(ds, ngayVN(Date.now())) }],
+      }),
+    });
+    if (!res.ok) return void (await res.body?.cancel());
+    const kq = keHoachDon(docDon(String((await res.json())?.choices?.[0]?.message?.content ?? '')), ds, ngayVN(Date.now()));
+    // thêm câu gộp trước, rồi mới cho điều cũ hết hiệu lực: lỗi giữa chừng thì chỉ thừa, không mất
+    if (kq.them.length) await ghi('boom_quan_ghi_nho', 'POST', kq.them.map((g) => ({ ...g, store_id: storeId })));
+    if (kq.het.length) await ghi(`boom_quan_ghi_nho?id=in.(${kq.het.join(',')})`, 'PATCH', { trang_thai: 'het_hieu_luc', den_ngay: ngayVN(Date.now()) });
+  } catch {
+    // dọn là phần thêm; lỗi không được làm hỏng gì
   }
 }
 
@@ -747,7 +794,9 @@ Deno.serve(async (req) => {
   const ketQua = boNhoDs && laChuBN ? await doLoiKhuyen(r.store_id, user, (req.headers.get('authorization') ?? '').slice(7).trim()) : '';
   if (ketQua) kind += '+do_ket_qua';
   // 09/11 web Demo (quán bỏ qua bộ nhớ): "em nhớ gì về quán" → Boom nói "đang nhớ" rồi kể số bán hàng như trí nhớ
-  const khongBoNho = r.mode === 'advice' && !boNhoDs && laHoiNho(r.question)
+  // lần 245: lượt rút ghi nhớ chạy song song với lúc trả lời (chỉ ghi sau khi trả lời xong)
+  const pRut = boNhoDs ? rutBoNho(laChuBN, r.question, boNhoDs) : null;
+  const khongBoNho = r.mode === 'advice' && !boNhoDs && (laHoiNho(r.question) || lenhBoNho(r.question))
     ? 'BỘ NHỚ QUÁN: quán này CHƯA dùng bộ nhớ riêng của Bé Boom, nên Bé Boom chưa ghi nhớ điều gì về quán. Nói thẳng như vậy; KHÔNG nói "em đang nhớ", KHÔNG kể số bán hàng như điều đã nhớ.'
     : '';
   const boNho = [boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : khongBoNho, ketQua].filter(Boolean).join('\n\n');
@@ -858,14 +907,24 @@ Deno.serve(async (req) => {
       return json(502, { error: 'AI_EMPTY_ANSWER' });
     }
     answer = ghiNguonThoiTiet(ghiApTay(ghiKy(answer, kyHoi, r.question)), !!thoiTiet);
-    await finish(logId, { model: kind, status: 'ok', answer: r.chain ? CHAIN_LOG_NOTE : r.modules ? MODULE_LOG_NOTE : answer, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, latency_ms: latency });
     const refused = modelRefused(answer);
+    if (pRut && boNhoDs && !refused) {
+      // chờ lượt rút thêm tối đa 1,5 giây; chưa xong thì vẫn ghi nền, chỉ không báo được trong câu này
+      const kqRut = await Promise.race([pRut, new Promise<'cham'>((x) => setTimeout(() => x('cham'), 1500))]);
+      const dong = dongGhiNho(kqRut, boNhoDs, lenhBoNho(r.question), laChuBN);
+      if (dong) { answer += `\n\n${dong}`; kind += '+ghi_nho'; }
+    } else if (r.mode === 'advice' && !boNhoDs && !refused && lenhBoNho(r.question)) {
+      // lần 246 (thử Demo sau lần 245): quán không bật bộ nhớ mà người hỏi nhờ nhớ / quên — mô hình có lúc hiểu thành câu tư vấn
+      answer += '\n\nBộ nhớ quán của Bé Boom chưa bật cho quán này, nên em chưa ghi nhớ hay bỏ được điều này.';
+      kind += '+khong_bo_nho';
+    }
+    await finish(logId, { model: kind, status: 'ok', answer: r.chain ? CHAIN_LOG_NOTE : r.modules ? MODULE_LOG_NOTE : answer, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, latency_ms: latency });
     await writeFull({ log_id: logId, store_id: r.store_id, user_id: user, source: 'gpt',
       tool: refused ? 'boom_tu_choi:model' : `${r.mode}:${kind}`,
       question: r.question, answer: refused ? refusalFor('programming') : answer, chunk_ids: r.chunk_ids });
     if (refused) return json(200, { answer: refusalFor('programming'), blocked: 'model', log_id: logId });
     const coLam = boNhoDs && laChuBN ? traLoiCoLam(r.question) : null;
-    if (boNhoDs) chayNen(Promise.all([ghiBoNho(r.store_id, user, laChuBN, r.question, boNhoDs), ghiLoiKhuyen(r.store_id, answer, r.facts), coLam ? ghiCoLam(r.store_id, user, coLam, logId) : null]).then(() => {}));
+    if (boNhoDs) chayNen(Promise.all([pRut ? pRut.then((kq) => apBoNho(r.store_id, user, kq)).then(() => donBoNho(r.store_id)) : null, ghiLoiKhuyen(r.store_id, answer, r.facts), coLam ? ghiCoLam(r.store_id, user, coLam, logId) : null]).then(() => {}));
     return json(200, { answer, log_id: logId, model: MODEL, ky: kyHoi });
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === 'AbortError';

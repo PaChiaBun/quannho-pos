@@ -169,3 +169,80 @@ Deno.test('bộ nhớ: rút cho mọi câu đủ dài (lần 241), bỏ câu qu�
   assert(!B.coTheRut('cảm ơn'));
   assert(!B.coTheRut('  '));
 });
+
+Deno.test('bộ nhớ lần 245: nhận lệnh nhớ / quên, không nhầm chữ "quen" và xoá món', () => {
+  for (const q of ['nhớ giúp em quán nghỉ thứ 2 nha', 'em ghi nhớ là quán mở 6h sáng', 'nho dum quan gan truong', 'em nhớ là khách chủ yếu sinh viên nhé'])
+    assertEquals(B.lenhBoNho(q), 'nho', q);
+  for (const q of ['quên chuyện quán gần trường đi', 'quen di vu chay fb', 'đừng nhớ chuyện lương nữa', 'xoá điều quán nghỉ thứ 2', 'khỏi nhớ cái đó'])
+    assertEquals(B.lenhBoNho(q), 'quen', q);
+  for (const q of ['khách quen đi đâu hết rồi', 'xoá giúp em món trà sữa', 'nhân viên quên chốt ca', 'làm sao giữ khách quen', 'bạn quen đi chung', 'lưu lại số khách'])
+    assertEquals(B.lenhBoNho(q), '', q);
+});
+
+Deno.test('bộ nhớ lần 245: dòng báo đã ghi / bỏ / không có quyền', () => {
+  const cu: B.GhiNho[] = [
+    { id: 'a', noi_dung: 'Quán gần trường', loai: 'su_that', nguon: 'chu_quan_noi', trang_thai: 'xac_nhan', muc_xem: 'ca_quan', hang_muc: 'ho_so' },
+    { id: 'b', noi_dung: 'Mở cửa 6h–14h', loai: 'su_that', nguon: 'chu_quan_noi', trang_thai: 'xac_nhan', muc_xem: 'ca_quan', hang_muc: 'gio_giac' },
+  ];
+  const moi = (nd: string, tt: B.GhiNho['trang_thai'], thay: string | null = null): B.GhiNho =>
+    ({ noi_dung: nd, loai: 'su_that', nguon: 'chu_quan_noi', trang_thai: tt, muc_xem: 'ca_quan', thay_cho: thay });
+  const d = B.dongGhiNho({ them: [moi('Mở cửa 6h–21h', 'xac_nhan', 'b'), moi('Khách chủ yếu sinh viên', 'doan')], het_hieu_luc: ['b', 'a'], hoi_lai: null, can_hoi: null }, cu, '');
+  assertStringIncludes(d, 'Em đã ghi nhớ: Mở cửa 6h–21h.');
+  assertStringIncludes(d, 'chờ chủ quán xác nhận: Khách chủ yếu sinh viên');
+  assertStringIncludes(d, 'Em đã bỏ ghi nhớ: Quán gần trường.'); // b được thay, không kể là bỏ
+  assert(!d.includes('6h–14h'));
+  const rong = { them: [], het_hieu_luc: [], hoi_lai: null, can_hoi: null };
+  assertEquals(B.dongGhiNho(rong, cu, ''), '');
+  assertEquals(B.dongGhiNho(null, cu, ''), '');
+  assertEquals(B.dongGhiNho('cham', cu, ''), '');
+  assertStringIncludes(B.dongGhiNho(rong, cu, 'nho'), 'không lưu');
+  assertStringIncludes(B.dongGhiNho(rong, cu, 'quen'), 'xem và bỏ');
+  assertStringIncludes(B.dongGhiNho(rong, cu, 'quen', false), 'chỉ chủ quán');
+  assertStringIncludes(B.dongGhiNho('cham', cu, 'nho'), 'đang ghi');
+  // nhân viên bảo quên điều chủ quán nói → không bỏ, báo không có quyền
+  const kq = B.keHoachGhi2([{ noi_dung: 'Quán gần trường', hang_muc: 'ho_so', la_doan: false, viec: 'het_hieu_luc', thay: 'g1' }], cu, false);
+  assertEquals(kq.het_hieu_luc, []);
+  assertEquals(kq.can_hoi, null);
+  assertStringIncludes(B.dongGhiNho(kq, cu, 'quen'), 'chỉ chủ quán bỏ được');
+  // chủ quán bảo quên → bỏ
+  const kq2 = B.keHoachGhi2([{ noi_dung: 'Quán gần trường', hang_muc: 'ho_so', la_doan: false, viec: 'het_hieu_luc', thay: 'g1' }], cu, true);
+  assertEquals(kq2.het_hieu_luc, ['a']);
+  assertStringIncludes(B.dongGhiNho(kq2, cu, 'quen'), 'Em đã bỏ ghi nhớ: Quán gần trường.');
+  // lời dặn lệnh có cả khi bộ nhớ trống
+  assertStringIncludes(B.boNhoChoBoom([], true, 'nhớ giúp em quán nghỉ thứ 2'), 'KHÔNG tự nói');
+  assertEquals(B.boNhoChoBoom([], true, 'làm sao tăng khách'), '');
+});
+
+Deno.test('bộ nhớ lần 245: lệnh nhớ / quên dạng khác; lệnh quên không trỏ được thì không thành rác', () => {
+  for (const q of ['nhớ là quán em chỉ bán buổi sáng thôi nhé', 'nho: k ban tet 10 ngay', 'bum oi, nho la quan co ship'])
+    assertEquals(B.lenhBoNho(q), 'nho', q);
+  for (const q of ['xoa giup chi vu ban grab', 'boom ơi xoá cái khách sinh viên đi', 'bo cai vu giam 10% gio trua di', 'boom quen cai vu ko chay qc di'])
+    assertEquals(B.lenhBoNho(q), 'quen', q);
+  for (const q of ['xoá cái món trà sữa giúp em', 'có nên bỏ chuyện bán đêm không', 'em nhớ khách quen hay gọi gì'])
+    assertEquals(B.lenhBoNho(q), '', q);
+  const cu: B.GhiNho[] = [{ id: 'a', noi_dung: 'Lương nhân viên 25k/giờ', loai: 'su_that', nguon: 'chu_quan_noi', trang_thai: 'xac_nhan', muc_xem: 'chu_quan', hang_muc: 'nhan_su_tien' }];
+  const kq = B.keHoachGhi2([{ noi_dung: 'Xóa thông tin về lương 25k/giờ', hang_muc: 'nhan_su_tien', la_doan: false, viec: 'het_hieu_luc', thay: 'g1' }], cu, false);
+  assertEquals([kq.them.length, kq.het_hieu_luc.length, kq.can_hoi], [0, 0, null]);
+  assertEquals(B.locUngVien([{ noi_dung: 'Đừng nhớ chuyện lương nữa', hang_muc: 'nhan_su_tien', la_doan: false }], true), []);
+  // viec / thay nằm trong chi_tiet; chủ quán bảo bỏ mà mô hình gắn la_doan vẫn bỏ
+  const u = B.docRutGhiNho('[{"noi_dung":"Không bán bia","hang_muc":"gioi_han","chi_tiet":{"viec":"het_hieu_luc","thay":"g1"},"la_doan":true}]');
+  assertEquals([u[0].viec, u[0].thay], ['het_hieu_luc', 'g1']);
+  assertEquals(B.keHoachGhi2(u, [{ ...cu[0], noi_dung: 'Không bán bia', hang_muc: 'gioi_han' }], true).het_hieu_luc, ['a']);
+});
+
+Deno.test('bộ nhớ lần 247: lời dặn rút nói rõ người nói; nhân viên nói trái vẫn rút "sua"', () => {
+  const g: B.GhiNho = { id: 'a', noi_dung: 'Không bán đồ uống có cồn', loai: 'so_thich', nguon: 'chu_quan_noi', trang_thai: 'xac_nhan', muc_xem: 'ca_quan', hang_muc: 'gioi_han' };
+  assertStringIncludes(B.loiDanRutGhiNho('quán mình vẫn bán bia mà', [g], false), 'NGƯỜI NÓI: nhân viên');
+  assertStringIncludes(B.loiDanRutGhiNho('quán mình vẫn bán bia mà', [g], false), 'hệ thống sẽ hỏi lại chủ quán');
+  assertStringIncludes(B.loiDanRutGhiNho('quán tôi nghỉ thứ 2', [], true), 'NGƯỜI NÓI: chủ quán.\n\nCÂU: quán tôi nghỉ thứ 2');
+  assert(!B.loiDanRutGhiNho('quán tôi nghỉ thứ 2').includes('NGƯỜI NÓI'));
+});
+
+Deno.test('bộ nhớ lần 247: khác số là khác ý; nhân viên nói số khác thì hỏi lại', () => {
+  assert(!B.trungY('Quán có 5 bàn', 'Quán có 8 bàn'));
+  assert(!B.trungY('Nghỉ Tết 3 ngày', 'Nghỉ Tết 7 ngày'));
+  assert(B.trungY('Quán có 8 bàn', 'quán có 8 bàn'));
+  const cu: B.GhiNho[] = [{ id: 'a', noi_dung: 'Quán có 8 bàn', loai: 'su_that', nguon: 'chu_quan_noi', trang_thai: 'xac_nhan', muc_xem: 'ca_quan', hang_muc: 'ho_so' }];
+  const kq = B.keHoachGhi2([{ noi_dung: 'Quán có 5 bàn', hang_muc: 'ho_so', la_doan: false, viec: 'sua', thay: 'g1' }], cu, false);
+  assertEquals([kq.het_hieu_luc, kq.can_hoi?.thay_cho], [[], 'a']);
+});

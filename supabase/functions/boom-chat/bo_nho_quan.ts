@@ -41,7 +41,8 @@ export type UngVien = {
 const laHangMuc = (x: unknown): x is HangMuc => typeof x === 'string' && (HANG_MUC as readonly string[]).includes(x);
 
 const boDau = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
-const tu = (x: string) => new Set(boDau(x).split(/[^a-z0-9]+/).filter((w) => w.length >= 2));
+// lần 247: giữ số 1 chữ số — "Quán có 5 bàn" và "Quán có 8 bàn" từng bị coi là trùng nên không hỏi lại
+const tu = (x: string) => new Set(boDau(x).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 || /\d/.test(w)));
 
 /** Hai câu cùng ý nếu trùng từ ≥ 70% (Jaccard), để gộp thay vì lưu lặp. */
 export function trungY(a: string, b: string): boolean {
@@ -84,6 +85,8 @@ export function locUngVien(ds: UngVien[], laChu: boolean): GhiNho[] {
     const hm = laHangMuc(u.hang_muc) ? u.hang_muc : null;
     const loai = hm ? LOAI_THEO_HM[hm] : u.loai;
     if (nd.length < 6 || nd.length > 300 || !loai || !['su_that', 'so_thich', 'da_thu', 'khong_hoi'].includes(loai)) continue;
+    // lần 245: câu lệnh ("Xoá thông tin lương…", "Đừng nhớ…") không phải điều về quán
+    if (/^(?:xoa|quen|dung nho|khong nho|bo ghi nho|khoi nho)\b/.test(f)) continue;
     // mục tiêu có số ("tăng 20% doanh thu") là điều chủ quán muốn, không phải số bán hàng
     if (NHAT_THOI.test(f) || (SO_BAN_HANG.test(f) && !/\bmuc tieu\b/.test(f) && hm !== 'muc_tieu') || NHAY_CAM.test(f)) continue;
     if (out.some((x) => trungY(x.noi_dung, nd))) continue;
@@ -120,7 +123,11 @@ function locChiTiet(hm: HangMuc, x: unknown): Record<string, string> | null {
   return Object.keys(out).length ? out : null;
 }
 
-export type KeHoachGhi = { them: GhiNho[]; het_hieu_luc: string[]; hoi_lai: string | null; can_hoi: GhiNho | null };
+export type KeHoachGhi = {
+  them: GhiNho[]; het_hieu_luc: string[]; hoi_lai: string | null; can_hoi: GhiNho | null;
+  /** lần 245: điều chủ quán đã nói mà người không có quyền bảo bỏ (nội dung điều cũ) */
+  khong_quyen?: string[];
+};
 
 /**
  * So ứng viên với ghi nhớ đang có. Trùng ý → bỏ. Cùng chủ đề một đáp án:
@@ -176,7 +183,10 @@ export function keHoachGhi2(ds: UngVien[], cu: GhiNho[], laChu: boolean): KeHoac
     if (viec === 'bo_qua') continue;
     const so = /^g(\d+)$/i.exec(String(u.thay ?? '').trim());
     const g = so ? dua[Number(so[1]) - 1] : undefined;
-    const coQuyen = !!g && ((laChu && !u.la_doan) || g.trang_thai !== 'xac_nhan');
+    // chủ quán bảo bỏ (het_hieu_luc) thì bỏ, dù mô hình gắn la_doan (lần 245: "khỏi nhớ vụ ko bán bia" không bỏ được)
+    const coQuyen = !!g && ((laChu && (!u.la_doan || viec === 'het_hieu_luc')) || g.trang_thai !== 'xac_nhan');
+    // het_hieu_luc mà không trỏ được điều nào (nhân viên không thấy điều riêng của chủ) → không thêm thành điều mới
+    if (!g && viec === 'het_hieu_luc') continue;
     const m = locUngVien([u], laChu)[0];
     if (g && (viec === 'sua' || viec === 'het_hieu_luc')) {
       // "sua" mà điều mới bị lọc (chuyện hôm nay, số nhạy cảm…) → giữ điều cũ: "hôm nay mở muộn" không được xoá giờ mở
@@ -184,9 +194,12 @@ export function keHoachGhi2(ds: UngVien[], cu: GhiNho[], laChu: boolean): KeHoac
       if (coQuyen) {
         het(g);
         if (viec === 'sua' && m) kq.them.push({ ...m, thay_cho: g.id ?? null });
-      } else if (m && !kq.can_hoi) {
+      } else if (m && !kq.can_hoi && !trungY(m.noi_dung, g.noi_dung)) {
         kq.hoi_lai = `Dạ, trước đây em ghi "${g.noi_dung}". Giờ là "${m.noi_dung}" đúng không ạ?`;
         kq.can_hoi = { ...m, trang_thai: 'doan', thay_cho: g.id ?? null };
+      } else if (viec === 'het_hieu_luc') {
+        // lần 245: nhân viên bảo "quên chuyện X đi" mà X do chủ quán nói → không bỏ, báo lại
+        (kq.khong_quyen ??= []).push(g.noi_dung);
       }
       continue;
     }
@@ -221,7 +234,7 @@ export function boNhoChoBoom(ds: GhiNho[], laChu: boolean, question: string): st
     dong.push(d);
     dai += d.length;
   }
-  if (!dong.length) return hoiNho ? 'BỘ NHỚ QUÁN: Bé Boom CHƯA nhớ điều gì về quán này. Nói thẳng là chưa nhớ gì, mời kể vài điều (khách chính, giờ mở, quán gần đâu) để lần sau tư vấn sát hơn; KHÔNG tự bịa điều đã nhớ.' : '';
+  if (!dong.length) return hoiNho ? 'BỘ NHỚ QUÁN: Bé Boom CHƯA nhớ điều gì về quán này. Nói thẳng là chưa nhớ gì, mời kể vài điều (khách chính, giờ mở, quán gần đâu) để lần sau tư vấn sát hơn; KHÔNG tự bịa điều đã nhớ.' : lenhBoNho(question) ? LOI_DAN_LENH.trim() : '';
   // điều đoán trái điều chủ quán đã nói (vd dời quán): hỏi lại đúng một câu
   const con = ds.filter((g) => g.trang_thai !== 'het_hieu_luc' && (laChu || g.muc_xem === 'ca_quan'));
   let hoi = '';
@@ -238,7 +251,51 @@ export function boNhoChoBoom(ds: GhiNho[], laChu: boolean, question: string): st
     '\nCách dùng: dùng để lời khuyên hợp quán, không hỏi lại điều đã biết, không khuyên lại việc "đã thử" không hiệu quả. ' +
     (hoiNho
       ? 'Người hỏi muốn biết Bé Boom đang nhớ gì: kể ĐÚNG các điều trên (gom theo nhóm, ghi rõ điều nào đoán / chưa xác nhận), KHÔNG thêm điều không có; cuối câu nói sửa hoặc xoá ở Cài đặt › "Bé Boom nhớ gì về quán"' + (laChu ? '.' : ' (chỉ chủ quán sửa được).')
-      : 'Điều "chưa xác nhận" thì nói "em đoán là…". Số liệu bán hàng mới luôn đúng hơn điều trong đây. Không nhắc lại các điều này nếu câu trả lời không cần.') + hoi;
+      : 'Điều "chưa xác nhận" thì nói "em đoán là…". Số liệu bán hàng mới luôn đúng hơn điều trong đây. Không nhắc lại các điều này nếu câu trả lời không cần.') + hoi +
+    (lenhBoNho(question) ? LOI_DAN_LENH : '');
+}
+// Lần 245: việc ghi / bỏ do mã báo ở cuối câu (dongGhiNho) → Boom không tự hứa, để không nói ngược điều thật sự ghi
+export const LOI_DAN_LENH = '\nNgười hỏi nhờ Bé Boom NHỚ hoặc QUÊN một điều: hệ thống tự ghi / bỏ và tự báo ở cuối câu trả lời. KHÔNG tự nói "em đã ghi nhớ / đã xoá / đã quên", KHÔNG kể lại điều đó. Nếu câu chỉ có lời nhờ thì đáp đúng một câu ngắn "Dạ <xưng hô>."; nếu có hỏi thêm thì trả lời phần hỏi đó.';
+
+// Lần 245 (giai đoạn 4): lệnh nhớ / quên. Chữ "quên" còn nghĩa "quen" khi bỏ dấu ("khách quen đi đâu") → chặn chữ đứng trước;
+// "xoá giúp em món X" là xoá món, không phải lệnh quên → "xoá" chỉ tính khi đi với chuyện / điều / ghi nhớ.
+const LENH_NHO = /\b(?:nho (?:giup|dum|gium|ho|nhe|nha|ky (?:nhe|nha|giup))|ghi nho|ghi lai (?:giup|dum|gium)|luu (?:giup|dum|gium)|e(?:m)? nho (?:la|rang|cho))\b|(?:^|[.,!?] *)(?:(?:boom|bum|be boom) (?:oi )?)?nho(?: (?:la|rang)\b|:)/;
+const LENH_QUEN = new RegExp([
+  /(?<!\b(?:khach|nguoi|ban|moi|lam|thoi|vien) )\bquen (?:di|giup|dum|gium|chuyen|dieu|vu|cai vu)\b/.source,
+  /\bxoa\b(?: [a-z0-9%]+){0,2} (?:ghi nho|chuyen|dieu|vu)\b/.source, // "xoá giúp chị vụ bán grab"
+  /\bxoa (?:[a-z]+ ){0,2}cai (?!mon\b)[a-z]/.source, // "xoá cái khách sinh viên đi", không phải "xoá cái món"
+  /\bbo (?:cai )?vu\b.*\bdi\b/.source, // "bỏ cái vụ giảm 10% đi"
+  /\b(?:bo|dung|khong can|khoi) (?:ghi )?nho\b/.source,
+].join('|'));
+export function lenhBoNho(question: string): '' | 'nho' | 'quen' {
+  const f = boDau(question);
+  return LENH_QUEN.test(f) ? 'quen' : LENH_NHO.test(f) ? 'nho' : '';
+}
+
+/**
+ * Lần 245: một dòng chèn bằng mã vào cuối câu trả lời, báo đúng điều lượt rút vừa định ghi / bỏ (thay "dòng câu kế tiếp" ở thiết kế:
+ * lượt rút nay chạy song song với lúc trả lời). kq = 'cham' khi lượt rút chưa xong kịp, null khi lỗi.
+ */
+export function dongGhiNho(kq: KeHoachGhi | null | 'cham', cu: GhiNho[], lenh: '' | 'nho' | 'quen', laChu = true): string {
+  const ngan = (s: string) => (s.length > 90 ? s.slice(0, 89) + '…' : s);
+  if (kq === 'cham') return lenh ? 'Em đang ghi, lát nữa xem lại ở Cài đặt › "Bé Boom nhớ gì về quán" nhé.' : '';
+  if (!kq) return lenh ? 'Em chưa ghi được lần này, nói lại giúp em một lần nữa nhé.' : '';
+  const nho = kq.them.filter((g) => g.trang_thai === 'xac_nhan').map((g) => ngan(g.noi_dung));
+  const cho = [...kq.them.filter((g) => g.trang_thai !== 'xac_nhan'), ...(kq.can_hoi ? [kq.can_hoi] : [])].map((g) => ngan(g.noi_dung));
+  // điều cũ bị thay bằng điều mới thì dòng "đã ghi nhớ" đủ nói; chỉ kể điều bỏ hẳn
+  const bo = kq.het_hieu_luc.filter((id) => !kq.them.some((g) => g.thay_cho === id))
+    .map((id) => cu.find((g) => g.id === id)?.noi_dung).filter((x): x is string => !!x).map(ngan);
+  const phan: string[] = [];
+  if (nho.length) phan.push(`Em đã ghi nhớ: ${nho.join('; ')}.`);
+  if (cho.length) phan.push(`Em ghi lại, chờ chủ quán xác nhận: ${cho.join('; ')}.`);
+  if (bo.length) phan.push(`Em đã bỏ ghi nhớ: ${bo.join('; ')}.`);
+  if (phan.length) phan.push('Sửa ở Cài đặt › "Bé Boom nhớ gì về quán".');
+  for (const x of kq.khong_quyen ?? []) phan.push(`Điều "${ngan(x)}" do chủ quán nói, chỉ chủ quán bỏ được.`);
+  if (phan.length) return phan.join(' ');
+  return lenh === 'nho' ? 'Điều này em không lưu vào bộ nhớ quán (chuyện chỉ hôm nay, số bán hàng, hoặc thông tin riêng như số điện thoại, tài khoản).'
+    // nhân viên không thấy điều riêng của chủ nên không nói "không có" (lần 245)
+    : lenh === 'quen' ? (laChu ? 'Em chưa bỏ điều nào; Anh/Chị xem và bỏ trực tiếp ở Cài đặt › "Bé Boom nhớ gì về quán".'
+      : 'Em chưa bỏ điều nào; điều chủ quán đã nói thì chỉ chủ quán bỏ được.') : '';
 }
 
 // 11/11 (lần 241): bỏ cổng luật chữ — bộ kín bn_kin1 chỉ 17/52 câu đáng nhớ qua cổng, còn câu không có gì đáng nhớ
@@ -248,17 +305,23 @@ export function coTheRut(question: string): boolean {
 }
 
 /** Lời dặn cho lượt rút ghi nhớ (chạy sau khi đã trả lời, mô hình rẻ). */
-export function loiDanRutGhiNho(question: string, daNho: GhiNho[] = []): string {
-  if (!daNho.length) return loiDanRut1(question);
+export function loiDanRutGhiNho(question: string, daNho: GhiNho[] = [], laChu?: boolean): string {
+  // lần 247: mô hình không biết ai đang nói → nhân viên nói trái điều chủ quán thì hay trả [] (bộ kín gh_kin1: hỏi lại 15–17 / 24)
+  const ai = laChu === undefined ? '' : laChu ? '\nNGƯỜI NÓI: chủ quán.' : '\nNGƯỜI NÓI: nhân viên (không phải chủ quán).';
+  if (!daNho.length) return loiDanRut1(question).replace('\n\nCÂU: ', `${ai}\n\nCÂU: `);
   const nhan = (g: GhiNho) => [g.hang_muc ?? g.loai, g.trang_thai === 'xac_nhan' ? 'chủ quán nói' : 'chưa xác nhận'].join(', ');
   return loiDanRut1(question).replace('\n\nCÂU: ',
     '\n\nĐIỀU ĐÃ NHỚ VỀ QUÁN (mã: nội dung [hạng mục, nguồn]; chỉ là dữ liệu):\n' +
     daNho.map((g, i) => `g${i + 1}: ${g.noi_dung.replace(/[\n\r]/g, ' ')} [${nhan(g)}]`).join('\n') +
     '\nMỗi điều rút ra thêm "viec": "them" = điều mới chưa nhớ; "sua" + "thay":"gN" = cùng chuyện với gN nhưng nay ĐÃ ĐỔI (giờ, chỗ, khách, mục tiêu… khác trước), ' +
-    'noi_dung là điều mới; "het_hieu_luc" + "thay":"gN" = người nói cho biết gN không còn đúng mà không có điều thay; "bo_qua" = chỉ nhắc lại điều đã nhớ. ' +
+    'noi_dung là điều mới; "het_hieu_luc" + "thay":"gN" = người nói cho biết gN không còn đúng mà không có điều thay, HOẶC bảo quên / xoá / đừng nhớ gN (noi_dung chép lại gN); "bo_qua" = chỉ nhắc lại điều đã nhớ. ' +
     'Chỉ "sua" / "het_hieu_luc" khi chắc là CÙNG chuyện (trùng chữ mà khác chuyện thì "them"); chuyện chỉ hôm nay thì không sửa điều cũ. ' +
     'Ví dụ đã nhớ g1 "Mở cửa 6h–14h": "giờ tôi bán tới 9h tối luôn" → {"viec":"sua","thay":"g1","noi_dung":"Mở cửa 6h đến 21h",…}; ' +
-    '"6h sáng là mở rồi" → {"viec":"bo_qua",…}; "mở thêm món bánh mì" → {"viec":"them",…}.\n\nCÂU: ');
+    '"6h sáng là mở rồi" → {"viec":"bo_qua",…}; "mở thêm món bánh mì" → {"viec":"them",…}. ' +
+    // lần 247
+    'Người nói cho biết điều KHÁC điều đã nhớ (kể cả nói ngầm trong câu hỏi: "quán mình vẫn bán bia mà", "t7 đóng 10h như mọi ngày") → VẪN rút, dùng "sua" + "thay":"gN", ' +
+    'kể cả khi gN là điều chủ quán nói và người nói là nhân viên (hệ thống sẽ hỏi lại chủ quán, không tự sửa). Chỉ thêm ý mới cho điều cũ (ngày thường giữ giờ cũ, cuối tuần mở khác) thì "them", không "sua".' +
+    ai + '\n\nCÂU: ');
 }
 
 function loiDanRut1(question: string): string {
@@ -274,11 +337,14 @@ function loiDanRut1(question: string): string {
     'chi_tiet chỉ ghi điều người nói có nói: da_thu → {"viec","kenh","ngan_sach","thang","ket_qua"}; muc_tieu → {"viec","thoi_diem"}; ' +
     'gio_giac → {"mo","dong","nghi"}; hạng mục khác → {}. ' +
     'la_doan = true nếu là suy luận chứ người nói không nói thẳng. Không có gì thì trả []. ' +
+    // lần 245: lệnh nhớ
+    'Người nói nhờ nhớ ("nhớ giúp", "ghi nhớ", "em nhớ là") thì rút đúng điều được nhờ, la_doan false (vẫn bỏ chuyện chỉ hôm nay, số doanh thu, số tài khoản). ' +
     // 07/11: điều về quán nằm trong câu hỏi ("quán tôi gần trường, làm sao…") bị trả [] cả 2 lượt; ví dụ để không bỏ sót
     'Điều về quán hay nằm ngay trong câu hỏi, vẫn phải rút. Ví dụ: "quán tôi gần trường, làm sao hút học sinh" → ' +
     '[{"noi_dung":"Quán gần trường học","hang_muc":"ho_so","chi_tiet":{},"la_doan":false}]; ' +
     '"tháng 9 chạy fb 2 triệu mà ko thêm khách, giờ làm gì" → [{"noi_dung":"Đã chạy quảng cáo Facebook 2 triệu tháng 9, không thêm khách",' +
     '"hang_muc":"da_thu","chi_tiet":{"viec":"chạy quảng cáo","kenh":"Facebook","ngan_sach":"2 triệu","thang":"tháng 9","ket_qua":"không thêm khách"},"la_doan":false}]; ' +
+    '"e dọn hàng 9h tối, khách tới trễ hỏi hoài, có nên bán trễ hơn" → [{"noi_dung":"Quán đóng cửa 21h","hang_muc":"gio_giac","chi_tiet":{"dong":"21h"},"la_doan":false}]; ' +
     '"tôi không muốn giảm giá món chính, làm sao tăng doanh thu" → ' +
     '[{"noi_dung":"Chủ quán không muốn giảm giá món chính","hang_muc":"gioi_han","chi_tiet":{},"la_doan":false}]; "doanh thu hôm nay bao nhiêu" → [].\n\nCÂU: ' +
     question.replace(/[\n\r]+/g, ' ').slice(0, 500);
@@ -292,8 +358,14 @@ export function docRutGhiNho(text: string): UngVien[] {
     const a = JSON.parse(m[0]);
     if (!Array.isArray(a)) return [];
     return a.filter((x) => x && typeof x.noi_dung === 'string' && (typeof x.hang_muc === 'string' || typeof x.loai === 'string'))
-      .map((x) => ({ noi_dung: x.noi_dung, loai: x.loai, hang_muc: x.hang_muc, chi_tiet: x.chi_tiet, la_doan: x.la_doan === true,
-        ...(typeof x.viec === 'string' ? { viec: x.viec } : {}), ...(typeof x.thay === 'string' ? { thay: x.thay } : {}) }));
+      .map((x) => {
+        // lần 245: mô hình đôi khi đặt viec / thay vào trong chi_tiet
+        const ct = x.chi_tiet && typeof x.chi_tiet === 'object' ? x.chi_tiet : {};
+        const viec = typeof x.viec === 'string' ? x.viec : typeof ct.viec === 'string' && ['sua', 'het_hieu_luc', 'bo_qua'].includes(ct.viec) ? ct.viec : undefined;
+        const thay = typeof x.thay === 'string' ? x.thay : typeof ct.thay === 'string' ? ct.thay : undefined;
+        return { noi_dung: x.noi_dung, loai: x.loai, hang_muc: x.hang_muc, chi_tiet: x.chi_tiet, la_doan: x.la_doan === true,
+          ...(viec ? { viec } : {}), ...(thay ? { thay } : {}) };
+      });
   } catch {
     return [];
   }

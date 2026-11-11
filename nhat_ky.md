@@ -7,6 +7,14 @@
 
 
 
+## 2026-11-12 — Bộ nhớ quán: lệnh nhớ / quên, nhân viên nói trái, dọn mỗi ngày (lần 245–248 ĐÃ ÁP)
+
+- ✅ Lần 245 ĐÃ ÁP 12/11 01:29 (TS 20261112_012940; bo_nho_quan.ts + index.ts): giai đoạn 4 — lượt rút ghi nhớ chạy song song lúc trả lời, mã chèn dòng "Em đã ghi nhớ / chờ chủ quán xác nhận / đã bỏ / chỉ chủ quán bỏ được" ngay trong câu; lệnh nhớ / quên (`lenhBoNho`), Boom không tự hứa. Bộ kín MỚI lk_kin2 66 câu × 2 lượt, chấm bằng mã: bỏ đúng 25 → 35 / 38, bỏ nhầm 3 → 4, ghi đúng 48 → 51 / 56, báo không có quyền 0 → 9 / 10, Boom nói sai việc ghi 4 → 0 / 88. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l245_ap_dung.sh 20261112_012940`.
+- ✅ Lần 246 ĐÃ ÁP 12/11 01:39 (TS 20261112_013949; index.ts): quán không bật bộ nhớ (Demo) mà nhờ nhớ / quên → dòng mã "bộ nhớ quán chưa bật". Đã thấy trên Demo. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l246_ap_dung.sh 20261112_013949`.
+- ✅ Lần 247 ĐÃ ÁP 12/11 01:59 (TS 20261112_015907; bo_nho_quan.ts + index.ts): lượt rút biết người nói; nhân viên nói trái vẫn "sua" để hỏi lại chủ quán; so trùng giữ số ("5 bàn" ≠ "8 bàn"). Bộ kín MỚI gh_kin2 60 câu × 3 lượt: hỏi lại 15 → 30 / 72, bỏ nhầm 4 → 0; giờ giấc nay ≥ 93%. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l247_ap_dung.sh 20261112_015907`. ➡️ Hỏi lại khi nhân viên nói ngầm vẫn ~42%.
+- ✅ Lần 248 ĐÃ ÁP 12/11 02:23 (TS 20261112_022340; migration `20261112_boom_bo_nho_quan_v3` cột don_luc, test 3/3 + don_dem.ts + index.ts): giai đoạn 5 — dọn bộ nhớ quán ở lượt hỏi đầu sau ≥ 20 giờ (không cron): kế hoạch đã qua hết hiệu lực, điều trùng ý gộp; mã chặn điều không có mốc, việc đã thử, âm lịch chưa qua Tết 20 ngày. Bộ kín MỚI dd_kin2 40 quán × 3 lượt: hết hiệu lực đúng 70 / 102, bỏ nhầm 2, mã chặn 22 đề xuất sai; gộp 69 / 75, gộp sai 0. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l248_ap_dung.sh 20261112_022340`.
+- ℹ️ Demo bỏ qua bộ nhớ nên ghi nhớ / dọn chưa chạy trên dữ liệu thật. Phần lần 214 của index.ts vẫn chưa commit (commit này chỉ có phần 245–248). Giai đoạn 6 (màn Cài đặt theo hạng mục) cần app mới.
+
 ## 2026-11-11 — Bộ nhớ quán bản 2, giai đoạn 1 (lần 240) ĐÃ ÁP
 
 - ✅ Thiết kế bộ nhớ quán bản 2: `.docs/thiet-ke-bo-nho-quan-boom.md` (hai tầng hồ sơ / sổ ghi nhớ, 9 hạng mục, ghi kiểu Mem0, dọn hằng đêm, 6 giai đoạn). Giai đoạn 0: bộ nhớ bật từ 09/11 nhưng cả 3 bảng 0 dòng — quán thật không hỏi từ 05/11, Demo bị bỏ qua.

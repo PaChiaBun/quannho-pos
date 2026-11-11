@@ -216,6 +216,40 @@ Theo hạng mục, bản 2 hơn rõ ở `nhan_su_tien` (1 → 10 / 12), `cach_no
 
 `gio_giac` vẫn yếu nhất (17 / 30).
 
+### Kết quả giai đoạn 4 (lần 245, đã áp 12/11 01:29)
+
+Làm phía máy chủ, không cần app mới (mục 9 câu 2: chọn máy chủ chèn). Lượt rút ghi nhớ nay chạy **song song** với lúc trả lời (chờ thêm tối đa 1,5 giây, chỉ ghi khi câu trả lời xong), nên dòng báo nằm ngay trong câu trả lời, không phải câu kế tiếp. `dongGhiNho` (mã, không qua mô hình) báo: "Em đã ghi nhớ: …", "Em ghi lại, chờ chủ quán xác nhận: …", "Em đã bỏ ghi nhớ: …", "Điều … do chủ quán nói, chỉ chủ quán bỏ được." `lenhBoNho` nhận lệnh nhớ / quên bằng chữ → lời dặn Boom không tự hứa đã ghi / đã xoá, và câu báo khi không rút được gì. Lượt rút: lệnh quên → `het_hieu_luc`; lệnh quên không trỏ được điều nào không thành ghi nhớ rác; chủ quán bảo bỏ thì bỏ dù mô hình gắn "đoán".
+
+Bộ kín `lk_kin1` (66 câu, 2 lượt) tìm ra lỗi để sửa; đo trên bộ kín MỚI `lk_kin2` (22 nhờ nhớ, 22 nhờ quên, 22 câu thường có chữ dễ nhầm như "khách quen", "xoá món"; 2 lượt), chấm bằng mã:
+
+| | Bản 243 | Bản 245 |
+|---|---|---|
+| Bỏ đúng điều được bảo quên / đã đổi | 25 / 38 | **35 / 38** |
+| Bỏ nhầm điều còn đúng | 3 | 4 |
+| Ghi đúng điều mới | 48 / 56 | **51 / 56** |
+| Không lưu điều không nên lưu | 8 / 8 | 8 / 8 |
+| Nhân viên không bỏ được điều chủ quán nói | 10 / 10 | 10 / 10 |
+| …và được báo rõ | 0 / 10 | **9 / 10** |
+| Câu trả lời nhận đã ghi / bỏ mà thật ra không | 4 / 88 | **0 / 88** |
+
+Nhận lệnh bằng chữ chỉ 17 / 44 trên bộ mới (cách nói rất đa dạng), câu thường nhận nhầm 0 / 22; nhận sót chỉ làm mất lời dặn và câu báo khi không rút được gì, việc ghi / bỏ vẫn do lượt rút chạy cho mọi câu.
+
+Lần 246 (đã áp 12/11 01:39): thử Demo sau lần 245, quán không bật bộ nhớ mà câu "nhớ giúp em quán nghỉ thứ 2" bị hiểu thành câu tư vấn (thử máy mình 2 / 6 lượt) → mã chèn "Bộ nhớ quán của Bé Boom chưa bật cho quán này, nên em chưa ghi nhớ hay bỏ được điều này." Đã thấy dòng này trên máy Demo.
+
+### Lần 247 (đã áp 12/11 01:59): người nói, nhân viên nói trái
+
+Lượt rút trước đây không biết ai đang nói → nhân viên nói trái điều chủ quán (kể cả nói ngầm: "quán mình vẫn bán bia mà") hay bị trả [] hoặc "them". Nay lời dặn có dòng NGƯỜI NÓI và dặn vẫn "sua" trỏ gN (mã hỏi lại chủ quán, không tự sửa); thêm ví dụ giờ đóng cửa nằm trong câu hỏi. `trungY` giữ số 1 chữ số: "Quán có 5 bàn" từng bị coi trùng "Quán có 8 bàn" nên không hỏi lại.
+
+Bộ kín `gh_kin1` tìm lỗi; bộ kín MỚI `gh_kin2` (24 giờ giấc, 24 nhân viên nói trái, 12 không trái; 3 lượt), chấm bằng mã: hỏi lại **15 → 30 / 72**, bỏ nhầm **4 → 0**, hỏi thừa 2 → 1, bỏ đúng 30 / 30 cả hai, ghi đúng điều mới 80 → 79 / 87, giờ giấc 69 → 64 / 69 (chạy lại 2 lượt không còn ca hỏng → dao động). Giờ giấc nay rút tốt (≥ 93%); hỏi lại vẫn chỉ ~42%: mô hình hay trả [] khi nhân viên nói ngầm.
+
+### Kết quả giai đoạn 5 (lần 248, đã áp 12/11 02:23): dọn mỗi ngày
+
+Không cron (mục 9 câu 3): lượt hỏi đầu tiên sau ≥ 20 giờ của quán chạy dọn nền sau câu trả lời (`donBoNho` trong `index.ts`, hàm thuần ở `don_dem.ts`); ghi mốc `boom_quan_ho_so.don_luc` (migration `20261112_boom_bo_nho_quan_v3`) trước khi dọn. Chỉ quán đang dùng Boom mới được dọn; Demo bỏ qua như bộ nhớ.
+
+Mô hình đề xuất `het` (kế hoạch / chuyện có mốc đã qua) và `gop` (nhóm cùng ý → một câu). Mã kiểm: chỉ hết hiệu lực điều có mốc thời gian (luật chữ), không bao giờ "đã thử"; điều dính âm lịch chỉ hết khi đã qua Tết ≥ 20 ngày (bảng ngày Tết 2026–2031, cũng đưa vào lời dặn); gộp chỉ khi cùng hạng mục / mức xem / trạng thái / nguồn và câu gộp còn dính từng điều cũ; dòng gộp trỏ `thay_cho`, thêm trước rồi mới cho dòng cũ hết hiệu lực. Chưa làm: "cần hỏi lại" điều quá hạn (cần cột mới), dựng lại tầng 1 (giai đoạn 3 không áp).
+
+Bộ kín `dd_kin1` tìm lỗi (mô hình không biết Tết 2027 rơi vào 6/2: bỏ nhầm "nghỉ Tết mùng 1–5" ngày mùng 3). Bộ kín MỚI `dd_kin2` (40 quán, 231 điều, 3 lượt), chấm bằng mã: hết hiệu lực đúng **70 / 102**, bỏ nhầm **2**, mã chặn **22** đề xuất bỏ nhầm của mô hình; gộp đúng **69 / 75**, gộp sai 0, mất chi tiết 0.
+
 ### Kết quả giai đoạn 3 (lần 244, KHÔNG có lợi, đề xuất không áp)
 
 Tầng 1 (quán, giờ, khách, không muốn, mục tiêu, cách trả lời; ≤ 6 dòng) luôn đưa; tầng 2 (đã thử, món, nhân sự tiền…; ≤ 6 dòng) chọn theo loại câu hỏi (bảng luật chữ `CAU_HM`) hoặc trùng chữ riêng; mỗi dòng có nhãn hạng mục.
@@ -275,8 +309,8 @@ Chỉ áp khi (a), (d), (e) không tệ hơn bản hiện tại và (b) − (c) 
 ## 9. Cần Chủ Quán quyết
 
 1. ~~Cho phép đọc bảng ghi nhớ thật một lần để làm giai đoạn 0 không?~~ Đã đọc 11/11: bảng trống (xem mục 2). Còn quyết: có tạo một quán thử riêng (không phải Demo) để bộ nhớ chạy thật vài ngày không?
-2. Dòng "em đã ghi nhớ": máy chủ chèn vào câu trả lời kế tiếp, hay app hiển thị riêng (cần bản app mới)?
-3. Dọn dẹp hằng đêm chạy trên máy chủ (cron), có đồng ý thêm một việc định kỳ không?
+2. ~~Dòng "em đã ghi nhớ": máy chủ chèn hay app hiển thị riêng?~~ Lần 245: máy chủ chèn ngay trong câu trả lời đó (không cần app mới).
+3. ~~Dọn dẹp hằng đêm chạy cron?~~ Lần 248: không cron, dọn ở lượt hỏi đầu tiên sau ≥ 20 giờ.
 4. Lượt ghi nhớ dùng mô hình rẻ hơn để đỡ tiền, hay giữ `gpt-6-luna` cho chắc?
 
 ## Nguồn
