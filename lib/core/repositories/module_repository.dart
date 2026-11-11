@@ -49,8 +49,6 @@ class ActiveIdsFetch {
   final bool ok; // false = lỗi mạng/quyền khi đọc
 }
 
-enum ModuleBootstrap { useRemote, useDefaultsNoSave, migrateAndSave }
-
 /// Gộp thứ tự do màn hình gửi lên với danh sách đang có trên máy chủ.
 ///
 /// Màn "Sửa → Xong" chỉ để SẮP XẾP; việc bật/tắt module đi qua activate/deactivate riêng.
@@ -68,22 +66,6 @@ List<String> mergeModuleOrder(List<String> serverIds, List<String> uiOrder) {
     if (!merged.contains(id)) merged.add(id);
   }
   return merged;
-}
-
-/// Quyết định khi nạp cấu hình module.
-///
-/// LỖI TỪNG GÂY MẤT MODULE (KAY, 18/10): sau khi đăng xuất/đổi ca máy chuyển sang khóa anon,
-/// RLS trả về "không có dòng" -> code coi là "lần đầu" và GHI ĐÈ cấu hình thật bằng danh sách
-/// mặc định/cũ trên máy (mất Bếp, Bàn, In hóa đơn...) -> nút Gửi bếp bị vô hiệu.
-/// Nay chỉ được ghi mặc định khi: đọc thành công, thật sự chưa có dòng, VÀ đang đăng nhập bằng JWT.
-ModuleBootstrap decideModuleBootstrap({
-  required bool fetchOk,
-  required bool rowFound,
-  required bool authenticated,
-}) {
-  if (rowFound) return ModuleBootstrap.useRemote;
-  if (fetchOk && authenticated) return ModuleBootstrap.migrateAndSave;
-  return ModuleBootstrap.useDefaultsNoSave;
 }
 
 /// Header `Authorization: Bearer <jwt>` có phải JWT role `authenticated` còn hạn không.
@@ -196,30 +178,20 @@ class ModuleRepository {
     final fetched = await _fetchActiveIdsResult(storeId);
     var activeIds = fetched.ids;
 
+    // KHÔNG BAO GIỜ ghi lên máy chủ từ đây. "Không thấy dòng" KHÁC "chưa có dòng": RLS lọc theo
+    // x-store-id/JWT của TỪNG lệnh nên một lệnh mang header lệch cũng ra rỗng dù đã đăng nhập
+    // (KAY 11/11 08:42: iPhone chủ quán đọc rỗng rồi ghi đè 15 module thành 4 mặc định).
+    // Quán mới đã được gieo cấu hình lúc tạo quán (StoreAuthService.seedDefaults).
+    final rowSeen = activeIds != null;
     if (activeIds == null) {
-      final decision = decideModuleBootstrap(
-        fetchOk: fetched.ok,
-        rowFound: false,
-        authenticated: jwtIsAuthenticated(_sb.rest.headers['Authorization']),
-      );
-      if (decision == ModuleBootstrap.migrateAndSave) {
-        // ── Lần đầu thật sự (đọc thành công, chưa có dòng, đã đăng nhập JWT) ──
-        activeIds = await _migrateFromSharedPrefs();
-        await _saveActiveIds(storeId, activeIds);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(_kLegacyPrefsKey);
-      } else {
-        // Đọc lỗi hoặc đang dùng khóa anon: KHÔNG ghi đè cấu hình thật trên máy chủ.
-        final lastGood = _lastGoodIds[storeId] ?? await readLastGoodIds(storeId);
-        activeIds = lastGood ?? await _migrateFromSharedPrefs();
-        if (_warnedStores.add(storeId)) {
-          AppLogger.warning(
-            'modules',
-            'Không đọc được cấu hình module (ok=${fetched.ok}) -> dùng '
-            '${lastGood != null ? "bản gần nhất" : "mặc định"} '
-            'tạm thời, KHÔNG ghi lên máy chủ',
-          );
-        }
+      final lastGood = _lastGoodIds[storeId] ?? await readLastGoodIds(storeId);
+      activeIds = lastGood ?? await _migrateFromSharedPrefs();
+      if (_warnedStores.add(storeId)) {
+        AppLogger.warning(
+          'modules',
+          'Không đọc được cấu hình module (ok=${fetched.ok}, thấy dòng=false) -> dùng '
+          '${lastGood != null ? "bản gần nhất" : "mặc định"} tạm thời, KHÔNG ghi lên máy chủ',
+        );
       }
     }
 
@@ -242,7 +214,8 @@ class ModuleRepository {
       }
     }
 
-    return (modules: result, ok: fetched.ok);
+    // Không thấy dòng = danh sách tạm → provider tự đọc lại cho tới khi thấy.
+    return (modules: result, ok: fetched.ok && rowSeen);
   }
 
   // ── Migrate từ SharedPreferences ─────────────────────────────────────────
@@ -291,10 +264,11 @@ class ModuleRepository {
       AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
       return;
     }
-    var activeIds = fetched.ids;
+    final activeIds = fetched.ids;
     if (activeIds == null) {
-      final all = await getAll();
-      activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
+      // Không thấy dòng (RLS/header lệch) -> không ghi, tránh đè cấu hình thật bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không thấy cấu hình hiện tại');
+      return;
     }
     if (!activeIds.contains(moduleId)) {
       activeIds.add(moduleId);
@@ -311,10 +285,11 @@ class ModuleRepository {
       AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
       return;
     }
-    var activeIds = fetched.ids;
+    final activeIds = fetched.ids;
     if (activeIds == null) {
-      final all = await getAll();
-      activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
+      // Không thấy dòng (RLS/header lệch) -> không ghi, tránh đè cấu hình thật bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không thấy cấu hình hiện tại');
+      return;
     }
     if (activeIds.contains(moduleId)) {
       activeIds.remove(moduleId);
@@ -334,7 +309,7 @@ class ModuleRepository {
     }
     final serverIds = current.ids;
     if (serverIds == null) {
-      await _saveActiveIds(storeId, orderedIds);
+      AppLogger.warning('modules', 'Bỏ qua lưu thứ tự module: không thấy cấu hình hiện tại');
       return;
     }
     final merged = mergeModuleOrder(serverIds, orderedIds);

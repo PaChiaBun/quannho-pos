@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -25,50 +26,34 @@ BanSessionItemModel _item(String status, DateTime addedAt) =>
     );
 
 void main() {
-  group('không ghi đè cấu hình module khi đọc lỗi/anon', () {
-    test('có dòng cấu hình -> dùng bản máy chủ', () {
-      expect(
-        decideModuleBootstrap(
-          fetchOk: true,
-          rowFound: true,
-          authenticated: false,
-        ),
-        ModuleBootstrap.useRemote,
-      );
+  group('không ghi đè cấu hình module khi đọc ra rỗng', () {
+    // KAY 11/11 08:42: đọc rỗng vì RLS (đã đăng nhập JWT) rồi ghi đè 15 module thành 4 mặc định.
+    final src = File('lib/core/repositories/module_repository.dart').readAsStringSync();
+    String body(String sig, String next) =>
+        src.substring(src.indexOf(sig), src.indexOf(next, src.indexOf(sig)));
+
+    test('load() không bao giờ ghi lên máy chủ', () {
+      final load = body('Future<({List<ModuleConfig> modules, bool ok})> load()',
+          '// ── Migrate từ SharedPreferences');
+      expect(load.contains('_saveActiveIds'), isFalse);
+      expect(load.contains('fetched.ok && rowSeen'), isTrue);
     });
-    test('anon (đăng xuất/đổi ca) đọc ra rỗng -> KHÔNG ghi mặc định', () {
-      expect(
-        decideModuleBootstrap(
-          fetchOk: true,
-          rowFound: false,
-          authenticated: false,
-        ),
-        ModuleBootstrap.useDefaultsNoSave,
-      );
-    });
-    test('đọc lỗi mạng -> KHÔNG ghi mặc định', () {
-      expect(
-        decideModuleBootstrap(
-          fetchOk: false,
-          rowFound: false,
-          authenticated: true,
-        ),
-        ModuleBootstrap.useDefaultsNoSave,
-      );
-    });
-    test(
-      'lần đầu thật (đọc ok, chưa có dòng, đã đăng nhập JWT) -> được ghi',
-      () {
+
+    test('bật/tắt/sắp xếp: không thấy dòng thì bỏ qua, không ghi danh sách tạm', () {
+      for (final sig in [
+        'Future<void> activate(',
+        'Future<void> deactivate(',
+        'Future<void> updatePositions(',
+      ]) {
+        final fn = body(sig, '\n  }\n');
+        final nullBranch = fn.substring(fn.indexOf('== null'));
         expect(
-          decideModuleBootstrap(
-            fetchOk: true,
-            rowFound: false,
-            authenticated: true,
-          ),
-          ModuleBootstrap.migrateAndSave,
+          nullBranch.substring(0, nullBranch.indexOf('return;')).contains('_saveActiveIds'),
+          isFalse,
+          reason: sig,
         );
-      },
-    );
+      }
+    });
   });
 
   group('jwtIsAuthenticated', () {

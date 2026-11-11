@@ -103,12 +103,13 @@ final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
   return _modulesWithRetry(ref);
 });
 
-/// Chỉ active modules (refresh khi session thay đổi)
-final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
-  ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  return _modulesWithRetry(ref).map(
-    (all) => all.where((m) => m.isActive).toList(),
-  );
+/// Chỉ active modules — đi theo [allModulesProvider]: nạp lại danh sách (mở lại app, kéo làm mới,
+/// nút Gửi bếp kiểm lại) là nút Bếp nhận ngay. Trước đây là luồng riêng, chỉ đọc 1 lần
+/// (KAY 11/11 13:23: Bếp đã bật lại từ 12:21 mà máy Phú vẫn báo "module Bếp đang tắt").
+final activeModulesProvider = Provider<AsyncValue<List<ModuleConfig>>>((ref) {
+  return ref
+      .watch(allModulesProvider)
+      .whenData((all) => all.where((m) => m.isActive).toList());
 });
 
 /// Mở app lúc mất mạng thì danh sách chỉ là tạm: đọc lại tới khi được, không bắt nhân viên

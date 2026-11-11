@@ -242,13 +242,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final session = ref.read(sessionProvider);
     if (session == null || !session.hasStore) return;
     try {
-      final membership = await UserAuthService.fetchStoreMembership(
-        session.userId,
-      );
+      // So đúng quán đang dùng. Trước đây lấy quán ĐẦU TIÊN trong danh sách → người có nhiều quán
+      // khác vai trò bị tự chuyển sang quán khác (đổi luôn x-store-id).
+      final stores = await UserAuthService.getUserStores(session.userId);
+      final membership = stores
+          .where((s) => s.storeId == session.storeId)
+          .firstOrNull;
       if (!mounted || membership == null) return;
       // Chủ quán đổi tên ở máy khác → máy này nhận tên mới khi mở lại Trang chủ
-      if (membership.storeId == session.storeId &&
-          membership.storeName != session.storeName) {
+      if (membership.storeName != session.storeName) {
         await ref
             .read(sessionProvider.notifier)
             .updateStoreName(membership.storeName);

@@ -37,11 +37,19 @@ class _FakeRepo extends ModuleRepository {
   }
 }
 
+class _ChangingRepo extends ModuleRepository {
+  bool bepBat = false;
+
+  @override
+  Future<({List<ModuleConfig> modules, bool ok})> load() async =>
+      (modules: [_banHang, if (bepBat) _bep], ok: true);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  ProviderContainer containerWith(_FakeRepo repo) {
+  ProviderContainer containerWith(ModuleRepository repo) {
     final c = ProviderContainer(
       overrides: [moduleRepositoryProvider.overrideWithValue(repo)],
     );
@@ -91,6 +99,22 @@ void main() {
       moduleRetryDelay(0) + const Duration(milliseconds: 300),
     );
     expect(repo.calls, 1);
+  });
+
+  // KAY 11/11 13:23: Bếp bật lại từ 12:21 mà máy Phú vẫn chặn gửi bếp — nạp lại danh sách
+  // (mở lại app / kéo làm mới) chỉ làm mới allModulesProvider, active giữ bản cũ.
+  test('nạp lại allModulesProvider thì danh sách module bật (nút Bếp) cũng mới', () async {
+    final repo = _ChangingRepo();
+    final c = containerWith(repo);
+    final sub = c.listen(activeModulesProvider, (_, _) {});
+    addTearDown(sub.close);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(c.read(activeModulesProvider).value!.map((m) => m.id), ['pos']);
+
+    repo.bepBat = true;
+    c.invalidate(allModulesProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(c.read(activeModulesProvider).value!.map((m) => m.id), contains('kitchen'));
   });
 
   test('giãn dần lần đọc lại, tối đa 30 giây', () {

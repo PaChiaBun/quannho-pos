@@ -11804,7 +11804,22 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
     // dễ bỏ sót nên nhân viên tưởng "không order được") và ghi log để chủ quán biết.
     if (!isKitchenActive) {
       return GestureDetector(
-        onTap: () {
+        onTap: () async {
+          // Danh sách module trên máy có thể đã cũ: đọc lại máy chủ một lần trước khi chặn.
+          try {
+            final all = await ref.refresh(allModulesProvider.future);
+            if (!mounted) return;
+            if (all.any((m) => m.id == 'kitchen' && m.isActive)) {
+              AppLogger.action(
+                'send_kitchen_modules_reloaded',
+                'Gửi bếp: danh sách module trên máy cũ, đã đọc lại thấy Bếp bật',
+                level: 'WARNING',
+              );
+              if (hasUnsent && !_isSending) _handlePress();
+              return;
+            }
+          } catch (_) {}
+          if (!mounted) return;
           AppLogger.action(
             'send_kitchen_blocked',
             'Gửi bếp bị chặn: module Bếp đang tắt',
