@@ -15,6 +15,30 @@ void main() {
     expect(skip, lessThan(loop.indexOf('_querySessionItems(sessionId)')));
   });
 
+  // Bò Đen 11/11: vòng cũ bị hủy (invalidate) vẫn hỏi thêm một lượt → 3 lượt trùng trên 5G.
+  test('vòng hỏi món dừng ngay khi bị hủy, không hỏi/ghi lỗi thêm', () {
+    final loop = repo.substring(repo.indexOf('watchSessionItems(String sessionId)'));
+    expect(loop, contains('out.onCancel = () => active = false;'));
+    expect(loop, contains('while (active())'));
+    final query = loop.indexOf('await _querySessionItems(sessionId)');
+    final stop = loop.indexOf('if (!active()) break;', query);
+    expect(stop, greaterThan(query));
+    expect(stop, lessThan(loop.indexOf('out.add(items)')));
+    final caught = loop.indexOf('} catch (e) {', query);
+    expect(loop.indexOf('if (!active()) break;', caught), lessThan(loop.indexOf('failures++', caught)));
+  });
+
+  test('vòng trạng thái bàn: dừng khi bị hủy, có hạn chót, lỗi mạng không xóa trắng sơ đồ', () {
+    final loop = repo.substring(
+      repo.indexOf('watchActiveSessions()'),
+      repo.indexOf('Future<BanSessionModel> openSession('),
+    );
+    expect(loop, contains('out.onCancel = () => active = false;'));
+    expect(loop, contains('.timeout(_sessionItemsTimeout)'));
+    expect(loop, contains('out.add(lastGood ?? {});'));
+    expect(loop, isNot(contains('async*')));
+  });
+
   test('bàn đã thanh toán thì màn bàn thôi theo dõi món', () {
     final ok = screen.indexOf('setState(() => _settledItems = items);');
     expect(ok, greaterThan(screen.indexOf("'Atomic V5 settlement")));

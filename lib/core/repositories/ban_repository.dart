@@ -502,28 +502,49 @@ class BanRepository {
       .eq('id', id);
 
   // ── Sessions ───────────────────────────────────────────────────────────────
-  Stream<Map<String, BanSessionModel>> watchActiveSessions() async* {
-    while (true) {
+  /// Bò Đen 11/11 (5G chập chờn): lỗi mạng từng trả {} làm cả sơ đồ bàn nháy "trống",
+  /// request treo không hạn chót, và vòng cũ bị hủy (invalidate) vẫn hỏi thêm một lượt.
+  Stream<Map<String, BanSessionModel>> watchActiveSessions() {
+    var active = true;
+    final out = StreamController<Map<String, BanSessionModel>>();
+    out.onCancel = () => active = false;
+    out.onListen = () => _pollActiveSessions(out, () => active);
+    return out.stream;
+  }
+
+  Future<void> _pollActiveSessions(
+    StreamController<Map<String, BanSessionModel>> out,
+    bool Function() active,
+  ) async {
+    Map<String, BanSessionModel>? lastGood;
+    while (active()) {
       final storeId = await _storeId();
+      if (!active()) break;
       if (storeId == null) {
-        yield {};
+        out.add({});
       } else {
         try {
           final rows = await _sb
               .from('ban_sessions')
               .select()
               .eq('store_id', storeId)
-              .eq('status', 'open');
+              .eq('status', 'open')
+              .timeout(_sessionItemsTimeout);
+          if (!active()) break;
           final sessions = rows.map(BanSessionModel.fromMap).toList();
-          yield {for (final s in sessions) s.tableId: s};
+          lastGood = {for (final s in sessions) s.tableId: s};
+          out.add(lastGood);
         } catch (e) {
+          if (!active()) break;
           debugPrint('[BanRepository] watchActiveSessions fetch error: $e');
-          yield {};
+          // Giữ trạng thái bàn tốt gần nhất; chỉ trả rỗng khi chưa từng tải được.
+          out.add(lastGood ?? {});
         }
       }
       // Poll every 8 seconds
       await Future.delayed(const Duration(seconds: 8));
     }
+    await out.close();
   }
 
   Future<BanSessionModel> openSession(
@@ -653,10 +674,25 @@ class BanRepository {
     }
   }
 
-  Stream<List<BanSessionItemModel>> watchSessionItems(String sessionId) async* {
+  /// Bò Đen 11/11: mỗi lần làm mới (invalidate) vòng cũ vẫn chạy thêm một lượt hỏi
+  /// sau khi bị hủy (async* chỉ dừng ở yield) → 3 lượt hỏi trùng cùng lúc trên 5G yếu.
+  /// Dùng cờ `active` để vòng cũ dừng ngay sau mỗi lần chờ.
+  Stream<List<BanSessionItemModel>> watchSessionItems(String sessionId) {
+    var active = true;
+    final out = StreamController<List<BanSessionItemModel>>();
+    out.onCancel = () => active = false;
+    out.onListen = () => _pollSessionItems(sessionId, out, () => active);
+    return out.stream;
+  }
+
+  Future<void> _pollSessionItems(
+    String sessionId,
+    StreamController<List<BanSessionItemModel>> out,
+    bool Function() active,
+  ) async {
     List<BanSessionItemModel>? lastGood;
     var failures = 0;
-    while (true) {
+    while (active()) {
       // App chạy nền (tắt màn hình, về trang chủ): không hỏi máy chủ, quay lại là tải ngay.
       final life = WidgetsBinding.instance.lifecycleState;
       if (life != null && life != AppLifecycleState.resumed) {
@@ -665,6 +701,7 @@ class BanRepository {
       }
       try {
         final items = await _querySessionItems(sessionId);
+        if (!active()) break;
         if (failures > 0) {
           AppLogger.info(
             'ban_items',
@@ -673,8 +710,9 @@ class BanRepository {
         }
         failures = 0;
         lastGood = items;
-        yield items;
+        out.add(items);
       } catch (e) {
+        if (!active()) break;
         failures++;
         // Ghi lên cloud ở lần lỗi đầu và mỗi 12 lần sau đó (tránh spam log).
         if (failures == 1 || failures % 12 == 0) {
@@ -685,13 +723,14 @@ class BanRepository {
         }
         // Giữ danh sách tốt gần nhất thay vì xóa trắng màn hình.
         if (lastGood != null) {
-          yield lastGood;
+          out.add(lastGood);
         } else if (failures == 1) {
-          yield [];
+          out.add([]);
         }
       }
       await Future.delayed(Duration(seconds: failures > 0 ? 2 : 5));
     }
+    await out.close();
   }
 
   Future<void> addSessionItem({
