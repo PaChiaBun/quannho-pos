@@ -7,6 +7,21 @@
 
 
 
+## 2026-11-12 — Phát hành 1.0.7 build 32 → 34 (thời tiết + Boom cố vấn + sửa mất module + màn bàn mạng yếu)
+
+- ✅ Build 32 (commit `8897f78`, Chủ Quán "Lên bản 1.0.7 đi"): chỉ tăng số so với 910f97c (lối vào Boom từ cảnh báo thời tiết, báo hết lượt 429). Web `/pos` + APK + Windows `.exe` đã lên; `app_versions` Windows 32 (Chủ Quán chạy SQL).
+- ✅ Build 33 (commit `7f134c4`, Chủ Quán "Làm bản 33"): sửa mất module KAY 11/11 — nạp module không bao giờ ghi lên máy chủ, bật / tắt / sắp xếp bỏ qua khi không thấy cấu hình, `activeModulesProvider` theo `allModulesProvider`, nút Gửi bếp đọc lại module, kiểm vai trò đúng quán đang dùng. Web + APK đã lên; Windows workflow `startup_failure` 2 lần.
+- ✅ Build 34 (commit `df3e31e`, Chủ Quán "đưa luôn phần sửa bò đen"): `watchSessionItems` / `watchActiveSessions` dừng ngay khi bị hủy (hết 3 vòng hỏi trùng), trạng thái bàn có hạn chót 10 giây, lỗi mạng giữ sơ đồ cũ. Test 1215 qua, 1 hỏng có sẵn (`huong_dan_dong_bo_test`: bài hướng dẫn cần rà lại, không phải lỗi app).
+  - Web `/pos` 34 (sao lưu `pos_backup_20261112_040500`, main.dart.js `4d9fb193…`), APK 34 (versionCode 34, chứng chỉ `5583d121…`, sha `3ff3b3b8…`), Windows `.exe` 34 (workflow 43099678607, sha `37d1fafe…`; Mac tải đứt nên cho VPS tải thẳng link tạm GitHub). Mã băm công khai khớp; bản cũ ở `/root/quannho-backups/web-download/*_truoc_107b3{2,3,4}_*`.
+  - `app_versions`: Windows 34 + Android 34 đã ghi (Chủ Quán chạy `db-fix/phat_hanh_107b34_app_versions.sql`, `db-fix/phat_hanh_107b34_android.sql`). Ghi chú cập nhật câu cuối "Tinh chỉnh thêm các tính năng" (Chủ Quán dặn không ghi sửa Bò Đen).
+  - iOS 1.0.7 (34): tải lên bằng `xcodebuild -exportArchive` destination=upload, tạo bản 1.0.7, GỬI DUYỆT 12:29, tự phát hành khi duyệt.
+  - Google Play 34 (1.0.7): Chủ Quán kéo thả AAB, ghi chú thẻ `<vi>` (Play không nhận `<vi-VN>`), GỬI XEM XÉT ~12:45. Trên Play trước đó là 23 (1.0.6).
+- ⚠️ Lệnh ghi `app_versions` qua ssh psql bị hệ thống quyền chặn → Chủ Quán tự chạy tệp SQL.
+- ⚠️ Máy Android còn bản ≤ 23 bấm "Cập nhật ngay" sẽ đứng → cài tay APK một lần.
+- ➡️ Play duyệt xong: bấm **Xuất bản** (xuất bản có quản lý đang bật). Apple duyệt xong: ghi dòng iOS 1.0.7 (34) vào `app_versions`. Cài thử Windows 34 trên một máy trước máy thu ngân KAY. Rà bài hướng dẫn Boom theo `huong_dan_dong_bo_test`.
+
+
+
 ## 2026-11-12 — Bộ nhớ quán: lệnh nhớ / quên, nhân viên nói trái, dọn mỗi ngày (lần 245–248 ĐÃ ÁP)
 
 - ✅ Lần 245 ĐÃ ÁP 12/11 01:29 (TS 20261112_012940; bo_nho_quan.ts + index.ts): giai đoạn 4 — lượt rút ghi nhớ chạy song song lúc trả lời, mã chèn dòng "Em đã ghi nhớ / chờ chủ quán xác nhận / đã bỏ / chỉ chủ quán bỏ được" ngay trong câu; lệnh nhớ / quên (`lenhBoNho`), Boom không tự hứa. Bộ kín MỚI lk_kin2 66 câu × 2 lượt, chấm bằng mã: bỏ đúng 25 → 35 / 38, bỏ nhầm 3 → 4, ghi đúng 48 → 51 / 56, báo không có quyền 0 → 9 / 10, Boom nói sai việc ghi 4 → 0 / 88. Hoàn tác `ROLLBACK=1 bash db-fix/boom_l245_ap_dung.sh 20261112_012940`.
