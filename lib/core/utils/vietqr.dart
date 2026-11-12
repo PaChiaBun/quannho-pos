@@ -22,23 +22,27 @@ String vietQrCrc16(String data) {
 String buildVietQrPayload({
   required String bin,
   required String accountNo,
-  required int amount,
-  required String content,
+  int? amount, // null → QR tĩnh, khách tự nhập số tiền
+  String? content, // null → không gắn nội dung
 }) {
   if (!RegExp(r'^\d{6}$').hasMatch(bin)) throw ArgumentError('BIN phải 6 chữ số');
   if (!RegExp(r'^\d{4,19}$').hasMatch(accountNo)) throw ArgumentError('Số tài khoản không hợp lệ');
-  if (amount <= 0 || amount > 999999999999) throw ArgumentError('Số tiền không hợp lệ');
-  if (!RegExp(r'^[A-Za-z0-9 ]{1,25}$').hasMatch(content)) throw ArgumentError('Nội dung không hợp lệ');
+  if (amount != null && (amount <= 0 || amount > 999999999999)) {
+    throw ArgumentError('Số tiền không hợp lệ');
+  }
+  if (content != null && !RegExp(r'^[A-Za-z0-9 ]{1,25}$').hasMatch(content)) {
+    throw ArgumentError('Nội dung không hợp lệ');
+  }
   final merchant = _tlv('00', 'A000000727') +
       _tlv('01', _tlv('00', bin) + _tlv('01', accountNo)) +
       _tlv('02', 'QRIBFTTA');
   final body = _tlv('00', '01') +
-      _tlv('01', '12') + // mã dùng một lần, có số tiền
+      _tlv('01', amount == null ? '11' : '12') + // 11 tĩnh dùng nhiều lần, 12 một lần có số tiền
       _tlv('38', merchant) +
       _tlv('53', '704') + // VND
-      _tlv('54', amount.toString()) +
+      (amount == null ? '' : _tlv('54', amount.toString())) +
       _tlv('58', 'VN') +
-      _tlv('62', _tlv('08', content));
+      (content == null ? '' : _tlv('62', _tlv('08', content)));
   final withCrcId = '${body}6304';
   return withCrcId + vietQrCrc16(withCrcId);
 }

@@ -3827,6 +3827,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             orderNumber: orderNumber,
             createdAt: DateTime.now(),
             tableName: widget.table.label,
+            transferCode: VietQrService.transferCode(widget.session.id),
             items: [
               for (final item in items)
                 BillItem(
@@ -6813,6 +6814,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         orderNumber: 'TẠM TÍNH',
         createdAt: DateTime.now(),
         tableName: widget.tableName,
+        transferCode: VietQrService.transferCode(sessionId),
         items: [
           ...items.map(
             (i) => BillItem(
@@ -7412,12 +7414,18 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               );
             }
 
+            final transferCode = VietQrService.transferCode(
+              widget.items.isEmpty ? '' : widget.items.first.sessionId,
+            );
             final qrUrl = VietQrService.generateUrl(
               bankBin: bin,
               accountNo: accNo,
               accountName: accName,
               amount: finalTotal,
-              addInfo: '${widget.tableName} thanh toan',
+              addInfo: VietQrService.transferContent(
+                transferCode,
+                widget.tableName,
+              ),
             );
 
             final bank = VietQrService.findByBin(bin);
@@ -7488,6 +7496,26 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       fontSize: 11,
                     ),
                   ),
+                  if (transferCode.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Nội dung CK: $transferCode',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w900,
+                        color: _kNavy,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Nghe loa / xem app ngân hàng báo tiền về đúng số tiền rồi bấm "Đã nhận tiền".',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.black54,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -7558,7 +7586,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     color: _kOrange,
                   ),
             label: Text(
-              'Xác nhận',
+              _payMethod == 'transfer' ? 'Đã nhận tiền' : 'Xác nhận',
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w800,
                 fontSize: 14,

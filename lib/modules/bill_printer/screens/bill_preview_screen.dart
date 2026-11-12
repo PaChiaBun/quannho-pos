@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import '../../../core/services/vietqr_service.dart';
+import '../../../core/utils/vietqr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -48,6 +49,7 @@ class BillData {
   final String? footer; // Lời cuối hoá đơn — từ Settings "bill_footer"
   final BillType type;
   final String? waiterName;
+  final String? transferCode; // mã đơn QN… đưa vào nội dung CK của QR (bill bàn)
 
   const BillData({
     required this.shopName,
@@ -68,6 +70,7 @@ class BillData {
     this.footer,
     this.type = BillType.receipt,
     this.waiterName,
+    this.transferCode,
   });
 }
 
@@ -697,6 +700,7 @@ class BillPdfGenerator {
               : 90.0;
 
           pw.Widget? qrWidget;
+          String? transferNote;
           if (qrSource == 'custom_image') {
             if (qrImagePath.startsWith('data:image')) {
               try {
@@ -710,22 +714,32 @@ class BillPdfGenerator {
           } else {
             final bin = b.cfg<String>('bankBin', '970422');
             final accNo = b.cfg<String>('accountNo', '');
-            final accName = b.cfg<String>('accountName', '');
             if (accNo.isNotEmpty) {
-              final qrType = b.cfg<String>('qrType', 'dynamic');
-              final qrUrl = VietQrService.generateUrl(
-                bankBin: bin,
-                accountNo: accNo,
-                accountName: accName,
-                amount: qrType == 'static_amount' ? null : bill.total,
-                addInfo: qrType == 'static_amount' ? null : bill.orderNumber,
+              final isStatic =
+                  b.cfg<String>('qrType', 'dynamic') == 'static_amount';
+              final content = VietQrService.transferContent(
+                bill.transferCode ?? '',
+                bill.tableName ?? bill.orderNumber,
               );
-              qrWidget = pw.BarcodeWidget(
-                barcode: pw.Barcode.qrCode(),
-                data: qrUrl,
-                width: qrSize,
-                height: qrSize,
-              );
+              final amount = bill.total.round();
+              // In chuỗi VietQR chuẩn (app ngân hàng đọc được), không in đường dẫn ảnh.
+              try {
+                qrWidget = pw.BarcodeWidget(
+                  barcode: pw.Barcode.qrCode(),
+                  data: buildVietQrPayload(
+                    bin: bin,
+                    accountNo: accNo.replaceAll(RegExp(r'[\s.\-]'), ''),
+                    amount: isStatic || amount <= 0 ? null : amount,
+                    content: isStatic || content.isEmpty ? null : content,
+                  ),
+                  width: qrSize,
+                  height: qrSize,
+                );
+              } on ArgumentError catch (e) {
+                // Sai số TK/ngân hàng: bỏ QR, không làm hỏng cả bill.
+                AppLogger.warning('Bill','Bỏ QR chuyển khoản: ${e.message}');
+              }
+              transferNote = isStatic ? null : bill.transferCode;
             }
           }
 
@@ -754,6 +768,12 @@ class BillPdfGenerator {
                     ),
                   ),
                 ],
+                if (transferNote != null && transferNote.isNotEmpty)
+                  pw.Text(
+                    'Nội dung CK: $transferNote',
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(font: fontBold, fontSize: 9),
+                  ),
               ],
             ),
           );

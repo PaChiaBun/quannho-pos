@@ -7,6 +7,16 @@
 
 
 
+## 2026-11-12 — Thu chuyển khoản Chế độ 1: QR có mã đơn, nút "Đã nhận tiền", QR trên bill giấy đúng chuẩn (build 35)
+
+- ✅ Chủ Quán chọn hướng "Chế độ 1" sau khi phân tích SePay (webhook / cổng thanh toán / Bank Hub 500đ/gd + ký quỹ 30 triệu / OAuth2): quán không đăng ký gì, loa / app ngân hàng của quán báo tiền về, thu ngân bấm "Đã nhận tiền" → thanh toán + in bill như cũ. Số CK thật 30 ngày: KAY 449, Nhai Nhai 304, Bò Đen 183.
+- ✅ `VietQrService.transferCode` (QN + 6 ký tự đầu mã phiên bàn) và `transferContent` (không dấu, ≤ 25 ký tự): màn thanh toán bàn trước ghi `"Bàn 5 thanh toan"` (trùng mọi lần) nay `QN1A2B3C Ban 5`, hiện mã to dưới QR; nút đổi "Đã nhận tiền" khi chọn Chuyển khoản. Người bấm đã có ở `cashier_staff_id`, không đổi máy chủ.
+- ✅ Bill giấy: khối QR trước in ĐƯỜNG DẪN ẢNH img.vietqr.io (app ngân hàng không đọc là mã chuyển khoản) → in chuỗi VietQR chuẩn `buildVietQrPayload` (thêm QR tĩnh không số tiền), kèm dòng "Nội dung CK"; bill tạm tính + bill thanh toán bàn mang `BillData.transferCode`. Sai số TK thì bỏ QR, không hỏng bill.
+- ✅ Gỡ lựa chọn "SePay API (Tự động confirm)" + ô API key trong cấu hình khối QR (không có máy chủ xử lý, lưu khoá trên máy).
+- ✅ Test `test/services/vietqr_transfer_content_test.dart`; `flutter test` core + screens + services + modules 1058 qua.
+- ⚠️ Chưa xem giao diện trên máy thật; chưa dựng PDF bill có QR trong test (cần giả lập quán + mẫu). Tra lịch sử theo mã QN… chưa làm (mô tả do máy chủ ghi). QR COUNTER giữ `QR <mã>`.
+- ➡️ Chế độ 2 (SePay tự xác nhận) chờ SePay trả lời gói Shop có webhook không.
+
 ## 2026-11-12 — Phát hành 1.0.7 build 32 → 34 (thời tiết + Boom cố vấn + sửa mất module + màn bàn mạng yếu)
 
 - ✅ Build 32 (commit `8897f78`, Chủ Quán "Lên bản 1.0.7 đi"): chỉ tăng số so với 910f97c (lối vào Boom từ cảnh báo thời tiết, báo hết lượt 429). Web `/pos` + APK + Windows `.exe` đã lên; `app_versions` Windows 32 (Chủ Quán chạy SQL).
