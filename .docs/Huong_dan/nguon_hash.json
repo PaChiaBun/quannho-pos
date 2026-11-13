@@ -29,8 +29,8 @@
       "supabase/migrations/20261104_topping_bao_cao_v1.sql": "90417bacd6051a33"
     },
     "bep.md": {
-      "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
-      "lib/screens/kitchen_screen.dart": "d788ded3865f290d",
+      "lib/core/repositories/kitchen_repository.dart": "e9fe06d4a1b37367",
+      "lib/screens/kitchen_screen.dart": "2836851a6f7a98ea",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -71,7 +71,7 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "a8d1c42acdc06aaf",
+      "lib/core/providers/app_providers.dart": "c4c05630a1e75079",
       "lib/core/utils/quantity_formatter.dart": "2d36b37e9622aee8",
       "lib/modules/kho/repository/kho_repository.dart": "50e45fe6b23d3c9c",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "c14d5138282e39ff",
@@ -81,7 +81,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "8bf0d3b177d7c36e",
+      "lib/screens/ban_screen.dart": "1608743668069f2c",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -132,8 +132,8 @@
       "supabase/migrations/20261014_qr_chong_pha_v4.sql": "51c552567bbb2691"
     },
     "quan-ly-ban.md": {
-      "lib/core/repositories/ban_repository.dart": "23e888b138f83bb4",
-      "lib/screens/ban_screen.dart": "8bf0d3b177d7c36e",
+      "lib/core/repositories/ban_repository.dart": "8c2b17934e4664f9",
+      "lib/screens/ban_screen.dart": "1608743668069f2c",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"

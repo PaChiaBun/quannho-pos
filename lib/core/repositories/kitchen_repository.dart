@@ -128,6 +128,12 @@ bool isRecentCancelledTicket(KitchenTicketModel t, DateTime now) =>
     t.doneAt != null &&
     now.millisecondsSinceEpoch - t.doneAt! < cancelledTicketWindow.inMilliseconds;
 
+/// Nhãn bàn để báo "món xong" nếu phiếu vừa xong sau [sinceMs] và chưa báo; null nếu bỏ qua.
+String? newDoneTicketLabel(KitchenTicketModel t, Set<String> known, int sinceMs) {
+  if (t.status != 'xong' || t.doneAt == null || t.doneAt! < sinceMs) return null;
+  return known.add(t.id) ? (t.tableLabel ?? 'Phiếu bếp') : null;
+}
+
 class TicketWithItems {
   final KitchenTicketModel ticket;
   final List<KitchenTicketItemModel> items;
@@ -154,6 +160,73 @@ class KitchenRepository {
     return null;
   }
 
+  // ── Báo "món xong" cho máy order ───────────────────────────────────────────
+  /// Bò Đen 12/11: máy order từng dùng watchActiveTickets chỉ để báo món xong → tải cả
+  /// sổ phiếu 4 giờ (~65 KB) mỗi 10 giây + mỗi lần ai gửi bếp (102 MB/buổi tối).
+  /// Giờ: nghe máy chủ báo phiếu đổi sang 'xong'; hỏi dự phòng 30 giây chỉ phiếu vừa xong.
+  /// Phát nhãn bàn của từng phiếu xong sau thời điểm bắt đầu nghe, mỗi phiếu một lần.
+  Stream<String> watchDoneTicketLabels() {
+    var active = true;
+    RealtimeChannel? channel;
+    Timer? poll;
+    final known = <String>{};
+    final startedAt = DateTime.now();
+    final out = StreamController<String>();
+
+    void emit(KitchenTicketModel t) {
+      if (!active) return;
+      final label = newDoneTicketLabel(t, known, startedAt.millisecondsSinceEpoch);
+      if (label != null) out.add(label);
+    }
+
+    Future<void> pollDone(String storeId) async {
+      try {
+        final rows = await _sb
+            .from('kitchen_tickets')
+            .select('id, store_id, status, table_label, sent_at, done_at')
+            .eq('store_id', storeId)
+            .eq('status', 'xong')
+            .gte('done_at', startedAt.toUtc().toIso8601String())
+            .timeout(const Duration(seconds: 10));
+        for (final r in rows) {
+          emit(KitchenTicketModel.fromMap(r));
+        }
+      } catch (e) {
+        debugPrint('[KitchenRepo] pollDone error: $e');
+      }
+    }
+
+    out.onCancel = () async {
+      active = false;
+      poll?.cancel();
+      await channel?.unsubscribe();
+    };
+    out.onListen = () async {
+      final storeId = await _storeId();
+      if (!active || storeId == null) return;
+      channel = _sb
+          .channel('kitchen_done_$storeId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'kitchen_tickets',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'store_id',
+              value: storeId,
+            ),
+            callback: (p) {
+              try {
+                emit(KitchenTicketModel.fromMap(p.newRecord));
+              } catch (_) {}
+            },
+          )
+        ..subscribe();
+      poll = Timer.periodic(const Duration(seconds: 30), (_) => pollDone(storeId));
+    };
+    return out.stream;
+  }
+
   // ── Watch tickets (polling + realtime) ─────────────────────────────────────
   Stream<List<TicketWithItems>> watchActiveTickets() {
     late StreamController<List<TicketWithItems>> ctrl;
@@ -161,31 +234,50 @@ class KitchenRepository {
     Timer? fallbackTimer;
     List<TicketWithItems>? lastSuccessfulResult;
     bool isCancelled = false;
+    Timer? soon;
 
     ctrl = StreamController<List<TicketWithItems>>(onCancel: () async {
       isCancelled = true;
+      soon?.cancel();
       await channel?.unsubscribe();
       fallbackTimer?.cancel();
       if (!ctrl.isClosed) await ctrl.close();
     });
 
+    // Một lần gửi bếp bắn 2+ sự kiện (phiếu + món): gộp lại, và không chạy chồng 2 lượt tải.
+    var running = false;
+    var again = false;
+
     Future<void> refresh(String storeId) async {
       if (isCancelled || ctrl.isClosed) return;
-      try {
-        final result = await _fetchActiveTickets(storeId);
-        if (isCancelled || ctrl.isClosed) return;
-        lastSuccessfulResult = result;
-        ctrl.add(result);
-      } catch (e, stack) {
-        debugPrint('[KitchenRepo] refresh error: $e\n$stack');
-        if (!isCancelled && !ctrl.isClosed) {
-          if (lastSuccessfulResult != null) {
-            ctrl.add(lastSuccessfulResult!);
-          } else {
-            ctrl.add([]);
-          }
-        }
+      if (running) {
+        again = true;
+        return;
       }
+      running = true;
+      try {
+        do {
+          again = false;
+          try {
+            final result = await _fetchActiveTickets(storeId);
+            if (isCancelled || ctrl.isClosed) return;
+            lastSuccessfulResult = result;
+            ctrl.add(result);
+          } catch (e, stack) {
+            debugPrint('[KitchenRepo] refresh error: $e\n$stack');
+            if (!isCancelled && !ctrl.isClosed) {
+              ctrl.add(lastSuccessfulResult ?? []);
+            }
+          }
+        } while (again && !isCancelled && !ctrl.isClosed);
+      } finally {
+        running = false;
+      }
+    }
+
+    void refreshSoon(String storeId) {
+      soon?.cancel();
+      soon = Timer(const Duration(milliseconds: 400), () => refresh(storeId));
     }
 
     Future<void> start() async {
@@ -220,7 +312,7 @@ class KitchenRepository {
                   value: storeId,
                 ),
               callback: (_) {
-                if (!isCancelled) refresh(storeId);
+                if (!isCancelled) refreshSoon(storeId);
               },
               )
               .onPostgresChanges(
@@ -234,7 +326,7 @@ class KitchenRepository {
                   value: storeId,
                 ),
               callback: (_) {
-                if (!isCancelled) refresh(storeId);
+                if (!isCancelled) refreshSoon(storeId);
               },
               );
           channel!.subscribe();
@@ -280,7 +372,9 @@ class KitchenRepository {
         .from('kitchen_tickets')
         .select()
         .eq('store_id', storeId)
-        .or('status.neq.huy,done_at.gte.$cancelledSince')
+        // Bò Đen 12/11: chỉ lấy phiếu bếp có thể hiện (đang chờ/làm, vừa xong/huỷ ≤ 15 phút);
+        // phiếu xong cũ trước đây vẫn tải về (kèm món) rồi mới bị lọc bỏ ở dưới.
+        .or('status.in.(cho,dang_lam),done_at.gte.$cancelledSince,done_at.is.null')
         .gte('sent_at', since)
         .order('sent_at', ascending: false)
         .limit(50)
@@ -290,13 +384,6 @@ class KitchenRepository {
       _itemsCache.clear();
       return [];
     }
-
-    final ticketIds = tickets.map((t) => t['id'] as String).toList();
-    final allItems  = await _sb
-        .from('kitchen_ticket_items')
-        .select()
-        .inFilter('ticket_id', ticketIds)
-        .timeout(const Duration(seconds: 5));
 
     final ticketModels = tickets.map(KitchenTicketModel.fromMap).toList()
       ..sort((a, b) {
@@ -333,8 +420,17 @@ class KitchenRepository {
       return true;
     }).toList();
 
-    // Món huỷ ở bàn: máy chủ để done = true như món xong → hỏi kitchen_status của các món "xong" đang hiện
+    // Chỉ tải món của phiếu sẽ hiện.
     final shownIds = shown.map((t) => t.id).toSet();
+    final List<dynamic> allItems = shownIds.isEmpty
+        ? const []
+        : await _sb
+            .from('kitchen_ticket_items')
+            .select()
+            .inFilter('ticket_id', shownIds.toList())
+            .timeout(const Duration(seconds: 5));
+
+    // Món huỷ ở bàn: máy chủ để done = true như món xong → hỏi kitchen_status của các món "xong" đang hiện
     final doneSessionItemIds = [
       for (final i in allItems)
         if (i['done'] == true && i['session_item_id'] != null && shownIds.contains(i['ticket_id']))

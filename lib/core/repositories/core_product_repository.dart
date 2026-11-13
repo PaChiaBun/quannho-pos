@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product_model.dart';
 import '../services/store_auth_service.dart';
+import '../utils/paged_query.dart' show watchByRefetch;
 
 export '../models/product_model.dart';
 
@@ -75,16 +76,10 @@ class CoreProductRepository {
       return null;
     }
 
-    final initial = await fetchAndCache();
-    if (initial != null) {
-      yield initial;
-    } else if (_productsCacheByStore[storeId] == null) {
-      yield [];
-    }
-
-    // Kết hợp kiểm tra định kỳ 15s và thông báo sự kiện tức thì
+    // Bò Đen 12/11: hỏi lại cả menu mỗi 15 giây (431 lượt / 4 giờ tối). Giờ tải khi máy chủ
+    // báo bảng món đổi (sửa món, trừ kho khi thanh toán); mất kết nối thì tự hỏi mỗi 10 giây.
     final controller = StreamController<List<ProductModel>>();
-    Timer? timer;
+    StreamSubscription? remote;
     StreamSubscription? sub;
 
     void checkUpdate() async {
@@ -94,15 +89,34 @@ class CoreProductRepository {
       }
     }
 
-    timer = Timer.periodic(const Duration(seconds: 15), (_) => checkUpdate());
-    sub = _changeNotifier.stream.listen((changedStoreId) {
-      if (changedStoreId == storeId) {
-        checkUpdate();
-      }
-    });
+    controller.onListen = () {
+      remote = watchByRefetch(
+        table: 'products',
+        storeId: storeId,
+        fetch: () => _fetchAll(storeId),
+      ).listen(
+        (products) {
+          if (sameProductSnapshot(_productsCacheByStore[storeId], products)) return;
+          _productsCacheByStore[storeId] = products;
+          if (!controller.isClosed) controller.add(products);
+        },
+        onError: (Object e) {
+          debugPrint('[CoreProductRepo] fetch error: $e');
+          // Chưa từng tải được: trả rỗng như trước để màn không quay mãi.
+          if (_productsCacheByStore[storeId] == null && !controller.isClosed) {
+            controller.add(const []);
+          }
+        },
+      );
+      sub = _changeNotifier.stream.listen((changedStoreId) {
+        if (changedStoreId == storeId) {
+          checkUpdate();
+        }
+      });
+    };
 
     controller.onCancel = () {
-      timer?.cancel();
+      remote?.cancel();
       sub?.cancel();
       controller.close();
     };

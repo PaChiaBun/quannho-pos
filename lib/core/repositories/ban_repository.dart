@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
 import '../utils/app_logger.dart';
+import '../utils/paged_query.dart' show watchByRefetch;
 import '../utils/string_utils.dart' show hasLineTotalToppings;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -366,31 +367,16 @@ class BanRepository {
   }
 
   // ── Zones ─────────────────────────────────────────────────────────────────
+  /// Khu vực, bàn ít khi đổi (Bò Đen 12/11: 1.357 lượt tải / 4 giờ tối, mỗi 12–15 giây).
+  /// Tải một lần, máy chủ báo bảng đổi mới tải lại; mất kết nối thì tự hỏi lại mỗi 10 giây.
+  /// Lỗi mạng giữ danh sách cũ, không còn xoá trắng sơ đồ.
   Stream<List<BanZoneModel>> watchZones() async* {
-    while (true) {
-      final storeId = await _storeId();
-      if (storeId == null) {
-        yield [];
-      } else {
-        try {
-          const kSysPosZoneId = '00000000-0000-0000-0001-000000000001';
-          final rows = await _sb
-              .from('ban_zones')
-              .select()
-              .eq('store_id', storeId)
-              .eq('is_active', true)
-              .neq('id', kSysPosZoneId)
-              .order('sort_order', ascending: true);
-          final zones = rows.map(BanZoneModel.fromMap).toList();
-          yield zones;
-        } catch (e) {
-          debugPrint('[BanRepository] watchZones error: $e');
-          yield [];
-        }
-      }
-      // Poll every 15 seconds
-      await Future.delayed(const Duration(seconds: 15));
+    final storeId = await _storeId();
+    if (storeId == null) {
+      yield [];
+      return;
     }
+    yield* watchByRefetch(table: 'ban_zones', storeId: storeId, fetch: getZones);
   }
 
   Future<List<BanZoneModel>> getZones() async {
@@ -425,55 +411,28 @@ class BanRepository {
   }
 
   // ── Tables ─────────────────────────────────────────────────────────────────
-  Stream<List<BanTableModel>> watchTablesForZone(String zoneId) async* {
-    while (true) {
-      final storeId = await _storeId();
-      if (storeId == null) {
-        yield [];
-      } else {
-        try {
-          final rows = await _sb
-              .from('ban_dining_tables')
-              .select()
-              .eq('store_id', storeId)
-              .eq('zone_id', zoneId)
-              .eq('is_active', true);
-          final tables = rows.map(BanTableModel.fromMap).toList()
-            ..sort((a, b) => compareNatural(a.label, b.label));
-          yield tables;
-        } catch (e) {
-          debugPrint('[BanRepository] watchTablesForZone error: $e');
-          yield [];
-        }
-      }
-      // Poll every 12 seconds
-      await Future.delayed(const Duration(seconds: 12));
-    }
-  }
+  Stream<List<BanTableModel>> watchTablesForZone(String zoneId) => watchAllTables()
+      .map((all) => all.where((t) => t.zoneId == zoneId).toList());
 
   Stream<List<BanTableModel>> watchAllTables() async* {
-    while (true) {
-      final storeId = await _storeId();
-      if (storeId == null) {
-        yield [];
-      } else {
-        try {
-          final rows = await _sb
-              .from('ban_dining_tables')
-              .select()
-              .eq('store_id', storeId)
-              .eq('is_active', true);
-          final tables = rows.map(BanTableModel.fromMap).toList()
-            ..sort((a, b) => compareNatural(a.label, b.label));
-          yield tables;
-        } catch (e) {
-          debugPrint('[BanRepository] watchAllTables error: $e');
-          yield [];
-        }
-      }
-      // Poll every 12 seconds
-      await Future.delayed(const Duration(seconds: 12));
+    final storeId = await _storeId();
+    if (storeId == null) {
+      yield [];
+      return;
     }
+    yield* watchByRefetch(
+      table: 'ban_dining_tables',
+      storeId: storeId,
+      fetch: () async {
+        final rows = await _sb
+            .from('ban_dining_tables')
+            .select()
+            .eq('store_id', storeId)
+            .eq('is_active', true);
+        return rows.map(BanTableModel.fromMap).toList()
+          ..sort((a, b) => compareNatural(a.label, b.label));
+      },
+    );
   }
 
   Future<void> upsertTable(BanTableModel table) async {
@@ -547,6 +506,11 @@ class BanRepository {
     await out.close();
   }
 
+  /// Mã nhân viên (waiter_id) theo "quán|người dùng": tra 1 lần mỗi phiên app.
+  /// Bò Đen 12/11: tra theo user_id nhưng lưu staff_members bằng store_members.id nên lần nào
+  /// cũng hụt → mỗi lần mở bàn thêm 3 chuyến (staff_members, store_members, upsert) ra Singapore.
+  static final Map<String, String> _waiterIdCache = {};
+
   Future<BanSessionModel> openSession(
     String tableId, {
     int guestCount = 1,
@@ -573,7 +537,9 @@ class BanRepository {
       final prefs = await SharedPreferences.getInstance();
       final currentStaffId =
           prefs.getString('auth_staff_id') ?? prefs.getString('auth_user_id');
-      if (currentStaffId != null) {
+      final cacheKey = '$storeId|$currentStaffId';
+      waiterRecordId = _waiterIdCache[cacheKey];
+      if (currentStaffId != null && waiterRecordId == null) {
         final staffRow = await _sb
             .from('staff_members')
             .select('id')
@@ -611,6 +577,7 @@ class BanRepository {
           }
         }
       }
+      if (waiterRecordId != null) _waiterIdCache[cacheKey] = waiterRecordId;
     } catch (e) {
       debugPrint('[BanRepository] Sync waiter record failed: $e');
     }

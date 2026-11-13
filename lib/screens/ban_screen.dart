@@ -7,6 +7,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/utils/app_logger.dart';
+import '../core/utils/paged_query.dart' show watchByRefetch;
 import '../core/utils/string_utils.dart';
 import '../core/utils/cart_animation_helper.dart';
 import '../core/utils/money_formatter.dart';
@@ -183,34 +184,27 @@ final sessionItemsProvider = StreamProvider.autoDispose
       return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
     });
 
-/// Ghi chú nhanh của cả quán, gom theo món: 1 request mỗi 30s thay vì 1 request
-/// cho từng món đang hiện trong danh sách (Bò Đen 28/10: 435 request / 10 phút).
+/// Ghi chú nhanh của cả quán, gom theo món (Bò Đen 28/10: trước đó 1 request cho từng món).
+/// Bò Đen 12/11: vẫn tải lại 44 KB mỗi 30 giây và mỗi lần mở bảng chọn món (410 lượt / 4 giờ).
+/// Giờ giữ trong máy suốt phiên (không autoDispose), chỉ tải lại khi máy chủ báo bảng đổi
+/// (cần migration 20261113_realtime_product_modifiers.sql); đổi quán thì tải lại.
 final storeModifiersProvider =
-    StreamProvider.autoDispose<Map<String, List<Map<String, dynamic>>>>((
-      ref,
-    ) async* {
+    StreamProvider<Map<String, List<Map<String, dynamic>>>>((ref) {
       final storeId = ref.watch(sessionProvider)?.storeId;
-      if (storeId == null || storeId.isEmpty) {
-        yield const {};
-        return;
-      }
-      Map<String, List<Map<String, dynamic>>>? last;
-      while (true) {
-        try {
-          final rows = await Supabase.instance.client
+      if (storeId == null || storeId.isEmpty) return Stream.value(const {});
+      return watchByRefetch(
+        table: 'product_modifiers',
+        storeId: storeId,
+        fetch: () async => groupModifiersByProduct(
+          await Supabase.instance.client
               .from('product_modifiers')
               .select()
               .eq('store_id', storeId)
               .eq('is_active', true)
               .order('group_name')
-              .order('sort_order');
-          last = groupModifiersByProduct(rows);
-          yield last;
-        } catch (_) {
-          yield last ?? const {}; // mạng chập chờn: giữ danh sách cũ, không xoá trắng
-        }
-        await Future.delayed(const Duration(seconds: 30));
-      }
+              .order('sort_order'),
+        ),
+      );
     });
 
 Map<String, List<Map<String, dynamic>>> groupModifiersByProduct(List rows) {

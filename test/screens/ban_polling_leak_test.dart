@@ -9,14 +9,22 @@ import 'package:quannho_pos/screens/ban_screen.dart' show groupModifiersByProduc
 import 'package:quannho_pos/screens/kitchen_screen.dart' show kitchenReadyStreamProvider;
 
 class _FakeKitchenRepo extends KitchenRepository {
-  final ctrl = StreamController<List<TicketWithItems>>();
+  final ctrl = StreamController<String>();
   var cancelled = false;
+  var fullTicketsWatched = false;
   _FakeKitchenRepo() {
     ctrl.onCancel = () => cancelled = true;
   }
 
   @override
-  Stream<List<TicketWithItems>> watchActiveTickets() => ctrl.stream;
+  Stream<String> watchDoneTicketLabels() => ctrl.stream;
+
+  // Bò Đen 12/11: máy order không được tải cả sổ phiếu bếp chỉ để báo món xong.
+  @override
+  Stream<List<TicketWithItems>> watchActiveTickets() {
+    fullTicketsWatched = true;
+    return const Stream.empty();
+  }
 }
 
 void main() {
@@ -27,10 +35,16 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    final sub = container.listen(kitchenReadyStreamProvider, (_, _) {});
-    repo.ctrl.add([]); // có dữ liệu nhưng không có phiếu mới xong -> không phát gì
+    final got = <String>[];
+    final sub = container.listen(
+      kitchenReadyStreamProvider,
+      (_, next) => next.whenData(got.add),
+    );
+    repo.ctrl.add('Bàn 14');
     await Future<void>.delayed(Duration.zero);
+    expect(got, ['Bàn 14']);
     expect(repo.cancelled, isFalse);
+    expect(repo.fullTicketsWatched, isFalse);
 
     sub.close();
     await container.pump();
