@@ -146,6 +146,64 @@ class BanSessionModel {
   );
 }
 
+/// Một lô món đang lưu nền lên máy chủ.
+class PendingItemAdd {
+  final String sessionId;
+  final List<Map<String, dynamic>> rows;
+  String? error;
+  Future<void> done = Future.value();
+  PendingItemAdd({required this.sessionId, required this.rows});
+
+  double get quantity =>
+      rows.fold(0.0, (s, r) => s + (r['quantity'] as num).toDouble());
+  double get subtotal =>
+      rows.fold(0.0, (s, r) => s + (r['subtotal'] as num).toDouble());
+}
+
+class PendingAddsFailed implements Exception {
+  final String cause;
+  PendingAddsFailed(this.cause);
+  @override
+  String toString() => 'Món chưa lưu được lên máy chủ: $cause';
+}
+
+/// Gộp các dòng cùng món / giá / ghi chú / tuỳ chọn trong CÙNG một lần bấm Thêm.
+/// Món có topping ghi số tổng cả dòng thì không gộp (giống addSessionItems).
+List<Map<String, dynamic>> mergeSameLines(List<Map<String, dynamic>> items) {
+  final out = <Map<String, dynamic>>[];
+  String key(Map<String, dynamic> i) => [
+        i['productId'],
+        (i['price'] as num).toDouble().toStringAsFixed(2),
+        (i['note'] as String?)?.trim() ?? '',
+        (i['modifiersJson'] as String?)?.trim() ?? '',
+      ].join('|');
+  final byKey = <String, Map<String, dynamic>>{};
+  for (final i in items) {
+    final k = key(i);
+    final hit = byKey[k];
+    if (hit != null && !hasLineTotalToppings(i['modifiersJson'] as String?)) {
+      hit['quantity'] = (hit['quantity'] as num) + (i['quantity'] as num);
+    } else {
+      final copy = Map<String, dynamic>.from(i);
+      out.add(copy);
+      if (!hasLineTotalToppings(i['modifiersJson'] as String?)) byKey[k] = copy;
+    }
+  }
+  return out;
+}
+
+/// Gom món theo phiên, giữ thứ tự thêm món.
+Map<String, List<BanSessionItemModel>> groupItemsBySession(Iterable<BanSessionItemModel> items) {
+  final out = <String, List<BanSessionItemModel>>{};
+  for (final i in items) {
+    (out[i.sessionId] ??= []).add(i);
+  }
+  for (final l in out.values) {
+    l.sort((a, b) => a.addedAt.compareTo(b.addedAt));
+  }
+  return out;
+}
+
 class BanSessionItemModel {
   final String id;
   final String sessionId;
@@ -644,6 +702,29 @@ class BanRepository {
   /// Bò Đen 11/11: mỗi lần làm mới (invalidate) vòng cũ vẫn chạy thêm một lượt hỏi
   /// sau khi bị hủy (async* chỉ dừng ở yield) → 3 lượt hỏi trùng cùng lúc trên 5G yếu.
   /// Dùng cờ `active` để vòng cũ dừng ngay sau mỗi lần chờ.
+  /// Món của MỌI bàn đang mở, gom theo phiên — 1 yêu cầu cho cả sơ đồ bàn.
+  /// Bò Đen 12/11: mỗi thẻ bàn có khách tự hỏi món riêng mỗi 5 giây (≈ 2 yêu cầu/giây mỗi máy
+  /// khi 10 bàn có khách). Giờ tải khi máy chủ báo món đổi (gộp 400 ms), mất kết nối thì 10 giây.
+  Stream<Map<String, List<BanSessionItemModel>>> watchOpenSessionItems() async* {
+    final storeId = await _storeId();
+    if (storeId == null) {
+      yield const {};
+      return;
+    }
+    yield* watchByRefetch(
+      table: 'ban_session_items',
+      storeId: storeId,
+      fetch: () async {
+        final rows = await _sb
+            .from('ban_session_items')
+            .select('*, ban_sessions!inner(status)')
+            .eq('store_id', storeId)
+            .eq('ban_sessions.status', 'open');
+        return groupItemsBySession(rows.map(BanSessionItemModel.fromMap));
+      },
+    );
+  }
+
   Stream<List<BanSessionItemModel>> watchSessionItems(String sessionId) {
     var active = true;
     final out = StreamController<List<BanSessionItemModel>>();
@@ -723,6 +804,106 @@ class BanRepository {
       ],
     );
   }
+
+  // ── Thêm món chạy nền (Bò Đen 12/11) ─────────────────────────────────────
+  /// Lô món đang lưu lên máy chủ, theo phiên bàn. Màn bàn hiện ngay các lô này,
+  /// Gửi bếp / Thanh toán chờ lưu xong. Lô lỗi giữ lại kèm lỗi để bấm Thử lại.
+  static final ValueNotifier<Map<String, List<PendingItemAdd>>> pendingAdds =
+      ValueNotifier(const {});
+
+  static List<PendingItemAdd> pendingFor(String sessionId) =>
+      pendingAdds.value[sessionId] ?? const [];
+
+  static void _setPending(String sessionId, List<PendingItemAdd> list) {
+    final next = Map<String, List<PendingItemAdd>>.from(pendingAdds.value);
+    if (list.isEmpty) {
+      next.remove(sessionId);
+    } else {
+      next[sessionId] = List.unmodifiable(list);
+    }
+    pendingAdds.value = next;
+  }
+
+  /// Thêm món không bắt người dùng chờ mạng: trả về ngay, lưu phía sau (1 yêu cầu),
+  /// tự thử lại 3 lần. Mỗi dòng có mã tạo sẵn ở máy nên gửi lại không bao giờ nhân đôi
+  /// (không gộp vào dòng cũ trên máy chủ: phép cộng số lượng gửi lại sẽ cộng hai lần).
+  void addSessionItemsInBackground({
+    required String sessionId,
+    required List<Map<String, dynamic>> items,
+    String? addedBy,
+  }) {
+    final batch = PendingItemAdd(
+      sessionId: sessionId,
+      rows: [
+        for (final it in mergeSameLines(items))
+          {
+            'id': const Uuid().v4(),
+            'session_id': sessionId,
+            'product_id': it['productId'],
+            'product_name': it['productName'],
+            'unit_price': it['price'],
+            'quantity': it['quantity'],
+            'subtotal':
+                (it['price'] as num).toDouble() * (it['quantity'] as num).toDouble(),
+            'note': _blankToNull(it['note'] as String?),
+            'modifiers_json': _blankToNull(it['modifiersJson'] as String?),
+            'kitchen_status': 'chua_gui',
+            'added_at': DateTime.now().toUtc().toIso8601String(),
+            if (addedBy != null && addedBy.isNotEmpty) 'added_by': addedBy,
+          },
+      ],
+    );
+    _setPending(sessionId, [...pendingFor(sessionId), batch]);
+    _runPending(batch);
+  }
+
+  /// Bấm "Thử lại" các lô đang lỗi của phiên.
+  void retryPendingAdds(String sessionId) {
+    for (final b in pendingFor(sessionId)) {
+      if (b.error != null) _runPending(b);
+    }
+  }
+
+  /// Chờ mọi lô của phiên lưu xong; còn lô lỗi thì ném lỗi (không được gửi bếp / thanh toán thiếu món).
+  Future<void> waitPendingAdds(String sessionId) async {
+    for (final b in pendingFor(sessionId)) {
+      await b.done;
+    }
+    final failed = pendingFor(sessionId).where((b) => b.error != null);
+    if (failed.isNotEmpty) throw PendingAddsFailed(failed.first.error!);
+  }
+
+  void _runPending(PendingItemAdd b) {
+    b.error = null;
+    _setPending(b.sessionId, [...pendingFor(b.sessionId)]);
+    b.done = () async {
+      final storeId = await _storeId();
+      Object? lastErr;
+      for (var attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await Future.delayed(Duration(seconds: attempt * 2));
+        try {
+          if (storeId == null) throw Exception('Chưa chọn quán');
+          await _sb
+              .from('ban_session_items')
+              .upsert(
+                [for (final r in b.rows) {...r, 'store_id': storeId}],
+                onConflict: 'id',
+                ignoreDuplicates: true,
+              )
+              .timeout(const Duration(seconds: 10));
+          _setPending(b.sessionId, pendingFor(b.sessionId).where((x) => x != b).toList());
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      b.error = '$lastErr';
+      AppLogger.warning('ban_items', 'Lưu món nền thất bại (phiên ${b.sessionId}): $lastErr');
+      _setPending(b.sessionId, [...pendingFor(b.sessionId)]);
+    }();
+  }
+
+  static String? _blankToNull(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
 
   // Khóa chống Race Condition cho mỗi session_id khi thêm món
   static final Set<String> _activeSessionWrites = {};

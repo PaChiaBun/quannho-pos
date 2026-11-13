@@ -81,7 +81,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "1608743668069f2c",
+      "lib/screens/ban_screen.dart": "d6d85a72df8d34b5",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -132,8 +132,8 @@
       "supabase/migrations/20261014_qr_chong_pha_v4.sql": "51c552567bbb2691"
     },
     "quan-ly-ban.md": {
-      "lib/core/repositories/ban_repository.dart": "8c2b17934e4664f9",
-      "lib/screens/ban_screen.dart": "1608743668069f2c",
+      "lib/core/repositories/ban_repository.dart": "6a9346e29e6ac9e0",
+      "lib/screens/ban_screen.dart": "d6d85a72df8d34b5",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"

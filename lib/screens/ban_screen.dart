@@ -173,6 +173,14 @@ final allBanTablesProvider = StreamProvider.autoDispose<List<BanTableModel>>((
   return ref.watch(banRepositoryProvider).watchAllTables();
 });
 
+/// Món của mọi bàn đang mở (1 yêu cầu chung) — chỉ cho thẻ bàn trên sơ đồ.
+/// Màn chi tiết bàn vẫn dùng [sessionItemsProvider] để thấy ngay món vừa thêm.
+final openSessionItemsProvider =
+    StreamProvider.autoDispose<Map<String, List<BanSessionItemModel>>>((ref) {
+      ref.watch(sessionProvider); // Force rebuild on store switch
+      return ref.watch(banRepositoryProvider).watchOpenSessionItems();
+    });
+
 final activeSessionsProvider =
     StreamProvider.autoDispose<Map<String, BanSessionModel>>((ref) {
       ref.watch(sessionProvider); // Force rebuild on store switch
@@ -206,6 +214,28 @@ final storeModifiersProvider =
         ),
       );
     });
+
+/// Đổi tổng số lượng một món gộp nhiều dòng DB về [newTotal]: tăng thì cộng vào dòng đầu,
+/// giảm thì bớt từ dòng cuối (dòng về 0 thì xoá). Trả các dòng cần ghi (qty ≤ 0 = xoá).
+List<({String id, double qty})> unsentQtyOps({
+  required List<String> ids,
+  required Map<String, double> rowQty,
+  required double newTotal,
+}) {
+  final current = ids.fold<double>(0, (s, id) => s + (rowQty[id] ?? 0));
+  var delta = newTotal - current;
+  if (delta == 0 || ids.isEmpty) return const [];
+  if (delta > 0) return [(id: ids.first, qty: (rowQty[ids.first] ?? 0) + delta)];
+  final ops = <({String id, double qty})>[];
+  for (final id in ids.reversed) {
+    if (delta >= 0) break;
+    final q = rowQty[id] ?? 0;
+    final take = (-delta < q) ? -delta : q;
+    ops.add((id: id, qty: q - take));
+    delta += take;
+  }
+  return ops;
+}
 
 Map<String, List<Map<String, dynamic>>> groupModifiersByProduct(List rows) {
   final out = <String, List<Map<String, dynamic>>>{};
@@ -1481,9 +1511,10 @@ class _ActiveTableRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final itemsAsync = ref.watch(sessionItemsProvider(session.id));
     final activeItems =
-        itemsAsync.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+        ref.watch(openSessionItemsProvider).value?[session.id]
+            ?.where((i) => i.kitchenStatus != 'huy') ??
+        const <BanSessionItemModel>[];
     final total = activeItems.fold<double>(0, (s, item) => s + item.subtotal);
     final totalQty = activeItems
         .fold<double>(0, (sum, item) => sum + item.quantity)
@@ -2022,12 +2053,12 @@ class _TableCard extends ConsumerWidget {
     final isOccupied = session != null;
     final zoneColor = Color(zone.colorValue);
 
-    final itemsAsync = isOccupied
-        ? ref.watch(sessionItemsProvider(session!.id))
-        : null;
-
+    final allItems = ref.watch(openSessionItemsProvider).value;
+    final sessionItems =
+        isOccupied && allItems != null ? allItems[session!.id] : null;
     final activeItems =
-        itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+        sessionItems?.where((i) => i.kitchenStatus != 'huy') ??
+        const <BanSessionItemModel>[];
     final totalAmount = activeItems.fold<double>(
       0,
       (sum, item) => sum + item.subtotal,
@@ -2629,6 +2660,58 @@ class _CounterButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLE SESSION SHEET
 // ─────────────────────────────────────────────────────────────────────────────
+/// Món vừa bấm Thêm, đang lưu nền lên máy chủ (hoặc lưu lỗi → Thử lại).
+class _PendingAddsBox extends StatelessWidget {
+  final List<PendingItemAdd> batches;
+  final VoidCallback onRetry;
+  const _PendingAddsBox({required this.batches, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = batches.any((b) => b.error != null);
+    final color = failed ? Colors.red.shade700 : _kNavy.withValues(alpha: 0.6);
+    final names = [
+      for (final b in batches)
+        for (final r in b.rows)
+          '${r['product_name']} x${(r['quantity'] as num).toStringAsFixed(0)}',
+    ].join(', ');
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: failed ? Colors.red.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          if (failed)
+            Icon(Icons.cloud_off_rounded, size: 18, color: color)
+          else
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              failed ? 'Chưa lưu được (mất mạng): $names' : 'Đang lưu: $names',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+          if (failed)
+            TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    );
+  }
+}
+
 class _TableSessionSheet extends ConsumerStatefulWidget {
   final BanTableModel table;
   final BanSessionModel session;
@@ -2661,6 +2744,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   @override
   void initState() {
     super.initState();
+    BanRepository.pendingAdds.addListener(_onPendingAdds);
     // A1: Tự động mở gỌd món sau khi mở bàn lần đầu
     if (widget.autoOpenOrder) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2669,8 +2753,40 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
+  int _pendingCount = 0;
+
+  /// Món lưu nền xong → tải lại danh sách (món hiện thật thay dòng "Đang lưu").
+  void _onPendingAdds() {
+    if (!mounted) return;
+    final n = BanRepository.pendingFor(widget.session.id).length;
+    if (n < _pendingCount) ref.invalidate(sessionItemsProvider(widget.session.id));
+    _pendingCount = n;
+    setState(() {});
+  }
+
+  /// Chờ món lưu nền xong trước khi gửi bếp / thanh toán / chuyển / gộp / huỷ bàn.
+  /// false = còn món chưa lưu được (đã báo người dùng), không làm tiếp.
+  Future<bool> _awaitPendingAdds() async {
+    if (BanRepository.pendingFor(widget.session.id).isEmpty) return true;
+    try {
+      await _banRepo.waitPendingAdds(widget.session.id);
+      ref.invalidate(sessionItemsProvider(widget.session.id));
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Còn món chưa lưu được (mất mạng). Bấm "Thử lại" ở danh sách món.'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+      return false;
+    }
+  }
+
   @override
   void dispose() {
+    BanRepository.pendingAdds.removeListener(_onPendingAdds);
     for (final c in _noteControllers.values) {
       c.dispose();
     }
@@ -2801,7 +2917,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     // Món chưa gửi bếp → xoá bình thường
     if (status == 'chua_gui') {
-      await _banRepo.removeSessionItem(item.id);
+      // Món gộp nhiều dòng (vd. thêm 2 lần): xoá cả nhóm, không chỉ dòng đại diện.
+      await Supabase.instance.client
+          .from('ban_session_items')
+          .delete()
+          .inFilter('id', _noteGroupIds[item.id] ?? [item.id])
+          .eq('kitchen_status', 'chua_gui');
       AppLogger.action(
         'remove_item',
         'Xóa món chưa gửi bếp',
@@ -3186,13 +3307,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         await _removeItem(item);
         return;
       }
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({
-            'quantity': newQty.toDouble(),
-            'subtotal': item.price * newQty,
-          })
-          .eq('id', item.id);
+      final db = Supabase.instance.client.from('ban_session_items');
+      for (final op in unsentQtyOps(
+        ids: _noteGroupIds[item.id] ?? [item.id],
+        rowQty: _rowQty,
+        newTotal: newQty.toDouble(),
+      )) {
+        if (op.qty <= 0) {
+          await db.delete().eq('id', op.id).eq('kitchen_status', 'chua_gui');
+        } else {
+          await db
+              .update({'quantity': op.qty, 'subtotal': item.price * op.qty})
+              .eq('id', op.id)
+              .eq('kitchen_status', 'chua_gui');
+        }
+      }
       ref.invalidate(sessionItemsProvider(widget.session.id));
       HapticFeedback.selectionClick();
       return;
@@ -4315,6 +4444,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     List<BanSessionItemModel> items,
   ) async {
     if (_isCheckingOut) return;
+    // Món vừa thêm chưa lưu xong: tổng tiền đang thiếu món đó → lưu xong rồi bấm lại.
+    if (BanRepository.pendingFor(widget.session.id).isNotEmpty) {
+      if (await _awaitPendingAdds() && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Đã lưu món vừa thêm — bấm Thanh toán lại để tính đủ tiền.'),
+            behavior: SnackBarBehavior.floating));
+      }
+      return;
+    }
     // Khóa trước await đầu tiên: double-click Windows không thể mở hai sheet.
     _isCheckingOut = true;
     try {
@@ -4415,6 +4553,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   /// nhiều dòng DB: id đại diện → mọi id; và id dòng DB → id đại diện.
   final Map<String, List<String>> _noteGroupIds = {};
   final Map<String, String> _noteRepOf = {};
+  /// Số lượng riêng của từng dòng DB (món gộp hiển thị tổng): để +/− / xoá sửa đúng cả nhóm.
+  final Map<String, double> _rowQty = {};
 
   Future<void> _updateItemNote(BanSessionItemModel item, String newNote) async {
     final clean = newNote.trim().isEmpty ? null : newNote.trim();
@@ -4452,6 +4592,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
+    // Món vừa thêm còn đang lưu nền: chờ lưu xong rồi lấy danh sách mới nhất để gửi đủ món.
+    if (BanRepository.pendingFor(widget.session.id).isNotEmpty) {
+      if (!await _awaitPendingAdds()) return;
+      final fresh = await _banRepo.fetchActiveSessionItems(widget.session.id);
+      if (fresh == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Mất kết nối, chưa gửi bếp được. Thử lại.'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating));
+        }
+        return;
+      }
+      items = fresh;
+    }
     final unsentNow = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
     AppLogger.action(
       'send_kitchen_click',
@@ -5122,6 +5277,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   }
 
   Future<void> _cancelSession() async {
+    if (!await _awaitPendingAdds()) return;
     final items = ref.read(sessionItemsProvider(widget.session.id)).value ?? [];
     final activeItems = items.where((i) => i.kitchenStatus != 'huy').toList();
     final hasCookingOrDone = activeItems.any(
@@ -5436,6 +5592,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         activeSessions: activeSessions,
         isMergeMode: true,
         onConfirm: (targetTableId) async {
+          if (!await _awaitPendingAdds()) return;
           final targetSession = activeSessions[targetTableId];
           await _banRepo.mergeSession(
             sourceSessionId: widget.session.id,
@@ -5692,7 +5849,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         );
                       },
                       data: (items) {
-                        if (items.isEmpty) {
+                        final pendingAdds = settled != null
+                            ? const <PendingItemAdd>[]
+                            : BanRepository.pendingFor(widget.session.id);
+                        if (items.isEmpty && pendingAdds.isEmpty) {
                           return Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -5814,6 +5974,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         }
                         _noteGroupIds.clear();
                         _noteRepOf.clear();
+                        _rowQty
+                          ..clear()
+                          ..addAll({for (final i in rawActiveItems) i.id: i.quantity});
                         for (final item in rawActiveItems) {
                           final rep = groupedActiveMap[groupKey(item)]!;
                           _noteRepOf[item.id] = rep.id;
@@ -5831,6 +5994,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
                         return CustomScrollView(
                           slivers: [
+                            if (pendingAdds.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: _PendingAddsBox(
+                                  batches: pendingAdds,
+                                  onRetry: () => _banRepo.retryPendingAdds(
+                                    widget.session.id,
+                                  ),
+                                ),
+                              ),
                             SliverList(
                               delegate: SliverChildBuilderDelegate(
                                 (ctx, i) {
@@ -6493,16 +6665,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         ),
                                         const SizedBox(width: 10),
                                         _SendKitchenButton(
-                                          unsentCount: items
-                                              .where(
-                                                (i) =>
-                                                    i.kitchenStatus ==
-                                                    'chua_gui',
-                                              )
-                                              .fold<int>(
+                                          unsentCount:
+                                              items
+                                                  .where(
+                                                    (i) =>
+                                                        i.kitchenStatus ==
+                                                        'chua_gui',
+                                                  )
+                                                  .fold<int>(
+                                                    0,
+                                                    (sum, i) =>
+                                                        sum + i.quantity.toInt(),
+                                                  ) +
+                                              pendingAdds.fold<int>(
                                                 0,
-                                                (sum, i) =>
-                                                    sum + i.quantity.toInt(),
+                                                (sum, b) => sum + b.quantity.toInt(),
                                               ),
                                           onPressed: () async =>
                                               await _sendToKitchen(items),
@@ -8050,9 +8227,12 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         });
       }
 
-      await _banRepo.addSessionItems(
+      // Bò Đen 12/11: không bắt nhân viên chờ mạng (trước: đọc món + ghi + sửa người thêm =
+      // 3 chuyến ra Singapore). Lưu nền 1 yêu cầu; màn bàn hiện ngay "Đang lưu".
+      _banRepo.addSessionItemsInBackground(
         sessionId: widget.sessionId,
         items: itemsList,
+        addedBy: ref.read(sessionProvider)?.displayName,
       );
       AppLogger.action(
         'add_items',
@@ -8071,20 +8251,6 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         },
       );
 
-      try {
-        final session = ref.read(sessionProvider);
-        if (session != null && session.displayName.isNotEmpty) {
-          await Supabase.instance.client
-              .from('ban_session_items')
-              .update({'added_by': session.displayName})
-              .eq('session_id', widget.sessionId)
-              .isFilter('added_by', null);
-        }
-      } catch (e) {
-        debugPrint('[BanScreen] Error updating added_by: $e');
-      }
-
-      ref.invalidate(sessionItemsProvider(widget.sessionId));
       HapticFeedback.lightImpact();
       if (mounted) Navigator.pop(context);
     } catch (e, st) {
