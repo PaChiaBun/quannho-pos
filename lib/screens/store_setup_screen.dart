@@ -3,6 +3,7 @@
 // Store Setup Screen — Màn hình lần đầu thiết bị kết nối vào quán
 // Nhân viên nhập mã quán (VD: QN-A3F7) để đồng bộ data
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/services/store_auth_service.dart';
@@ -231,35 +232,56 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                 ),
                 const SizedBox(height: 32),
 
-                // ── Tab selector ──────────────────────────────────────────
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      _TabBtn(
-                        label: 'Nhập mã quán',
-                        icon: Icons.login_rounded,
-                        active: _tab == 0,
-                        onTap: () => setState(() { _tab = 0; _error = ''; }),
+                // ── Tab selector (Trên iOS native chỉ cho phép Nhập mã quán theo Apple Guideline 3.1.1; Web và Android mở đầy đủ) ──
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: const Text(
+                      'Nhập mã kết nối do quản lý cửa hàng cung cấp để kết nối thiết bị.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.4,
                       ),
-                      _TabBtn(
-                        label: 'Tạo quán mới',
-                        icon: Icons.add_business_rounded,
-                        active: _tab == 1,
-                        onTap: () => setState(() { _tab = 1; _error = ''; }),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ] else ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        _TabBtn(
+                          label: 'Nhập mã quán',
+                          icon: Icons.login_rounded,
+                          active: _tab == 0,
+                          onTap: () => setState(() { _tab = 0; _error = ''; }),
+                        ),
+                        _TabBtn(
+                          label: 'Tạo quán mới',
+                          icon: Icons.add_business_rounded,
+                          active: _tab == 1,
+                          onTap: () => setState(() { _tab = 1; _error = ''; }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 28),
 
                 // ── Tab content ───────────────────────────────────────────
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: _tab == 0
+                  child: ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) || _tab == 0)
                       ? _buildJoinForm()
                       : _buildCreateForm(),
                 ),

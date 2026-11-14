@@ -363,7 +363,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
             ),
             const SizedBox(height: 20),
             Text('Quán Nhỏ POS',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white54, fontSize: 13,
                 fontWeight: FontWeight.w600, letterSpacing: 0.8)),
             const SizedBox(height: 8),
@@ -371,7 +371,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
               duration: const Duration(milliseconds: 200),
               child: Text(_topLabel,
                 key: ValueKey(_topLabel),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white, fontSize: 24,
                   fontWeight: FontWeight.w800, letterSpacing: -0.4)),
             ),
@@ -457,7 +457,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
               TextButton(
                 onPressed: _goToForgotPin,
                 child: Text('Quên PIN?',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.white.withValues(alpha: 0.45),
                     fontSize: 14, fontWeight: FontWeight.w600)),
               ),
@@ -554,7 +554,7 @@ class _NumKeyState extends State<_NumKey>
                 ? Icon(Icons.backspace_rounded,
                     color: Colors.white.withValues(alpha: 0.7), size: 24)
                 : Text(widget.label,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white, fontSize: 30,
                       fontWeight: FontWeight.w600, letterSpacing: -0.2)),
           ),

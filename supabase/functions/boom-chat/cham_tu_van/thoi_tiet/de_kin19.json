@@ -1,0 +1,212 @@
+[
+ {
+  "id": "G01",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "kho_het",
+  "q": "Sữa đặc còn có 3 lon à, mai dự báo mưa từ sáng sớm, dân văn phòng chắc ít ra mua. Giờ nhập thêm bao nhiêu lon cho đủ tới đầu tuần sau?"
+ },
+ {
+  "id": "G02",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "Ly 700ml hết sạch rồi em ơi, mai trời nắng gắt chắc khách gọi size lớn nhiều. Chiều nay phải chạy đi mua gấp bao nhiêu cái, tạm thời bán ly gì thay?"
+ },
+ {
+  "id": "G03",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "kho_het",
+  "q": "gas con 1 binh, gao con 8 ky. mai mua chieu thi toi chac vang, nhap bao nhieu cho vua, khong muon de ton"
+ },
+ {
+  "id": "G04",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "Than hết sạch rồi, sáng nay nướng sườn bằng gì đây? Trứng cũng còn có 40 quả. Lấy than mấy bao, trứng mấy chục là vừa?"
+ },
+ {
+  "id": "G05",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "kho_het",
+  "q": "hat ca phe rang con 2.5kg, ly 500ml con 150 cai. dat xuong rang bao nhieu kg de khoi het giua tuan"
+ },
+ {
+  "id": "G06",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "kho_het",
+  "q": "Bột trân châu còn 1,5kg, sữa tươi còn 4 lít mà tháng này nấu dư trân châu đổ bỏ 7kg rồi. Mai mưa chiều, nên nấu bao nhiêu mẻ và nhập thêm bao nhiêu?"
+ },
+ {
+  "id": "G07",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "gio_ca",
+  "q": "Từ 4h tới 6h chiều quán vắng hoe mà vẫn để Tú đứng tới 18h. Có nên đóng sớm lúc 4 giờ cho đỡ không, hay giữ để bán thêm?"
+ },
+ {
+  "id": "G08",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gio_ca",
+  "q": "Tối Thứ 7 tầm 6 giờ tới 10 giờ đông nhất tuần, hiện có Phúc, Thảo, Duy, Khang. Bốn đứa đủ chưa hay phải gọi thêm 1 bạn?"
+ },
+ {
+  "id": "G09",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "gio_ca",
+  "q": "Ca chiều 4h–8h tối bán lèo tèo, có mỗi Bảo đứng. Tính dẹp luôn ca tối, chỉ bán sáng với trưa thôi có được không?"
+ },
+ {
+  "id": "G10",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "gio_ca",
+  "q": "Ca tối 5 giờ tới 9 giờ đang xếp 2 người (Phúc với 1 bạn bán thời gian). Có cần thêm người không hay 2 là đủ?"
+ },
+ {
+  "id": "G11",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gio_ca",
+  "q": "ca chieu 3h-6h thu 2 toi thu 4 vang qua ma van xep 2 nguoi, cat bot 1 duoc ko"
+ },
+ {
+  "id": "G12",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gio_ca",
+  "q": "Thứ 7 sáng đông hơn mấy ngày thường nhiều, 6h tới 1h trưa có 2 chị em đứng. Có nên kêu thêm đứa bán thời gian vô buổi sáng Thứ 7 không?"
+ },
+ {
+  "id": "G13",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "san_gia",
+  "q": "Tính đưa quán lên GrabFood, nghe nói phí sàn 25%. Cà phê sữa đá đang bán 25k thì trên Grab để giá bao nhiêu mới không lỗ?"
+ },
+ {
+  "id": "G14",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "san_gia",
+  "q": "len shopeefood phi 20%, tra sua tran chau duong den ban 35k thi tren san de bnhieu, con loi ko"
+ },
+ {
+  "id": "G15",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "san_gia",
+  "q": "Có mối rủ lên Grab, phí 22%. Cơm sườn tại quán 40 nghìn, giá vốn hơn 19 nghìn. Lên đó để giá bao nhiêu là vừa, có đáng làm không?"
+ },
+ {
+  "id": "G16",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "san_gia",
+  "q": "ShopeeFood lấy mình 25%. Cơm tấm sườn bán ở quán 40k, trên sàn đang để y chang 40k. Vậy là lời hay lỗ, nên tăng lên bao nhiêu?"
+ },
+ {
+  "id": "G17",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "san_gia",
+  "q": "GrabFood mới báo tăng phí lên 30%. Phần sườn bì chả 50k, sàn để giá nhiêu cho còn lời mà khách không chê mắc?"
+ },
+ {
+  "id": "G18",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "san_gia",
+  "q": "Trà đào cam sả muốn bán trên Grab, phí 25%. Giá quán 32k, vốn tầm 10k. Trên sàn nên để bao nhiêu, có cần nâng không?"
+ },
+ {
+  "id": "G19",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "khach_nhom",
+  "q": "Khách chính toàn dân văn phòng toà bên cạnh mà tháng này bán đuối hẳn. Có nên làm mã riêng cho nhân viên toà nhà không, hay mã SANGVUI là đủ?"
+ },
+ {
+  "id": "G20",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khach_nhom",
+  "q": "Học sinh trường kế bên hay ghé sau giờ tan học, đang có mã HSSV10. Muốn tụi nhỏ quay lại nhiều hơn thì làm gì, có nên tăng giảm giá lên không?"
+ },
+ {
+  "id": "G21",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khach_nhom",
+  "q": "Mấy anh công trình ăn trưa ở quán đều, nghe đâu công trình sắp xong. Có cách gì giữ mối mấy ảnh không, làm mã riêng có đáng không?"
+ },
+ {
+  "id": "G22",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khach_nhom",
+  "q": "Quán gần trường cấp 2, trưa tụi học sinh đi ngang nhiều mà ít vô ăn. Có nên làm phần cơm nhỏ giá rẻ hay mã giảm riêng cho học sinh?"
+ },
+ {
+  "id": "G23",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khach_nhom",
+  "q": "cuoi tuan hay co gia dinh dan con nit toi, muon keo them nhom nay thi lam combo hay ma giam rieng"
+ },
+ {
+  "id": "G24",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "khach_nhom",
+  "q": "Dân văn phòng quanh chợ trưa ra ăn cũng có mà ít ghé lại. Muốn họ ăn thường xuyên thì có nên làm thẻ tích điểm hay mã giảm trưa riêng không?"
+ },
+ {
+  "id": "G25",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "tang_mon",
+  "q": "Tính làm mua 2 ly cà phê sữa đá tặng 1 ổ bánh mì trứng. Làm vậy có lỗ không, giảm như vậy là bao nhiêu phần trăm?"
+ },
+ {
+  "id": "G26",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "tang_mon",
+  "q": "Mua 2 ly trân châu đường đen tặng 1 phần khoai tây chiên, chạy thử 1 tuần được không? Tính giùm có lỗ không."
+ },
+ {
+  "id": "G27",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "tang_mon",
+  "q": "Muốn kích bán buổi tối: ăn 2 tô bún bò tặng 1 ly nước sâm. Vậy có lời không hay ăn vào vốn?"
+ },
+ {
+  "id": "G28",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "tang_mon",
+  "q": "Định làm mua cơm tấm sườn tặng trứng ốp cho học sinh. Mỗi phần tặng vậy mất bao nhiêu, có nên làm không?"
+ },
+ {
+  "id": "G29",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "tang_mon",
+  "q": "mua 3 tra dao cam sa tang 1 ly, tinh ra giam may % vay, co bi lo ko"
+ },
+ {
+  "id": "G30",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "tang_mon",
+  "q": "bac xiu mua 2 tang 1 tra tac duoc ko, sang dong qua so lam roi cua lo"
+ }
+]

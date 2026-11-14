@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "/Users/banhbao/.local/bin/codegraph",
+      "args": ["serve", "--mcp", "--path", "/Users/banhbao/Quan Nho/quan_nho"]
+    }
+  }
+}

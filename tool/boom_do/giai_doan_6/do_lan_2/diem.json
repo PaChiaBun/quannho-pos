@@ -1,0 +1,1451 @@
+[
+ {
+  "id": "kinK02#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK02#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK02#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK05#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK05#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK05#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  }
+ },
+ {
+  "id": "kinK09#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "kinK09#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK09#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK13#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "kinK13#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  }
+ },
+ {
+  "id": "kinK13#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC04#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC04#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC04#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC05#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC05#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC05#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC11#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "qcC11#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC11#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC12#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC12#1",
+  "A": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC12#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "qcC13#0",
+  "A": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "qcC13#1",
+  "A": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC13#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC14#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC14#1",
+  "A": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC14#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC15#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "qcC15#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC15#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC16#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC16#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC16#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC17#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC17#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC17#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC18#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC18#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC18#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC21#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC21#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC21#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC30#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC30#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "qcC30#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV03#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "tvV03#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV03#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV14#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV14#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV14#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV20#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV20#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV20#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  }
+ },
+ {
+  "id": "tvV36#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "tvV36#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV36#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV38#0",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  }
+ },
+ {
+  "id": "tvV38#1",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ },
+ {
+  "id": "tvV38#2",
+  "A": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "B": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  }
+ }
+]

@@ -1,0 +1,22 @@
+[
+ {"q":"quán tôi gần trường THCS, làm sao hút học sinh buổi trưa","nho":["truong"],"la_chu":true},
+ {"q":"quán mình bán cơm tấm, khách chủ yếu là dân văn phòng, trưa đông quá làm không kịp","nho":["van phong"],"la_chu":true},
+ {"q":"tôi mở cửa từ 6h đến 14h thôi, chiều nghỉ, có nên mở thêm buổi tối không","nho":["6"],"la_chu":true},
+ {"q":"combo trưa tôi thử rồi không ăn thua, còn cách nào khác không","nho":["combo"],"la_chu":true},
+ {"q":"tôi không muốn giảm giá món chính, có cách nào tăng doanh thu","nho":["giam gia"],"la_chu":true},
+ {"q":"quán em nghỉ chủ nhật, thứ 7 nên làm gì cho đông","nho":["chu nhat"],"la_chu":true},
+ {"q":"bên mình bán trà sữa gần khu dân cư, giới trẻ là khách chính","nho":["tra sua","khu dan cu"],"la_chu":true},
+ {"q":"tháng sau tôi chuyển quán sang khu văn phòng, cần chuẩn bị gì","nho":["van phong"],"la_chu":true},
+ {"q":"mục tiêu của tôi là tăng 20% doanh thu trong 3 tháng tới","nho":["20%"],"la_chu":true},
+ {"q":"quán tôi gần chợ, khách chủ yếu là tiểu thương","nho":["cho"],"la_chu":false},
+ {"q":"doanh thu hôm nay bao nhiêu","nho":[],"la_chu":true},
+ {"q":"món nào bán chạy nhất tháng này","nho":[],"la_chu":true},
+ {"q":"hôm nay mưa nên quán vắng quá","nho":[],"la_chu":true},
+ {"q":"sáng nay nhân viên đến trễ, xử lý sao","nho":[],"la_chu":true},
+ {"q":"viết bài facebook khuyến mãi tuần này","nho":[],"la_chu":true},
+ {"q":"số tài khoản của quán là 0123456789 vietcombank, in lên bill được không","nho":[],"la_chu":true},
+ {"q":"chị Lan nhân viên ca sáng xin nghỉ, tôi đang tính cho nghỉ luôn","nho":[],"la_chu":true,"rieng":true},
+ {"q":"doanh thu tháng này của tôi 45 triệu có ổn không","nho":[],"la_chu":true},
+ {"q":"máy in bếp không ra phiếu","nho":[],"la_chu":true},
+ {"q":"tuần này tôi định chạy mã giảm 10%","nho":[],"la_chu":true}
+]

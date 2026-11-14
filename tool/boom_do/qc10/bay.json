@@ -1,0 +1,268 @@
+{
+ "cases": [
+  {
+   "q": "hôm nay quầy huỷ mấy đơn rồi em",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hom nay huy may don roi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tuần này in lại bao nhiêu bill",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng 9 xoá món trong đơn bao nhiêu lần",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm qua ai xoá món nhiều nhất",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm qua lỡ huỷ mấy đơn giờ khôi phục lại",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm nay lỡ xoá mấy món trong đơn giờ thêm lại",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng này tạo mấy phiếu chi rồi giờ muốn xoá bớt 1 phiếu",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "1 ngày khách được nhập mã km mấy lần",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hom nay nhan nhieu don qua may in khong kip",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm nay huỷ 3 đơn mà doanh thu không giảm",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tuần này bán bao nhiêu ly trà sữa",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "cách sữa giá món trà đào",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "sữa món trong đơn đã gửi bếp",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "khách chuyển khoản rồi mà đơn vẫn chưa thanh toán",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm nay tiền mặt bao nhiêu chuyển khoản bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "trân châu còn bao nhiêu vậy",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "còn mấy chai siro dâu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "két còn bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "mã giảm giá còn bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hạn mức boom còn bao nhiêu",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "kho trân châu không nhúc nhích dù bán cả chục ly",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "ai đang vào ca vậy",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng 9 trả lương cho Lan bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "đi trễ mà lương không bị trừ",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng này chi lương hết bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng này tiền vô đâu hết vậy",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng này chi tiền vào đâu nhiều nhất",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tháng này chi phí sao nhiều vậy, phân tích giúp",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "7 ngày qua chi những khoản gì",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "khoản tiền điện ghi vô đâu",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "thu chi với báo cáo lệch nhau hoài",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "doanh thu tuần này vậy ổn không",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "doanh thu bao nhiêu thì phải đóng thuế",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "thang nay tien thue mat bang bao nhieu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "chi phí không giảm nổi, tư vấn giúp",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hôm nay làm được bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "hoá đơn in ra mờ mờ",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "máy in bị đơ không in được",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "tạo chương trình khuyến mãi mua 2 tặng 1",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "món trả lại thì tiền được trả cho khách thế nào",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "nạp ví cho khách 2 trăm nghìn",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "nhân viên làm đồ uống sai công thức",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q": "bỏ 1 cái topping khỏi món",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q"
+  }
+ ]
+}

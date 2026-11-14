@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên giảm giá Trà đá 3.000đ xuống 2.500đ vào giờ vắng là làm mỏng lời, không khuyên ẩn Nước cam, Sữa đậu nành."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu Nước cam, bỏ sót Sữa đậu nành và nói sai là có 1 món đồ uống chưa bán (thực tế 2 món)."
+  },
+  {
+   "id": "D10_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khuyên thêm món mới trong khi đã có 2 đồ uống không bán; combo không nêu giá, không mời nước sâm hay chanh."
+  },
+  {
+   "id": "D10_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Số đúng nhưng combo không nêu món và giá, thiếu đề xuất ẩn Nước cam, Sữa đậu nành và thiếu 9.120.000đ."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói sai Nước chanh chưa bán (thực tế bán 80 phần) và khuyên ẩn món đang bán; combo hai đồ uống 15.000đ là con số tự đặt."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói sai Nước chanh chưa bán (bán 80 phần), lại khuyên giảm giá Trà đá và quảng bá chung chung."
+  },
+  {
+   "id": "D10_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai Nước chanh chưa bán (bán 80 phần), phần lý do chung chung và thiếu việc ẩn món không bán."
+  },
+  {
+   "id": "D10_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai Nước chanh chưa bán (bán 80 phần), lý do mơ hồ và các đoạn dính liền khó đọc."
+  }
+ ]
+}

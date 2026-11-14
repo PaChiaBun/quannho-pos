@@ -1,0 +1,170 @@
+[
+ {
+  "id": "Z01",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "muc_tieu_tien",
+  "q": "Tháng này chị muốn chốt được 115 triệu doanh thu, mấy ngày còn lại phải bán bao nhiêu một ngày mới tới?"
+ },
+ {
+  "id": "Z02",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "muc_tieu_tien",
+  "q": "muc tieu thang 11 cua quan la 130tr, moi ngay can ban bn ly thi dat em"
+ },
+ {
+  "id": "Z03",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "muc_tieu_tien",
+  "q": "Phấn đấu tháng sau lời ròng 40 triệu thì doanh thu phải cỡ nào hả Boom, mỗi ngày bán bao nhiêu ly?"
+ },
+ {
+  "id": "Z04",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "muc_tieu_tien",
+  "q": "Anh đặt mục tiêu cuối tháng này đạt 150 triệu, giờ còn kịp không hay thôi?"
+ },
+ {
+  "id": "Z05",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "muc_tieu_tien",
+  "q": "Cô muốn tháng 11 bán được 160 triệu, phải tăng thêm bao nhiêu tô mỗi ngày so với bây giờ con?"
+ },
+ {
+  "id": "Z06",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "muc_tieu_tien",
+  "q": "tháng này tui phấn đấu chạm 140 củ, tới cuối tháng có kịp ko, làm sao cho tới"
+ },
+ {
+  "id": "Z07",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "muc_tieu_tien",
+  "q": "Mục tiêu tháng sau em đặt 135 triệu, quán nghỉ chủ nhật thì mỗi ngày mở cửa phải bán bao nhiêu dĩa?"
+ },
+ {
+  "id": "Z08",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "muc_tieu_tien",
+  "q": "Chị muốn tháng 11 dư ra 35 triệu tiền lời bỏ túi, vậy phải bán sao, mỗi ngày bao nhiêu đơn?"
+ },
+ {
+  "id": "Z09",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "so_thang_N",
+  "q": "Tháng này có bằng được tháng 9 không em?"
+ },
+ {
+  "id": "Z10",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "so_thang_N",
+  "q": "cuoi thang nay co kip muc thang 9 ko, thieu bao nhieu"
+ },
+ {
+  "id": "Z11",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "so_thang_N",
+  "q": "So với tháng 9 vừa rồi thì tháng này quán đang hơn hay kém, hơn kém bao nhiêu?"
+ },
+ {
+  "id": "Z12",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "so_thang_N",
+  "q": "Tháng 10 này vượt tháng 9 chưa Boom?"
+ },
+ {
+  "id": "Z13",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "so_thang_N",
+  "q": "Nay 28 rồi, từ giờ tới hết tháng bán kiểu này thì có qua được tháng 9 không con?"
+ },
+ {
+  "id": "Z14",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "so_thang_N",
+  "q": "thang nay vs thang 9 sao roi, co dat khong"
+ },
+ {
+  "id": "Z15",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "so_thang_N",
+  "q": "Tháng này đuổi kịp mức tháng 9 không, còn thiếu mấy dĩa nữa?"
+ },
+ {
+  "id": "Z16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "so_thang_N",
+  "q": "Doanh thu tháng này có hơn tháng 9 vừa rồi không em, món nào kéo xuống?"
+ },
+ {
+  "id": "Z17",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "vay_that",
+  "q": "Anh tính vay ngân hàng 50 triệu mua thêm cái máy pha, lãi 1%/tháng trả trong 12 tháng thì quán gánh nổi không?"
+ },
+ {
+  "id": "Z18",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "vay_that",
+  "q": "Mượn em gái 20 triệu, hứa trả 5 triệu mỗi tháng, với doanh thu hiện giờ có ổn không?"
+ },
+ {
+  "id": "Z19",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "vay_that",
+  "q": "Mua tủ mát trả góp 18 tháng, mỗi tháng góp 2,5 triệu, có nên không Boom?"
+ },
+ {
+  "id": "Z20",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "vay_that",
+  "q": "no nha cung cap tran chau 12tr, ho cho tra cham 30 ngay, thang nay du tien tra ko"
+ },
+ {
+  "id": "Z21",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "vay_that",
+  "q": "Cô đang nợ mối gạo với mối thịt tổng 25 triệu, cuối tháng phải trả, tiền bán vầy có đủ không con?"
+ },
+ {
+  "id": "Z22",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "vay_that",
+  "q": "Định vay 100 triệu sửa lại quán, lãi 10%/năm trả góp 2 năm, mỗi tháng trả bao nhiêu và có kham nổi ko?"
+ },
+ {
+  "id": "Z23",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "vay_that",
+  "q": "Em muốn vay 30 triệu mua thêm bếp nướng than với tủ, trả trong 6 tháng thì mỗi tháng phải dành ra bao nhiêu?"
+ },
+ {
+  "id": "Z24",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "vay_that",
+  "q": "vay nong 15tr lai 3%/thang de xoay tien hang, tra 1 lan sau 2 thang, co nen ko"
+ }
+]

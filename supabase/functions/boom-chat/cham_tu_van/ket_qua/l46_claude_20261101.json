@@ -1,0 +1,405 @@
+[
+ {
+  "id": "D01_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Gán việc giảm cho Thứ 7 (vốn luôn thấp, không phải nguyên nhân giảm) và không nói giá trị mỗi đơn giữ nguyên."
+ },
+ {
+  "id": "D13_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không có số mà vẫn nói 'số nghiêng về mở', bỏ qua việc văn phòng nghỉ Chủ nhật và đòi số Chủ nhật vốn không tồn tại."
+ },
+ {
+  "id": "D18_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 0,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Bịa doanh thu ca tối 18.000.000đ (đúng là 21.873.000đ), không có món / giờ tối gọn để thử."
+ },
+ {
+  "id": "D21_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Bỏ sót khung chiều 14–16h vắng; tuần 2 'đẩy mạnh cà phê sữa đá' chung chung."
+ },
+ {
+  "id": "D22_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu số tuần này (13.520.000đ, −4,7%) và bỏ sót khung 14–16h vắng; việc chép lại kế hoạch tháng."
+ },
+ {
+  "id": "D28_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C2"
+  ],
+  "loi_chinh": "Khuyên giảm giá / tặng kèm, không giảm nhập hàng Thứ 4, dùng sai số 1,14 phần để mời trà đá."
+ },
+ {
+  "id": "D42_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Mở đầu vòng vo 'phụ thuộc nhiều yếu tố', lẫn 'những ngày còn lại' của tháng 10 với tháng 11."
+ },
+ {
+  "id": "D45_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không dùng số quán (đông tối, cuối tuần; 24–25/12 rơi Thứ 5–6), không có việc chuẩn bị cụ thể."
+ },
+ {
+  "id": "D48_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Tính thêm 14h–18h trong khi quán nghỉ 14–16h và mở tối 16–20h; không so với Thứ 4 tuần trước."
+ },
+ {
+  "id": "D57_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 0,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Gọi 24.998.000đ là 'ca trưa 11–14h' (thực là riêng giờ 12h) và lý giải vòng 'thấp vì ít đơn'."
+ },
+ {
+  "id": "D58_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 0
+  },
+  "van_de_tim_ra": [
+   "C1"
+  ],
+  "loi_chinh": "Không bám chủ đề giá trị mỗi đơn giảm 11,9%; 4 việc tản mạn, có combo giảm giá cơm sườn vốn đang lời mỏng."
+ },
+ {
+  "id": "D60_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Trả lời chung chung, không dùng 760 phần / 48% giá vốn, không đề xuất mức tăng cụ thể."
+ },
+ {
+  "id": "D01_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Đổ cho Thứ 7 như nguyên nhân giảm, không nói giá trị mỗi đơn giữ ~31.500đ."
+ },
+ {
+  "id": "D08_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C2"
+  ],
+  "loi_chinh": "Câu đầu luẩn quẩn 'thấp do doanh thu thấp'; không gợi giảm nhập hàng Thứ 4 hay hỏi chủ quán lý do."
+ },
+ {
+  "id": "D13_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không có số mà vẫn nói 'số nghiêng về mở', bỏ qua việc văn phòng nghỉ Chủ nhật."
+ },
+ {
+  "id": "D21_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Bỏ sót khung chiều 14–16h vắng; tăng giá Bạc xỉu không giúp lấy lại số đơn."
+ },
+ {
+  "id": "D22_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu số tuần này và bỏ sót khung 14–16h vắng; việc chép lại kế hoạch tháng."
+ },
+ {
+  "id": "D23_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Năm bước chung chung, không có mốc cụ thể (mua mấy tặng 1, đặt theo phòng ban) cho khách văn phòng."
+ },
+ {
+  "id": "D28_2",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu Thứ 4 thấp bao nhiêu (11.502.000đ, ~55%), việc chung chung, lạc sang món chưa bán."
+ },
+ {
+  "id": "D41_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nói Thứ 7 thấp kéo ước xuống; so '14,2%' sai chỗ (đó là 1–28/10 so 1–28/9, không phải cả tháng)."
+ },
+ {
+  "id": "D42_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Bịa 'Cà phê đen đá giá vốn thấp hơn để tăng lợi nhuận' khi không có giá vốn món đó."
+ },
+ {
+  "id": "D45_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Khẳng định doanh thu 'có khả năng tăng mạnh' không có số, không dùng mẫu đông tối / cuối tuần."
+ },
+ {
+  "id": "D48_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Ước 2.800.000đ quá thấp vì bỏ quên ca tối 16–20h; không so với Thứ 4 tuần trước."
+ },
+ {
+  "id": "D50_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Tự đặt dự báo 70.000.000đ (cộng thêm 12,7 triệu) như chắc chắn; không so nguyên liệu +28% với doanh thu +2%."
+ },
+ {
+  "id": "D58_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Không nói thẳng giá trị mỗi đơn giảm là trọng tâm; gọi Cơm cá kho là 'món mới' và giảm giá giờ vắng."
+ }
+]

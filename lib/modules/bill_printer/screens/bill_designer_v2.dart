@@ -1,5 +1,6 @@
 // lib/modules/bill_printer/screens/bill_designer_v2.dart
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +9,9 @@ import '../models/bill_template_history.dart';
 import '../providers/bill_template_provider.dart';
 import '../widgets/bill_preview_widget.dart';
 import 'bill_history_sheet.dart';
+import '../widgets/designer_shell.dart';
 import 'block_config_sheet.dart';
+import 'template_gallery_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -50,7 +53,7 @@ String _blockLabel(BillBlockType type) {
     case BillBlockType.totals:        return 'Tổng tiền';
     case BillBlockType.paymentMethod: return 'Phương thức thanh toán';
     case BillBlockType.loyaltyPoints: return 'Điểm thưởng';
-    case BillBlockType.qrCode:        return 'QR Code';
+    case BillBlockType.qrCode:        return 'Mã QR';
     case BillBlockType.customText:    return 'Văn bản tự do';
     case BillBlockType.spacer:        return 'Khoảng trắng';
     case BillBlockType.footer:        return 'Lời cảm ơn';
@@ -59,28 +62,17 @@ String _blockLabel(BillBlockType type) {
   }
 }
 
+/// Thiết kế hoá đơn thu ngân: khối hoá đơn, mẫu dựng sẵn, xem trước.
+/// Chỉ là phần thân — được nhúng trong màn "Thiết Kế Mẫu In".
 class BillDesignerV2 extends ConsumerStatefulWidget {
   const BillDesignerV2({super.key});
   @override
   ConsumerState<BillDesignerV2> createState() => _BillDesignerV2State();
 }
 
-class _BillDesignerV2State extends ConsumerState<BillDesignerV2>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
+class _BillDesignerV2State extends ConsumerState<BillDesignerV2> {
+  final _shellKey = GlobalKey<DesignerShellState>();
   bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
 
   Future<void> _save() async {
     setState(() => _saving = true);
@@ -90,77 +82,57 @@ class _BillDesignerV2State extends ConsumerState<BillDesignerV2>
       await BillTemplateHistoryService.push(current);
     }
     await ref.read(billTemplateProvider.notifier).save();
+    if (!mounted) return;
     setState(() => _saving = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã lưu thiết kế hoá đơn',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kIndigo,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('✅ Đã lưu thiết kế hoá đơn',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+      backgroundColor: _kIndigo,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     final asyncTpl = ref.watch(billTemplateProvider);
-    final isWide = MediaQuery.of(context).size.width > 700;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        backgroundColor: _kIndigo,
-        foregroundColor: Colors.white,
-        title: const Text('Thiết Kế Hoá Đơn', style: TextStyle(fontWeight: FontWeight.w700)),
+    return asyncTpl.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      data: (tpl) => DesignerShell(
+        key: _shellKey,
+        accent: _kIndigo,
+        config: _BlocksPanel(tpl: tpl),
+        presets: BillPresetPicker(
+          // Áp dụng xong → về Cấu hình để thấy ngay các khối của mẫu mới.
+          onApplied: () => _shellKey.currentState?.showConfig(),
+        ),
+        preview: BillPreviewWidget(tpl: tpl),
         actions: [
-          // Nút lịch sử
           IconButton(
-            icon: const Icon(Icons.history_rounded, color: Colors.white, size: 22),
+            icon: const Icon(Icons.history_rounded, color: _kIndigo, size: 22),
             tooltip: 'Lịch sử thiết kế',
             onPressed: () => showBillHistorySheet(context, ref),
           ),
           if (_saving)
             const Padding(
-              padding: EdgeInsets.all(14),
-              child: SizedBox(width: 18, height: 18,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(color: _kIndigo, strokeWidth: 2)),
             )
           else
             TextButton.icon(
-              icon: const Icon(Icons.save_rounded, color: Colors.white, size: 18),
+              icon: const Icon(Icons.save_rounded, color: _kIndigo, size: 18),
               label: Text('Lưu',
-                  style: GoogleFonts.outfit(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
+                  style: GoogleFonts.plusJakartaSans(
+                      color: _kIndigo, fontWeight: FontWeight.w700)),
               onPressed: _save,
             ),
         ],
-        bottom: isWide ? null : TabBar(
-          controller: _tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: _kOrange,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.tune_rounded, size: 18), text: 'Cấu hình'),
-            Tab(icon: Icon(Icons.preview_rounded, size: 18), text: 'Xem trước'),
-          ],
-        ),
-      ),
-      body: asyncTpl.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
-        data: (tpl) => isWide
-            ? Row(children: [
-                SizedBox(width: 420, child: _BlocksPanel(tpl: tpl)),
-                const VerticalDivider(width: 1),
-                Expanded(child: BillPreviewWidget(tpl: tpl)),
-              ])
-            : TabBarView(controller: _tab, children: [
-                _BlocksPanel(tpl: tpl),
-                BillPreviewWidget(tpl: tpl),
-              ]),
       ),
     );
   }
@@ -198,12 +170,7 @@ class _BlocksPanel extends ConsumerWidget {
 }
 
 // ─── Paper Size Bar ───────────────────────────────────────────────────────────
-// Thông tin mô tả khổ giấy — giúp chủ quán hiểu để chọn đúng
-const _kPaperInfo = {
-  '58mm': '58mm — Khổ nhỏ | Máy in cầm tay, bill nhỏ gọn. Phù hợp quán take-away hoặc khu vực bếp.',
-  '80mm': '80mm — Khổ phổ biến nhất | Máy in quầy thu ngân thông thường. Đa số quán ăn, cà phê, nhà hàng dùng khổ này.',
-  'a4':   'A4 — Khổ lớn | In trên máy in văn phòng. Phù hợp nhà hàng cao cấp, in hóa đơn VAT.',
-};
+// Mô tả khổ giấy lấy từ bảng chung `kPaperSpecs` (utils/paper_sizes.dart)
 
 class _PaperSizeBar extends ConsumerWidget {
   final String current;
@@ -218,19 +185,19 @@ class _PaperSizeBar extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Khổ giấy',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 13, fontWeight: FontWeight.w700, color: _kIndigo)),
           const SizedBox(height: 8),
-          Row(children: [
-            _PaperChip(label: '58mm', value: '58mm', selected: current.toLowerCase() == '58mm',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('58mm')),
-            const SizedBox(width: 8),
-            _PaperChip(label: '80mm', value: '80mm', selected: current.toLowerCase() == '80mm',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('80mm')),
-            const SizedBox(width: 8),
-            _PaperChip(label: 'A4', value: 'a4', selected: current.toLowerCase() == 'a4',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('a4')),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final spec in kPaperSpecs)
+              _PaperChip(
+                label: spec.label,
+                value: spec.key,
+                selected: current.toLowerCase() == spec.key,
+                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize(spec.key),
+              ),
           ]),
+          const SizedBox(height: 10),
           // Mô tả khổ giấy đang chọn
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -246,9 +213,8 @@ class _PaperSizeBar extends ConsumerWidget {
                     size: 16, color: _kIndigo.withValues(alpha: 0.7)),
                 const SizedBox(width: 8),
                 Expanded(child: Text(
-                  _kPaperInfo[current.toLowerCase()] ??
-                      _kPaperInfo['80mm']!,
-                  style: GoogleFonts.outfit(
+                  paperSpecOf(current).description,
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       color: _kIndigo,
                       fontWeight: FontWeight.w500,
@@ -286,7 +252,7 @@ class _PaperChip extends StatelessWidget {
             color: selected ? _kIndigo : Colors.grey.shade300),
       ),
       child: Text(label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               fontSize: 12, fontWeight: FontWeight.w700,
               color: selected ? Colors.white : Colors.grey.shade700)),
     ),
@@ -338,7 +304,7 @@ class _BlockCard extends ConsumerWidget {
         ]),
         title: Text(
           _blockLabel(block.type), // tên rõ ràng, không dùng emoji.substring
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13, fontWeight: FontWeight.w600,
             color: block.enabled ? _kIndigo : Colors.grey.shade400,
           ),
@@ -455,7 +421,7 @@ class _AddBlockBtn extends ConsumerWidget {
                   return ListTile(
                     leading: Icon(_blockIcon(type), size: 20, color: _kIndigo.withValues(alpha: 0.7)),
                     title: Text(_blockLabel(type),
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                     subtitle: type.isLocked ? const Text('Bắt buộc') :
                               type.isMultiAllowed ? const Text('Có thể thêm nhiều lần') : null,
                     trailing: alreadyAdded

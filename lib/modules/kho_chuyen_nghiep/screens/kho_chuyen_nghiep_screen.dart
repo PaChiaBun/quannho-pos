@@ -9,6 +9,8 @@ import 'recipe_list_screen.dart';
 import 'ingredient_list_screen.dart';
 import 'production_order_screen.dart';
 import 'kho_chuyen_nghiep_report_screen.dart';
+import 'stock_count_screen.dart';
+import 'stock_waste_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO HÀNG CHUYÊN NGHIỆP — Entry Screen
@@ -114,12 +116,27 @@ class _KhoProScreenState extends ConsumerState<KhoProScreen>
     ),
     // ── Title — không bị clip, không bị parallax ──────────────────
     title: Text('Kho Chuyên Nghiệp',
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.plusJakartaSans(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.4)),
     titleSpacing: 6,
+    actions: [
+      IconButton(
+        tooltip: 'Kiểm kê kho',
+        icon: const Icon(Icons.fact_check_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const StockCountScreen())),
+      ),
+      IconButton(
+        tooltip: 'Ghi hao hụt',
+        icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const StockWasteScreen())),
+      ),
+      const SizedBox(width: 4),
+    ],
     // ── Background gradient + subtitle ───────────────────────────
     flexibleSpace: FlexibleSpaceBar(
       collapseMode: CollapseMode.pin, // không parallax, chỉ thu gọn
@@ -135,7 +152,7 @@ class _KhoProScreenState extends ConsumerState<KhoProScreen>
         padding: const EdgeInsets.fromLTRB(72, 0, 20, 14),
         child: Text(
           'Định lượng & giá vốn nhà hàng',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
         ),
       ),
@@ -161,7 +178,7 @@ class _KhoProScreenState extends ConsumerState<KhoProScreen>
               Icon(t.icon, size: 15),
               const SizedBox(width: 5),
               Text(t.label,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5, fontWeight: FontWeight.w700)),
             ]),
           )).toList(),
@@ -207,7 +224,7 @@ class _KhoProRightPanel extends StatelessWidget {
                 child: Row(children: [
                   const Icon(Icons.precision_manufacturing_rounded, size: 16, color: KhoTheme.navy),
                   const SizedBox(width: 6),
-                  Text('Kho Chuyên Nghiệp', style: GoogleFonts.outfit(
+                  Text('Kho Chuyên Nghiệp', style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
                 ]),
               ),
@@ -229,10 +246,10 @@ class _KhoProRightPanel extends StatelessWidget {
                         color: isActive ? KhoTheme.navy : const Color(0xFF9E9085)),
                       const SizedBox(width: 8),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(t.title, style: GoogleFonts.outfit(
+                        Text(t.title, style: GoogleFonts.plusJakartaSans(
                           fontSize: 12, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                           color: isActive ? KhoTheme.navy : const Color(0xFF1A1207))),
-                        Text(t.desc, style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFF9E9085))),
+                        Text(t.desc, style: GoogleFonts.plusJakartaSans(fontSize: 10, color: const Color(0xFF9E9085))),
                       ])),
                       if (isActive)
                         Container(width: 6, height: 6, decoration: BoxDecoration(

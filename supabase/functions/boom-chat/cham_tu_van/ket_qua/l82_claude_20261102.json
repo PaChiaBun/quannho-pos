@@ -1,0 +1,846 @@
+{
+ "moi": [
+  {
+   "id": "D23_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Mở đầu vòng vo, có ngày giảm 10% hơi rộng tay, không nói thiếu số liệu."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 0,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu Thứ 4 tụt ~55% ngày thường, việc làm chung chung không gắn Thứ 4, lạc sang món chưa bán."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nhập vừa đủ mức tối thiểu, bỏ qua hao hụt bún 26 kg / rau 15 kg khi lên lịch nhập."
+  },
+  {
+   "id": "D26_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không có số, bỏ Khoai tây chiên buổi tối, 'mục tiêu: đo số phần' lặp 4 lần."
+  },
+  {
+   "id": "D25_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đề xuất tạo thẻ tích điểm dù quán đã có 1.320 khách có điểm; bỏ qua 240 khách mới, 35 khách có ví."
+  },
+  {
+   "id": "D24_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Để nhân viên mời topping tới tuần 3–4, không nêu 0,35 phần/đơn hay trân châu trắng chưa bán."
+  },
+  {
+   "id": "D30_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Rải 4 tuần cho một ngày lễ, 'tiệc cho giáo viên' không hợp quán bún gần chợ."
+  },
+  {
+   "id": "D30_3",
+   "diem": {
+    "thang": 0,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không gắn gì với 20/11 (combo, mini game chung chung), 'món ăn vặt' quán không có."
+  },
+  {
+   "id": "D25_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm mơ hồ (tặng điểm, combo) không có con số, không dùng 240 khách mới / 35 khách có ví."
+  },
+  {
+   "id": "D25_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Tuần 3–4 khảo sát không kéo khách quay lại, thiếu ưu đãi cho 240 khách mới."
+  },
+  {
+   "id": "D21_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nêu đúng hướng nhưng không dẫn số (−14,8% đơn, 14–16h chỉ ~1,9 triệu/giờ)."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'Bún bò có giá vốn thấp hơn' (không có giá vốn), tuần 3–4 tự mâu thuẫn: 'giới thiệu' bằng cách ẩn món."
+  },
+  {
+   "id": "D26_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi khách là 'Em' sai xưng hô, trưa bỏ Trà dâu tây."
+  },
+  {
+   "id": "D23_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 0
+   },
+   "loi": "Dài, sáo, x2 điểm thứ Hai/Sáu không lý do, không gắn khách văn phòng mua sáng."
+  },
+  {
+   "id": "D26_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi 'Em' sai xưng hô, không có số, buổi tối bỏ Khoai tây chiên."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu đồ uống chỉ ~7% doanh thu; 'tăng cường quảng bá' chung chung, combo không có giá."
+  },
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói tập trung khung giờ vắng nhưng không có việc nào nhắm buổi chiều; không nêu tuần này giảm 4,7% do số đơn."
+  },
+  {
+   "id": "D27_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất giảm giá quảng bá Nước cam, Sữa đậu nành (món cả kỳ chưa bán) như 'món mới' — trái hướng nên ẩn."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Có số 11.502.000đ nhưng không so ngày thường; tặng trứng kèm Cơm sườn là món đang lời mỏng 48%."
+  },
+  {
+   "id": "D24_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Giảm 10% topping thay vì mời đều; thiếu số 0,35 phần/đơn và món Trân châu trắng chưa bán."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu Thứ 4 thấp bao nhiêu; tăng giá Cơm sườn không liên quan việc bớt ế."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mời trà tắc kèm cà phê sữa (2 ly nước) hơi gượng; không dẫn số khung chiều."
+  },
+  {
+   "id": "D21_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu nguyên nhân là số đơn giảm 14,8%; tặng ly cà phê 20.000đ khá nặng; lặp ý Thứ 7."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót hao hụt bún 26 kg, rau 15 kg, sườn 2,5 kg (~912.000đ) khi lên lịch nhập; 'nhập ngay' nhưng hẹn 30/10."
+  },
+  {
+   "id": "D22_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói tập trung 14–17h nhưng không việc nào nhắm khung chiều; mời cà phê sữa khi khách gọi bạc xỉu vô lý."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót hao hụt bún/rau/sườn khi lên lịch nhập; 'nhập ngay' nhưng hẹn 30/10."
+  },
+  {
+   "id": "D21_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu nguyên nhân giảm số đơn; viết sai 'tăng giá combo xuống 45.000đ'."
+  },
+  {
+   "id": "D30_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lên chương trình giảm giá, quảng cáo cho quán bình dân gần chợ khi không có số liệu, không nói rõ chỉ cần làm nhẹ."
+  },
+  {
+   "id": "D23_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Tặng trà sữa dù quán cà phê không bán trà sữa; 1 điểm/100.000đ trong khi đơn ~31.500đ là khó tích."
+  },
+  {
+   "id": "D24_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Viện lý 'combo hiện đang đắt hơn mua lẻ' — sai với quán này; thiếu số 0,35 phần/đơn."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D23_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "x2 điểm giờ trưa trái hồ sơ (khách chủ yếu mua sáng), quảng bá qua email không thực tế với ki-ốt."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tăng giá Cơm sườn gọi là 'khuyến mãi', không gắn việc làm với Thứ 4, không nêu số Thứ 4 tụt."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nhập vừa đủ mức tối thiểu, bỏ qua hao hụt bún 26 kg / rau 15 kg khi lên lịch nhập."
+  },
+  {
+   "id": "D26_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chỉ liệt kê món bán chạy kèm số, thiếu cách mời / mục tiêu đo cụ thể."
+  },
+  {
+   "id": "D25_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Giảm 10% chung chung và tổ chức 'buổi gặp mặt' không hợp quán trà sữa; bỏ qua 240 khách mới, 35 khách có ví."
+  },
+  {
+   "id": "D24_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề xuất tặng topping khi mua trà sữa và giảm giá trân châu đen — thuộc điều cần tránh."
+  },
+  {
+   "id": "D30_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "'Mua 1 tặng 1' giảm sâu và bịa nhận định 'mỗi đơn chỉ có món chính' khi không có số liệu."
+  },
+  {
+   "id": "D30_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tiệc tại quán, đặt bàn trước không hợp quán bún bình dân gần chợ."
+  },
+  {
+   "id": "D25_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chung chung (giảm 10%, nhắn tin), không dùng 240 khách mới / 35 khách có ví."
+  },
+  {
+   "id": "D25_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Hai chương trình tích ly / tích điểm chồng nhau, rối và trùng hệ điểm sẵn có."
+  },
+  {
+   "id": "D21_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không chỉ ra nguyên nhân là số đơn giảm 14,8% và giờ chiều vắng; tuần 2–3 chỉ mời thêm chung chung."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm giá trà đá 3.000đ / tặng món ăn khi gọi nước và quảng bá nước cam, sữa đậu nành chưa bán — sai hướng."
+  },
+  {
+   "id": "D26_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không có số, buổi tối bỏ Khoai tây chiên, cấu trúc lặp."
+  },
+  {
+   "id": "D23_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất tặng trà sữa cho ki-ốt cà phê (món có thể không có), hai mốc đổi quà mâu thuẫn."
+  },
+  {
+   "id": "D26_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ đẩy món đã bán chạy, bỏ Bánh tráng trộn chiều và Khoai tây chiên tối."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu đồ uống chỉ ~7% doanh thu, đẩy giảm giá/tặng nước và xếp nhầm Giò heo thêm vào nhóm đồ uống."
+  },
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không dẫn số liệu khung 14–16h và mức giảm 4,7% để làm lý lẽ."
+  },
+  {
+   "id": "D27_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu đồ uống ~7% doanh thu; quảng bá chung chung, combo không có giá."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nhắc số Thứ 4 nào, việc làm không gắn với Thứ 4; 'mỗi đơn chỉ có 1 món' sai (~2 phần/đơn)."
+  },
+  {
+   "id": "D24_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tuần 3–4 giảm 5.000đ món chính khi mua topping 6.000đ gần như xóa hết tiền topping."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Có số 2.875.500đ/ngày nhưng các việc không riêng cho Thứ 4 (mời thêm món giờ cao điểm không tăng số đơn)."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Hạ combo 'dưới giá lẻ' không nêu giá cụ thể; không dẫn số khung chiều."
+  },
+  {
+   "id": "D21_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa 'cà phê đen giá vốn thấp, lời cao hơn' và mua 1 tặng 1 vào Thứ 2 là ngày đã đông nhất."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót hao hụt bún/rau/sườn khi lên lịch nhập; 'nhập ngay' nhưng hẹn 30/10."
+  },
+  {
+   "id": "D22_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Xếp việc vào Chủ nhật dù quán nghỉ CN, và gọi Thứ 4 là ngày yếu nhất (Thứ 3 bằng Thứ 4)."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót hao hụt bún/rau/sườn; không nêu ngày nhập, mục cần xem lại chung chung."
+  },
+  {
+   "id": "D21_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Ưu đãi dồn vào Thứ 2 là ngày đông nhất, không nhắm khung chiều hay Thứ 7 yếu; không dẫn số đơn −14,8%."
+  },
+  {
+   "id": "D30_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Giảm 10% giáo viên và 'mua 2 tặng 1' là giảm sâu, lý lẽ chung chung, không có số liệu."
+  },
+  {
+   "id": "D23_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chung chung, không gắn khách văn phòng (đặt theo phòng ban, giờ chiều), mức điểm không cụ thể."
+  },
+  {
+   "id": "D24_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tuần 3–4 giảm 10% topping làm mỏng lời; không nhắc Trân châu trắng chưa bán."
+  }
+ ]
+}

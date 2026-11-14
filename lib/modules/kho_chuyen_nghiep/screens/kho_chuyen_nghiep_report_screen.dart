@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/utils/quantity_formatter.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
 
@@ -80,7 +82,7 @@ class _KhoProReportScreenState extends ConsumerState<KhoProReportScreen>
             indicatorColor: KhoTheme.violet,
             indicatorWeight: 2.5,
             tabs: _tabs.map((t) => Tab(
-                child: Text(t, style: GoogleFonts.outfit(
+                child: Text(t, style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w700)))).toList(),
           ),
         ),
@@ -127,7 +129,7 @@ class _KhoProReportScreenState extends ConsumerState<KhoProReportScreen>
             color: isSelected ? KhoTheme.violet : KhoTheme.violet.withOpacity(0.25),
           ),
         ),
-        child: Text(label, style: GoogleFonts.outfit(
+        child: Text(label, style: GoogleFonts.plusJakartaSans(
             fontSize: 11.5, fontWeight: FontWeight.w700,
             color: isSelected ? Colors.white : KhoTheme.violet)),
       ),
@@ -150,13 +152,16 @@ class _DateChip extends StatelessWidget {
         color: KhoTheme.card, borderRadius: BorderRadius.circular(8),
         border: Border.all(color: KhoTheme.border)),
       child: Text('$label ${date.day}/${date.month}',
-          style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700,
+          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700,
               color: KhoTheme.navy)),
     ),
   );
 }
 
 // ── FOOD COST TAB ─────────────────────────────────────────────────────────────
+// Giá vốn = nguyên liệu bị trừ khi bán (phiếu kho). Trước chỉ cộng lệnh sản xuất nên quán không dùng lệnh
+// sản xuất luôn thấy "Tổng giá vốn 0 đ" (Bò Đen 03/11/2026); lệnh sản xuất nay tính riêng, không cộng vào
+// (cộng thì tính trùng: bán thành phẩm đã mang giá vốn của mẻ nấu).
 class _FoodCostTab extends ConsumerWidget {
   final DateTime from;
   final DateTime to;
@@ -164,16 +169,28 @@ class _FoodCostTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<Map<String, double>>(
+    final repo = ref.read(khoProRepositoryProvider);
+    return FutureBuilder(
       key: ValueKey('foodcost-${from.toIso8601String()}-${to.toIso8601String()}'),
-      future: ref.read(khoProRepositoryProvider).getFoodCostByDate(from: from, to: to),
+      future: (
+        repo.getSalesIngredientUsage(from: from, to: to),
+        repo.getFoodCostByDate(from: from, to: to),
+      ).wait,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final data   = snap.data ?? {};
-        final total  = data.values.fold(0.0, (s, v) => s + v);
-        final days   = data.length;
+        if (snap.hasError) {
+          return const Center(child: _EmptyReport(label: 'Chưa tải được báo cáo, chọn lại ngày để thử lại'));
+        }
+        final sales = snap.data?.$1.costByDate ?? const <String, double>{};
+        final production = snap.data?.$2 ?? const <String, double>{};
+        final total = sales.values.fold(0.0, (s, v) => s + v);
+        final days = sales.length;
+        List<Widget> byDay(Map<String, double> m) => [
+              for (final e in m.entries.toList()..sort((a, b) => b.key.compareTo(a.key)))
+                _DayCostRow(date: e.key, cost: e.value),
+            ];
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -188,21 +205,31 @@ class _FoodCostTab extends ConsumerWidget {
               ),
               child: Row(children: [
                 Expanded(child: _StatItem(
-                  label: 'Tổng giá vốn', value: fmtMoney(total))),
+                  label: 'Giá vốn NL đã bán', value: fmtMoney(total))),
                 Expanded(child: _StatItem(
                   label: 'TB/ngày',
                   value: days > 0 ? fmtMoney(total / days) : '—')),
               ]),
             ),
+            const SizedBox(height: 6),
+            Text('Nguyên liệu bị trừ khi bán × giá vốn hiện tại của nguyên liệu.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: KhoTheme.muted)),
             const SizedBox(height: 16),
-            // Daily breakdown
-            Text('Chi phí theo ngày', style: GoogleFonts.outfit(
+            Text('Giá vốn theo ngày', style: GoogleFonts.plusJakartaSans(
                 fontSize: 13, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
             const SizedBox(height: 8),
-            if (data.isEmpty)
-              _EmptyReport(label: 'Chưa có dữ liệu sản xuất trong kỳ này')
+            if (sales.isEmpty)
+              const _EmptyReport(label: 'Chưa có nguyên liệu nào bị trừ khi bán trong kỳ này')
             else
-              ...data.entries.map((e) => _DayCostRow(date: e.key, cost: e.value)),
+              ...byDay(sales),
+            if (production.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text('Lệnh sản xuất theo ngày (tính riêng, không cộng ở trên)',
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
+              const SizedBox(height: 8),
+              ...byDay(production),
+            ],
           ],
         );
       },
@@ -218,57 +245,92 @@ class _ConsumptionTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    final repo = ref.read(khoProRepositoryProvider);
+    return FutureBuilder(
       key: ValueKey('consumption-${from.toIso8601String()}-${to.toIso8601String()}'),
-      future: ref.read(khoProRepositoryProvider)
-          .getIngredientConsumption(from: from, to: to),
+      future: (
+        repo.getSalesIngredientUsage(from: from, to: to),
+        repo.getIngredientConsumption(from: from, to: to),
+      ).wait,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final items = snap.data ?? [];
-        if (items.isEmpty) {
-          return Center(child: _EmptyReport(
+        if (snap.hasError) {
+          return const Center(child: _EmptyReport(label: 'Chưa tải được báo cáo, chọn lại ngày để thử lại'));
+        }
+        final sales = snap.data?.$1.ingredients ?? const <Map<String, dynamic>>[];
+        final production = snap.data?.$2 ?? const <Map<String, dynamic>>[];
+        if (sales.isEmpty && production.isEmpty) {
+          return const Center(child: _EmptyReport(
               label: 'Chưa có tiêu thụ trong kỳ này'));
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, i) {
-            final item = items[i];
-            return Container(
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                color: KhoTheme.card,
-                borderRadius: BorderRadius.circular(KhoTheme.radiusCard),
-                border: Border.all(color: KhoTheme.border),
-                boxShadow: KhoTheme.subtleShadow,
-              ),
-              child: Row(children: [
-                Text('${i + 1}', style: GoogleFonts.outfit(
-                    fontSize: 13, color: KhoTheme.muted, fontWeight: FontWeight.w700)),
-                const SizedBox(width: 10),
-                Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['ingredient_name'] as String? ?? '—',
-                          style: GoogleFonts.outfit(
-                              fontSize: 14, fontWeight: FontWeight.w800,
-                              color: KhoTheme.ink)),
-                      Text('${(item['total_qty'] as double).toStringAsFixed(1)} ${item['unit']}',
-                          style: GoogleFonts.outfit(
-                              fontSize: 12, color: KhoTheme.muted)),
-                    ])),
-                Text(fmtMoney(item['total_cost'] as double),
-                    style: GoogleFonts.outfit(
-                        fontSize: 14, fontWeight: FontWeight.w800,
-                        color: KhoTheme.violet)),
-              ]),
+        Widget header(String t) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(t, style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
             );
-          },
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (sales.isNotEmpty) ...[
+              header('Dùng khi bán'),
+              for (var i = 0; i < sales.length; i++) _ConsumptionRow(rank: i + 1, item: sales[i]),
+            ],
+            if (production.isNotEmpty) ...[
+              if (sales.isNotEmpty) const SizedBox(height: 8),
+              header('Dùng cho lệnh sản xuất'),
+              for (var i = 0; i < production.length; i++)
+                _ConsumptionRow(rank: i + 1, item: production[i]),
+            ],
+          ],
         );
       },
+    );
+  }
+}
+
+class _ConsumptionRow extends StatelessWidget {
+  final int rank;
+  final Map<String, dynamic> item;
+  const _ConsumptionRow({required this.rank, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final qty = item['total_qty'] as double;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: KhoTheme.card,
+        borderRadius: BorderRadius.circular(KhoTheme.radiusCard),
+        border: Border.all(color: KhoTheme.border),
+        boxShadow: KhoTheme.subtleShadow,
+      ),
+      child: Row(children: [
+        Text('$rank', style: GoogleFonts.plusJakartaSans(
+            fontSize: 13, color: KhoTheme.muted, fontWeight: FontWeight.w700)),
+        const SizedBox(width: 10),
+        Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item['ingredient_name'] as String? ?? '—',
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14, fontWeight: FontWeight.w800,
+                      color: KhoTheme.ink)),
+              // Cùng kiểu số với kho ("29 ml", "611,1 ml"), không "611.111".
+              Text(fmtStock(qty, item['unit'] as String? ?? '',
+                      conversionRate: (item['conversion_rate'] as num?) ?? 0,
+                      conversionUnit: item['conversion_unit'] as String? ?? '',
+                      maxDecimals: qty >= 1 ? 1 : 3),
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, color: KhoTheme.muted)),
+            ])),
+        Text(fmtMoney(item['total_cost'] as double),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, fontWeight: FontWeight.w800,
+                color: KhoTheme.violet)),
+      ]),
     );
   }
 }
@@ -353,12 +415,12 @@ class _ProductionTab extends ConsumerWidget {
                   Expanded(child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(o.recipeName, style: GoogleFonts.outfit(
+                        Text(o.recipeName, style: GoogleFonts.plusJakartaSans(
                             fontSize: 13, fontWeight: FontWeight.w800,
                             color: o.status == 'cancelled' ? KhoTheme.muted : KhoTheme.ink,
                             decoration: o.status == 'cancelled' ? TextDecoration.lineThrough : null)),
-                        Text('${o.quantity.toStringAsFixed(0)} phần  ·  ${o.scheduledDate}',
-                            style: GoogleFonts.outfit(fontSize: 11, color: KhoTheme.muted)),
+                        Text('${o.quantity.toStringAsFixed(0)} phần  ·  ${khoReportDayLabel(o.scheduledDate)}',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11, color: KhoTheme.muted)),
                       ])),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -367,7 +429,7 @@ class _ProductionTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(statusLabel,
-                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700,
                             color: statusColor)),
                   ),
                 ]),
@@ -390,12 +452,18 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w600)),
-      Text(value, style: GoogleFonts.outfit(
+      Text(value, style: GoogleFonts.plusJakartaSans(
           fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
     ],
   );
+}
+
+/// "2026-11-02" → "Thứ Hai, 02/11", cùng kiểu đầu trang Báo cáo (trước ghi nguyên "2026-11-02").
+String khoReportDayLabel(String day) {
+  final d = DateTime.tryParse(day);
+  return d == null ? day : DateFormat('EEEE, dd/MM', 'vi').format(d);
 }
 
 class _DayCostRow extends StatelessWidget {
@@ -411,10 +479,10 @@ class _DayCostRow extends StatelessWidget {
       color: KhoTheme.card, borderRadius: BorderRadius.circular(10),
       border: Border.all(color: KhoTheme.border)),
     child: Row(children: [
-      Text(date, style: GoogleFonts.outfit(
+      Text(khoReportDayLabel(date), style: GoogleFonts.plusJakartaSans(
           fontSize: 13, color: KhoTheme.muted)),
       const Spacer(),
-      Text(fmtMoney(cost), style: GoogleFonts.outfit(
+      Text(fmtMoney(cost), style: GoogleFonts.plusJakartaSans(
           fontSize: 14, fontWeight: FontWeight.w800, color: KhoTheme.violet)),
     ]),
   );
@@ -434,8 +502,8 @@ class _KpiMini extends StatelessWidget {
       border: Border.all(color: color.withOpacity(0.2)),
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.outfit(fontSize: 11, color: color)),
-      Text(value, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: color)),
+      Text(value, style: GoogleFonts.plusJakartaSans(
           fontSize: 22, fontWeight: FontWeight.w900, color: color)),
     ]),
   );
@@ -451,7 +519,7 @@ class _EmptyReport extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Icon(Icons.bar_chart_rounded, size: 56, color: KhoTheme.muted.withOpacity(0.4)),
       const SizedBox(height: 12),
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 14, color: KhoTheme.muted, fontWeight: FontWeight.w600),
           textAlign: TextAlign.center),
     ]),

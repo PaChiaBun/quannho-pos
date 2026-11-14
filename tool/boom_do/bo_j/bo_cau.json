@@ -1,0 +1,680 @@
+{
+ "note": "Bộ J — kín: xin phân tích/đề xuất theo số quán, lạc đề và câu dễ nhầm",
+ "cases": [
+  {
+   "q": "nhìn doanh thu theo giờ tuần rồi thì ca tối nên xếp thêm mấy đứa, phân giúp a",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "xep nguoi theo gio ban dum minh, khung nao dong thi them nguoi khung nao vang thi bot",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "chi phí tháng này có khoản nào tăng bất thường ko, soi giúp e",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "cắt bớt chi phí chỗ nào được hả Boom, dựa sổ thu chi quán t",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tien luong tren doanh thu thang 9 bn %, vay la cao hay thap",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tỉ lệ huỷ món của quán mình có cao quá ko so với doanh thu",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "giam gia voucher thang nay an vao doanh thu nhieu ko, co nen dung chay tiep k",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "voucher KM20 chạy 2 tuần rồi có hiệu quả không hay lỗ thêm",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "dựa vào tồn kho với tốc độ bán thì tuần sau nên nhập thêm bn kg trân châu",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "sữa tươi xài hết nhanh quá, theo số bán thì nhập bao nhiêu thùng là vừa",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "món nào bán ế nên xoá khỏi menu, xem số rồi khuyên t",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "mon nao nen day manh, ban chay ma loi cao y",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "so tháng 9 với tháng 10 xem tháng nào làm ăn tốt hơn, tại sao",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "quý 3 vs quý 2 lời hơn hay lỗ hơn, nguyên nhân do đâu z",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "2 tiệm quận 3 với gò vấp tiệm nào ngon hơn, vì sao bên kia đuối",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "khach quen dao nay co giam ko, so voi thang truoc thi sao",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tầm 2-4h chiều quán vắng hoắc, nhìn số rồi gợi ý nên làm gì",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "có nên huỷ ca khuya không, doanh thu khung đó có đủ trả lương ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "thêm 1 bạn pha chế ca sáng có đáng ko, dựa trên đơn mấy tuần nay",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "lợi nhuận tháng này tụt, phân tích giùm chỗ nào làm lỗ",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "bien loi nhuan cua quan minh nhu vay on chua",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "giá vốn ly trà sữa trân châu đường đen cao quá ko, có nên tăng giá",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "nên tăng giá món nào mà khách ko bỏ, nhìn số bán giúp",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tiền hao hụt tháng rồi nhiều ko, ghi hao hut vay la bat thuong chua",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "mấy bạn thu ngân ai bán được nhiều nhất, có nên thưởng ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "nhan vien nao di tre nhieu, co nen cat ca ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "chạy chương trình nạp ví tặng tiền có làm khách quay lại nhiều hơn ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tỷ lệ khách trả chuyển khoản tăng, vậy có nên bỏ bớt tiền mặt trong két",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tiền điện tháng 10 so với doanh thu cao ko, có cần cắt máy lạnh",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "thứ mấy trong tuần bán chậm nhất, nên khuyến mãi ngày đó ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tuần này doanh thu giảm 15% so tuần trước là do món nào, do giờ nào",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "theo bảng huỷ duyệt thì nhân viên nào huỷ nhiều bất thường, có đáng ngờ ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "so 2 chi nhanh thi chi nhanh nao chi phi luong cao hon tren doanh thu",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "món topping nào ít ai gọi nên bỏ cho đỡ tồn kho",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tháng sau nên đặt mục tiêu doanh thu bao nhiêu dựa trên mấy tháng qua",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "đơn qr với đơn tại quầy cái nào trung bình bill cao hơn, nên đẩy cái nào",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "có nên chạy thêm voucher cuối tuần ko hay cuối tuần tự đông rồi",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "nguyen lieu nao dang ton nhieu qua can xu ly truoc khi hu",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "khách hạng vàng chi tiêu có nhiều hơn hẳn ko, có nên nâng ưu đãi",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "nhìn lương với giờ công, ca nào đang dư người",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "doanh thu hôm qua bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "cho xin top 10 món bán chạy tháng 10",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tong chi phi thang nay la bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "liệt kê mấy khoản chi tuần này",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "hôm nay huỷ bao nhiêu món, tổng tiền huỷ",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "voucher dùng bao nhiêu lần tháng rồi, giảm tổng bn tiền",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "ton kho sua dac con bao nhieu lon",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tháng 9 lời bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "danh sách nhân viên đi trễ tuần này",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "doanh thu tiền mặt với chuyển khoản hôm nay mỗi cái bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "bao nhiêu khách mới đăng ký trong tháng",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "so don hom nay voi TB moi don",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "quỹ lương kỳ này tổng cộng bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "hai tiệm doanh thu tháng này mỗi tiệm bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "liet ke mon dang het hang",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "làm sao giảm giá cho khách quen lúc tính tiền",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-thanh-toan",
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "chỗ nào xem chi phí với lời lỗ vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-tai-chinh",
+    "thu-chi#cac-viec-thuong-lam-2-xem-theo-khoang-thoi-gian"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "them nguoi vao ca kieu gi z",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-7-ca-lam-viec"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "voucher hết hạn rồi sao vẫn áp được, hay báo hết hạn mà còn ngày",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#loi-ma-giam-gia-da-het-han-su-dung-chua-den-thoi-gian-ap-dung-da"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "tạo mã khuyến mãi 10% ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "nhập thêm nguyên liệu nhiều món 1 lúc có nhà cung cấp thì làm sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "huy mon da gui bep the nao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "xoá khoản chi ghi nhầm sao đc",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "ghi tiền điện vô sổ chi chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "chỗ nào coi món bán chạy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-san-pham"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "xem lich su huy mon ai duyet o dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-huy-duyet"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "so sánh 2 tiệm trên app làm sao, ko thấy nút báo cáo chuỗi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-khong-thay-nut-bao-cao-chuoi",
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "lợi nhuận app báo thấp hơn thực tế, sai chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "chạy kỳ lương tháng này bấm đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#cac-viec-thuong-lam-2-tao-ky-luong"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "voucher bao don chua dat gia tri toi thieu la sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#loi-don-hang-chua-dat-gia-tri-toi-thieu-de-ap-dung-voucher",
+    "ban-hang#loi-loi-don-hang-chua-dat-gia-tri-toi-thieu-de-ap-dung-voucher"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "cắt hàng hư hỏng khỏi kho, điều chỉnh tồn sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong",
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-5-ghi-hao-hut"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "xem giá vốn từng món ở đâu vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-6-xem-gia-von-va-loi-nhuan-mon"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "sổ thu chi ko thấy khoản lương, phải làm gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-so-thu-chi-khong-co-khoan-luong"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "xem khách này đã chi tổng bao nhiêu chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-2-xem-chi-tiet-khach"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "tat ban mon tam thoi khi het nguyen lieu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "nhom": "J"
+  },
+  {
+   "q": "quán cà phê nhỏ tầm 30 chỗ thì ca tối nên mấy người",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "khuyến mãi gì hợp ngày 20/11 cho quán trà sữa",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "chi phi mat bang bao nhieu % doanh thu la hop ly",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "giá vốn đồ uống nên giữ dưới bao nhiêu phần trăm",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "làm sao giữ chân khách quen nói chung, có mẹo gì ko",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "mở quán ăn sáng nên bán món gì dễ lời",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "mùa mưa quán vắng thì người ta hay làm gì để kéo khách",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "nen tra luong theo gio hay theo thang cho nv part time",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "chạy quảng cáo facebook cho quán cà phê có đáng tiền ko",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "kinh nghiệm quản lý nhân viên hay đi trễ",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "định giá ly cà phê muối sao cho hợp lý",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "có nên làm thẻ tích điểm hay giảm giá trực tiếp, cái nào hay hơn",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "noel nen trang tri quan va lam combo gi",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tỉ lệ lương trên doanh thu bao nhiêu thì là ổn với quán nước",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "bán thêm bánh ngọt kèm cà phê có nên ko",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "mai sài gòn có mưa ko boom",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "tối nay MU đá với ai",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "đau đầu uống thuốc gì",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "xo so mien nam hom nay ve so may",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "giá vàng sjc hôm nay bn",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "Boom là ai, ai làm ra m",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "có phim gì hay coi cuối tuần ko",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "ny giận ko thèm rep tin nhắn phải làm sao",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "giải giúp con bài toán lớp 4: 1 bể nước chảy...",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "bitcoin tuan nay len hay xuong",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "ke chuyen cuoi di boom",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "bé nhà e sốt 39 độ có sao ko",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "viết giùm bài thơ tặng vợ",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "dịch câu này sang tiếng anh: tôi yêu em",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  },
+  {
+   "q": "ăn gì để giảm cân nhanh",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "J"
+  }
+ ]
+}

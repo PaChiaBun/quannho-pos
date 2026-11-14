@@ -1,0 +1,226 @@
+[
+ {
+  "id": "F01",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "Tính chạy mua 2 ly cà phê sữa đá tặng 1 bánh mì trứng cho buổi chiều, vậy có lỗ không em?"
+ },
+ {
+  "id": "F02",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "giam 5k bac xiu tu 14h den 16h co lo ko em"
+ },
+ {
+  "id": "F03",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Mã GIAM15 tới 30/11 mới hết, giờ có nên dừng sớm không hay để chạy tiếp?"
+ },
+ {
+  "id": "F04",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Muốn làm trà dâu tây mua 1 tặng 1 cuối tuần này để kéo khách, được không?"
+ },
+ {
+  "id": "F05",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Bớt 5 ngàn cho đơn từ 80 ngàn buổi trưa có bõ không, hay đổi qua tặng nước sâm?"
+ },
+ {
+  "id": "F06",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "khuyen_mai",
+  "q": "giam 10% com suon ca toi thi con loi khong"
+ },
+ {
+  "id": "F07",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "Mã GIAOHANG10 đang giảm 10% đơn giao từ 100k, cộng thêm phí sàn nữa thì tui có lỗ không?"
+ },
+ {
+  "id": "F08",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "Thứ 7 tặng trứng ốp cho mỗi dĩa cơm tấm sườn thì sao, tính giùm có đáng làm không"
+ },
+ {
+  "id": "F09",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "gio_mo_dong",
+  "q": "Chiều 14h–16h vắng hoe mà Tú vẫn đứng tới 18h, có nên đóng cửa lúc 15h luôn không?"
+ },
+ {
+  "id": "F10",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "gio_mo_dong",
+  "q": "thu 7 ban it qua, mo luc 6h roi dong 11h duoc ko"
+ },
+ {
+  "id": "F11",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gio_mo_dong",
+  "q": "Sáng 9–11h gần như không có ai, mở lúc 11h thay vì 9h thì mất bao nhiêu?"
+ },
+ {
+  "id": "F12",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gio_mo_dong",
+  "q": "toi 21h-22h con dong ko, keo toi 23h duoc khong"
+ },
+ {
+  "id": "F13",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gio_mo_dong",
+  "q": "Ca tối 16h–20h ế quá, bỏ luôn ca tối được không hay giữ tới 19h?"
+ },
+ {
+  "id": "F14",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gio_mo_dong",
+  "q": "Mở sớm hơn từ 5h30 để bắt mấy ông công trình ăn sáng có đáng không?"
+ },
+ {
+  "id": "F15",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gio_mo_dong",
+  "q": "Tối 20–21h bán lèo tèo, cho bé Khoa về lúc 20h được không?"
+ },
+ {
+  "id": "F16",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "gio_mo_dong",
+  "q": "Tui tính mở luôn buổi chiều 14h–17h bán cho học sinh tan trường, nên không?"
+ },
+ {
+  "id": "F17",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "kho_het",
+  "q": "Sữa đặc còn có 3 lon, sáng mai đủ bán không, nhập bao nhiêu lon cho tới cuối tuần?"
+ },
+ {
+  "id": "F18",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "kho_het",
+  "q": "ly 500ml con 150 cai, hat ca phe con 2kg ruoi, nhap gi truoc"
+ },
+ {
+  "id": "F19",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "Ly 700ml hết sạch rồi, giờ khách gọi size lớn thì xử lý sao?"
+ },
+ {
+  "id": "F20",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "kho_het",
+  "q": "Trân châu đen còn 1,5 ký mà tháng rồi nấu dư bỏ 7 ký, nhập thêm bao nhiêu là vừa?"
+ },
+ {
+  "id": "F21",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "Gas còn 1 bình, gạo còn 8 ký, hôm nay có kịp bán tới tối không?"
+ },
+ {
+  "id": "F22",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "gao con 8kg thi nen nhap bao nhieu cho 1 tuan"
+ },
+ {
+  "id": "F23",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "kho_het",
+  "q": "Than hết rồi, sáng nay nướng sườn sao đây, có nên ngưng bán sườn không?"
+ },
+ {
+  "id": "F24",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "kho_het",
+  "q": "Trứng gà còn 40 quả, thứ 7 này đông, nhập bao nhiêu thì đủ?"
+ },
+ {
+  "id": "F25",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "giu_khach",
+  "q": "Khách văn phòng bớt ghé hẳn tháng này, làm sao kéo họ quay lại?"
+ },
+ {
+  "id": "F26",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "giu_khach",
+  "q": "Chị Hằng tầng 5 gần như ngày nào cũng mua, có nên làm thẻ tích điểm riêng cho khách quen kiểu chị ấy không?"
+ },
+ {
+  "id": "F27",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "giu_khach",
+  "q": "khach moi nhieu ma quay lai it qua, lam sao giu chan tui hoc sinh"
+ },
+ {
+  "id": "F28",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "giu_khach",
+  "q": "Có 35 khách nạp ví rồi, nên tặng thêm bao nhiêu % khi nạp để họ quay lại?"
+ },
+ {
+  "id": "F29",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "giu_khach",
+  "q": "Quán toàn khách quen công trình, có cần làm tích điểm không hay thôi?"
+ },
+ {
+  "id": "F30",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "giu_khach",
+  "q": "Tuần này khách ít gọi thêm món, mấy anh quen bớt ăn, giữ chân họ sao?"
+ },
+ {
+  "id": "F31",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "giu_khach",
+  "q": "tich diem cho khach quen thi tang gi cho hop, it ai quay lai qua"
+ },
+ {
+  "id": "F32",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "giu_khach",
+  "q": "Mấy khách đặt giao như anh Hùng, làm sao kéo họ tới ăn tại quán thay vì đặt qua sàn?"
+ }
+]

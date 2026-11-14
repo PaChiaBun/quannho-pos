@@ -1,0 +1,566 @@
+{
+ "moi": [
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất làm việc Thứ 5–Chủ nhật trong khi quán nghỉ Chủ nhật, lại nói 'mỗi đơn chỉ 1 món' sai số."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Thiếu mốc đo cụ thể, việc 3 quảng bá chung chung, không nhắc khung 14–16h."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nhắc khung 14–16h vắng; việc 3 gộp hai ý rời rạc."
+  },
+  {
+   "id": "D21_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc tuần 3–4 mời thêm món nâng giá trị đơn, lệch với vấn đề chính là mất số đơn; 'mỗi đơn chỉ 1 món' không đúng (~1,2 phần)."
+  },
+  {
+   "id": "D22_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói tập trung giờ chiều nhưng không có việc nào cho chiều; đẩy Bạc xỉu giá vốn cao là sai hướng; combo không ghi giá."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tăng giá Cơm sườn không giải quyết Thứ 4 ế; 'mỗi đơn chỉ 1 món' sai (~2 phần/đơn)."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khuyến mãi 'giảm giá đơn lớn' chung chung, không nhắc khung 14–16h."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu giá trị đơn tụt 55.049đ→48.480đ, việc ẩn món/tăng giá lệch câu hỏi tăng doanh thu."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu giá trị đơn giảm 55.049đ→48.480đ; khuyến mãi tặng món chung chung."
+  },
+  {
+   "id": "D58_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tự mâu thuẫn: nói không nên đẩy Cơm sườn rồi lại tạo combo Cơm sườn."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "'Mỗi đơn chỉ 1 món' sai; không nêu số tuần này (13.520.000đ, −4,7%)."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nhắc khung 14–16h vắng; câu khá dài."
+  },
+  {
+   "id": "D21_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa 'trà tắc giá vốn hợp lý' khi không có giá vốn; 'mỗi đơn chỉ 1 món' sai."
+  },
+  {
+   "id": "D21_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "'Mua 1 tặng 1' Cà phê sữa đá vào Thứ 2 cao điểm — mất nửa doanh thu món chủ lực, ngược logic."
+  },
+  {
+   "id": "D22_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề xuất việc Thứ 5–Chủ nhật trong khi quán nghỉ Chủ nhật; 'mỗi đơn chỉ 1 món' sai."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Ẩn Cơm chiên dương châu đang bán 95 phần thay vì Cơm cá kho chưa bán phần nào."
+  },
+  {
+   "id": "D58_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu giá trị đơn giảm và đồ uống; 4 ý hơi dài."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý lẽ sai: 'giới thiệu món mới vì Cơm cá kho chưa bán'; tăng giá Cơm sườn không giúp Thứ 4."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Mời thêm Bún thịt nướng cho khách đã gọi món chính là không thực tế; việc không riêng cho Thứ 4."
+  },
+  {
+   "id": "D21_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa 'Cà phê đen đá giá vốn hợp lý'; bỏ qua khung chiều 14–16h vắng nhất."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu số tuần này (13.520.000đ, −4,7%); x2 điểm giả định quán có chương trình điểm."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Thêm việc quảng bá Cà phê sữa đá không có mốc đo, không nhắc khung 14–16h vắng."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi 36.668.000đ là doanh thu 'hôm nay' (thực là cả kỳ); quảng bá 'hình ảnh hấp dẫn' sáo."
+  },
+  {
+   "id": "D21_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đẩy 'combo trà tắc + bánh mì' trong khi combo trà tắc + bánh mì chả cả kỳ chưa bán; 'mỗi đơn chỉ 1 món' sai."
+  },
+  {
+   "id": "D22_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên mời thêm Bạc xỉu vì giá vốn cao — đẩy bán món lời mỏng là ngược hướng."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Việc chung chung, không riêng cho Thứ 4, không nêu Thứ 4 chỉ ~55% ngày thường; câu kết sáo."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa Cà phê sữa đá/đen đá 'giá vốn hợp lý, lợi nhuận tốt' trong khi không có giá vốn."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Giống A, thêm không nhắc đồ uống (nước sâm/chanh) để tăng giá trị đơn; dài."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy Cơm sườn (giá vốn 48%) mâu thuẫn với khuyên tăng giá chính món đó; combo không cụ thể."
+  },
+  {
+   "id": "D58_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu giá trị đơn giảm và đồ uống; khuyến mãi tặng món chung chung."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "'Mỗi đơn chỉ 1 món' sai; không nêu số tuần này; x2 điểm giả định có chương trình."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Gọi Cà phê sữa đá là 'món lời' khi không có giá vốn và khuyên giảm giá món chủ lực."
+  },
+  {
+   "id": "D21_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tự đặt giảm Cà phê đen đá 20.000đ→15.000đ (−25%) quá sâu; 'mỗi đơn chỉ 1 món' sai."
+  },
+  {
+   "id": "D21_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Viết 'tăng giá combo xuống 45.000đ' gây nhầm; giảm 10% cả nhóm trà; câu kết sáo."
+  },
+  {
+   "id": "D22_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "'Mỗi đơn chỉ 1 món' sai; không nêu số tuần này."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm giá Bún bò / giảm giá khách quen làm mỏng lời, không riêng cho Thứ 4."
+  },
+  {
+   "id": "D58_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu giá trị đơn giảm 55.049đ→48.480đ; khuyến mãi tặng món chung chung."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Combo Bún bò + Trà đá không ghi giá; không nêu Thứ 4 chỉ ~55% ngày thường."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa Bún bò Huế 'giá vốn hợp lý' khi không có giá vốn."
+  },
+  {
+   "id": "D21_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "'Mỗi đơn chỉ 1 món' sai; đẩy combo trà tắc + bánh mì trong khi combo này chưa bán."
+  }
+ ]
+}

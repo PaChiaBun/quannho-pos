@@ -1,7 +1,13 @@
-# TÀI LIỆU KỸ THUẬT & VẬN HÀNH MODULE QR GỌI MÓN (MVP)
+# TÀI LIỆU LEGACY — MODULE QR GỌI MÓN V3
 **Dự án:** Quán Nhỏ POS (`quan_nho`)  
-**Ngày cập nhật:** 31/07/2026  
-**Trạng thái:** Hoàn tất phát triển MVP mã nguồn Dart & file Migration SQL. **CHƯA apply migration lên Supabase, CHƯA deploy web/mobile, CHƯA commit/push git.**
+**Ngày đánh dấu legacy:** 26/08/2026
+**Trạng thái:** Mô tả source/migration V3 hiện có để phục vụ chuyển đổi; **không còn là kiến trúc mục tiêu** và migration QR V3 chưa apply Supabase.
+**Nguồn mục tiêu mới:** `.docs/qr-order-kien-truc-muc-tieu.md`.
+**Kế hoạch triển khai:** `.docs/ke-hoach-trien-khai-qr-order.md`.
+
+> **Cập nhật 13/10/2026:** QR bàn giao động và camera quét ĐÃ BỊ BỎ; khách tự chọn bàn, nhân viên duyệt từ hàng chờ chung bằng một nút. Hợp đồng hiện hành: `.docs/qr-rpc-contract-don-gian.md`; kế hoạch: `ke-hoach-don-gian-hoa-qr.md`. Toàn bộ tài liệu dưới đây là V3 legacy, chỉ để đối chiếu.
+
+> Cảnh báo: các phần bên dưới còn mô tả QR riêng từng bàn, POS device pairing và luồng gửi Bếp V3. Không dùng các mô tả đó để triển khai mới. Kiến trúc đã chốt dùng một QR TABLE_SHARED cho cả quán, một QR COUNTER mang đi, QR bàn giao động theo request, nhân viên chọn bàn sau khi claim, và tái sử dụng account/membership hiện hành.
 
 ---
 

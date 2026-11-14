@@ -4,10 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../kho/providers/kho_providers.dart' show allStockProvider;
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../repository/recipe_product_ids.dart' show recipeMakesStock;
 import 'recipe_form_screen.dart';
 import 'recipe_detail_screen.dart';
+import '../../../core/utils/stagger.dart';
+import '../../../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RECIPE LIST SCREEN — Danh sách công thức món ăn
@@ -38,6 +42,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
       loading: () => <String, double>{},
       error: (_, __) => <String, double>{},
     );
+    // Loại món gắn với công thức: cốt / bán thành phẩm ghi theo lệnh sản xuất, không theo "menu POS".
+    final typeById = {
+      for (final s in ref.watch(allStockProvider).value ?? const []) s.id: s.productType,
+    };
 
     return Scaffold(
       backgroundColor: KhoTheme.bg,
@@ -47,7 +55,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         data: (all) {
           final filtered = all.where((r) {
             final matchQ  = _query.isEmpty ||
-                r.name.toLowerCase().contains(_query.toLowerCase());
+                r.name.containsSearch(_query);
             final matchCat = _categoryFilter == null ||
                 _categoryFilter == 'Tất cả' ||
                 r.category == _categoryFilter;
@@ -62,7 +70,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: TextField(
                     onChanged: (v) => setState(() => _query = v),
-                    style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                     decoration: KhoTheme.inputDecoration(
                       hint: 'Tìm công thức...',
                       prefix: const Icon(Icons.search_rounded,
@@ -96,7 +104,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                             border: Border.all(
                               color: sel ? KhoTheme.violet : KhoTheme.border),
                           ),
-                          child: Text(cat, style: GoogleFonts.outfit(
+                          child: Text(cat, style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5, fontWeight: FontWeight.w600,
                               color: sel ? Colors.white : KhoTheme.muted)),
                         ),
@@ -117,7 +125,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                           size: 64, color: KhoTheme.muted.withOpacity(0.4)),
                       const SizedBox(height: 16),
                       Text('Chưa có công thức nào',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 15, color: KhoTheme.muted,
                               fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
@@ -125,7 +133,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         onPressed: () => _openForm(context),
                         icon: const Icon(Icons.add_rounded),
                         label: Text('Tạo công thức đầu tiên',
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                         style: FilledButton.styleFrom(
                           backgroundColor: KhoTheme.violet,
                           shape: RoundedRectangleBorder(
@@ -148,6 +156,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         return _RecipeCard(
                           recipe: r,
                           sellPrice: sellPrice,
+                          makesStock: recipeMakesStock(typeById[r.posProductId]),
                           onTap: () => Navigator.push(context,
                               MaterialPageRoute(
                                   builder: (_) => RecipeDetailScreen(
@@ -155,7 +164,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                           onEdit: () => _openForm(context, recipe: r),
                           onDelete: () => _delete(r),
                         )
-                            .animate(delay: (i * 50).ms)
+                            .animate(delay: staggerDelay(i, 50))
                             .fadeIn(duration: 250.ms)
                             .slideY(begin: 0.05, end: 0);
                       },
@@ -173,7 +182,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         backgroundColor: KhoTheme.violet,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text('Tạo công thức',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 color: Colors.white, fontWeight: FontWeight.w700)),
       ),
     );
@@ -201,9 +210,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Xoá công thức?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
         content: Text('Xoá "${recipe.name}" — không thể khôi phục.',
-            style: GoogleFonts.outfit()),
+            style: GoogleFonts.plusJakartaSans()),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text('Huỷ')),
@@ -228,6 +237,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
 class _RecipeCard extends StatelessWidget {
   final RecipeModel recipe;
   final double sellPrice;
+  /// Công thức của nguyên liệu / bán thành phẩm (vd cốt trà): không bán ở quầy, lệnh sản xuất cộng vào kho.
+  final bool makesStock;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -235,6 +246,7 @@ class _RecipeCard extends StatelessWidget {
   const _RecipeCard({
     required this.recipe,
     required this.sellPrice,
+    this.makesStock = false,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -254,7 +266,8 @@ class _RecipeCard extends StatelessWidget {
     String marginLabel;
     if (!hasSell) {
       marginColor = KhoTheme.muted;
-      marginLabel = 'Chưa gắn giá';
+      // Cốt / bán thành phẩm không có giá bán là đúng — trước ghi "Chưa gắn giá" như thiếu cài đặt.
+      marginLabel = makesStock ? 'Bán thành phẩm' : 'Chưa gắn giá';
     } else if (margin >= 0.6) {
       marginColor = KhoTheme.green;
       marginLabel = '${(margin * 100).toStringAsFixed(0)}% lãi';
@@ -316,12 +329,12 @@ class _RecipeCard extends StatelessWidget {
                 Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(recipe.name, style: GoogleFonts.outfit(
+                      Text(recipe.name, style: GoogleFonts.plusJakartaSans(
                           fontSize: 15, fontWeight: FontWeight.w800,
                           color: KhoTheme.ink)),
                       if (recipe.category?.isNotEmpty == true)
                         Text(recipe.category!,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12, color: KhoTheme.muted)),
                     ])),
                 // Margin badge
@@ -332,7 +345,7 @@ class _RecipeCard extends StatelessWidget {
                     color: marginColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(marginLabel, style: GoogleFonts.outfit(
+                  child: Text(marginLabel, style: GoogleFonts.plusJakartaSans(
                       fontSize: 11, fontWeight: FontWeight.w800,
                       color: marginColor)),
                 ),
@@ -350,14 +363,14 @@ class _RecipeCard extends StatelessWidget {
                         child: Row(children: [
                           const Icon(Icons.edit_rounded, size: 16),
                           const SizedBox(width: 8),
-                          Text('Chỉnh sửa', style: GoogleFonts.outfit()),
+                          Text('Chỉnh sửa', style: GoogleFonts.plusJakartaSans()),
                         ])),
                     PopupMenuItem(value: 'delete',
                         child: Row(children: [
                           const Icon(Icons.delete_rounded,
                               size: 16, color: KhoTheme.red),
                           const SizedBox(width: 8),
-                          Text('Xoá', style: GoogleFonts.outfit(
+                          Text('Xoá', style: GoogleFonts.plusJakartaSans(
                               color: KhoTheme.red)),
                         ])),
                   ],
@@ -373,18 +386,18 @@ class _RecipeCard extends StatelessWidget {
                   Icon(Icons.egg_alt_rounded, size: 13, color: KhoTheme.muted),
                   const SizedBox(width: 4),
                   Text('${recipe.ingredients.length} nguyên liệu',
-                      style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
                   const SizedBox(width: 12),
                   Icon(Icons.people_rounded, size: 13, color: KhoTheme.muted),
                   const SizedBox(width: 4),
                   Text('${recipe.servingSize.toStringAsFixed(0)} ${recipe.servingUnit}',
-                      style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
                   const Spacer(),
                   // Giá vốn
                   Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('Giá vốn', style: GoogleFonts.outfit(
+                    Text('Giá vốn', style: GoogleFonts.plusJakartaSans(
                         fontSize: 10, color: KhoTheme.muted)),
-                    Text(fmtMoney(cost), style: GoogleFonts.outfit(
+                    Text(fmtMoney(cost), style: GoogleFonts.plusJakartaSans(
                         fontSize: 15, fontWeight: FontWeight.w900,
                         color: KhoTheme.violet)),
                   ]),
@@ -395,24 +408,24 @@ class _RecipeCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Giá bán', style: GoogleFonts.outfit(
+                      Text('Giá bán', style: GoogleFonts.plusJakartaSans(
                           fontSize: 10, color: KhoTheme.muted)),
-                      Text(fmtMoney(sellPrice), style: GoogleFonts.outfit(
+                      Text(fmtMoney(sellPrice), style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, fontWeight: FontWeight.w700,
                           color: KhoTheme.ink)),
                     ])),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                      Text('Lãi gộp', style: GoogleFonts.outfit(
+                      Text('Lãi gộp', style: GoogleFonts.plusJakartaSans(
                           fontSize: 10, color: KhoTheme.muted)),
-                      Text(fmtMoney(profit), style: GoogleFonts.outfit(
+                      Text(fmtMoney(profit), style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, fontWeight: FontWeight.w700,
                           color: profit > 0 ? KhoTheme.green : KhoTheme.red)),
                     ])),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('Food cost', style: GoogleFonts.outfit(
+                      Text('Tỉ lệ giá vốn', style: GoogleFonts.plusJakartaSans(
                           fontSize: 10, color: KhoTheme.muted)),
                       Text('${(foodCostPct * 100).toStringAsFixed(0)}%',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 13, fontWeight: FontWeight.w700,
                               color: marginColor)),
                     ])),
@@ -447,10 +460,15 @@ class _RecipeCard extends StatelessWidget {
                 child: Row(children: [
                   Icon(Icons.link_rounded, size: 13, color: KhoTheme.green),
                   const SizedBox(width: 4),
-                  Text('Đã gắn menu POS — Tự trừ kho khi bán',
-                      style: GoogleFonts.outfit(
-                          fontSize: 11.5, color: KhoTheme.green,
-                          fontWeight: FontWeight.w700)),
+                  Expanded(
+                    child: Text(
+                        makesStock
+                            ? 'Gắn kho — hoàn thành lệnh sản xuất cộng vào kho'
+                            : 'Đã gắn menu POS — Tự trừ kho khi bán',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5, color: KhoTheme.green,
+                            fontWeight: FontWeight.w700)),
+                  ),
                 ]),
               ),
           ],

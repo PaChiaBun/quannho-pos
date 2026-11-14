@@ -1,368 +1,322 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/services/vietqr_service.dart';
 import '../../models/qr_order_model.dart';
-import '../../providers/qr_order_providers.dart';
 
-import 'pos_device_session_card.dart';
+/// Hàm lưu do màn hình cung cấp: đọc settings mới nhất, áp [mutate], ghi lại.
+/// Trả true khi lưu thành công.
+typedef QrSettingsSaver =
+    Future<bool> Function(
+      QrOrderSettingsModel Function(QrOrderSettingsModel latest) mutate,
+    );
 
-class QrSettingsTab extends ConsumerWidget {
+/// Mục thu gọn "Chuyển khoản tại quầy" (VietQR): ngân hàng, số tài khoản, tên chủ TK.
+class QrTransferSection extends StatefulWidget {
   final QrOrderSettingsModel settings;
-  final TextEditingController baseUrlCtrl;
-  final bool Function(String?) isValidPublicUrl;
-  final String Function(String) normalizeUrl;
-  final Future<void> Function(String) testOpenDomain;
+  final bool enabled;
+  final QrSettingsSaver onSave;
 
-  const QrSettingsTab({
+  const QrTransferSection({
     super.key,
     required this.settings,
-    required this.baseUrlCtrl,
-    required this.isValidPublicUrl,
-    required this.normalizeUrl,
-    required this.testOpenDomain,
+    required this.enabled,
+    required this.onSave,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activeUrl = baseUrlCtrl.text.trim();
-    final isValidDomain = activeUrl.isNotEmpty && isValidPublicUrl(activeUrl);
+  State<QrTransferSection> createState() => _QrTransferSectionState();
+}
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+class _QrTransferSectionState extends State<QrTransferSection> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _accountNoCtrl;
+  late final TextEditingController _accountNameCtrl;
+  String? _bankBin;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _accountNoCtrl = TextEditingController(
+      text: widget.settings.transferAccountNo,
+    );
+    _accountNameCtrl = TextEditingController(
+      text: widget.settings.transferAccountName,
+    );
+    _bankBin = VietQrService.findByBin(widget.settings.transferBankBin)?.bin;
+  }
+
+  @override
+  void dispose() {
+    _accountNoCtrl.dispose();
+    _accountNameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final bin = _bankBin!;
+    final accountNo = _accountNoCtrl.text.trim();
+    final accountName = _accountNameCtrl.text.trim().toUpperCase();
+    setState(() => _saving = true);
+    final ok = await widget.onSave(
+      (latest) => latest.copyWith(
+        transferBankBin: bin,
+        transferAccountNo: accountNo,
+        transferAccountName: accountName,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Đã lưu thông tin chuyển khoản.'
+              : 'Không lưu được thông tin chuyển khoản. Vui lòng thử lại.',
+        ),
+        backgroundColor: ok ? null : Colors.red,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.enabled && !_saving;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: ExpansionTile(
+        leading: const Icon(
+          Icons.account_balance_rounded,
+          color: Color(0xFF8B5CF6),
+        ),
+        title: Text(
+          'Chuyển khoản tại quầy',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        subtitle: Text(
+          'Tài khoản nhận tiền khi khách mang đi chuyển khoản (VietQR)',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
-          const PosDeviceSessionCard(),
-          const SizedBox(height: 20),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isValidDomain
-                  ? Colors.green.shade50
-                  : Colors.amber.shade50,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isValidDomain
-                    ? Colors.green.shade200
-                    : Colors.amber.shade300,
-              ),
-            ),
+          Form(
+            key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      isValidDomain
-                          ? Icons.check_circle_rounded
-                          : Icons.warning_amber_rounded,
-                      color: isValidDomain
-                          ? Colors.green.shade800
-                          : Colors.amber.shade900,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isValidDomain
-                            ? 'TÊN MIỀN PUBLIC HỢP LỆ (HTTPS)'
-                            : 'CHƯA CẤU HÌNH TÊN MIỀN PUBLIC (ĐÃ KHÓA XUẤT QR)',
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          color: isValidDomain
-                              ? Colors.green.shade900
-                              : Colors.amber.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tên miền Public (Base URL) là địa chỉ trang web công khai được nhúng vào mã QR để điện thoại khách hàng sau khi quét mã có thể mở ứng dụng gọi món di động.',
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: Colors.grey.shade800,
+                DropdownButtonFormField<String>(
+                  initialValue: _bankBin,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Ngân hàng nhận tiền',
+                    border: OutlineInputBorder(),
                   ),
+                  items: [
+                    for (final bank in VietQrService.banks)
+                      DropdownMenuItem(
+                        value: bank.bin,
+                        child: Text(bank.shortName),
+                      ),
+                  ],
+                  validator: (v) => (v == null || VietQrService.findByBin(v) == null)
+                      ? 'Vui lòng chọn ngân hàng trong danh sách'
+                      : null,
+                  onChanged: enabled ? (v) => setState(() => _bankBin = v) : null,
                 ),
-                if (!isValidDomain) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '⚠️ Để đảm bảo an toàn và tính khả dụng, hệ thống KHÔNG in mã QR chứa "localhost" hoặc tên miền giả định chưa deploy. Vui lòng cấu hình tên miền HTTPS công khai bên dưới để kích hoạt xuất mã QR.',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red.shade900,
-                    ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _accountNoCtrl,
+                  enabled: enabled,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Số tài khoản',
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.purple.shade100),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return null; // cho phép xóa cấu hình
+                    if (!RegExp(r'^\d{6,19}$').hasMatch(t)) {
+                      return 'Số tài khoản gồm 6-19 chữ số';
+                    }
+                    return null;
+                  },
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_scanner_rounded,
-                        color: Color(0xFF8B5CF6),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Chế độ Gọi Món Tại Bàn (TABLE)',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            'Khách quét mã tại bàn, đơn chuyển tới BanScreen để nhân viên duyệt',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.isTableEnabled,
-                      activeThumbColor: const Color(0xFF8B5CF6),
-                      onChanged: (val) {
-                        ref
-                            .read(qrOrderRepoProvider)
-                            .saveSettings(
-                              settings.copyWith(isTableEnabled: val),
-                            );
-                        ref.invalidate(qrOrderSettingsProvider);
-                      },
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _accountNameCtrl,
+                  enabled: enabled,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên chủ tài khoản',
+                    hintText: 'NGUYEN VAN A',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (_accountNoCtrl.text.trim().isNotEmpty &&
+                        (v ?? '').trim().isEmpty) {
+                      return 'Nhập tên chủ tài khoản';
+                    }
+                    return null;
+                  },
                 ),
-                const Divider(height: 24),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.storefront_rounded,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Chế độ Gọi Món Tại Quầy (COUNTER)',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            'Khách tự chọn món tại quầy, sinh mã pickup code #Q01 để lấy món tại POS',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.isCounterEnabled,
-                      activeThumbColor: Colors.orange,
-                      onChanged: (val) {
-                        ref
-                            .read(qrOrderRepoProvider)
-                            .saveSettings(
-                              settings.copyWith(isCounterEnabled: val),
-                            );
-                        ref.invalidate(qrOrderSettingsProvider);
-                      },
-                    ),
-                  ],
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: enabled ? _save : null,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
+                    label: const Text('Lưu'),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+}
 
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+/// Mục thu gọn "Nâng cao": tên miền tùy chỉnh. Link luôn dựng từ giá trị ĐÃ LƯU.
+class QrAdvancedSection extends StatefulWidget {
+  final QrOrderSettingsModel settings;
+  final bool enabled;
+  final QrSettingsSaver onSave;
+  final Future<void> Function(String url) onTestOpen;
+
+  const QrAdvancedSection({
+    super.key,
+    required this.settings,
+    required this.enabled,
+    required this.onSave,
+    required this.onTestOpen,
+  });
+
+  @override
+  State<QrAdvancedSection> createState() => _QrAdvancedSectionState();
+}
+
+class _QrAdvancedSectionState extends State<QrAdvancedSection> {
+  late final TextEditingController _domainCtrl;
+  String? _error;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _domainCtrl = TextEditingController(text: widget.settings.customBaseUrl);
+  }
+
+  @override
+  void dispose() {
+    _domainCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save({bool reset = false}) async {
+    final raw = reset ? '' : _domainCtrl.text.trim();
+    String value = '';
+    if (raw.isNotEmpty) {
+      value = QrUrlBuilder.normalizeUrl(raw);
+      if (!QrUrlBuilder.isValidPublicUrl(value)) {
+        setState(() {
+          _error =
+              'Tên miền không hợp lệ. Cần https://, tên miền công khai, không có tài khoản, tham số hoặc #. Ví dụ: ${QrUrlBuilder.defaultBaseUrl}';
+        });
+        return;
+      }
+    }
+    setState(() {
+      _error = null;
+      _saving = true;
+    });
+    final ok = await widget.onSave((latest) => latest.copyWith(customBaseUrl: value));
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      if (ok) _domainCtrl.text = value;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Đã lưu tên miền.' : 'Không lưu được tên miền. Vui lòng thử lại.'),
+        backgroundColor: ok ? null : Colors.red,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final saved = widget.settings.customBaseUrl.trim();
+    final effective = QrUrlBuilder.resolveBaseUrl(saved);
+    final enabled = widget.enabled && !_saving;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: ExpansionTile(
+        leading: const Icon(Icons.tune_rounded, color: Color(0xFF8B5CF6)),
+        title: Text(
+          'Nâng cao',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        subtitle: Text(
+          effective == null
+              ? 'Tên miền đã lưu không hợp lệ - QR bị khóa'
+              : 'Tên miền đang dùng: $effective',
+          style: TextStyle(
+            fontSize: 12,
+            color: effective == null ? Colors.red : Colors.grey.shade600,
+          ),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          TextField(
+            controller: _domainCtrl,
+            enabled: enabled,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              labelText: 'Tên miền tùy chỉnh (để trống = mặc định)',
+              hintText: QrUrlBuilder.defaultBaseUrl,
+              errorText: _error,
+              errorMaxLines: 4,
+              border: const OutlineInputBorder(),
             ),
-            child: ExpansionTile(
-              initiallyExpanded: true,
-              leading: const Icon(
-                Icons.language_rounded,
-                color: Color(0xFF8B5CF6),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              TextButton(
+                onPressed: enabled && saved.isNotEmpty
+                    ? () => _save(reset: true)
+                    : null,
+                child: const Text('Dùng mặc định'),
               ),
-              title: Text(
-                'Cấu hình Tên miền Tùy chỉnh (Nâng cao / Custom Base URL)',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+              OutlinedButton(
+                onPressed: effective == null
+                    ? null
+                    : () => widget.onTestOpen(effective),
+                child: const Text('Mở thử'),
               ),
-              subtitle: Text(
-                baseUrlCtrl.text.trim().isNotEmpty
-                    ? 'Hiện tại: ${baseUrlCtrl.text.trim()}'
-                    : 'Mặc định hệ thống quản lý (Chưa thiết lập)',
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+              FilledButton.icon(
+                onPressed: enabled ? _save : null,
+                icon: const Icon(Icons.save_rounded, size: 18),
+                label: const Text('Lưu'),
               ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nhập tên miền trang web gọi món đã deploy của quán (phải có giao thức https:// và không có dấu gạch chéo / ở cuối):',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: baseUrlCtrl,
-                        decoration: InputDecoration(
-                          hintText: 'https://quannho.lpm.vn/pos',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          helperText:
-                              'Tên miền sẽ tự động chuẩn hóa loại bỏ ký tự / thừa ở cuối.',
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              icon: const Icon(Icons.open_in_browser_rounded),
-                              label: const Text('Kiểm Tra / Mở Thử'),
-                              onPressed: () => testOpenDomain(baseUrlCtrl.text),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8B5CF6),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              icon: const Icon(Icons.save_rounded),
-                              label: const Text('Lưu Tên Miền'),
-                              onPressed: () async {
-                                final input = baseUrlCtrl.text.trim();
-                                if (input.isNotEmpty &&
-                                    !isValidPublicUrl(input)) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Tên miền không hợp lệ! Vui lòng nhập URL HTTPS công khai (không dùng localhost hay IP nội bộ).',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final normalized = input.isNotEmpty
-                                    ? normalizeUrl(input)
-                                    : '';
-                                baseUrlCtrl.text = normalized;
-
-                                await ref
-                                    .read(qrOrderRepoProvider)
-                                    .saveSettings(
-                                      settings.copyWith(
-                                        customBaseUrl: normalized,
-                                      ),
-                                    );
-                                ref.invalidate(qrOrderSettingsProvider);
-
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        normalized.isNotEmpty
-                                            ? 'Đã lưu và chuẩn hóa tên miền: $normalized'
-                                            : 'Đã xóa tên miền tùy chỉnh.',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
         ],
       ),

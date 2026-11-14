@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../modules/kho/providers/kho_providers.dart';
+import '../../../core/utils/stagger.dart';
+import '../../../core/utils/string_utils.dart';
 
 class IngredientListScreen extends ConsumerStatefulWidget {
   const IngredientListScreen({super.key});
@@ -31,7 +33,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
             final isKhoType = i.productType == 'ingredient' ||
                               i.productType == 'semi_finished';
             final matchQ = _query.isEmpty ||
-                i.name.toLowerCase().contains(_query.toLowerCase());
+                i.name.containsSearch(_query);
             return isKhoType && matchQ;
           }).toList();
 
@@ -43,7 +45,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                   child: Column(children: [
                     TextField(
                       onChanged: (v) => setState(() => _query = v),
-                      style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                       decoration: KhoTheme.inputDecoration(
                         hint: 'Tìm nguyên liệu...',
                         prefix: const Icon(Icons.search_rounded,
@@ -65,7 +67,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                         const SizedBox(width: 6),
                         Expanded(child: Text(
                             'Dùng chung với Kho Hàng. Nhập hàng qua tab Phiếu nhập.',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5, color: KhoTheme.violet,
                                 fontWeight: FontWeight.w500))),
                       ]),
@@ -81,7 +83,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                     (_, i) {
                       final item = filtered[i];
                       return _IngredientCard(item: item)
-                          .animate(delay: (i * 40).ms)
+                          .animate(delay: staggerDelay(i, 40))
                           .fadeIn(duration: 200.ms)
                           .slideY(begin: 0.04);
                     },
@@ -112,9 +114,12 @@ class _IngredientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final qty    = (item.stockQty as double?) ?? 0;
     final min    = (item.minStock as double?) ?? 0;
-    final isLow  = min > 0 && qty <= min;
-    final isOut  = qty <= 0;
-    final statusColor = isOut  ? KhoTheme.red
+    // Tồn tối thiểu 0 = không theo dõi tồn (như màn Kho hàng): không gắn "Hết" đỏ khi bị trừ âm.
+    final untracked = min <= 0;
+    final isLow  = !untracked && qty <= min;
+    final isOut  = !untracked && qty <= 0;
+    final statusColor = untracked ? KhoTheme.muted
+                       : isOut  ? KhoTheme.red
                        : isLow ? KhoTheme.amber
                        : KhoTheme.green;
     final ts = _typeStyle(item.productType as String? ?? 'ingredient');
@@ -139,7 +144,7 @@ class _IngredientCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(item.name as String, style: GoogleFonts.outfit(
+          Text(item.name as String, style: GoogleFonts.plusJakartaSans(
               fontSize: 14, fontWeight: FontWeight.w800, color: KhoTheme.ink)),
           const SizedBox(height: 2),
           Row(children: [
@@ -149,12 +154,16 @@ class _IngredientCard extends StatelessWidget {
                 color: ts.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(ts.label, style: GoogleFonts.outfit(
+              child: Text(ts.label, style: GoogleFonts.plusJakartaSans(
                   fontSize: 10, fontWeight: FontWeight.w700, color: ts.color)),
             ),
-            const SizedBox(width: 6),
-            Text('Tồn: ${qty.toStringAsFixed(0)} ${item.unit}',
-                style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+            // Cùng kiểu Kho hàng ("88 hộp + 666 ml"); làm tròn số cũ từng báo dư 1 hộp không có thật.
+            // Không theo dõi mà tồn âm thì stockLabel cũng là "Không theo dõi" — nhãn bên phải đã ghi, không lặp.
+            if (!(untracked && qty < 0)) ...[
+              const SizedBox(width: 6),
+              Text('Tồn: ${item.stockLabel}',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
+            ],
           ]),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -164,8 +173,8 @@ class _IngredientCard extends StatelessWidget {
               color: statusColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
-                style: GoogleFonts.outfit(
+            child: Text(untracked ? 'Không theo dõi' : isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: statusColor)),
           ),

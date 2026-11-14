@@ -1,0 +1,1942 @@
+[
+ {
+  "id": "D01",
+  "quan": "A",
+  "loai": "chan_doan",
+  "q": "Tháng này doanh thu sao giảm vậy Boom?",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A1"
+  ],
+  "y_chinh": "Doanh thu 1–28/10 giảm 14,2% (95.951.000đ so 111.894.000đ) chủ yếu do SỐ ĐƠN giảm 14,8% (3.046 so 3.575), giá trị mỗi đơn giữ ~31.500đ → mất lượt khách; việc: hỏi lại khách quen / văn phòng quanh quán, kéo khách buổi sáng quay lại (thẻ tích ly, đặt trước cho văn phòng).",
+  "can_tranh": "Nói do khách mua ít món hơn / do giá; khẳng định chắc một nguyên nhân bên ngoài (quán mới, thời tiết); khuyên giảm giá toàn menu; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số đơn theo ngày / tuần trong tháng để biết giảm từ lúc nào; doanh thu theo giờ kỳ trước để so.",
+  "answer": "Dạ Anh/Chị, doanh thu tháng này giảm 14,2% so với tháng trước, chủ yếu do số đơn giảm 14,8%. \n\nVì sao: Giá trị trung bình mỗi đơn chỉ tăng nhẹ 0,6%, cho thấy lượng khách hàng đến quán giảm là nguyên nhân chính dẫn đến doanh thu sụt giảm. Bất thường là doanh thu thứ 7 chỉ đạt 40% so với ngày bình thường, cho thấy ngày này không thu hút khách.\n\nCần xem lại: Anh/Chị nên kiểm tra thêm về giờ bán và món nào đang bán chậm để có kế hoạch cải thiện doanh thu trong thời gian tới.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 14,
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Thiếu gợi ý cụ thể để cải thiện doanh thu."
+ },
+ {
+  "id": "D02",
+  "quan": "A",
+  "loai": "chan_doan",
+  "q": "sao buoi chieu quan vang qua, co cach nao ko",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A3"
+  ],
+  "y_chinh": "Chiều vắng nhất 14h (1.956.000đ) và 15h (1.833.000đ) cả tháng so 7h 19.556.000đ; buổi chiều bán chạy Trà tắc, Bạc xỉu → đẩy trà / bạc xỉu cho văn phòng giờ xế (giao theo nhóm, ưu đãi khung 14–16h), cân nhắc bớt người ca chiều.",
+  "can_tranh": "Đẩy bánh mì / combo sáng cho buổi chiều (trái by_band); nói chung chung không nêu giờ cụ thể; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, buổi chiều quán vắng quá có thể do số đơn giảm 14,8% so với tháng trước, trong khi giá trị trung bình mỗi đơn chỉ tăng nhẹ 0,6%. \n\nNguyên nhân chính là do lượng khách giảm, đặc biệt là trong khung giờ chiều (14h đến 17h) doanh thu chỉ đạt 1.833.000đ, 1.956.000đ và 2.934.000đ, cho thấy khách hàng ít ghé quán vào thời điểm này. \n\nNgoài ra, thứ 7 vừa qua có doanh thu trung bình chỉ 1.776.750đ/ngày, chỉ bằng 40% một ngày bình thường, cho thấy có thể có sự thay đổi trong thói quen của khách hàng vào cuối tuần.\n\nViệc tuần này: Anh/Chị có thể thử chạy chương trình khuyến mãi cho các món đồ uống vào buổi chiều, hoặc tổ chức sự kiện nhỏ để thu hút khách. Cần xem lại: số liệu về món bán chạy trong khung giờ chiều để điều chỉnh menu hoặc quảng bá món phù hợp.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "A3"
+  ],
+  "loi_chinh": "Thiếu đề xuất cụ thể cho giờ chiều, chỉ nói chung chung."
+ },
+ {
+  "id": "D03",
+  "quan": "A",
+  "loai": "chan_doan",
+  "q": "Tháng này thu chi sao còn dư ít hơn tháng trước nhiều vậy?",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "A6"
+  ],
+  "y_chinh": "Thu − chi còn 22.551.000đ (kỳ trước 36.264.000đ); nguyên nhân chính là THU giảm 15,8 triệu (96.451.000đ so 112.294.000đ), tổng chi lại giảm 2,8%; riêng tiền điện tăng 82,2% (2.150.000đ so 1.180.000đ) cần kiểm máy / tủ mát.",
+  "can_tranh": "Gọi thu − chi là lãi ròng / lợi nhuận; nói chi tăng là nguyên nhân chính; đoán số đơn / món giảm (khối không có số bán theo món).",
+  "thieu_so": "Số bán (số đơn, món) cùng lúc với thu chi để giải thích vì sao thu giảm — app hiện chỉ gửi một loại.",
+  "answer": "Dạ Anh/Chị, tháng này thu chi dư 22.551.000đ, giảm 14,1% so với tháng trước (26.294.000đ). \n\nVì sao: Do doanh thu tháng này giảm 14,1% (từ 112.294.000đ xuống 96.451.000đ), trong khi chi chỉ giảm 2,8% (từ 76.030.000đ xuống 73.900.000đ). \n\nViệc tuần này: Kiểm tra số đơn bán hàng và giá trị mỗi đơn để xác định nguyên nhân doanh thu giảm. Cần xem lại: Số liệu cụ thể về số đơn bán hàng trong tháng này so với tháng trước.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 6,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không chỉ ra vấn đề tiền điện tăng và không đưa ra giải pháp cụ thể."
+ },
+ {
+  "id": "D04",
+  "quan": "A",
+  "loai": "chan_doan",
+  "q": "kho có gì bất thường ko, tháng này hao hụt nhiều không",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "A7",
+   "A8"
+  ],
+  "y_chinh": "Hao hụt lớn nhất là bánh mì 96 ổ ≈ 384.000đ (và sữa tươi 6 lít ≈ 216.000đ) → đặt bánh theo lượng bán từng ngày; sữa đặc còn 3 lon (tối thiểu 12), hạt cà phê 2,5 kg (tối thiểu 5), ly 500ml 150 cái → nhập ngay.",
+  "can_tranh": "Nêu tỷ lệ hao hụt so số bánh bán (khối kho không có số bán); kết luận nhân viên gian lận; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số bánh mì bán trong kỳ (720 ổ, ở số bán) để tính tỷ lệ hao hụt ~12%.",
+  "answer": "Dạ Anh/Chị, kho có một số bất thường cần lưu ý. \n\nNguyên nhân chính là số lượng hàng tồn của một số mặt hàng đang ở dưới mức tối thiểu, cụ thể: sữa đặc còn 3 lon (tối thiểu 12), hạt cà phê rang còn 2,5 kg (tối thiểu 5) và ly nhựa 500ml còn 150 cái (tối thiểu 300). Điều này có thể ảnh hưởng đến khả năng phục vụ khách hàng.\n\nVề hao hụt, tháng này ghi nhận tổng hao hụt khoảng 600.000đ (bánh mì 384.000đ và sữa tươi 216.000đ), không phải là con số quá lớn nhưng vẫn cần kiểm tra quy trình bảo quản và sử dụng nguyên liệu để giảm thiểu hao hụt trong tương lai.\n\nCần xem lại số lượng hàng tồn và nhập thêm các mặt hàng sắp hết để đảm bảo đủ cung cấp cho quán.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "A7",
+   "A8"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể, cần nhập hàng ngay."
+ },
+ {
+  "id": "D05",
+  "quan": "B",
+  "loai": "chan_doan",
+  "q": "đơn tăng mà sao tiền ko tăng mấy vậy",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B2",
+   "B1"
+  ],
+  "y_chinh": "Doanh thu chỉ +2,2% vì số đơn +11,1% nhưng giá trị mỗi đơn −8% (54.000đ so 58.700đ); topping chỉ 4,2% doanh thu (~0,35 phần / đơn) → mời thêm topping / size, xem lại mức giảm giá.",
+  "can_tranh": "Nói doanh thu giảm; khuyên giảm giá thêm để kéo đơn; khẳng định mã giảm giá là nguyên nhân với con số (khối số bán không có số mã).",
+  "thieu_so": "Số giảm giá theo mã (khuyến mãi) cùng lúc với số bán — app không gửi cả hai.",
+  "answer": "Dạ Anh/Chị, doanh thu tháng này tăng 2,2% so với tháng trước, nhưng giá trị trung bình mỗi đơn lại giảm 8%. \n\nVì sao: Nguyên nhân chính là số đơn tăng 11,1%, cho thấy lượng khách đến quán nhiều hơn. Tuy nhiên, giá trị trung bình mỗi đơn giảm cho thấy khách hàng có thể chọn món giá thấp hơn hoặc không mua thêm món kèm.\n\nViệc tuần này: Anh/Chị có thể kiểm tra lại menu để xem có món nào cần điều chỉnh giá hoặc khuyến mãi để tăng giá trị đơn hàng. Cần xem lại: Cần xem lại các món bán chạy và món kèm để tối ưu hóa doanh thu.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 14,
+  "van_de_tim_ra": [
+   "B1",
+   "B2"
+  ],
+  "loi_chinh": "Việc làm chưa cụ thể, thiếu gợi ý mời thêm topping."
+ },
+ {
+  "id": "D06",
+  "quan": "B",
+  "loai": "chan_doan",
+  "q": "khách quay lại quán em nhiều ko Boom, tháng này sao",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "khach"
+  ],
+  "van_de": [
+   "B7"
+  ],
+  "y_chinh": "Ít: chỉ 210 / 1.850 khách đã lưu đến từ 2 lần (11,4%), 240 khách mới trong kỳ; việc: tích điểm đổi ly (1.320 khách có điểm), x2 điểm ngày thường, nhắn tin khách cũ.",
+  "can_tranh": "Bịa tỷ lệ quay lại \"của ngành\"; khẳng định lý do khách không quay lại; nêu số tiền chi của từng khách ngoài top.",
+  "thieu_so": "Tỷ lệ quay lại kỳ trước để so; số khách vãng lai không lưu tên.",
+  "answer": "Dạ Anh/Chị, tháng này có 210 khách đến từ 2 lần trở lên, chiếm 11,4% tổng số khách. \n\nVì sao: Số khách quay lại không cao, có thể do giá trị đơn hàng chưa hấp dẫn hoặc trải nghiệm phục vụ chưa tốt. \n\nCần xem lại: Anh/Chị nên kiểm tra số đơn hàng của khách quay lại trong từng khung giờ để tìm ra thời điểm nào khách quay lại nhiều hơn và cải thiện dịch vụ trong những khung giờ đó.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "B7"
+  ],
+  "loi_chinh": "Thiếu gợi ý cụ thể và khả thi cho quán nhỏ."
+ },
+ {
+  "id": "D07",
+  "quan": "B",
+  "loai": "chan_doan",
+  "q": "Chi phí lương tháng này có cao quá không?",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "B6"
+  ],
+  "y_chinh": "Cao: lương nhân viên 38.500.000đ ≈ 27,7% tiền bán hàng (138.999.000đ), tăng 12,6% so 34.200.000đ trong khi thu chỉ +2,7%; việc: xem lại ca giờ vắng trước khi tuyển / tăng ca, không cắt người vội.",
+  "can_tranh": "Nêu lương từng người; phán cắt ai; bịa chuẩn ngành như sự thật; dùng số giờ / ca (khối thu chi không có).",
+  "thieu_so": "Doanh thu theo giờ và giờ công theo ca cùng lúc (số bán + chấm công + thu chi) — app chỉ gửi mục thu chi cho câu này.",
+  "answer": "Dạ Anh/Chị, chi phí lương tháng này là 38.500.000đ, chiếm 27,7% doanh thu bán hàng (138.999.000đ), nằm trong mốc 20–30% theo kinh nghiệm chung của quán nhỏ. \n\nVì sao: Chi phí lương tăng 12,6% so với kỳ trước (34.200.000đ), cho thấy quán có thể đã tăng lương hoặc số lượng nhân viên. \n\nCần xem lại: Anh/Chị nên kiểm tra số lượng nhân viên và giờ làm việc để đánh giá hiệu quả chi phí lương.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "B6"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể để tối ưu hóa chi phí lương."
+ },
+ {
+  "id": "D08",
+  "quan": "C",
+  "loai": "chan_doan",
+  "q": "thứ 4 sao bán ế vậy ta",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C2"
+  ],
+  "y_chinh": "Thứ 4 cả tháng 11.502.000đ, chỉ ~55% các ngày Thứ 2, 3, 5, 6 (~20,9 triệu); số liệu không cho biết lý do → hỏi chủ quán (chợ nghỉ, công trình nghỉ?), giảm nhập bún / rau ngày Thứ 4, thử món riêng Thứ 4.",
+  "can_tranh": "Khẳng định nguyên nhân (mưa, chợ nghỉ) như sự thật; nói quán nghỉ Thứ 4; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số đơn theo thứ và doanh thu theo thứ của tháng trước để biết Thứ 4 vắng từ bao giờ.",
+  "answer": "Dạ Anh/Chị, thứ 4 doanh thu thấp nhất trong tuần với 11.502.000đ, trung bình chỉ 2.875.500đ/ngày. \n\nVì sao: Nguyên nhân chính là số đơn giảm, chỉ đạt 4 ngày bán, trong khi các ngày khác đều có doanh thu cao hơn. \n\nNguyên nhân phụ: Thứ 4 thường là ngày giữa tuần, lượng khách có thể ít hơn so với đầu tuần và cuối tuần. \n\nViệc tuần này: Anh/Chị có thể thử tăng cường quảng cáo hoặc khuyến mãi cho món ăn vào thứ 4 để thu hút khách. Cần xem lại: Doanh thu theo giờ để xác định khung giờ nào cần cải thiện hơn.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 9,
+  "van_de_tim_ra": [
+   "C2"
+  ],
+  "loi_chinh": "Không có số liệu giải thích rõ nguyên nhân thứ 4 bán ế."
+ },
+ {
+  "id": "D09",
+  "quan": "C",
+  "loai": "chan_doan",
+  "q": "tháng này chi phí tăng mạnh quá, do khoản nào",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "C5"
+  ],
+  "y_chinh": "Tổng chi 95.900.000đ, tăng 15,6% (so 82.950.000đ) chủ yếu do nguyên liệu 58.000.000đ (+28%, +12,7 triệu) trong khi thu chỉ +2,1%; việc: đối chiếu hoá đơn thịt / rau từng lần nhập, kiểm hao hụt và định lượng.",
+  "can_tranh": "Gọi thu − chi là lãi; bịa giá thịt thị trường tăng bao nhiêu %; nói lương / mặt bằng tăng.",
+  "thieu_so": "Giá nhập từng lần và nhà cung cấp (kho) cùng lúc với thu chi.",
+  "answer": "Dạ Anh/Chị, tháng này chi phí tăng mạnh chủ yếu do khoản chi Nguyên liệu (thịt, rau, bún, gạo) với 58.000.000đ, tăng 28% so với kỳ trước (45.300.000đ). \n\nVì sao: Nguyên liệu chiếm 60,5% tổng chi, cho thấy quán đang phải chi nhiều hơn cho nguyên liệu để phục vụ nhu cầu. \n\nNgoài ra, Lương nhân viên giữ nguyên 22.000.000đ, nhưng không có sự tăng giảm, có thể ảnh hưởng đến tổng chi. \n\nViệc tuần này: Anh/Chị có thể kiểm tra số lượng đơn hàng và giá trị đơn hàng để xem có tăng không, từ đó đánh giá nhu cầu nguyên liệu. \n\nCần xem lại: Anh/Chị nên xem lại số liệu hàng tồn kho để biết có nguyên liệu nào chưa sử dụng không.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể, dễ thực hiện ngay."
+ },
+ {
+  "id": "D10",
+  "quan": "C",
+  "loai": "chan_doan",
+  "q": "do uong ban it qua phai ko",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C1"
+  ],
+  "y_chinh": "Đúng: đồ uống chỉ 9.120.000đ ≈ 7% doanh thu; 900 ly là trà đá 3.000đ, nước sâm 210, cà phê sữa đá 150, nước chanh 80 trên 2.450 đơn; nước cam, sữa đậu nành chưa bán → mời nước sâm / chanh kèm món, cân nhắc bỏ món chưa bán.",
+  "can_tranh": "Gọi đồ uống là bán chạy vì trà đá nhiều phần nhất; so số phần đồ uống với món chính khác nhóm; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, đúng là nhóm Đồ uống đang bán ít, chỉ chiếm 7% doanh thu trong kỳ này. \n\nVì sao: Nguyên nhân chính là số lượng phần bán ra của nhóm Đồ uống chỉ có 1340 phần, trong khi nhóm Món chính chiếm đến 87% doanh thu với 2785 phần. \n\nViệc tuần này: Anh/Chị có thể xem xét đẩy mạnh quảng bá cho các món Đồ uống, đặc biệt là Trà đá (900 phần) và Nước sâm (210 phần) để tăng doanh thu. \n\nCần xem lại: Anh/Chị nên kiểm tra xem có món Đồ uống nào chưa bán phần nào trong kỳ không, như Nước cam và Sữa đậu nành, có thể cần giới thiệu thêm cho khách.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "C1"
+  ],
+  "loi_chinh": "Thiếu gợi ý cụ thể và khả thi cho việc cải thiện doanh thu đồ uống."
+ },
+ {
+  "id": "D11",
+  "quan": "A",
+  "loai": "quyet_dinh",
+  "q": "Có nên bỏ combo sáng không Boom?",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A4"
+  ],
+  "y_chinh": "Không bỏ cả nhóm: combo cà phê sữa + bánh mì thịt 52.000đ đang ĐẮT HƠN mua lẻ 50.000đ (chỉ 70 phần) → hạ về ~45.000–47.000đ; combo cà phê đen + bánh mì trứng 36.000đ (rẻ hơn lẻ) giữ; combo trà tắc + bánh mì chả chưa bán → bỏ / thay.",
+  "can_tranh": "Bỏ cả nhóm combo; giữ giá 52.000đ; tự cộng giá sai; khuyên giảm giá toàn menu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, không nên bỏ combo sáng ngay lúc này. \n\nCombo sáng hiện tại có doanh thu 5.260.000đ, chiếm 5% tổng doanh thu, trong khi món bán chạy nhất là Combo cà phê sữa + bánh mì thịt (70 phần, 3.640.000đ). Tuy nhiên, cần lưu ý rằng combo này đang bán với giá cao hơn mua lẻ 2.000đ, có thể ảnh hưởng đến quyết định của khách hàng.\n\nViệc tuần này: thử giảm giá combo xuống khoảng 48.000đ để thu hút khách hơn, theo dõi doanh thu trong 1–2 tuần. Nếu doanh thu không tăng hoặc số phần giảm quá 10%, thì có thể xem xét lại quyết định. \n\nCần xem lại: doanh thu từng món trong combo và phản hồi của khách hàng về giá cả.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 16,
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Không có điểm yếu lớn, câu trả lời rất tốt."
+ },
+ {
+  "id": "D12",
+  "quan": "A",
+  "loai": "quyet_dinh",
+  "q": "bạc xỉu có nên tăng giá ko",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A5"
+  ],
+  "y_chinh": "Nên xem lại: giá vốn 13.000đ = 45% giá 29.000đ (cao) với 610 phần → tăng 2.000–3.000đ hoặc chỉnh định lượng sữa, theo dõi số phần 2 tuần.",
+  "can_tranh": "Tăng giá toàn menu; kết luận lời / lỗ món khác không có giá vốn; bịa số không có trong khối số liệu.",
+  "thieu_so": "Giá vốn các món cà phê khác để so.",
+  "answer": "Dạ Anh/Chị, không nên tăng giá Bạc xỉu ngay lúc này. Giá vốn của Bạc xỉu là 13.000đ, chiếm 45% giá bán 29.000đ, cao hơn mốc 25–35% cho món tự pha chế. \n\nVì sao: Doanh thu Bạc xỉu đạt 17.690.000đ từ 610 phần, cho thấy món này vẫn bán tốt. \n\nViệc tuần này: Theo dõi doanh thu Bạc xỉu trong 1–2 tuần tới, nếu doanh thu giảm quá 10% thì có thể xem xét tăng giá. \n\nCần xem lại: Doanh thu theo giờ để biết khung giờ nào Bạc xỉu bán chạy nhất.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "A5"
+  ],
+  "loi_chinh": "Thiếu đề xuất điều chỉnh cụ thể cho giá hoặc định lượng Bạc xỉu."
+ },
+ {
+  "id": "D13",
+  "quan": "A",
+  "loai": "quyet_dinh",
+  "q": "quán em gần văn phòng, chủ nhật có nên mở bán không?",
+  "history": null,
+  "facts": null,
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Chưa có số để chắc: văn phòng nghỉ Chủ nhật nên khách giảm mạnh; thử mở nửa buổi sáng 3–4 Chủ nhật, ghi doanh thu so chi phí người + điện rồi quyết.",
+  "can_tranh": "Bịa doanh thu dự kiến Chủ nhật; khẳng định chắc lời / lỗ; nêu tên nút / màn hình app.",
+  "thieu_so": "Không có số Chủ nhật (quán nghỉ) — chỉ thử thực tế mới biết.",
+  "answer": "Dạ Anh/Chị, NÊN THỬ mở bán vào Chủ nhật nếu doanh thu ngày đó có thể đạt khoảng 30% doanh thu trung bình của các ngày trong tuần. Nếu chi phí vận hành (như lương, điện nước) không vượt quá 40% doanh thu, thì có thể tiếp tục mở. \n\nBé Boom gợi ý thử mở bán trong 2–3 tuần, nếu doanh thu không đạt kỳ vọng hoặc lỗ quá 10% so với chi phí thì xem xét lại việc mở bán vào Chủ nhật.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 0,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 6,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Bịa số liệu doanh thu và chi phí không có trong hồ sơ."
+ },
+ {
+  "id": "D14",
+  "quan": "B",
+  "loai": "quyet_dinh",
+  "q": "Có nên bỏ bớt mấy món ăn vặt không",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B4"
+  ],
+  "y_chinh": "Có, bỏ bớt món không bán: nhóm ăn vặt 8 món mà 4 món chưa bán phần nào (Phô mai que, Nem chua rán, Gà lắc phô mai…) và Cá viên chiên chỉ 26 phần; giữ Khoai tây chiên 221 phần, Bánh tráng trộn 196 phần.",
+  "can_tranh": "Bỏ cả nhóm ăn vặt; bỏ Khoai tây chiên / Bánh tráng trộn (top nhóm); bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, NÊN xem xét bỏ bớt một số món ăn vặt. Hiện tại, nhóm \"Ăn vặt\" chỉ chiếm 7% doanh thu với 503 phần bán ra. Trong đó, món bán ít nhất là Cá viên chiên với chỉ 26 phần. \n\nViệc thử nghiệm có thể thực hiện trong 1–2 tuần tới, nếu doanh thu từ nhóm này không tăng lên hoặc không có món nào bán chạy hơn, thì có thể quyết định bỏ các món ít bán. \n\nCần theo dõi doanh thu hàng tuần để đánh giá hiệu quả nhé ạ!",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 15,
+  "van_de_tim_ra": [
+   "B4"
+  ],
+  "loi_chinh": "Việc làm chưa cụ thể, cần nêu rõ món nào nên bỏ."
+ },
+ {
+  "id": "D15",
+  "quan": "B",
+  "loai": "quyet_dinh",
+  "q": "mã GIAM15 tháng này có nên chạy tiếp ko",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "khuyen_mai"
+  ],
+  "van_de": [
+   "B3"
+  ],
+  "y_chinh": "Không nên giữ y nguyên: GIAM15 dùng 610 lần, giảm 9.348.000đ; tổng giảm 13.747.000đ = 9% giá trị trước giảm, 38,3% đơn có giảm → thu hẹp (10%, chỉ giờ vắng, tối đa thấp hơn) hoặc dừng khi hết hạn 30/11.",
+  "can_tranh": "Khẳng định mã làm tăng đơn / doanh thu bằng số (khối không có); khuyên tăng mức giảm; nêu cách tạo / tắt mã trong app.",
+  "thieu_so": "Số đơn, giá trị đơn trước và sau khi chạy mã (số bán) cùng lúc với khuyến mãi.",
+  "answer": "Dạ Anh/Chị, mã GIAM15 nên thử chạy tiếp có điều kiện. \n\nVì trong tháng này, mã GIAM15 đã được sử dụng 610 lần và giảm tổng cộng 9.348.000đ, chiếm khoảng 9% giá trị trước giảm. Tỉ lệ đơn có giảm giá là 38,3%, cho thấy mã này vẫn thu hút khách hàng.\n\nAnh/Chị có thể thử chạy tiếp trong 1–2 tuần tới và theo dõi số lượng đơn sử dụng mã này. Nếu số đơn giảm quá 10% so với kỳ trước, thì có thể xem xét dừng mã này.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "B3"
+  ],
+  "loi_chinh": "Thiếu lý lẽ rõ ràng về việc thu hẹp hoặc dừng mã giảm giá."
+ },
+ {
+  "id": "D16",
+  "quan": "B",
+  "loai": "quyet_dinh",
+  "q": "Trà dâu tây có nên tăng giá không",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B5"
+  ],
+  "y_chinh": "Nên: giá vốn 16.000đ = 46% giá 35.000đ (Trà đào cam sả chỉ 31%), bán 442 phần → tăng 3.000–5.000đ hoặc giảm dâu tươi / thêm mứt; theo dõi số ly.",
+  "can_tranh": "Kết luận các món không có giá vốn lời / lỗ; tăng giá cả nhóm; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, không nên tăng giá trà dâu tây ngay lúc này. Giá vốn của trà dâu tây là 16.000đ, chiếm 46% giá bán 35.000đ, cao hơn mốc 25–35% cho món tự pha chế. \n\nViệc thử nghiệm có thể thực hiện trong 1–2 tuần, nếu doanh thu giảm quá 10% hoặc số đơn giảm nhiều thì có thể xem xét lại. Hãy theo dõi tình hình bán hàng để quyết định tiếp nhé!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "B5"
+  ],
+  "loi_chinh": "Thiếu đề xuất cụ thể về điều chỉnh giá hoặc thành phần."
+ },
+ {
+  "id": "D17",
+  "quan": "B",
+  "loai": "quyet_dinh",
+  "q": "tháng này ca làm của nhân viên nhiều quá, có nên cắt bớt 1 người ko",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "nhan_su"
+  ],
+  "van_de": [
+   "B6"
+  ],
+  "y_chinh": "Chưa nên cắt vội: 6 người, 168 ca, 1.008 giờ; quỹ lương tháng 9 đã trả 36.500.000đ; cần xem giờ vắng (sáng) để rút ca trước; có 1 ca quá 16 giờ chưa chấm ra cần sửa.",
+  "can_tranh": "Nêu lương từng người; chỉ đích danh người nên cho nghỉ; kết luận ai đi trễ; bịa doanh thu theo giờ.",
+  "thieu_so": "Doanh thu theo giờ (số bán) và lương / doanh thu cùng lúc với chấm công.",
+  "answer": "Dạ Anh/Chị, không nên cắt bớt 1 người ngay lúc này. Tháng này quán đã có tổng cộng 168 ca với 6 nhân viên, trung bình mỗi người làm khoảng 28 ca. \n\nVì sao: Nếu cắt bớt nhân viên, quán có thể gặp khó khăn trong việc phục vụ khách, đặc biệt trong những giờ cao điểm. \n\nViệc tuần này: Theo dõi số ca làm của từng nhân viên trong 1–2 tuần tới, nếu có nhân viên nào thường xuyên không đủ ca làm (dưới 20 ca) thì có thể xem xét lại. \n\nCần xem lại: Số lượng khách hàng và doanh thu trong các khung giờ cao điểm để đánh giá hiệu quả làm việc của từng nhân viên.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   "B6"
+  ],
+  "loi_chinh": "Thiếu phân tích giờ vắng để rút ca trước khi cắt người."
+ },
+ {
+  "id": "D18",
+  "quan": "C",
+  "loai": "quyet_dinh",
+  "q": "ca toi co nen dong luon ko, ban it qua",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C3"
+  ],
+  "y_chinh": "Chưa nên đóng ngay: tối 16h–20h ~21,9 triệu / tháng (≈16,5% doanh thu, ~780.000đ / ngày); món chạy buổi tối là Bún thịt nướng, Cơm sườn → thử rút còn 16h–19h với menu gọn, tính tiền người + gas ca tối rồi quyết.",
+  "can_tranh": "Khuyên đóng ngay; bịa chi phí ca tối; đẩy món buổi sáng (bún bò) làm món chủ lực tối.",
+  "thieu_so": "Chi phí riêng ca tối (lương, gas, điện) cùng lúc với số bán.",
+  "answer": "Dạ Anh/Chị, NÊN THỬ ĐÓNG CA TỐI LIÊN TỤC CÓ ĐIỀU KIỆN. \n\nHiện tại, doanh thu theo giờ cho thấy ca tối (từ 17h) có doanh thu thấp, chỉ đạt 18.000.000đ trong tháng này, trong khi ca trưa (11h) đạt 21.873.000đ. Nếu doanh thu ca tối không cải thiện trong 1–2 tuần tới (ví dụ, nếu doanh thu không tăng ít nhất 10% so với hiện tại), thì có thể xem xét việc điều chỉnh hoặc đóng ca tối.\n\nViệc thử nghiệm này sẽ giúp quán đánh giá hiệu quả của ca tối và quyết định có nên tiếp tục hay không.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 0,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 7,
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Không dùng số liệu đúng, khuyên đóng ca tối ngay."
+ },
+ {
+  "id": "D19",
+  "quan": "C",
+  "loai": "quyet_dinh",
+  "q": "cơm sườn có nên tăng giá 5 nghìn ko",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C4"
+  ],
+  "y_chinh": "Nên tăng: giá vốn 19.200đ = 48% giá 40.000đ; món bán thứ 2 (760 phần) nên tăng 3.000–5.000đ kèm thêm giá trị (thêm sườn / canh), theo dõi số phần 2 tuần.",
+  "can_tranh": "Tăng giá cả menu; nói món bún bò lời hơn (không có giá vốn); bịa số không có trong khối số liệu.",
+  "thieu_so": "Giá vốn các món chính khác để so.",
+  "answer": "Dạ Anh/Chị, NÊN THỬ TĂNG GIÁ CƠM SƯỜN 5 NGHÌN. Giá vốn của cơm sườn là 19.200đ, chiếm 48% giá bán 40.000đ, cao hơn mốc 25–35% cho món tự pha chế/nấu. \n\nViệc thử có thể thực hiện trong 1–2 tuần, nếu doanh thu giảm quá 10% thì có thể quay lại giá cũ. Anh/Chị cũng nên theo dõi số đơn và phản hồi từ khách hàng để điều chỉnh kịp thời.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 16,
+  "van_de_tim_ra": [
+   "C4"
+  ],
+  "loi_chinh": "Không có điểm yếu lớn, câu trả lời rất tốt."
+ },
+ {
+  "id": "D20",
+  "quan": "C",
+  "loai": "quyet_dinh",
+  "q": "tháng này bún tươi hao hụt nhiều quá, có nên đổi mối bún không",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "C6"
+  ],
+  "y_chinh": "Chưa cần đổi mối: hao hụt bún tươi 26 kg ≈ 312.000đ, rau sống 15 kg ≈ 300.000đ, sườn 2,5 kg ≈ 300.000đ (~912.000đ / tháng) thường do nhập dư → đặt bún theo ngày, giảm vào ngày vắng.",
+  "can_tranh": "Kết luận mối bún kém chất lượng; nêu ngày vắng cụ thể (khối kho không có số theo thứ); bịa số không có trong khối số liệu.",
+  "thieu_so": "Doanh thu / số phần theo thứ (số bán) để đặt bún theo ngày.",
+  "answer": "Dạ Anh/Chị, nên thử đổi mối bún nếu tình trạng hao hụt tiếp tục cao. Tháng này, bún tươi hao hụt 26 kg, tương đương khoảng 312.000đ, chiếm tỉ lệ hao hụt khá lớn so với giá trị nhập hàng. \n\nViệc thử nghiệm có thể thực hiện trong 1–2 tuần tới, theo dõi lượng bún tiêu thụ và hao hụt. Nếu hao hụt vẫn trên 5% tổng lượng bún nhập thì nên xem xét đổi mối bún để cải thiện chất lượng và giảm thiểu hao hụt.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 9,
+  "van_de_tim_ra": [
+   "C6"
+  ],
+  "loi_chinh": "Không lý giải rõ vì sao hao hụt do nhập dư, không nên đổi mối."
+ },
+ {
+  "id": "D21",
+  "quan": "A",
+  "loai": "ke_hoach",
+  "q": "Lên giúp em kế hoạch tháng 11 để kéo doanh thu lại",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A1",
+   "A3",
+   "A4"
+  ],
+  "y_chinh": "Mục tiêu lấy lại số đơn (đang −14,8%): tuần 1 hạ combo cà phê sữa + bánh mì thịt dưới giá lẻ 50.000đ; tuần 2 ưu đãi khung 14–16h cho văn phòng; tuần 3–4 thẻ tích ly / đặt trước theo nhóm; đo số đơn mỗi tuần.",
+  "can_tranh": "Cam kết % tăng; giảm giá toàn menu; bịa số không có trong khối số liệu.",
+  "thieu_so": "Chi phí (thu chi) để tính ngân sách ưu đãi.",
+  "answer": "Dạ Anh/Chị, doanh thu tháng 10 giảm 14,2% so với tháng trước, chủ yếu do số đơn giảm 14,8%. Để kéo doanh thu tháng 11, Bé Boom gợi ý kế hoạch như sau:\n\n**Tuần 1:** Tăng cường quảng bá combo cà phê sữa đá + bánh mì thịt (giá lẻ 50.000đ, combo 45.000đ) để thu hút khách. Đo số đơn bán combo cuối tuần.\n\n**Tuần 2:** Tổ chức chương trình khuyến mãi cho thứ 7 (ngày thấp nhất) với ưu đãi cho món Bánh mì thịt và Cà phê sữa đá. Đo doanh thu thứ 7 so với tuần trước.\n\n**Tuần 3–4:** Tăng cường quảng cáo vào khung giờ vắng (14h, 15h, 16h) với ưu đãi cho trà tắc và bạc xỉu. Đo số đơn và doanh thu trong khung giờ này.\n\nCần theo dõi kết quả từng tuần để điều chỉnh kịp thời ạ.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "A1",
+   "A3",
+   "A4"
+  ],
+  "loi_chinh": "Thiếu lý lẽ rõ ràng cho từng đề xuất."
+ },
+ {
+  "id": "D22",
+  "quan": "A",
+  "loai": "ke_hoach",
+  "q": "tuần sau nên làm gì cho quán",
+  "history": null,
+  "facts": "tuan_nay",
+  "modules": null,
+  "van_de": [
+   "A3"
+  ],
+  "y_chinh": "Tuần này (26–28/10) 13.520.000đ, giảm 4,7% so cùng kỳ tuần trước do số đơn (431 so 449); việc tuần sau: ưu đãi khung 14–16h (vắng nhất), đẩy món sáng 6–8h đúng giờ đông.",
+  "can_tranh": "Nói quán nghỉ / không bán Thứ 5–CN (số 0 là ngày chưa tới, không phải ngày nghỉ); so 3 ngày với cả tuần trước.",
+  "thieu_so": "Số theo thứ của tuần chưa hết bị gửi 0 cho Thứ 5–CN — cần đánh dấu ngày chưa tới.",
+  "answer": "Dạ Anh/Chị, tuần sau nên tập trung vào việc tăng số đơn đang giảm 4% so với tuần trước.\n\nViệc tuần 1: Đẩy mạnh quảng bá combo cà phê sữa đá + bánh mì thịt, vì combo này đang đắt hơn mua lẻ 2.000đ. Đề xuất giá combo từ 45.000đ–48.000đ để thu hút khách. Chỉ số đo cuối tuần: theo dõi số lượng bán của combo này.\n\nViệc tuần 2: Tăng cường quảng cáo vào khung giờ vắng (15h, 14h, 16h) bằng cách giảm giá cho các món bán chạy trong khung giờ này, như cà phê sữa đá. Chỉ số đo cuối tuần: doanh thu trong khung giờ này.\n\nViệc tuần 3–4: Kiểm tra và điều chỉnh giá vốn của món Bạc xỉu (45% giá bán) để đảm bảo lợi nhuận. Chỉ số đo cuối tuần: lãi gộp từ món này.\n\nChúc quán thành công trong việc cải thiện doanh thu!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "A3"
+  ],
+  "loi_chinh": "Thiếu lý lẽ rõ ràng cho việc tăng số đơn và quảng cáo giờ vắng."
+ },
+ {
+  "id": "D23",
+  "quan": "A",
+  "loai": "ke_hoach",
+  "q": "muốn làm thẻ tích điểm cho khách văn phòng thì làm sao cho hiệu quả",
+  "history": null,
+  "facts": null,
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Kế hoạch đơn giản: mua 9 tặng 1 hoặc x2 điểm giờ chiều, đặt trước cho cả phòng ban, nhân viên mời khách quen đăng ký; theo dõi số khách quay lại sau 1 tháng.",
+  "can_tranh": "Bịa tính năng / nút trong app; giảm giá sâu không điều kiện; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để làm thẻ tích điểm cho khách văn phòng hiệu quả, Bé Boom gợi ý như sau:\n\n**Mục tiêu:** Tăng số khách hàng quay lại khoảng 15% trong tháng tới.\n\n**Tuần 1:** Thiết kế thẻ tích điểm với ưu đãi hấp dẫn (ví dụ: mỗi 10 đơn hàng sẽ được tặng 1 phần quà hoặc giảm giá 10% cho đơn hàng tiếp theo). Đo số lượng thẻ phát ra và số khách sử dụng thẻ.\n\n**Tuần 2:** Quảng bá thẻ tích điểm qua các kênh truyền thông xã hội và tại quán. Đo số lượt tương tác và số khách đến quán sử dụng thẻ.\n\n**Tuần 3–4:** Theo dõi và điều chỉnh chương trình dựa trên phản hồi của khách hàng. Đo số khách hàng quay lại và số đơn hàng từ khách sử dụng thẻ.\n\nChúc Anh/Chị thành công với chương trình tích điểm!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Thiếu kết nối rõ ràng giữa số liệu và kết luận."
+ },
+ {
+  "id": "D24",
+  "quan": "B",
+  "loai": "ke_hoach",
+  "q": "lên kế hoạch tăng bán topping giúp em",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B1"
+  ],
+  "y_chinh": "Topping hiện 4,2% doanh thu, ~0,35 phần / đơn; mục tiêu 0,5 phần / đơn: nhân viên hỏi \"thêm trân châu đen / thạch phô mai không\" mỗi ly, combo ly + topping rẻ hơn lẻ, đẩy topping theo món tối bán chạy.",
+  "can_tranh": "Tặng topping miễn phí đại trà; giảm giá toàn menu; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để tăng bán topping, Bé Boom gợi ý như sau:\n\n**Mục tiêu:** Tăng doanh thu từ topping lên khoảng 10% trong tháng này.\n\n**Tuần 1:** Đẩy mạnh quảng bá topping trong menu, đặc biệt là Trân châu đen và Thạch phô mai, bằng cách tạo combo với trà sữa (giá combo rẻ hơn 5–10% so với mua lẻ). Chỉ số đo: Theo dõi số lượng topping bán ra hàng ngày.\n\n**Tuần 2:** Tổ chức chương trình khuyến mãi \"Mua trà sữa tặng topping\" cho khách hàng, khuyến khích họ thử topping mới. Chỉ số đo: Đếm số đơn có topping trong tuần.\n\n**Tuần 3–4:** Tăng cường giới thiệu topping qua nhân viên phục vụ, khuyến khích họ gợi ý topping cho khách khi gọi món. Chỉ số đo: Theo dõi phản hồi từ khách hàng và số lượng topping bán ra.\n\nBé Boom hy vọng kế hoạch này sẽ giúp tăng doanh thu từ topping cho quán ạ!",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 9,
+  "van_de_tim_ra": [
+   "B1"
+  ],
+  "loi_chinh": "Kế hoạch tặng topping miễn phí không phù hợp."
+ },
+ {
+  "id": "D25",
+  "quan": "B",
+  "loai": "ke_hoach",
+  "q": "tháng này em muốn làm chương trình cho khách quen quay lại, khách quay lại bao nhiêu rồi",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "khach"
+  ],
+  "van_de": [
+   "B7"
+  ],
+  "y_chinh": "Hiện 210 / 1.850 khách quay lại (11,4%); kế hoạch: x2 điểm ngày thường, nhắn khách đã nạp ví (35 khách), thẻ đóng dấu 8 tặng 1, ưu đãi cho 240 khách mới quay lại lần 2.",
+  "can_tranh": "Bịa tỷ lệ mục tiêu chắc chắn; nêu tên / số tiền khách ngoài khối; hướng dẫn thao tác app.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, tháng này có 210 khách đến từ 2 lần trở lên, chiếm 11,4% tổng số khách. \n\nViệc tuần này: \n1. Tạo chương trình ưu đãi cho khách quen, ví dụ như giảm giá 10% cho lần mua tiếp theo, và thông báo qua tin nhắn hoặc email.\n2. Đo số khách quay lại trong tuần tới để xem hiệu quả của chương trình.\n\nCần xem lại: Tỷ lệ khách quay lại trong tháng trước để so sánh và đánh giá hiệu quả chương trình.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "B7"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể và khả thi cho quán nhỏ."
+ },
+ {
+  "id": "D26",
+  "quan": "B",
+  "loai": "ke_hoach",
+  "q": "Lên lịch đẩy món theo khung giờ giúp em",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Dùng đúng món theo khung: sáng Trà sữa truyền thống / Trà đào cam sả; trưa Trà sữa trân châu đường đen, Trà dâu tây; chiều Bánh tráng trộn kèm trà sữa; tối Khoai tây chiên kèm trà sữa (giờ đông nhất 19–20h).",
+  "can_tranh": "Lấy món bán chạy buổi tối cho buổi sáng; nêu món quán không có; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, Bé Boom gợi ý lịch đẩy món theo khung giờ như sau:\n\n**Tuần 1:** Đẩy món Trà sữa trân châu đường đen vào khung giờ tối (từ 17h đến 21h) vì đây là món bán chạy nhất, giúp tăng doanh thu. Chỉ số đo cuối tuần: Doanh thu từ Trà sữa trân châu đường đen.\n\n**Tuần 2:** Đẩy món Khoai tây chiên vào khung giờ tối (từ 17h đến 21h) để kết hợp với Trà sữa, tăng thêm doanh thu cho nhóm ăn vặt. Chỉ số đo cuối tuần: Doanh thu từ Khoai tây chiên.\n\n**Tuần 3–4:** Đẩy món Trà đào cam sả vào khung giờ trưa (từ 11h đến 14h) để tận dụng lượng khách đông vào giờ này. Chỉ số đo cuối tuần: Doanh thu từ Trà đào cam sả.\n\nBé Boom hy vọng lịch này sẽ giúp quán tăng doanh thu hiệu quả ạ!",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không trả lời thẳng câu hỏi về khung giờ cụ thể cho từng món."
+ },
+ {
+  "id": "D27",
+  "quan": "C",
+  "loai": "ke_hoach",
+  "q": "Muốn bán thêm nước uống, lên kế hoạch giúp",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C1"
+  ],
+  "y_chinh": "Đồ uống chỉ ~7% doanh thu: mời nước sâm (12.000đ, 210 ly) / nước chanh kèm mỗi phần cơm trưa, phần cơm + nước sâm giá rẻ hơn lẻ một chút, bỏ món chưa bán (nước cam, sữa đậu nành); đo số ly / đơn mỗi tuần.",
+  "can_tranh": "Đề xuất trà sữa / món quán không có; tự cộng giá combo sai; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để bán thêm nước uống, Bé Boom gợi ý như sau:\n\n**Mục tiêu:** Tăng doanh thu nhóm Đồ uống lên khoảng 10% trong tháng tới.\n\n**Tuần 1:** Tạo combo nước uống kèm món chính (ví dụ: mua Bún bò Huế tặng Trà đá) để khuyến khích khách chọn nước uống. Đo số lượng combo bán ra cuối tuần.\n\n**Tuần 2:** Tăng cường quảng bá các món nước uống đang bán chạy như Trà đá và Nước sâm qua mạng xã hội và tại quán. Đo số đơn nước uống trong tuần.\n\n**Tuần 3–4:** Đánh giá lại giá bán các món nước uống, xem xét giảm giá cho Nước chanh và Nước cam để thu hút khách. Đo doanh thu nhóm Đồ uống cuối tháng.\n\nChúc Anh/Chị thành công trong việc tăng doanh thu nước uống ạ!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   "C1"
+  ],
+  "loi_chinh": "Thiếu liên kết rõ ràng giữa số liệu và kế hoạch hành động."
+ },
+ {
+  "id": "D28",
+  "quan": "C",
+  "loai": "ke_hoach",
+  "q": "kế hoạch cho ngày thứ 4 để bớt ế",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C2"
+  ],
+  "y_chinh": "Thứ 4 chỉ ~55% ngày thường (11.502.000đ cả tháng): giảm nhập bún / rau / người Thứ 4, món đặc biệt chỉ Thứ 4, nhắn khách quen; đo lại sau 4 tuần.",
+  "can_tranh": "Khẳng định lý do vắng; nói quán nghỉ Thứ 4; bịa số không có trong khối số liệu.",
+  "thieu_so": "Hao hụt nguyên liệu theo ngày (kho) cùng lúc với số theo thứ.",
+  "answer": "Dạ Anh/Chị, để bớt ế vào ngày thứ 4, Bé Boom gợi ý như sau:\n\n**Mục tiêu:** Tăng doanh thu vào thứ 4, hiện tại doanh thu thấp nhất trong tuần.\n\n**Tuần 1:** Đẩy mạnh món Bún bò Huế và Cơm sườn, vì đây là hai món bán chạy nhất. Đề xuất giảm giá 10% cho Bún bò Huế và Cơm sườn trong khung giờ từ 11h đến 14h (giờ cao điểm). Chỉ số đo cuối tuần: Doanh thu từ hai món này.\n\n**Tuần 2:** Tổ chức chương trình khuyến mãi \"Mua 1 tặng 1\" cho Trà đá trong khung giờ từ 16h đến 18h để thu hút khách vào giờ vắng. Chỉ số đo cuối tuần: Số lượng Trà đá bán ra.\n\n**Tuần 3–4:** Tăng cường quảng bá món Cơm gà xối mỡ và Bún thịt nướng, có thể thông qua mạng xã hội hoặc phát tờ rơi. Chỉ số đo cuối tuần: Doanh thu từ hai món này.\n\nHy vọng kế hoạch này giúp quán tăng doanh thu vào thứ 4 ạ!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   "C2"
+  ],
+  "loi_chinh": "Thiếu lý do cụ thể cho các đề xuất khuyến mãi."
+ },
+ {
+  "id": "D29",
+  "quan": "C",
+  "loai": "ke_hoach",
+  "q": "Gas với gạo sắp hết chưa, lên lịch nhập hàng tuần này giúp",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "C6"
+  ],
+  "y_chinh": "Gas còn 1 bình (tối thiểu 2), gạo 8 kg (tối thiểu 20) → nhập ngay hôm nay; lịch nhập: thịt từ lò thịt, rau / bún đặt theo ngày vì đang hao hụt bún 26 kg, rau 15 kg.",
+  "can_tranh": "Bịa lượng dùng mỗi ngày; nêu nhà cung cấp / giá không có trong khối.",
+  "thieu_so": "Lượng dùng mỗi ngày từng nguyên liệu (định lượng × số phần bán).",
+  "answer": "Dạ Anh/Chị, gas còn 1 bình (tối thiểu 2) và gạo còn 8 kg (tối thiểu 20), nên cần nhập hàng ngay.\n\n**Việc tuần này:** \n1. Nhập 1 bình gas và 12 kg gạo để đủ mức tối thiểu.\n2. Đo lượng gas và gạo còn lại vào cuối tuần để đảm bảo không thiếu hàng.\n\nCần xem lại: Theo dõi tình hình nhập hàng và hao hụt để điều chỉnh kế hoạch nhập hàng cho tuần sau.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 15,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Chưa chỉ ra vấn đề hao hụt bún, rau, sườn."
+ },
+ {
+  "id": "D30",
+  "quan": "C",
+  "loai": "ke_hoach",
+  "q": "Sắp tới 20/11 quán bún có nên làm gì không",
+  "history": null,
+  "facts": null,
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "20/11 là ngày Nhà giáo Việt Nam; quán bún gần chợ không cần chương trình lớn — có thể ưu đãi nhẹ có điều kiện (tặng nước) hoặc nhận đặt cơm cho trường gần đó.",
+  "can_tranh": "Bịa ngày lễ khác; giảm giá toàn menu; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, sắp tới 20/11, quán bún nên chuẩn bị một số hoạt động để thu hút khách hàng. \n\nMục tiêu: Tăng số đơn hàng khoảng 15% so với tuần trước.\n\n**Tuần 1:** Tạo một combo đặc biệt cho ngày 20/11, ví dụ như \"Combo bún + nước uống với giá ưu đãi\". Chỉ số đo cuối tuần: Theo dõi số lượng combo bán ra.\n\n**Tuần 2:** Chạy chương trình khuyến mãi cho nhóm khách hàng là giáo viên, có thể là giảm giá 10% cho họ khi đến quán trong ngày 20/11. Chỉ số đo cuối tuần: Ghi nhận số lượng khách hàng là giáo viên đến quán.\n\n**Tuần 3-4:** Tăng cường quảng cáo trên mạng xã hội về các món ăn đặc biệt cho ngày lễ, kèm theo hình ảnh hấp dẫn. Chỉ số đo cuối tuần: Theo dõi lượng tương tác và số đơn hàng từ quảng cáo.\n\nChúc quán thành công trong việc thu hút khách hàng cho ngày 20/11!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Thiếu sự thận trọng và không phù hợp với quy mô quán nhỏ."
+ },
+ {
+  "id": "D31",
+  "quan": "A",
+  "loai": "so_sanh",
+  "q": "Tháng 9 so với tháng 8 thế nào",
+  "history": null,
+  "facts": "thang_truoc",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Tháng 9 121.244.000đ, tăng 2,5% so tháng 8 (118.256.000đ); số đơn +0,9% (3.874 so 3.839), giá trị mỗi đơn +1,6% → tăng chủ yếu do giá trị mỗi đơn; nêu 1 điểm cần xem (combo đắt hơn mua lẻ / bạc xỉu giá vốn 45%).",
+  "can_tranh": "Lấy số tháng 10 vào; nói giảm; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, doanh thu tháng 9/2026 đạt 121.244.000đ, tăng 2,5% so với tháng 8/2026 (118.256.000đ). \n\nVì sao: Số đơn chỉ tăng 0,9%, nhưng giá trị trung bình mỗi đơn tăng 1,6%, cho thấy doanh thu chủ yếu đến từ việc tăng giá trị đơn hàng.\n\nKhác biệt lớn nhất: Doanh thu theo thứ, tháng 9 có thứ Ba cao nhất với 25.688.000đ, trong khi thứ Bảy thấp nhất chỉ đạt 8.220.000đ, chỉ bằng 40% một ngày bình thường.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 13,
+  "van_de_tim_ra": [
+   9
+  ],
+  "loi_chinh": "Thiếu đề xuất hành động cụ thể cho quán."
+ },
+ {
+  "id": "D32",
+  "quan": "A",
+  "loai": "so_sanh",
+  "q": "so với tháng trước thì món nào giảm nhiều nhất",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A1"
+  ],
+  "y_chinh": "Nói rõ chưa có số từng món tháng trước; chỉ biết tổng giảm 14,2% do số đơn giảm 14,8%; nêu món bán chạy / chậm hiện tại để theo dõi.",
+  "can_tranh": "Bịa món giảm nhiều nhất hoặc % giảm từng món.",
+  "thieu_so": "Số phần từng món kỳ trước.",
+  "answer": "Dạ Anh/Chị, so với tháng trước, món giảm nhiều nhất là Bạc xỉu, với số phần giảm 150 phần (từ 760 phần xuống 610 phần). \n\nVì sao: Doanh thu giảm chủ yếu do số đơn giảm 14,8%, trong khi giá trị trung bình mỗi đơn chỉ tăng nhẹ 0,6%. \n\nCần xem lại: Anh/Chị nên kiểm tra lại cách quảng bá món Bạc xỉu hoặc xem xét khuyến mãi để thu hút khách hàng hơn.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 0,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 8,
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Bịa số phần giảm của món Bạc xỉu."
+ },
+ {
+  "id": "D33",
+  "quan": "A",
+  "loai": "so_sanh",
+  "q": "tuần này so tuần trước sao",
+  "history": null,
+  "facts": "tuan_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Tuần này (26–28/10) 13.520.000đ, giảm 4,7% so cùng kỳ tuần trước 14.180.000đ; số đơn −4,0% (431 so 449), giá trị mỗi đơn gần như giữ → do ít đơn hơn.",
+  "can_tranh": "Nói Thứ 5–CN quán nghỉ / doanh thu 0; so 3 ngày với cả tuần trước.",
+  "thieu_so": "Số theo thứ của tuần chưa hết bị gửi 0 cho ngày chưa tới.",
+  "answer": "Dạ Anh/Chị, doanh thu tuần này đạt 13.520.000đ, giảm 4,7% so với tuần trước (14.180.000đ). Số đơn hoàn thành giảm 4% từ 449 đơn xuống 431 đơn, trong khi giá trị trung bình mỗi đơn giảm nhẹ 0,7%.\n\nKhác biệt lớn nhất là doanh thu theo thứ: tuần này chỉ có doanh thu từ Thứ 2 và Thứ 3, trong khi tuần trước có thêm Thứ 4. Điều này cho thấy lượng khách giảm đáng kể trong tuần này. \n\nCần xem lại các yếu tố thu hút khách trong tuần tới để cải thiện doanh thu ạ.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   1
+  ],
+  "loi_chinh": "Thiếu đề xuất cụ thể để cải thiện doanh thu."
+ },
+ {
+  "id": "D34",
+  "quan": "A",
+  "loai": "so_sanh",
+  "q": "chi phí tháng này so tháng trước tăng giảm sao",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "A6"
+  ],
+  "y_chinh": "Tổng chi 73.900.000đ, giảm 2,8% so 76.030.000đ; nguyên liệu giảm theo bán, nhưng tiền điện tăng 82,2% (+970.000đ) là khoản tăng duy nhất → kiểm máy pha / tủ mát / điều hoà.",
+  "can_tranh": "Gọi thu − chi là lãi ròng; nói nguyên liệu tăng; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, tháng này thu giảm 14,1% so tháng trước, chi giảm 2,8%. Chênh lệch thu - chi là 22.551.000đ.\n\nVì sao: Doanh thu bán hàng tháng này là 95.951.000đ, giảm so với tháng trước. Chi phí nguyên liệu giảm 6,6% nhưng vẫn chiếm 52,1% tổng chi, cao hơn mức mốc 25–35%.\n\nKhác biệt lớn nhất: Tiền điện tăng 82,2%, từ 1.180.000đ lên 2.150.000đ.\n\nCần xem lại: Doanh thu và chi phí cụ thể từng khoản để có cái nhìn rõ hơn về tình hình tài chính.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   "A6"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể để giải quyết vấn đề."
+ },
+ {
+  "id": "D35",
+  "quan": "B",
+  "loai": "so_sanh",
+  "q": "trà sữa với trà trái cây nhóm nào lời hơn",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B5"
+  ],
+  "y_chinh": "Chưa kết luận được nhóm nào lời hơn: chỉ có giá vốn 2 món trà trái cây (Trà đào cam sả 31%, Trà dâu tây 46%), trà sữa chưa có giá vốn; về doanh thu trà sữa 58% so trà trái cây ~31%.",
+  "can_tranh": "Kết luận trà sữa lời hơn / trà trái cây lời hơn; bịa giá vốn trà sữa.",
+  "thieu_so": "Giá vốn đủ các món.",
+  "answer": "Dạ Anh/Chị, nhóm \"Trà sữa\" có doanh thu 88.697.000đ từ 2.643 phần, trong khi nhóm \"Trà trái cây\" có doanh thu 46.700.000đ từ 1.453 phần. Như vậy, nhóm \"Trà sữa\" chiếm 58% doanh thu của quán, trong khi \"Trà trái cây\" chỉ chiếm 31%.\n\nVì sao: Nhóm \"Trà sữa\" có số lượng bán cao hơn và giá trị mỗi đơn cũng thường cao hơn so với nhóm \"Trà trái cây\".\n\nKhác biệt lớn nhất: Món bán chạy nhất trong nhóm \"Trà sữa\" là Trà sữa trân châu đường đen với 1.062 phần, trong khi món bán chạy nhất trong nhóm \"Trà trái cây\" là Trà đào cam sả với 518 phần.\n\nDựa trên số liệu này, nhóm \"Trà sữa\" có khả năng lời hơn so với nhóm \"Trà trái cây\".",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 0,
+   "gon": 1
+  },
+  "tong": 7,
+  "van_de_tim_ra": [
+   "B5"
+  ],
+  "loi_chinh": "Kết luận nhóm trà sữa lời hơn mà không có đủ thông tin giá vốn."
+ },
+ {
+  "id": "D36",
+  "quan": "B",
+  "loai": "so_sanh",
+  "q": "cuối tuần với ngày thường khác nhau nhiều không",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Khác nhiều: Thứ 7 27.616.000đ, Chủ nhật 29.457.000đ cả tháng, gấp ~2 lần Thứ 2 / Thứ 3 (14.728.000đ) → xếp thêm người, nguyên liệu cuối tuần; ngày thường đẩy ưu đãi khung vắng.",
+  "can_tranh": "Nói ngày nào quán nghỉ; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số đơn theo thứ (để biết khách đông hơn hay đơn lớn hơn).",
+  "answer": "Dạ Anh/Chị, doanh thu cuối tuần (Thứ 7 và Chủ nhật) cao hơn ngày thường (Thứ 2 đến Thứ 6) rất nhiều. Cụ thể:\n\n- Doanh thu Thứ 7: 27.616.000đ (trung bình 6.904.000đ/ngày)\n- Doanh thu Chủ nhật: 29.457.000đ (trung bình 7.364.250đ/ngày)\n- Doanh thu Thứ 2: 14.728.000đ (trung bình 3.682.000đ/ngày)\n\nChênh lệch doanh thu giữa cuối tuần và ngày thường là khoảng 87% (cuối tuần cao hơn). \n\nVì sao: Do lượng khách vào cuối tuần tăng cao, đặc biệt là vào Chủ nhật, trong khi ngày thường có lượng khách ít hơn.\n\nViệc tuần này: Anh/Chị có thể xem xét tăng cường quảng cáo hoặc khuyến mãi vào cuối tuần để thu hút thêm khách. \n\nCần xem lại: Số liệu cụ thể về món nào bán chạy nhất vào cuối tuần để tối ưu hóa menu.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Thiếu việc làm cụ thể cho ngày thường và cuối tuần."
+ },
+ {
+  "id": "D37",
+  "quan": "B",
+  "loai": "so_sanh",
+  "q": "mã GIAM15 với HSSV10 mã nào hiệu quả hơn",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "khuyen_mai"
+  ],
+  "van_de": [
+   "B3"
+  ],
+  "y_chinh": "GIAM15 dùng 610 lần, giảm 9.348.000đ (~15.300đ / lần); HSSV10 375 lần, giảm 4.399.000đ (~11.700đ / lần); số này chỉ là tiền giảm — không biết mã nào kéo thêm khách; tổng giảm đã 9% giá trị trước giảm → thu hẹp GIAM15 trước.",
+  "can_tranh": "Khẳng định mã nào mang về doanh thu bao nhiêu; bịa số không có trong khối số liệu.",
+  "thieu_so": "Doanh thu / số khách mới từ từng mã.",
+  "answer": "Dạ Anh/Chị, mã GIAM15 hiệu quả hơn với 610 lần sử dụng và tổng giảm 9.348.000đ, chiếm 68% tổng giảm giá. Trong khi đó, mã HSSV10 chỉ được sử dụng 375 lần và giảm 4.399.000đ, chiếm 32% tổng giảm giá. \n\nVì sao: Mã GIAM15 có số lần sử dụng cao hơn, cho thấy khách hàng ưa chuộng hơn. \n\nCần xem lại: Có thể kiểm tra thêm về món nào được giảm giá nhiều nhất để tối ưu hóa khuyến mãi trong tương lai.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "B3"
+  ],
+  "loi_chinh": "Thiếu thận trọng khi kết luận mã GIAM15 hiệu quả hơn."
+ },
+ {
+  "id": "D38",
+  "quan": "C",
+  "loai": "so_sanh",
+  "q": "tuần này sao tụt so tuần trước vậy",
+  "history": null,
+  "facts": "tuan_nay",
+  "modules": null,
+  "van_de": [
+   "C7"
+  ],
+  "y_chinh": "Giảm 21,5% (12.314.000đ so 15.689.000đ); số đơn −10,9% nhưng giá trị mỗi đơn −11,9% → chủ yếu do đơn nhỏ đi; món thêm chỉ ~4% doanh thu tuần này → mời trứng / chả / thịt thêm và đồ uống.",
+  "can_tranh": "Nói Thứ 5–CN quán nghỉ; chỉ nói do ít khách; bịa số không có trong khối số liệu.",
+  "thieu_so": "Cơ cấu món của tuần trước để so (app chỉ gửi tổng tuần trước).",
+  "answer": "Dạ Anh/Chị, doanh thu tuần này giảm 21,5% so với tuần trước. Nguyên nhân chính là do số đơn giảm 10,9% và giá trị trung bình mỗi đơn giảm 11,9%. \n\nKhác biệt lớn nhất là doanh thu theo thứ, tuần này thấp nhất vào Thứ 4 với 2.656.000đ, trong khi tuần trước không có số liệu để so. \n\nViệc tuần này: Anh/Chị nên xem xét đẩy mạnh món bán chạy như Cơm sườn và Bún bò Huế vào giờ cao điểm, đặc biệt là vào buổi trưa. Cần xem lại số liệu về món chưa bán để có kế hoạch điều chỉnh menu.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Thiếu gợi ý cụ thể về món thêm và đồ uống để tăng giá trị đơn."
+ },
+ {
+  "id": "D39",
+  "quan": "C",
+  "loai": "so_sanh",
+  "q": "bún bò với cơm sườn món nào ngon ăn hơn",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C4"
+  ],
+  "y_chinh": "Bún bò doanh thu cao hơn (820 phần, 36.900.000đ so cơm sườn 760 phần, 30.400.000đ); chỉ cơm sườn có giá vốn (48%, lãi gộp ~20.800đ / phần) → chưa so được lời; cần nhập giá vốn bún bò.",
+  "can_tranh": "Kết luận bún bò lời hơn / cơm sườn lời hơn; bịa giá vốn bún bò.",
+  "thieu_so": "Giá vốn bún bò.",
+  "answer": "Dạ Anh/Chị, Bé Boom không nhận xét món nào ngon hơn giữa bún bò và cơm sườn ạ. Tuy nhiên, bún bò Huế đang bán rất chạy với 820 phần và doanh thu đạt 36.900.000đ, trong khi cơm sườn cũng rất phổ biến với 760 phần và doanh thu 30.400.000đ. Anh/Chị có thể tham khảo ý kiến khách hàng để biết thêm về sở thích của họ nhé!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 12,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Chưa chỉ ra vấn đề giá vốn của cơm sườn."
+ },
+ {
+  "id": "D40",
+  "quan": "C",
+  "loai": "so_sanh",
+  "q": "tháng này thu chi so tháng trước sao, có lời hơn ko",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "C5"
+  ],
+  "y_chinh": "Thu 133.100.000đ (+2,1%), chi 95.900.000đ (+15,6%) → thu − chi 37.200.000đ, thấp hơn kỳ trước ~47.412.000đ; nguyên nhân chính nguyên liệu +12,7 triệu (+28%); đây là chênh lệch sổ quỹ, không phải lãi ròng.",
+  "can_tranh": "Gọi là lãi ròng / lợi nhuận; nói lời hơn; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, tháng này thu 133.100.000đ, chi 95.900.000đ, chênh lệch thu − chi là 37.200.000đ, tăng 2,1% so tháng trước (thu 130.362.000đ, chi 82.950.000đ). \n\nVì sao: Doanh thu tháng này tăng chủ yếu từ việc bán hàng, trong khi chi tháng này tăng nhiều hơn, đặc biệt là chi nguyên liệu (+12.700.000đ). \n\nKhác biệt lớn nhất: Chi nguyên liệu chiếm 60,5% tổng chi tháng này, cao hơn nhiều so với mức mốc 25–35%. \n\nCần xem lại: Anh/Chị nên theo dõi chi phí nguyên liệu để điều chỉnh giá bán hoặc tìm cách tiết kiệm hơn trong tháng tới.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Thiếu giải thích rõ ràng về chênh lệch thu chi và không nhấn mạnh đây không phải lãi ròng."
+ },
+ {
+  "id": "D41",
+  "quan": "A",
+  "loai": "du_bao",
+  "q": "cứ đà này cuối tháng 10 được bao nhiêu",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A2"
+  ],
+  "y_chinh": "Ước ~106 triệu: 95.951.000đ tới 28/10 + Thứ 5 (~4,4 triệu), Thứ 6 (~4,2 triệu), Thứ 7 chỉ ~1,8 triệu (Thứ 7 thấp nhất, ~40% ngày thường) theo trung bình từng thứ; nói rõ là ước, thấp hơn tháng 9.",
+  "can_tranh": "Nhân trung bình ngày cho 31 ngày (tính cả Chủ nhật nghỉ); cam kết con số.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, dự báo doanh thu cuối tháng 10 ước khoảng 106.390.000đ (đã có 95.951.000đ + ước 10.439.000đ). Đây chỉ là ước tính, có thể thay đổi khi kết thúc tháng. \n\nCần xem lại số liệu thực tế vào cuối tháng để có con số chính xác hơn ạ.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 14,
+  "van_de_tim_ra": [
+   "A2"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể cho quán."
+ },
+ {
+  "id": "D42",
+  "quan": "A",
+  "loai": "du_bao",
+  "q": "Tháng 11 có khả năng tăng lại không",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A1"
+  ],
+  "y_chinh": "Chưa dự báo chắc được: chỉ có tháng này (−14,2% do số đơn) so cùng kỳ tháng trước; tăng lại nếu lấy lại số đơn (combo, giờ chiều, khách văn phòng); có 20/11 có thể tận dụng nhẹ.",
+  "can_tranh": "Đưa % tăng chắc chắn; bịa xu hướng nhiều tháng.",
+  "thieu_so": "Chuỗi doanh thu 12 tháng, cùng kỳ năm trước.",
+  "answer": "Dạ Anh/Chị, dự báo doanh thu tháng 11 ước khoảng 106.390.000đ, tức là có khả năng tăng so với tháng 10 (ước tính 95.951.000đ) nếu quán duy trì được lượng khách và doanh thu trung bình mỗi đơn. \n\nVì sao: Doanh thu tháng này giảm chủ yếu do số đơn giảm 14,8%, trong khi giá trị trung bình mỗi đơn chỉ tăng nhẹ 0,6%. Nếu quán có kế hoạch thu hút khách hàng tốt hơn, có thể cải thiện doanh thu.\n\nViệc tuần này: Anh/Chị có thể thử tăng cường quảng cáo cho các món bán chạy như Cà phê sữa đá và Bánh mì thịt, đồng thời xem xét khuyến mãi cho Combo sáng để thu hút khách vào buổi sáng. \n\nCần xem lại: Anh/Chị nên theo dõi số lượng đơn hàng trong những ngày đầu tháng 11 để đánh giá hiệu quả các chiến dịch quảng cáo và khuyến mãi.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Thiếu thận trọng khi dự báo doanh thu tháng 11."
+ },
+ {
+  "id": "D43",
+  "quan": "A",
+  "loai": "du_bao",
+  "q": "sữa đặc còn nhiêu, đủ dùng tới cuối tuần ko",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "A8"
+  ],
+  "y_chinh": "Không đủ: sữa đặc còn 3 lon, dưới mức tối thiểu 12 → nhập ngay hôm nay; khối không có lượng dùng mỗi ngày nên không tính chính xác số ngày.",
+  "can_tranh": "Bịa số lon dùng mỗi ngày / số ngày còn đủ.",
+  "thieu_so": "Lượng sữa đặc dùng mỗi ngày (định lượng × số ly cà phê sữa, bạc xỉu).",
+  "answer": "Dạ Anh/Chị, sữa đặc còn 3 lon, nhưng mức tối thiểu là 12 lon. Như vậy, sữa đặc không đủ dùng tới cuối tuần này. \n\nBé Boom khuyên Anh/Chị nên nhập thêm sữa đặc để đảm bảo đủ hàng cho quán ạ.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 15,
+  "van_de_tim_ra": [
+   "A8"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể, chỉ khuyên nhập thêm mà không nêu số lượng cụ thể."
+ },
+ {
+  "id": "D44",
+  "quan": "B",
+  "loai": "du_bao",
+  "q": "tháng này kho còn gì sắp hết, tháng 11 em nên nhập trân châu bao nhiêu",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "B8"
+  ],
+  "y_chinh": "Ly 700ml đã HẾT (0 / tối thiểu 200) → nhập ngay; trân châu đen còn 1,5 kg (tối thiểu 5), sữa tươi 4 lít (tối thiểu 10); hao hụt trân châu nấu dư 7 kg ≈ 315.000đ → nấu mẻ nhỏ theo giờ; lượng nhập tháng 11 cần số ly bán + định lượng nên chỉ nêu cách tính.",
+  "can_tranh": "Bịa số kg nhập cụ thể; dùng số ly bán (khối kho không có); bịa số không có trong khối số liệu.",
+  "thieu_so": "Số ly trà sữa / phần trân châu bán (số bán) và định lượng công thức cùng lúc với kho.",
+  "answer": "Dạ Anh/Chị, tháng này kho còn 3 mặt hàng sắp hết, cụ thể là:\n\n1. Ly 700ml: còn 0 cái (tối thiểu 200).\n2. Trân châu đen (bột): còn 1,5 kg (tối thiểu 5).\n3. Sữa tươi: còn 4 lít (tối thiểu 10).\n\nVì trân châu đen hiện tại chỉ còn 1,5 kg, Anh/Chị nên nhập ít nhất 3,5 kg để đạt mức tối thiểu 5 kg. Tuy nhiên, nếu có nhu cầu sử dụng nhiều hơn, Anh/Chị có thể nhập thêm để đảm bảo đủ cho tháng 11. \n\nCần xem lại lượng dùng mỗi ngày để có dự báo chính xác hơn cho việc nhập hàng trong tháng tới ạ.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "B8"
+  ],
+  "loi_chinh": "Thiếu hướng dẫn cụ thể về cách tính lượng nhập cho tháng 11."
+ },
+ {
+  "id": "D45",
+  "quan": "B",
+  "loai": "du_bao",
+  "q": "tháng 12 noel doanh thu có tăng ko",
+  "history": null,
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Không dự báo chắc được (không có số tháng 12 năm trước); 24/12 rơi Thứ 5, 25/12 Thứ 6; quán đông tối và cuối tuần → chuẩn bị nguyên liệu, người cho các tối đó, món theo mùa.",
+  "can_tranh": "Đưa % tăng chắc chắn; sai thứ của ngày 24–25/12; bịa số không có trong khối số liệu.",
+  "thieu_so": "Cùng kỳ năm trước, chuỗi 12 tháng.",
+  "answer": "Dạ Anh/Chị, tháng 12 thường có doanh thu tăng do dịp lễ Giáng sinh và Tết Dương lịch. Tuy nhiên, để dự báo chính xác cho quán mình, cần xem xét số liệu doanh thu tháng 12 năm trước và các yếu tố như khuyến mãi, thực đơn đặc biệt cho dịp lễ.\n\nBé Boom gợi ý Anh/Chị có thể chuẩn bị các món đặc trưng cho mùa lễ, tăng cường quảng cáo và khuyến mãi để thu hút khách hàng hơn. Nếu có số liệu doanh thu tháng 12 năm trước, Bé Boom có thể giúp phân tích cụ thể hơn ạ!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 12,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Thiếu kết nối số liệu hiện tại với dự báo doanh thu tháng 12."
+ },
+ {
+  "id": "D46",
+  "quan": "B",
+  "loai": "du_bao",
+  "q": "nếu tắt mã GIAM15 thì doanh thu tháng sau giảm bao nhiêu",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "khuyen_mai"
+  ],
+  "van_de": [
+   "B3"
+  ],
+  "y_chinh": "Không tính chắc được: mã đang giảm 9.348.000đ / tháng qua 610 lần dùng; tắt có thể mất một phần khách nhưng giữ lại tiền giảm → thử tắt / thu hẹp 1–2 tuần ngày thường rồi so số đơn.",
+  "can_tranh": "Đưa con số giảm doanh thu chắc chắn; bịa số không có trong khối số liệu.",
+  "thieu_so": "Doanh thu, số đơn trước khi có mã (số bán) cùng lúc với khuyến mãi.",
+  "answer": "Dạ Anh/Chị, nếu tắt mã GIAM15, doanh thu tháng sau ước tính sẽ giảm khoảng 9.348.000đ, tương đương với 610 đơn hàng đã sử dụng mã này trong tháng hiện tại.\n\nVì sao: Mã GIAM15 đã được dùng 610 lần, giảm tổng cộng 9.348.000đ trong tháng này, nên nếu không có mã này, doanh thu sẽ giảm tương ứng.\n\nCần xem lại: Cần xem thêm số lượng đơn hàng dự kiến cho tháng sau để có dự báo chính xác hơn.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 8,
+  "van_de_tim_ra": [
+   "B3"
+  ],
+  "loi_chinh": "Kết luận sai về doanh thu giảm khi tắt mã GIAM15."
+ },
+ {
+  "id": "D47",
+  "quan": "B",
+  "loai": "du_bao",
+  "q": "tuần này chắc được bao nhiêu",
+  "history": null,
+  "facts": "tuan_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "3 ngày đầu tuần 12.541.000đ (~4,2 triệu / ngày, +4,2% so cùng kỳ); cuối tuần thường đông hơn nên cả tuần ước trên 29 triệu (chỉ nhân 7 là mức thấp); nói rõ là ước.",
+  "can_tranh": "Nói Thứ 5–CN quán nghỉ (số 0 là ngày chưa tới); cam kết con số.",
+  "thieu_so": "Doanh thu theo thứ của các tuần trước (để ước cuối tuần).",
+  "answer": "Dạ Anh/Chị, tuần này dự báo doanh thu ước tính khoảng 12.541.000đ, tăng 4,2% so với tuần trước. \n\nVì sao: Doanh thu tăng chủ yếu do số đơn hoàn thành tăng 5,4%, trong khi giá trị trung bình mỗi đơn giảm nhẹ 1,2%.\n\nCần xem lại: Anh/Chị có thể xem thêm số liệu theo giờ hoặc theo thứ để có cái nhìn chi tiết hơn về doanh thu trong tuần này.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 7,
+  "van_de_tim_ra": [
+   1
+  ],
+  "loi_chinh": "Không ước lượng doanh thu cả tuần, chỉ nói 3 ngày đầu."
+ },
+ {
+  "id": "D48",
+  "quan": "C",
+  "loai": "du_bao",
+  "q": "hôm nay tới giờ được nhiêu rồi, chắc cả ngày được bao nhiêu",
+  "history": null,
+  "facts": "hom_nay",
+  "modules": null,
+  "van_de": [],
+  "y_chinh": "Tới 14h được 2.638.000đ / 54 đơn, giảm 4,6% so Thứ 4 tuần trước cùng giờ; ca tối 16–20h còn chưa bán, cả ngày ước khoảng 3,1–3,2 triệu nếu tối như thường; nói rõ là ước.",
+  "can_tranh": "Nói quán đã đóng cửa cả ngày; bịa doanh thu ca tối hôm qua.",
+  "thieu_so": "Tỷ trọng ca tối của các ngày trước (giờ của nhiều kỳ).",
+  "answer": "Dạ Anh/Chị, hôm nay tới giờ quán đã đạt doanh thu 2.638.000đ từ 54 đơn hoàn thành. \n\nDự báo doanh thu cả ngày có thể đạt khoảng 4.000.000đ (ước tính dựa trên doanh thu hiện tại và xu hướng bán hàng). Tuy nhiên, để có con số chính xác hơn, cần theo dõi doanh thu trong các giờ còn lại trong ngày. \n\nCần xem lại doanh thu theo giờ để điều chỉnh kế hoạch phục vụ cho buổi chiều nhé ạ!",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 8,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Dự báo doanh thu cả ngày không hợp lý và không có cơ sở rõ ràng."
+ },
+ {
+  "id": "D49",
+  "quan": "C",
+  "loai": "du_bao",
+  "q": "gạo còn 8 ký đủ bán mấy ngày",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [],
+  "y_chinh": "Gạo còn 8 kg, dưới mức tối thiểu 20 kg → nhập ngay; khối không có lượng gạo dùng mỗi ngày nên không tính chính xác số ngày.",
+  "can_tranh": "Bịa số kg dùng mỗi ngày / số ngày đủ.",
+  "thieu_so": "Số phần cơm bán mỗi ngày + định lượng gạo.",
+  "answer": "Dạ Anh/Chị, Bé Boom không có số liệu về lượng dùng mỗi ngày, nên không thể tính chính xác gạo còn 8 kg đủ bán được bao nhiêu ngày. \n\nBé Boom khuyên Anh/Chị nên nhập thêm gạo để đảm bảo đủ hàng cho quán, vì mức tối thiểu là 20 kg.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 15,
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không chỉ ra vấn đề cụ thể từ số liệu."
+ },
+ {
+  "id": "D50",
+  "quan": "C",
+  "loai": "du_bao",
+  "q": "giá thịt tăng hoài, tháng sau tiền chi nguyên liệu chắc tăng bao nhiêu",
+  "history": null,
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "C5"
+  ],
+  "y_chinh": "Không dự báo chắc: tháng này nguyên liệu 58.000.000đ (+28% so 45.300.000đ) đã kéo thu − chi xuống 37,2 triệu; nếu giá giữ thì tháng sau tương tự → đối chiếu giá nhập, tăng giá món giá vốn cao (cơm sườn) từ từ.",
+  "can_tranh": "Đưa % tăng giá thịt thị trường; gọi thu − chi là lãi; nêu giá vốn cơm sườn (khối thu chi không có).",
+  "thieu_so": "Giá nhập theo thời gian, chuỗi nhiều tháng; giá vốn món (số bán) cùng lúc.",
+  "answer": "Dạ Anh/Chị, tháng sau tiền chi nguyên liệu có thể tăng lên do giá thịt tăng liên tục. Tuy nhiên, Bé Boom không có số liệu cụ thể về lượng dùng mỗi ngày để dự báo chính xác. \n\nVì sao: Hiện tại, chi nguyên liệu đã chiếm 43,7% doanh thu bán hàng, cao hơn mức mốc 25–35%. Nếu giá thịt tiếp tục tăng, chi phí này sẽ còn tăng thêm.\n\nCần xem lại: Anh/Chị nên theo dõi giá thịt cụ thể và lượng nguyên liệu sử dụng hàng ngày để có dự báo chính xác hơn cho tháng sau.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể để ứng phó với chi phí nguyên liệu tăng."
+ },
+ {
+  "id": "D51",
+  "quan": "A",
+  "loai": "noi_tiep",
+  "q": "vậy làm gì cho tăng",
+  "history": [
+   {
+    "q": "doanh thu thang nay sao roi",
+    "a": "Tháng này 95,95 triệu, giảm 14,2% so cùng kỳ tháng trước, chủ yếu do số đơn giảm 14,8% (3.046 so 3.575), giá trị mỗi đơn gần như giữ nguyên."
+   }
+  ],
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A1",
+   "A3",
+   "A4"
+  ],
+  "y_chinh": "Đi tiếp đúng chủ đề doanh thu giảm do số đơn: hạ combo cà phê sữa + bánh mì thịt dưới giá lẻ, ưu đãi khung 14–16h, giữ chân khách văn phòng buổi sáng; không lặp lại nguyên văn câu trước.",
+  "can_tranh": "Nhắc lại nguyên câu trước; đổi sang chủ đề khác; giảm giá toàn menu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để tăng doanh thu, quán có thể tập trung vào các việc sau:\n\n1. **Đẩy mạnh món bán chạy**: Cà phê sữa đá đang là món bán chạy nhất với 1150 phần. Quán có thể quảng bá món này nhiều hơn, như tạo combo với Bánh mì thịt (giá combo đề xuất 45.000đ) để thu hút khách.\n\n2. **Khuyến mãi vào giờ vắng**: Thời gian 14h, 15h, 16h doanh thu thấp. Quán có thể áp dụng khuyến mãi cho các món trong khung giờ này, như giảm giá cho Cà phê sữa đá hoặc Bạc xỉu để kích thích khách hàng.\n\n3. **Tăng cường quảng bá trên mạng xã hội**: Đăng tải hình ảnh hấp dẫn của món ăn, đặc biệt là các món đang bán chạy, để thu hút sự chú ý của khách hàng.\n\nViệc tuần này: Quán có thể thử nghiệm khuyến mãi cho Cà phê sữa đá và Bánh mì thịt vào giờ vắng, theo dõi doanh thu trong 1 tuần để đánh giá hiệu quả.\n\nCần xem lại: Doanh thu theo thứ 7 đang rất thấp, cần tìm hiểu nguyên nhân và có kế hoạch cải thiện.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "tong": 16,
+  "van_de_tim_ra": [
+   "A1",
+   "A3",
+   "A4"
+  ],
+  "loi_chinh": "Không có điểm yếu lớn, câu trả lời rất tốt."
+ },
+ {
+  "id": "D52",
+  "quan": "A",
+  "loai": "noi_tiep",
+  "q": "chi tiết hơn đi",
+  "history": [
+   {
+    "q": "món nào bán chạy nhất tháng này",
+    "a": "Cà phê sữa đá 1.150 ly (28,75 triệu), bạc xỉu 610 ly, cà phê đen đá 520 ly; bánh mì thịt 420 ổ."
+   }
+  ],
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "A4",
+   "A5"
+  ],
+  "y_chinh": "Đi sâu từng nhóm: cà phê (sữa đá 1.150, bạc xỉu 610 — giá vốn 45%, đen đá 520), trà, bánh mì; combo cà phê sữa + bánh mì thịt đắt hơn lẻ 2.000đ; kết bằng \"Cần xem lại\" và \"Việc tuần này\".",
+  "can_tranh": "Gọi bạc xỉu là món ế; bịa số không có trong khối số liệu; lặp nguyên câu trước.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, Bé Boom sẽ đi sâu hơn vào các nhóm món bán chạy trong tháng này.\n\n1. **Nhóm Cà phê**: Đây là nhóm chiếm tỷ trọng lớn nhất với 2.485 phần, doanh thu 63.575.000đ (62% doanh thu). \n   - **Cà phê sữa đá**: 1.150 phần, doanh thu 28.750.000đ (28,2% doanh thu).\n   - **Bạc xỉu**: 610 phần, doanh thu 17.690.000đ (17,3% doanh thu), giá vốn 13.000đ, cao hơn mức 25–35% giá bán.\n   - **Cà phê đen đá**: 520 phần, doanh thu 10.400.000đ (10,2% doanh thu).\n\n2. **Nhóm Trà**: Doanh thu 16.980.000đ (17% doanh thu).\n   - **Trà đào**: 300 phần, doanh thu 9.000.000đ (8,8% doanh thu).\n   - **Trà tắc**: 260 phần, doanh thu 4.680.000đ (4,6% doanh thu).\n\n3. **Nhóm Bánh mì**: Doanh thu 16.260.000đ (16% doanh thu).\n   - **Bánh mì thịt**: 420 phần, doanh thu 10.500.000đ (10,3% doanh thu).\n   - **Bánh mì trứng**: 210 phần, doanh thu 3.780.000đ (3,7% doanh thu).\n\n4. **Nhóm Combo sáng**: Doanh thu 5.260.000đ (5% doanh thu).\n   - **Combo cà phê sữa + bánh mì thịt**: 70 phần, doanh thu 3.640.000đ (3,6% doanh thu).\n\n**Bất thường**: Nhóm Combo sáng có doanh thu thấp, có thể do khách chưa biết đến hoặc chưa được quảng bá đúng cách.\n\nDựa vào số liệu này, Anh/Chị có thể xem xét đẩy mạnh quảng cáo cho các món trong nhóm Combo sáng hoặc cải tiến menu để thu hút khách hơn.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 10,
+  "van_de_tim_ra": [
+   "A5"
+  ],
+  "loi_chinh": "Thiếu phân tích chi tiết về vấn đề giá combo và bạc xỉu."
+ },
+ {
+  "id": "D53",
+  "quan": "A",
+  "loai": "noi_tiep",
+  "q": "thế hao hụt tháng này bao nhiêu",
+  "history": [
+   {
+    "q": "kho có gì sắp hết không",
+    "a": "Sữa đặc còn 3 lon (tối thiểu 12), hạt cà phê rang 2,5 kg (tối thiểu 5), ly 500ml 150 cái (tối thiểu 300) — nên nhập ngay sữa đặc."
+   }
+  ],
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "kho"
+  ],
+  "van_de": [
+   "A7"
+  ],
+  "y_chinh": "Hao hụt: bánh mì 96 ổ ≈ 384.000đ, sữa tươi 6 lít ≈ 216.000đ → đặt bánh theo ngày (ít hơn Thứ 7).",
+  "can_tranh": "Nhắc lại hàng sắp hết; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số bánh bán trong kỳ để ra tỷ lệ hao hụt.",
+  "answer": "Dạ Anh/Chị, tháng này hao hụt ghi nhận là 384.000đ cho 96 ổ bánh mì và 216.000đ cho 6 lít sữa tươi, tổng cộng là 600.000đ. \n\nVì sao: Hao hụt chủ yếu đến từ bánh mì và sữa tươi, có thể do bảo quản không đúng cách hoặc lượng tiêu thụ không ổn định.\n\nCần xem lại: Anh/Chị nên kiểm tra quy trình bảo quản và sử dụng nguyên liệu để giảm thiểu hao hụt trong tháng tới.",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "A7"
+  ],
+  "loi_chinh": "Thiếu việc làm cụ thể để giảm hao hụt."
+ },
+ {
+  "id": "D54",
+  "quan": "B",
+  "loai": "noi_tiep",
+  "q": "lam sao de khach goi them",
+  "history": [
+   {
+    "q": "topping ban sao",
+    "a": "Topping 6,35 triệu = 4,2% doanh thu, khoảng 0,35 phần mỗi đơn; trân châu đen 442 phần, thạch phô mai 178."
+   }
+  ],
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B1"
+  ],
+  "y_chinh": "Tiếp chủ đề topping: câu mời cố định mỗi ly (trân châu đen, thạch phô mai), ly + topping rẻ hơn lẻ, bảng topping ở quầy; mục tiêu từ 0,35 lên 0,5 phần / đơn.",
+  "can_tranh": "Đổi sang chủ đề khác; tặng topping miễn phí đại trà; nêu nút / màn hình app.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để khách gọi thêm, quán có thể thực hiện một số cách sau:\n\n1. **Khuyến mãi combo**: Tạo ra các combo hấp dẫn, ví dụ như Trà sữa trân châu đường đen + Khoai tây chiên với giá ưu đãi (lẻ 60.000đ → combo 54.000đ–57.000đ). Điều này có thể khuyến khích khách gọi thêm món ăn kèm.\n\n2. **Giới thiệu topping**: Topping hiện tại chiếm 4% doanh thu, nhưng có thể tăng cường quảng bá các topping như trân châu đen và thạch phô mai. Nhân viên có thể gợi ý khách thêm topping khi họ gọi đồ uống.\n\n3. **Chương trình khách hàng thân thiết**: Tạo ra chương trình tích điểm hoặc ưu đãi cho khách hàng thường xuyên, khuyến khích họ quay lại và gọi thêm món.\n\n4. **Thời điểm phục vụ**: Tăng cường phục vụ vào giờ cao điểm (như 18h-21h) với các món ăn vặt dễ ăn, có thể thu hút khách gọi thêm.\n\nViệc tuần này: Quán có thể thử nghiệm các combo mới và theo dõi số lượng đơn hàng để xem hiệu quả. Cần xem lại doanh thu theo giờ để điều chỉnh thời điểm phục vụ cho phù hợp.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "B1"
+  ],
+  "loi_chinh": "Thiếu tập trung vào việc tăng lượng topping mỗi đơn."
+ },
+ {
+  "id": "D55",
+  "quan": "B",
+  "loai": "noi_tiep",
+  "q": "vậy có nên tắt GIAM15 ko",
+  "history": [
+   {
+    "q": "tháng này khuyến mãi tốn bao nhiêu",
+    "a": "Tháng này giảm giá 13,75 triệu = 9% giá trị trước giảm, 985/2.574 đơn có giảm; GIAM15 dùng 610 lần, HSSV10 375 lần."
+   }
+  ],
+  "facts": null,
+  "modules": null,
+  "van_de": [
+   "B3"
+  ],
+  "y_chinh": "Dựa đúng số đã nói ở lượt trước (giảm 13,75 triệu = 9%, GIAM15 610 lần): không tắt đột ngột, thu hẹp (10%, chỉ giờ vắng / ngày thường, tối đa thấp hơn) rồi so số đơn 2 tuần.",
+  "can_tranh": "Bịa số mới ngoài lượt trước; bảo người hỏi tự xem báo cáo.",
+  "thieu_so": "Câu nói tiếp không có từ chủ đề khuyến mãi nên app (theo boomModuleTopics) không gửi lại số khuyến mãi — Boom chỉ còn số trong lượt trước.",
+  "answer": "Dạ Anh/Chị, nên tắt mã giảm giá GIAM15 nếu doanh thu từ mã này không đủ bù đắp cho chi phí giảm giá. \n\nVì hiện tại, mã GIAM15 đã được sử dụng 610 lần, nếu doanh thu từ những đơn này không cao hơn 13,75 triệu (chi phí khuyến mãi tháng này), thì việc tắt mã sẽ giúp quán tiết kiệm chi phí. \n\nViệc tuần này: Theo dõi doanh thu từ mã GIAM15 trong 1–2 tuần tới, nếu doanh thu giảm quá 10% so với tháng trước thì nên xem xét tắt mã này. \n\nCần xem lại: Doanh thu cụ thể từ mã GIAM15 để có quyết định chính xác hơn.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 8,
+  "van_de_tim_ra": [
+   "B3"
+  ],
+  "loi_chinh": "Không đưa ra phương án cụ thể để thử nghiệm thay đổi mã giảm giá."
+ },
+ {
+  "id": "D56",
+  "quan": "B",
+  "loai": "noi_tiep",
+  "q": "chi tiết hơn",
+  "history": [
+   {
+    "q": "đánh giá nhóm ăn vặt giúp em",
+    "a": "Ăn vặt 11 triệu = 7,2% doanh thu; khoai tây chiên 221 phần, bánh tráng trộn 196; có 4 món chưa bán phần nào."
+   }
+  ],
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "B4"
+  ],
+  "y_chinh": "Đi sâu nhóm ăn vặt: Khoai tây chiên 221, Bánh tráng trộn 196, Xúc xích chiên 60, Cá viên chiên 26; 4 món chưa bán → bỏ / ẩn; ghép khoai tây chiên với trà sữa buổi tối.",
+  "can_tranh": "Chuyển sang nhóm trà sữa; bịa số không có trong khối số liệu.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, về nhóm ăn vặt, hiện tại doanh thu đạt 10.995.000đ, chiếm 7% tổng doanh thu. Trong nhóm này, món bán chạy nhất là khoai tây chiên với 221 phần, mang lại 5.525.000đ, tiếp theo là bánh tráng trộn với 196 phần, doanh thu 3.920.000đ. Tuy nhiên, có 4 món chưa bán phần nào: phô mai que, nem chua rán, gà lắc phô mai và một món khác.\n\nVì sao nhóm ăn vặt có doanh thu thấp? Có thể do ít khách biết đến hoặc chưa được quảng bá tốt. Anh/Chị có thể xem xét tăng cường quảng cáo cho các món ăn vặt này hoặc thử nghiệm các combo hấp dẫn để thu hút khách hơn. \n\nViệc tuần này có thể là: \n1. Đẩy mạnh quảng cáo cho khoai tây chiên và bánh tráng trộn.\n2. Tạo combo ăn vặt với giá ưu đãi.\n3. Khảo sát ý kiến khách hàng về món ăn vặt để cải thiện.\n\nCần xem lại: Tình hình bán hàng của các món chưa bán phần nào để quyết định có nên giữ lại hay không.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "B4"
+  ],
+  "loi_chinh": "Thiếu kết luận rõ ràng về việc bỏ món ăn vặt không bán được."
+ },
+ {
+  "id": "D57",
+  "quan": "C",
+  "loai": "noi_tiep",
+  "q": "sao vậy",
+  "history": [
+   {
+    "q": "ca toi ban sao",
+    "a": "Ca tối 16–20h khoảng 21,9 triệu = 16,5% doanh thu tháng, bằng chừng một giờ trưa 12h."
+   }
+  ],
+  "facts": "thang_nay",
+  "modules": null,
+  "van_de": [
+   "C3"
+  ],
+  "y_chinh": "Số liệu không cho biết lý do; chỉ thấy khách chủ yếu sáng / trưa, tối bán chạy Bún thịt nướng, Cơm sườn → hỏi chủ quán về khách quanh khu buổi tối (công trình tan ca?), thử menu tối gọn.",
+  "can_tranh": "Khẳng định nguyên nhân như sự thật; bịa số không có trong khối số liệu.",
+  "thieu_so": "Số đơn ca tối các tháng trước.",
+  "answer": "Dạ Anh/Chị, doanh thu ca tối chỉ đạt khoảng 21,9 triệu đồng, chiếm 16,5% doanh thu tháng. Điều này có thể do lượng khách trong ca tối không cao như mong đợi, đặc biệt là vào các giờ vắng như 16h, 17h, 19h. \n\nVì sao: Doanh thu ca tối thường phụ thuộc vào số lượng khách đến quán, và nếu không có nhiều khách trong khung giờ này, doanh thu sẽ bị ảnh hưởng. \n\nViệc tuần này: Anh/Chị có thể xem xét tăng cường quảng cáo cho ca tối, hoặc thử nghiệm các món mới hấp dẫn hơn để thu hút khách. \n\nCần xem lại: Anh/Chị nên xem lại số liệu doanh thu theo giờ để xác định khung giờ nào cần cải thiện thêm.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "tong": 12,
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Thiếu gợi ý cụ thể và khả thi cho quán nhỏ."
+ },
+ {
+  "id": "D58",
+  "quan": "C",
+  "loai": "noi_tiep",
+  "q": "lam gi cho tang",
+  "history": [
+   {
+    "q": "tuần này bán sao",
+    "a": "Tuần này 12,3 triệu, giảm 21,5% so cùng kỳ tuần trước, chủ yếu do giá trị mỗi đơn giảm 11,9%."
+   }
+  ],
+  "facts": "tuan_nay",
+  "modules": null,
+  "van_de": [
+   "C7",
+   "C1"
+  ],
+  "y_chinh": "Tiếp chủ đề giá trị đơn giảm: mời món thêm (trứng ốp la, chả, thịt thêm) và nước sâm / chanh kèm mỗi phần; đo giá trị mỗi đơn từ 48.500đ về lại ~55.000đ.",
+  "can_tranh": "Chỉ nói kéo thêm khách; giảm giá; nói Thứ 5–CN quán nghỉ.",
+  "thieu_so": null,
+  "answer": "Dạ Anh/Chị, để tăng doanh thu, Bé Boom gợi ý một số việc như sau:\n\n1. **Đẩy mạnh món bán chạy**: Tăng cường quảng bá cho các món như Cơm sườn, Bún bò Huế và Trà đá, vì đây là những món đang bán tốt. Có thể tạo combo hoặc khuyến mãi cho các món này.\n\n2. **Khuyến mãi vào giờ vắng**: Tổ chức khuyến mãi trong khung giờ vắng (như 16h, 19h) để thu hút khách hàng. Ví dụ, giảm giá cho món ăn hoặc tặng kèm đồ uống.\n\n3. **Tăng cường quảng cáo**: Sử dụng mạng xã hội để quảng bá các món mới hoặc món đang bán chạy, kèm theo hình ảnh hấp dẫn để thu hút khách hàng.\n\nViệc tuần này: Theo dõi số đơn và doanh thu sau khi thực hiện các biện pháp trên để đánh giá hiệu quả.\n\nCần xem lại: Doanh thu theo giờ để xác định khung giờ nào cần tập trung khuyến mãi nhiều hơn.",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 9,
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Không tập trung vào việc tăng giá trị mỗi đơn."
+ },
+ {
+  "id": "D59",
+  "quan": "C",
+  "loai": "noi_tiep",
+  "q": "khoản chi nguyên liệu tháng này chi tiết hơn đi",
+  "history": [
+   {
+    "q": "tháng này chi gì nhiều nhất",
+    "a": "Nguyên liệu 58 triệu (60,5% tổng chi), tăng 28% so kỳ trước; lương 22 triệu, mặt bằng 10 triệu."
+   }
+  ],
+  "facts": null,
+  "modules": "thang_nay",
+  "muc": [
+   "finance"
+  ],
+  "van_de": [
+   "C5"
+  ],
+  "y_chinh": "Nguyên liệu 58.000.000đ = 60,5% tổng chi, tăng 12,7 triệu (+28%) so kỳ trước; khối chỉ có tổng, không tách thịt / rau → đối chiếu từng phiếu nhập, giá sườn, hao hụt.",
+  "can_tranh": "Bịa phần thịt / rau; gọi thu − chi là lãi.",
+  "thieu_so": "Chi nguyên liệu tách theo loại / nhà cung cấp (kho) cùng lúc với thu chi.",
+  "answer": "Dạ Anh/Chị, khoản chi nguyên liệu tháng này là 58 triệu đồng, chiếm 60,5% tổng chi. Trong đó, các khoản chi chi tiết như sau:\n\n- Thịt: ước tính khoảng 25 triệu đồng\n- Rau: ước tính khoảng 15 triệu đồng\n- Bún: ước tính khoảng 10 triệu đồng\n- Gạo: ước tính khoảng 8 triệu đồng\n\nKhoản chi nguyên liệu này đã tăng 28% so với kỳ trước (45,3 triệu đồng). Nếu cần thêm thông tin cụ thể hơn về từng loại nguyên liệu, Anh/Chị có thể kiểm tra trong báo cáo chi tiết trong app nhé!",
+  "diem": {
+   "thang": 0,
+   "dung_so": 0,
+   "tim_van_de": 2,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 0,
+   "gon": 1
+  },
+  "tong": 5,
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Bịa số chi tiết cho từng loại nguyên liệu."
+ },
+ {
+  "id": "D60",
+  "quan": "C",
+  "loai": "noi_tiep",
+  "q": "vậy tăng giá có sợ mất khách ko",
+  "history": [
+   {
+    "q": "cơm sườn giá vốn cao quá",
+    "a": "Cơm sườn giá vốn 19.200đ = 48% giá 40.000đ, bán 760 phần — cao so mức thường 30–40%."
+   }
+  ],
+  "facts": null,
+  "modules": null,
+  "van_de": [
+   "C4"
+  ],
+  "y_chinh": "Dựa số lượt trước: tăng 3.000–5.000đ kèm thêm giá trị (thêm sườn / canh), báo trước khách quen, theo dõi số phần 2 tuần; món đang bán chạy nên tăng nhẹ.",
+  "can_tranh": "Bịa số khách sẽ mất; khuyên giảm giá; bảo tự xem báo cáo.",
+  "thieu_so": "Độ nhạy giá của khách — app không có.",
+  "answer": "Dạ Anh/Chị, tăng giá có thể ảnh hưởng đến lượng khách, nhưng nếu giá vẫn hợp lý so với chất lượng và giá trị món ăn, thì không nhất thiết phải lo lắng quá. \n\nVì sao: Cơm sườn giá vốn cao, nếu tăng giá lên khoảng 45.000đ, vẫn có thể giữ được khách nếu quán có chất lượng phục vụ tốt và món ăn ngon. \n\nViệc tuần này: Anh/Chị có thể thử đo phản hồi của khách sau khi tăng giá, xem có khách nào phản hồi tiêu cực hay không. Cần theo dõi số đơn hàng trong tuần sau để đánh giá tác động của việc tăng giá. \n\nCần xem lại: Anh/Chị nên xem lại số lượng khách hàng trong tháng trước để có cái nhìn rõ hơn về xu hướng tiêu dùng.",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "tong": 11,
+  "van_de_tim_ra": [
+   "C4"
+  ],
+  "loi_chinh": "Thiếu hướng dẫn cụ thể về cách tăng giá và theo dõi phản hồi."
+ }
+]

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/utils/quantity_formatter.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/providers/app_providers.dart';
@@ -37,7 +38,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     'Món chính', 'Khai vị', 'Tráng miệng',
     'Đồ uống', 'Súp & Cháo', 'Khác',
   ];
-  static const _servingUnits = ['phần', 'tô', 'đĩa', 'ly', 'kg', 'lít'];
+  static const _servingUnits = ['phần', 'tô', 'đĩa', 'ly', 'g', 'kg', 'ml', 'lít'];
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       _descCtrl.text       = e.description ?? '';
       _category            = e.category;
       _servingUnit         = e.servingUnit;
-      _servingSizeCtrl.text = e.servingSize.toStringAsFixed(0);
+      _servingSizeCtrl.text = fmtQty(e.servingSize);
       _linkedPosId         = e.posProductId;
       for (final i in e.ingredients) {
         _lines.add(_IngLine(
@@ -58,6 +59,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
           unit:           i.unit,
           note:           i.note,
           costLatest:     i.ingredientCostLatest ?? 0,
+          productUnit:    i.productUnit,
+          convRate:       i.conversionRate,
+          convUnit:       i.conversionUnit,
           wastePct:       i.wastePct,  // load tỷ lệ hao phí từ DB
         ));
       }
@@ -92,7 +96,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(isEdit ? 'Sửa công thức' : 'Tạo công thức',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         actions: [
           if (_nameCtrl.text.isNotEmpty && _lines.isNotEmpty)
@@ -100,7 +104,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: TextButton(
                 onPressed: _loading ? null : _submit,
-                child: Text('LƯU', style: GoogleFonts.outfit(
+                child: Text('LƯU', style: GoogleFonts.plusJakartaSans(
                     color: Colors.white, fontWeight: FontWeight.w800)),
               ),
             ),
@@ -117,7 +121,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
               _buildCard(Column(children: [
                 TextField(
                   controller: _nameCtrl,
-                  style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: KhoTheme.ink),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: KhoTheme.ink),
                   onChanged: (_) => setState(() {}),
                   decoration: KhoTheme.inputDecoration(hint: 'Tên món *'),
                 ),
@@ -125,7 +129,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                 TextField(
                   controller: _descCtrl,
                   maxLines: 2,
-                  style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                   decoration: KhoTheme.inputDecoration(hint: 'Mô tả (tuỳ chọn)'),
                 ),
                 const SizedBox(height: 10),
@@ -134,12 +138,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _category,
-                      hint: Text('Danh mục', style: GoogleFonts.outfit(
+                      hint: Text('Danh mục', style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, color: KhoTheme.muted)),
                       decoration: KhoTheme.inputDecoration(hint: ''),
                       items: _categories.map((c) => DropdownMenuItem(
                           value: c,
-                          child: Text(c, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                          child: Text(c, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                       onChanged: (v) => setState(() => _category = v),
                     ),
                   ),
@@ -149,7 +153,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     child: TextField(
                       controller: _servingSizeCtrl,
                       keyboardType: TextInputType.number,
-                      style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                       decoration: KhoTheme.inputDecoration(hint: '1'),
                     ),
                   ),
@@ -159,7 +163,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     underline: const SizedBox(),
                     items: _servingUnits.map((u) => DropdownMenuItem(
                         value: u,
-                        child: Text(u, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                        child: Text(u, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                     onChanged: (v) => setState(() => _servingUnit = v!),
                   ),
                 ]),
@@ -179,12 +183,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Chọn sản phẩm bán hàng tương ứng:',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, color: KhoTheme.muted)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _linkedPosId,
-                      hint: Text('— Không gắn —', style: GoogleFonts.outfit(
+                      hint: Text('— Không gắn —', style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, color: KhoTheme.muted)),
                       decoration: KhoTheme.inputDecoration(hint: ''),
                       isExpanded: true,
@@ -192,12 +196,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                         DropdownMenuItem<String>(
                             value: null,
                             child: Text('— Không gắn —',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13, color: KhoTheme.muted))),
                         ...products.map((p) => DropdownMenuItem(
                             value: p.id,
                             child: Text(p.name,
-                                style: GoogleFonts.outfit(fontSize: 13)))),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 13)))),
                       ],
                       onChanged: (v) => setState(() {
                         _linkedPosId   = v;
@@ -217,11 +221,46 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                               ?? products.where((p) => p.id == _linkedPosId).firstOrNull?.name
                               ?? _linkedPosId ?? '';
                           return Text('Khi bán "$displayName" → tự động trừ kho',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5, color: KhoTheme.green,
                                   fontWeight: FontWeight.w600));
                         }),
                       ]),
+                      // Bán thành phẩm / nguyên liệu: Lệnh sản xuất sẽ CỘNG thành phẩm vào kho
+                      Builder(builder: (_) {
+                        final dynamic p = products
+                            .cast<dynamic>()
+                            .firstWhere((x) => (x.id as String?) == _linkedPosId,
+                                orElse: () => null);
+                        final type = (p?.productType as String?) ?? '';
+                        if (p == null || (type != 'semi_finished' && type != 'ingredient')) {
+                          return const SizedBox.shrink();
+                        }
+                        final unit = (p.unit as String?) ?? '';
+                        final size = double.tryParse(_servingSizeCtrl.text) ?? 1;
+                        final warn = recipeUnitWarning(
+                          recipeUnit: _servingUnit,
+                          productUnit: unit,
+                          conversionRate: (p.conversionRate as double?) ?? 0,
+                          conversionUnit: (p.conversionUnit as String?) ?? '',
+                        );
+                        final out = convertRecipeIngredientQty(
+                          size, _servingUnit, unit,
+                          conversionRate: (p.conversionRate as double?) ?? 0,
+                          conversionUnit: (p.conversionUnit as String?) ?? '',
+                        );
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            warn != null
+                                ? 'Mỗi mẻ ra ${fmtQty(size)} $_servingUnit nhưng kho "${p.name}" tính bằng "$unit" — $warn'
+                                : 'Hoàn thành lệnh sản xuất 1 mẻ → nhập ${fmtQty(out)} $unit "${p.name}" vào kho.',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5, height: 1.3,
+                                color: warn != null ? KhoTheme.amber : KhoTheme.green,
+                                fontWeight: FontWeight.w600)),
+                        );
+                      }),
                     ],
                   ],
                 ),
@@ -271,7 +310,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   Widget _buildSection(String label, IconData icon) => Row(children: [
     Icon(icon, size: 15, color: KhoTheme.violet),
     const SizedBox(width: 6),
-    Text(label, style: GoogleFonts.outfit(
+    Text(label, style: GoogleFonts.plusJakartaSans(
         fontSize: 13.5, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
   ]);
 
@@ -299,7 +338,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.add_circle_rounded, color: KhoTheme.violet, size: 18),
         const SizedBox(width: 8),
-        Text('Thêm nguyên liệu', style: GoogleFonts.outfit(
+        Text('Thêm nguyên liệu', style: GoogleFonts.plusJakartaSans(
             fontSize: 14, fontWeight: FontWeight.w700, color: KhoTheme.violet)),
       ]),
     ),
@@ -318,9 +357,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       Column(crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Giá vốn/phần', style: GoogleFonts.outfit(
+            Text('Giá vốn/phần', style: GoogleFonts.plusJakartaSans(
                 fontSize: 11, color: KhoTheme.muted, fontWeight: FontWeight.w600)),
-            Text(fmtMoney(_totalCost), style: GoogleFonts.outfit(
+            Text(fmtMoney(_totalCost), style: GoogleFonts.plusJakartaSans(
                 fontSize: 22, fontWeight: FontWeight.w900, color: KhoTheme.navy)),
           ]),
       const SizedBox(width: 16),
@@ -343,7 +382,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2.5))
                 : Text(widget.existing != null ? 'Cập nhật công thức' : 'Lưu công thức',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 15, fontWeight: FontWeight.w800)),
           ),
         ),
@@ -365,6 +404,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         yieldFactor:      l.yieldFactor,
         ingredientName:   l.ingredientName,
         ingredientCostLatest: l.costLatest,
+        productUnit:      l.productUnit,
+        conversionRate:   l.convRate,
+        conversionUnit:   l.convUnit,
       )).toList();
 
       if (widget.existing != null) {
@@ -423,7 +465,10 @@ class _IngLine {
   double  quantity;
   String  unit;
   String? note;
-  double  costLatest;
+  double  costLatest;      // giá vốn theo ĐƠN VỊ KHO
+  String  productUnit;     // đơn vị kho
+  double  convRate;        // quy cách: 1 [productUnit] = convRate [convUnit]
+  String  convUnit;
   double  wastePct;   // 0–99: % hao phí (VD: 20 = 20% hao phí, yield 80%)
   final TextEditingController qtyCtrl;
   final TextEditingController noteCtrl;
@@ -436,6 +481,9 @@ class _IngLine {
     this.unit           = 'gram',
     this.note,
     this.costLatest     = 0,
+    this.productUnit    = '',
+    this.convRate       = 0,
+    this.convUnit       = '',
     this.wastePct       = 0,
   })  : qtyCtrl  = TextEditingController(
             text: quantity == quantity.truncateToDouble()
@@ -451,10 +499,14 @@ class _IngLine {
   /// Chi phí đã tính hao phí để hiển thị realtime
   double get lineCostDisplay {
     final actualQty = yieldFactor > 0 ? quantity / yieldFactor : quantity;
-    double normalizedQty = actualQty;
-    if (unit == 'kg')  normalizedQty = actualQty * 1000;
-    if (unit == 'lít') normalizedQty = actualQty * 1000;
-    return costLatest * normalizedQty;
+    return recipeUnitCost(
+          costPerStockUnit: costLatest,
+          recipeUnit: unit,
+          productUnit: productUnit.isEmpty ? unit : productUnit,
+          conversionRate: convRate,
+          conversionUnit: convUnit,
+        ) *
+        actualQty;
   }
 
   void dispose() {
@@ -486,7 +538,9 @@ class _IngLineCard extends StatefulWidget {
 }
 
 class _IngLineCardState extends State<_IngLineCard> {
-  static const _units = ['gram', 'kg', 'ml', 'lít', 'chiếc', 'cái', 'muỗng', 'chén'];
+  static const _units = [
+    'gram', 'kg', 'ml', 'lít', 'hộp', 'lon', 'chai', 'gói', 'chiếc', 'cái', 'muỗng', 'chén', 'phần', 'ly'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -523,7 +577,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                         child: DropdownButtonFormField<String>(
                           value: line.ingredientId,
                           hint: Text('Chọn nguyên liệu...',
-                              style: GoogleFonts.outfit(fontSize: 13, color: KhoTheme.muted)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: KhoTheme.muted)),
                           decoration: KhoTheme.inputDecoration(hint: '').copyWith(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
@@ -532,17 +586,27 @@ class _IngLineCardState extends State<_IngLineCard> {
                           ),
                           isExpanded: true,
                           items: widget.allStock
-                              .where((p) {
-                                final type = (p.productType as String?);
+                              .map((p) {
+                                final name = (p.name as String?) ?? '';
+                                final unit = (p.unit as String?) ?? '';
+                                final cat = (p.category as String?) ?? '';
+                                final type = (p.productType as String?) ?? '';
                                 final isIng = type == 'ingredient' || type == 'semi_finished';
-                                final isSelected = (p.id as String?) == line.ingredientId;
-                                return isIng || isSelected;
-                              })
-                              .map((p) => DropdownMenuItem(
-                                value: p.id as String,
-                                child: Text(p.name as String,
-                                    style: GoogleFonts.outfit(fontSize: 13)),
-                              )).toList(),
+                                final badge = isIng ? ' [NL]' : (cat.isNotEmpty ? ' [$cat]' : '');
+                                final unitLabel = unit.isNotEmpty ? ' ($unit)' : '';
+                                return DropdownMenuItem(
+                                  value: p.id as String,
+                                  child: Text(
+                                    '$name$unitLabel$badge',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: isIng ? FontWeight.w600 : FontWeight.w400,
+                                      color: KhoTheme.ink,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
                           onChanged: (v) {
                             setState(() {
                               final dynamic prod = widget.allStock
@@ -551,12 +615,23 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       orElse: () => null);
                               line.ingredientId   = v;
                               line.ingredientName = (prod?.name as String?) ?? '';
-                              line.unit           = (prod?.unit as String?) ?? 'gram';
-                              double rawCost = (prod?.costPrice as double?) ?? 0;
-                              final prodUnit = (prod?.unit as String?) ?? '';
-                              if (prodUnit == 'kg')  rawCost /= 1000;
-                              if (prodUnit == 'lít') rawCost /= 1000;
-                              line.costLatest = rawCost;
+                              final prodUnit      = (prod?.unit as String?) ?? 'gram';
+                              final convRate      = (prod?.conversionRate as double?) ?? 0;
+                              final convUnit      = (prod?.conversionUnit as String?) ?? '';
+
+                              if (convRate > 0 && convUnit.isNotEmpty) {
+                                line.unit = convUnit;
+                              } else {
+                                line.unit = _units.contains(prodUnit) ? prodUnit : 'gram';
+                              }
+
+                              line.productUnit = prodUnit;
+                              line.convRate    = convRate;
+                              line.convUnit    = convUnit;
+                              line.costLatest  = effectiveUnitCost(
+                                (prod?.costPriceLatest as double?) ?? 0,
+                                (prod?.costPrice as double?) ?? 0,
+                              );
                             });
                             widget.onChanged();
                           },
@@ -585,7 +660,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                         child: TextField(
                           controller: line.qtyCtrl,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 14, fontWeight: FontWeight.w700, color: KhoTheme.ink),
                           onChanged: (v) {
                             line.quantity = double.tryParse(v) ?? 1;
@@ -595,7 +670,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
                             labelText: 'Số lượng',
-                            labelStyle: GoogleFonts.outfit(
+                            labelStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 11, color: KhoTheme.muted),
                           ),
                         ),
@@ -609,12 +684,12 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
                             labelText: 'Đơn vị',
-                            labelStyle: GoogleFonts.outfit(
+                            labelStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 11, color: KhoTheme.muted),
                           ),
                           items: _units.map((u) => DropdownMenuItem(
                               value: u,
-                              child: Text(u, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                              child: Text(u, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                           onChanged: (v) {
                             setState(() => line.unit = v!);
                             widget.onChanged();
@@ -630,12 +705,53 @@ class _IngLineCardState extends State<_IngLineCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text('= ${fmtMoney(subtotal)}',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12, fontWeight: FontWeight.w800,
                                   color: KhoTheme.green)),
                         ),
                       ],
                     ]),
+
+                    // Cảnh báo đơn vị không khớp đơn vị kho (tránh trừ kho sai)
+                    Builder(builder: (_) {
+                      final dynamic prod = widget.allStock
+                          .cast<dynamic>()
+                          .firstWhere((p) => (p.id as String?) == line.ingredientId,
+                              orElse: () => null);
+                      if (prod == null) return const SizedBox.shrink();
+                      final msg = recipeUnitWarning(
+                        recipeUnit: line.unit,
+                        productUnit: (prod.unit as String?) ?? '',
+                        conversionRate: (prod.conversionRate as double?) ?? 0,
+                        conversionUnit: (prod.conversionUnit as String?) ?? '',
+                      );
+                      if (msg == null) return const SizedBox.shrink();
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: KhoTheme.amber.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: KhoTheme.amber.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                size: 16, color: KhoTheme.amber),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(msg,
+                                  style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w600,
+                                      color: KhoTheme.ink)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
 
                     // Row 3: % Hao phí
                     const SizedBox(height: 8),
@@ -644,7 +760,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                           size: 14, color: KhoTheme.amber),
                       const SizedBox(width: 6),
                       Text('Hao phí sơ chế:',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5, color: KhoTheme.ink,
                               fontWeight: FontWeight.w700)),
                       const SizedBox(width: 4),
@@ -685,7 +801,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text('Hao phí sơ chế là gì?',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w800,
                                               color: KhoTheme.navy)),
@@ -696,7 +812,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                   Text(
                                     'Khi chế biến, nguyên liệu bị hao hụt do rửa, lặt, '
                                     'cắt gọt, xương... Phần bị mất đi gọi là hao phí sơ chế.',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13.5, color: KhoTheme.ink,
                                         height: 1.5),
                                   ),
@@ -714,7 +830,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('📦 Ví dụ thực tế:',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w800,
                                                 color: KhoTheme.amber)),
@@ -726,7 +842,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           '• Công thức cần 200g rau/tô\n'
                                           '• Nhập hao phí 20%\n'
                                           '• Hệ thống trừ kho: 200 ÷ 0.8 = 250g/tô ✓',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.ink,
                                               height: 1.6),
@@ -748,7 +864,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('📊 Tỷ lệ gợi ý theo nguyên liệu:',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w800,
                                                 color: const Color(0xFF2563EB))),
@@ -782,7 +898,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           'Đây là định lượng chuẩn của ngành F&B. '
                                           'Chi phí hao phí sơ chế được tính vào giá vốn '
                                           'và khách hàng sẽ gánh chịu phần này thông qua giá bán menu.',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.ink,
                                               fontWeight: FontWeight.w500,
@@ -804,7 +920,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           'Bảng trên chỉ để tham khảo. Nên tự cân đo '
                                           'thực tế sau khi sơ chế nguyên liệu tại bếp '
                                           'để ra tỷ lệ % chính xác cho quán mình.',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.amber,
                                               fontWeight: FontWeight.w600,
@@ -829,7 +945,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                         padding: const EdgeInsets.symmetric(vertical: 12),
                                       ),
                                       child: Text('Đã hiểu',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700)),
                                     ),
@@ -860,7 +976,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                           controller: line.wasteCtrl,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 13, fontWeight: FontWeight.w800,
                               color: hasWaste ? KhoTheme.amber : KhoTheme.ink),
                           // FIX: tap vào → select all → gõ số mới ngay, không cần xóa số 0
@@ -878,7 +994,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 6),
                             suffixText: '%',
-                            suffixStyle: GoogleFonts.outfit(
+                            suffixStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12, color: KhoTheme.muted),
                           ),
                         ),
@@ -894,14 +1010,14 @@ class _IngLineCardState extends State<_IngLineCard> {
                               ),
                               child: Text(
                                 'Lấy ${(line.yieldFactor > 0 ? line.quantity / line.yieldFactor : line.quantity).toStringAsFixed(0)} ${line.unit} từ kho',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10.5, fontWeight: FontWeight.w700,
                                     color: KhoTheme.amber),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             )
                           : Text('(0% = không hao phí)',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11, color: KhoTheme.muted),
                               overflow: TextOverflow.ellipsis),
                       ),
@@ -938,7 +1054,7 @@ class _WasteRow extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(label,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         color: KhoTheme.ink,
                         fontWeight: FontWeight.w600)),
@@ -950,7 +1066,7 @@ class _WasteRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(pct,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF2563EB))),
@@ -963,7 +1079,7 @@ class _WasteRow extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 13, top: 2),
                 child: Text(
                   '↳ $note',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.5,
                       color: KhoTheme.muted,
                       fontWeight: FontWeight.w400,
@@ -976,4 +1092,3 @@ class _WasteRow extends StatelessWidget {
     );
   }
 }
-

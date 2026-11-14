@@ -1,0 +1,546 @@
+[
+ {
+  "id": "C01#0",
+  "loi": []
+ },
+ {
+  "id": "C01#1",
+  "loi": []
+ },
+ {
+  "id": "C02#0",
+  "loi": []
+ },
+ {
+  "id": "C02#1",
+  "loi": []
+ },
+ {
+  "id": "C03#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Top 3 bỏ Trà đá mà không nói đang xếp theo doanh thu; 'bán chạy' mặc định hiểu theo số phần.",
+    "bang_chung": "K3: 'Món bán chạy: Trà đá (900 phần, 2.700.000đ); Bún bò Huế (820...)'. Trả lời: Bún bò 820, Cơm sườn 760, Bún thịt nướng 520; không nêu tiêu chí."
+   }
+  ]
+ },
+ {
+  "id": "C03#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Xếp top 3 theo số phần nhưng bỏ món nhiều phần nhất là Trà đá; đúng phải là Trà đá, Bún bò Huế, Cơm sườn.",
+    "bang_chung": "K3: Trà đá 900 phần > Bún bò 820 > Cơm sườn 760 > Bún thịt nướng 520. Trả lời chỉ nêu số phần: 820, 760, 520."
+   }
+  ]
+ },
+ {
+  "id": "C04#0",
+  "loi": [
+   {
+    "loai": "tinh_nang",
+    "muc": "nang",
+    "mo_ta": "Chỉ vào Báo cáo để tìm số đơn theo kênh bán, nhưng app không có báo cáo này.",
+    "bang_chung": "lib/screens/report_screen.dart có các tab Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn; chỉ chia theo phương thức thanh toán và thu ngân. Tìm 'kênh bán' trong lib không thấy; GrabFood/ShopeeFood chỉ có trong module ops (danh sách việc)."
+   }
+  ]
+ },
+ {
+  "id": "C04#1",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Mở đầu bằng 420 đơn dùng mã GIAOHANG10 như con số thay thế cho đơn qua sàn, dễ hiểu nhầm mã này đại diện cho đơn sàn.",
+    "bang_chung": "K4: mã GIAOHANG10 420/2600 đơn; khối không nói mã này gắn với ShopeeFood/GrabFood."
+   }
+  ]
+ },
+ {
+  "id": "C05#0",
+  "loi": []
+ },
+ {
+  "id": "C05#1",
+  "loi": []
+ },
+ {
+  "id": "C06#0",
+  "loi": []
+ },
+ {
+  "id": "C06#1",
+  "loi": []
+ },
+ {
+  "id": "C07#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Nói 17–20h chưa có doanh thu riêng từng giờ, trong khi khối có đủ. Câu hỏi đúng về ca này nên chủ quán bị thiếu số quyết định giờ nào nên rút.",
+    "bang_chung": "K7: 16h 3.125.000đ; 17h 6.249.000đ; 18h 7.812.000đ; 19h 4.687.000đ. Trả lời: '17–20h chưa có số doanh thu riêng từng giờ'."
+   },
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Đề xuất ưu đãi 14–17h trong khi quán đóng 14–16h; thực chất chỉ thử được 1 giờ 16–17h.",
+    "bang_chung": "Hồ sơ: mở 6h–14h và 16h–20h. K7: 'giờ giữa các khung quán KHÔNG bán'. Mốc 112.000đ/ngày = 3.125.000đ/28 là riêng giờ 16h."
+   }
+  ]
+ },
+ {
+  "id": "C07#1",
+  "loi": [
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Đề xuất và đo khung 14–17h trong khi quán đóng 14–16h.",
+    "bang_chung": "Hồ sơ: mở 6h–14h và 16h–20h. Mốc 112.000đ/ngày = 3.125.000đ/28 là riêng giờ 16h."
+   }
+  ]
+ },
+ {
+  "id": "C08#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc. Thử tắt mã 1–2 tuần rồi so với 2.600 đơn cả kỳ sẽ thấy đơn 'giảm rõ' dù khách không bỏ, dẫn tới bật lại mã tốn 6.300.000đ/kỳ.",
+    "bang_chung": "Trả lời: 'Thử tắt GIAOHANG10 trong 1–2 tuần; so số đơn... với mức hiện tại 2.600 đơn... Nếu đơn giảm rõ, cân nhắc bật lại'. K8: 2600 đơn là của 1–28/10."
+   },
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "Gán nhầm: 3.450.000đ là thu tăng, không phải doanh thu bán hàng tăng.",
+    "bang_chung": "K8: 'thu tăng 3.450.000đ'; doanh thu 118.000.000đ − 114.452.000đ = 3.548.000đ."
+   }
+  ]
+ },
+ {
+  "id": "C08#1",
+  "loi": []
+ },
+ {
+  "id": "C09#0",
+  "loi": [
+   {
+    "loai": "nguy_hai",
+    "muc": "nang",
+    "mo_ta": "Chủ quán nói sáng làm không kịp, vẫn khuyên giảm giá đúng khung 5–11h: kéo thêm khách vào giờ quá tải và bớt tiền trên đơn vốn đã có; hai món chưa có giá vốn và câu này không cảnh báo.",
+    "bang_chung": "Câu hỏi: 'sáng thì làm k kịp'. Trả lời: 'Sáng 5–11h, thử ưu đãi cho Cà phê sữa đá và Bánh mì thịt'. K9: hai món này thuộc nhóm chưa có giá vốn. Chú ý: gợi ý này có sẵn trong khối K9."
+   }
+  ]
+ },
+ {
+  "id": "C09#1",
+  "loi": [
+   {
+    "loai": "nguy_hai",
+    "muc": "nang",
+    "mo_ta": "Giảm giá đúng khung đang quá tải, trái với việc phải chồng ca 7–9h ngay trong cùng câu trả lời.",
+    "bang_chung": "Câu hỏi: 'sáng thì làm k kịp'. Trả lời: 'Sáng 5–11h, thử ưu đãi...' và 'Xếp người hỗ trợ chồng ca vào 7–9h'. Chú ý: gợi ý này có sẵn trong khối K9."
+   }
+  ]
+ },
+ {
+  "id": "C10#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "Ghi số topping 2 tuần, so với '442 phần trong kỳ này' (cả 28 ngày)."
+   }
+  ]
+ },
+ {
+  "id": "C10#1",
+  "loi": []
+ },
+ {
+  "id": "C11#0",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Việc 'Chỉnh mã SANGVUI' không nói chỉnh gì và không liên quan kéo khách chiều.",
+    "bang_chung": " 'Chỉnh mã SANGVUI: hiện giảm 10%... chưa có số cho biết mã kéo thêm khách nào' không có hành động cụ thể."
+   },
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So hai đơn vị khác nhau: trung bình một ngày với tổng cả kỳ.",
+    "bang_chung": "'280.000đ/ngày, thấp hơn nhiều so với buổi sáng 6–11h là 64.781.000đ trong kỳ'."
+   }
+  ]
+ },
+ {
+  "id": "C11#1",
+  "loi": []
+ },
+ {
+  "id": "C12#0",
+  "loi": [
+   {
+    "loai": "nguy_hai",
+    "muc": "nhe",
+    "mo_ta": "Quảng bá combo đang đắt hơn mua lẻ mà không báo chủ quán.",
+    "bang_chung": "K12: combo 52.000đ, 'mua lẻ 50.000đ → combo ĐẮT HƠN mua lẻ 2.000đ'. Lưu ý: bài ngắn theo yêu cầu."
+   }
+  ]
+ },
+ {
+  "id": "C12#1",
+  "loi": [
+   {
+    "loai": "nguy_hai",
+    "muc": "nang",
+    "mo_ta": "Bài đăng công khai in khoảng giá 45.000–48.000đ, là giá đề xuất nội bộ chứ không phải giá đang bán. Khách đến sẽ bị tính 52.000đ, đắt hơn cả giá lẻ in trong bài; không báo chủ quán phải đổi giá trước khi đăng.",
+    "bang_chung": "K12: giá thật 52.000đ; 'Combo tính sẵn... giá combo đề xuất... 45.000đ–48.000đ'. Bài: 'Giá mua lẻ 50.000đ, giá combo 45.000đ–48.000đ'."
+   }
+  ]
+ },
+ {
+  "id": "C13#0",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Chương trình cho học sinh nhưng khung thử 9–10h, 14h nhiều khả năng trùng giờ học, nên đo sai đối tượng (suy luận, khối không có lịch học).",
+    "bang_chung": "Câu hỏi: 'cho học sinh'. Trả lời: 'khung vắng 9–10h hoặc 14h'."
+   }
+  ]
+ },
+ {
+  "id": "C13#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "Gọi 5 món là 'trà sữa' nhưng trong đó có Trân châu đen (topping) và Trà vải (trà trái cây).",
+    "bang_chung": "K13: 'Món bán chạy CHƯA có giá vốn: Trà sữa trân châu đường đen, Trà sữa truyền thống, Trân châu đen, Trà sữa matcha, Trà vải'. Trả lời: '5 món trà sữa bán chạy'."
+   },
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Khung thử 9–11h, 14–16h nhiều khả năng trùng giờ học của học sinh (suy luận, khối không có lịch học).",
+    "bang_chung": "Câu hỏi: 'cho học sinh'. Trả lời: 'khung 9–11h hoặc 14–16h'."
+   }
+  ]
+ },
+ {
+  "id": "C14#0",
+  "loi": []
+ },
+ {
+  "id": "C14#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "Nói sai rằng cả hai món chưa có giá vốn; Trà đào cam sả đã có.",
+    "bang_chung": "K14: 'Trà đào cam sả (518 phần, giá 32.000đ... giá vốn 10.000đ = 31% giá bán)'. Trả lời: 'còn giá vốn hai món chưa có'."
+   },
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Bảo chạy ưu đãi 5–11h trong khi quán mở từ 9h.",
+    "bang_chung": "Hồ sơ: mở 9h–22h. Trả lời: 'thử ưu đãi 5–11h'."
+   },
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "Ghi topping mỗi ngày trong 2 tuần 'so với mức hiện tại 442 phần trong kỳ'."
+   }
+  ]
+ },
+ {
+  "id": "C15#0",
+  "loi": []
+ },
+ {
+  "id": "C15#1",
+  "loi": []
+ },
+ {
+  "id": "C16#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "Đo sau 1–2 tuần 'so với... 2.450 đơn' (cả 28 ngày)."
+   }
+  ]
+ },
+ {
+  "id": "C16#1",
+  "loi": []
+ },
+ {
+  "id": "C17#0",
+  "loi": []
+ },
+ {
+  "id": "C17#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Ví dụ giảm 5.000đ/phần Trà đá trong khi Trà đá chỉ bán 3.000đ, không thực hiện được; nếu làm phải bù tiền hoặc cho không.",
+    "bang_chung": "K17: 'Trà đá (842 phần, giá 3.000đ...)'. Trả lời: 'Thử ưu đãi Trà đá... giảm 5.000đ/phần'. Chú ý: khối K17 có sẵn ví dụ 'bớt 5.000đ / phần'."
+   },
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Khung 11–14h trong khi quán đóng từ 13h.",
+    "bang_chung": "Hồ sơ: mở 6h–13h. K17: 'Trưa (11–13h, quán nghỉ 13–17h)'."
+   },
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Tránh giảm giá cơm vì giá vốn 51–54%, nhưng đẩy mời Trứng ốp thêm cũng 53% mà không nói.",
+    "bang_chung": "K17: 'Trứng ốp thêm... giá vốn 3.200đ = 53% giá bán'. Mỗi phần vẫn còn 2.800đ nên không lỗ."
+   }
+  ]
+ },
+ {
+  "id": "C18#0",
+  "loi": [
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Dặn không ghi lời mời chuyển đơn trái điều khoản sàn, nhưng mẫu chính là lời mời gọi trực tiếp cho quán.",
+    "bang_chung": "Mẫu: 'Anh/Chị có thể gọi trực tiếp cho quán'. Cuối bài: 'không ghi lời mời nhằm né phí hoặc chuyển đơn trái điều khoản sàn'."
+   },
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Mẫu mời gọi điện nhưng không có chỗ điền số điện thoại.",
+    "bang_chung": "Mẫu kết thúc '[Tên quán] – [Địa chỉ]'."
+   },
+   {
+    "loai": "nguy_hai",
+    "muc": "nhe",
+    "mo_ta": "In mã giảm giá lên tờ rơi làm tăng chi phí mã; không chắc mã dùng được khi đặt trực tiếp.",
+    "bang_chung": "K18: GIAOHANG10 đã tốn 6.300.000đ, trung bình 15.000đ/lần; khối không nói kênh áp dụng."
+   }
+  ]
+ },
+ {
+  "id": "C18#1",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Mẫu mời gọi điện không có chỗ điền số; câu dặn 'Không đưa số điện thoại vào đây' lộ quy tắc viết của trợ lý.",
+    "bang_chung": "Hai mẫu không có ô liên hệ; câu 'Không đưa số điện thoại vào đây—Anh/Chị tự điền'."
+   }
+  ]
+ },
+ {
+  "id": "C19#0",
+  "loi": []
+ },
+ {
+  "id": "C19#1",
+  "loi": []
+ },
+ {
+  "id": "C20#0",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nang",
+    "mo_ta": "Hỏi Trà vải nhưng trả lời về Trà ổi hồng mà không nói đã đổi món. Trà vải bán 323 phần, gấp hơn 6 lần, chủ quán có thể hiểu sai và quyết định nhầm món.",
+    "bang_chung": "Câu hỏi: 'tra vai ban it qua bo dc ko'. K20: 'Trà vải (323 phần, giá 30.000đ, 9.690.000đ)'; 'Trà ổi hồng (51 phần...)'. Trả lời không nhắc Trà vải."
+   },
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "Đếm số bán 2 tuần rồi 'đối chiếu... 51 phần hiện tại' (cả 28 ngày) để quyết định ẩn món."
+   }
+  ]
+ },
+ {
+  "id": "C20#1",
+  "loi": []
+ },
+ {
+  "id": "C21#0",
+  "loi": []
+ },
+ {
+  "id": "C21#1",
+  "loi": []
+ },
+ {
+  "id": "C22#0",
+  "loi": []
+ },
+ {
+  "id": "C22#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Thử giá 2 tuần nhưng ngưỡng giữ giá tính từ 608 phần của cả 28 ngày. Hai tuần bình thường chỉ khoảng 304 phần, không thể đạt 547, nên chủ quán sẽ bỏ giá mới dù khách không giảm.",
+    "bang_chung": "K22: 608 phần trong 1–28/10. Trả lời: 'Trong 2 tuần... giữ giá nếu số phần giảm dưới 10% (tức còn trên khoảng 547 phần)'. 608/2 = 304; ngưỡng đúng khoảng 274."
+   }
+  ]
+ },
+ {
+  "id": "C23#0",
+  "loi": []
+ },
+ {
+  "id": "C23#1",
+  "loi": [
+   {
+    "loai": "mau_thuan",
+    "muc": "nhe",
+    "mo_ta": "Nói số liệu nghiêng về chưa nên mở, rồi lại nói chưa có số và chưa thể kết luận.",
+    "bang_chung": "Đầu: 'số liệu hiện nghiêng về chưa nên mở Chủ nhật ngay'. Cuối: 'chưa thể kết luận mở ngày đó có bù được chi phí hay không'."
+   }
+  ]
+ },
+ {
+  "id": "C24#0",
+  "loi": []
+ },
+ {
+  "id": "C24#1",
+  "loi": []
+ },
+ {
+  "id": "C25#0",
+  "loi": []
+ },
+ {
+  "id": "C25#1",
+  "loi": []
+ },
+ {
+  "id": "C26#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số đơn với mốc doanh thu: khác đơn vị và khác độ dài kỳ.",
+    "bang_chung": "'ghi số đơn theo ca... so với 5.835.000đ doanh thu tại hai giờ này trong kỳ'."
+   },
+   {
+    "loai": "nguy_hai",
+    "muc": "nhe",
+    "mo_ta": "Chủ quán hỏi cho nghỉ người, câu này không nhắc thời hạn báo trước và tiền lương phải trả theo hợp đồng; câu C26#1 có nhắc.",
+    "bang_chung": "Không có nội dung về hợp đồng; có 'Chỉ cân nhắc giảm giờ Ngọc hoặc Khoa'."
+   }
+  ]
+ },
+ {
+  "id": "C26#1",
+  "loi": []
+ },
+ {
+  "id": "C27#0",
+  "loi": [
+   {
+    "loai": "nguy_hai",
+    "muc": "nhe",
+    "mo_ta": "Khuyên chia thêm ca cho Tú trong khi Tú đã ở mức 48 giờ/tuần, sẽ vượt mốc.",
+    "bang_chung": "K27: 'Lan ~54 giờ...; Tú ~48 giờ; Hoà ~42 giờ'. Trả lời: 'chia thêm ca cho Tú hoặc Hoà'."
+   }
+  ]
+ },
+ {
+  "id": "C27#1",
+  "loi": []
+ },
+ {
+  "id": "C28#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số góp ý 7 ngày với mức bán cả kỳ 28 ngày.",
+    "bang_chung": "'Ghi riêng số ly bị khách góp ý... trong 7 ngày; đối chiếu với... 1.062 phần... 833 phần'."
+   }
+  ]
+ },
+ {
+  "id": "C28#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "'Trong 2 tuần... đối chiếu số phần trân châu đen với mốc kỳ này là 442 phần'."
+   }
+  ]
+ },
+ {
+  "id": "C29#0",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "'cuối tuần đối chiếu với mức hao hụt 26 kg trong kỳ này'."
+   }
+  ]
+ },
+ {
+  "id": "C29#1",
+  "loi": [
+   {
+    "loai": "so",
+    "muc": "nang",
+    "mo_ta": "Tự chế rằng bún tươi dưới mức tối thiểu và nhắc nhập đủ, trong khi kho không báo vậy và chủ quán đang than dư bún đổ bỏ. Làm theo có thể nhập dư thêm.",
+    "bang_chung": "K29: '2 mặt hàng ở / dưới mức tối thiểu... Gas còn 1 bình (tối thiểu 2); Gạo còn 8 kg (tối thiểu 20)'. Trả lời: 'bún tươi cũng đang dưới mức tồn tối thiểu nên nhớ nhập đủ'."
+   },
+   {
+    "loai": "so",
+    "muc": "nhe",
+    "mo_ta": "So số liệu của thời gian thử ngắn với mốc cả kỳ 28 ngày, nên kết quả thử luôn trông thấp hơn mốc.",
+    "bang_chung": "'Cuối tuần, đối chiếu tổng bún bỏ với mốc hao hụt kỳ này là 26 kg'."
+   }
+  ]
+ },
+ {
+  "id": "C30#0",
+  "loi": []
+ },
+ {
+  "id": "C30#1",
+  "loi": []
+ },
+ {
+  "id": "C31#0",
+  "loi": []
+ },
+ {
+  "id": "C31#1",
+  "loi": []
+ },
+ {
+  "id": "C32#0",
+  "loi": [
+   {
+    "loai": "lac_de",
+    "muc": "nhe",
+    "mo_ta": "Ngụ ý Bé Boom phụ được việc học của con; câu hỏi cần sự đồng cảm. Không chắc Boom có từ chối chủ đề này không, chưa thử.",
+    "bang_chung": "'hỏi con hôm nay học gì, cần Bé Boom phụ phần nào'."
+   }
+  ]
+ },
+ {
+  "id": "C32#1",
+  "loi": []
+ }
+]

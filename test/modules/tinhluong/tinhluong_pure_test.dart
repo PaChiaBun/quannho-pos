@@ -468,5 +468,92 @@ void main() {
       expect(resolvedBonus, 500000.0); // Giữ lại 500k thay vì lấy 100k
       expect(resolvedDeduction, 200000.0); // Giữ lại khoản khấu trừ
     });
+
+    test('calculatePayroll M4: absent days do not double-deduct from daily pay', () {
+      const input = PayrollInput(
+        userId: 'u-daily',
+        staffName: 'Daily Worker',
+        salaryMode: 'M4',
+        baseSalary: 0,
+        hourlyRate: 0,
+        dailyRate: 300000,
+        totalHours: 40,
+        overtimeHours: 0,
+        workDays: 5,
+        absentDays: 21, // 21 ngày nghỉ trong tháng 26 ngày
+        lateCount: 0,
+        deductionPerLate: 0,
+        deductionPerAbsent: 300000,
+        bonusRevenue: 0,
+        bonusManual: 0,
+        deductionManual: 0,
+      );
+      final calc = calculatePayroll(input);
+      // Lương phải là 5 * 300.000 = 1.500.000, KHÔNG bị trừ 21 * 300.000 về 0!
+      expect(calc.regularPay, 1500000);
+      expect(calc.deductionAbsent, 0.0);
+      expect(calc.grossPay, 1500000);
+      expect(calc.netPay, 1500000);
+    });
+
+    test('calculatePayroll M2/M3: OT hourly rate respects custom expectedDays', () {
+      const inputM2 = PayrollInput(
+        userId: 'u-m2',
+        staffName: 'M2 Staff',
+        salaryMode: 'M2',
+        baseSalary: 6000000,
+        hourlyRate: 0,
+        expectedDays: 20, // 20 ngày công chuẩn thay vì 26
+        totalHours: 40,
+        overtimeHours: 5,
+        absentDays: 0,
+        lateCount: 0,
+        deductionPerLate: 0,
+        deductionPerAbsent: 0,
+        bonusRevenue: 0,
+        bonusManual: 0,
+        deductionManual: 0,
+        otMultiplier: 1.5,
+      );
+      final calcM2 = calculatePayroll(inputM2);
+      expect(calcM2.overtimePay, 5 * (6000000 / 20 / 8) * 1.5);
+
+      const inputM3 = PayrollInput(
+        userId: 'u-m3',
+        staffName: 'M3 Staff',
+        salaryMode: 'M3',
+        baseSalary: 6000000,
+        hourlyRate: 0, // Fallback to base rate
+        expectedDays: 20,
+        totalHours: 40,
+        overtimeHours: 5,
+        absentDays: 0,
+        lateCount: 0,
+        deductionPerLate: 0,
+        deductionPerAbsent: 0,
+        bonusRevenue: 0,
+        bonusManual: 0,
+        deductionManual: 0,
+        otMultiplier: 1.5,
+      );
+      final calcM3 = calculatePayroll(inputM3);
+      expect(calcM3.overtimePay, 5 * (6000000 / 20 / 8) * 1.5);
+    });
+
+    test('ShiftRecord stores isLate and lateMinutes accurately', () {
+      final s = ShiftRecord(
+        id: 's-late',
+        userId: 'u1',
+        userName: 'Staff',
+        clockIn: DateTime(2026, 8, 1, 8, 25),
+        clockOut: DateTime(2026, 8, 1, 16, 0),
+        source: 'app',
+        note: '',
+        isLate: true,
+        lateMinutes: 25,
+      );
+      expect(s.isLate, isTrue);
+      expect(s.lateMinutes, 25);
+    });
   });
 }

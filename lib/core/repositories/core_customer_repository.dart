@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import '../utils/paged_query.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CORE CUSTOMER REPOSITORY — 100% Supabase
@@ -17,59 +18,25 @@ class CoreCustomerRepository {
 
   // ── Streams ───────────────────────────────────────────────────────────────
 
-  Stream<T> _robustStream<T>(
-    String table,
-    String columnFilter,
-    String valueFilter,
-    T Function(List<Map<String, dynamic>>) mapper,
-  ) async* {
-    Future<T> fetch() async {
-      final rows = await _sb.from(table).select().eq(columnFilter, valueFilter);
-      return mapper(rows);
-    }
-
-    // Initial fetch
-    try {
-      yield await fetch();
-    } catch (e) {
-      print('[RobustStream] Initial fetch err on $table: $e');
-    }
-
-    // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
-    while (true) {
-      try {
-        final stream = _sb.from(table).stream(primaryKey: ['id']).eq(columnFilter, valueFilter);
-        await for (final rows in stream) {
-          yield mapper(rows);
-        }
-      } catch (e) {
-        print('[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.');
-        
-        // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-        
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-      }
-    }
-  }
-
   Stream<List<CustomerModel>> watchAll() async* {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'customers', 'store_id', storeId,
-      (rows) => rows
-        .where((r) => r['is_deleted'] != true)
-        .map(CustomerModel.fromMap)
-        .toList()
-      ..sort((a, b) => b.totalSpent.compareTo(a.totalSpent))
+    // Tải đủ khách theo trang (quán > 1.000 khách trước đây thiếu khách).
+    yield* watchByRefetch(
+        table: 'customers',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('customers')
+              .select()
+              .eq('store_id', storeId)
+              .or('is_deleted.is.null,is_deleted.eq.false')
+              .order('total_spent', ascending: false)
+              .order('id')
+              .range(offset, end));
+          return rows.map(CustomerModel.fromMap).toList();
+        }
     );
   }
 

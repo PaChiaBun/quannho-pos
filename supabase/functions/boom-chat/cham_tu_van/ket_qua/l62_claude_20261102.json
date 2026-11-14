@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D05_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc tăng giá Trà dâu tây không giải quyết giá trị mỗi đơn giảm."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc quảng bá Cà phê sữa đá chung chung, không nói rõ đây mới là số 3 ngày."
+  },
+  {
+   "id": "D35_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc thứ hai (theo dõi doanh thu) chung chung, không có con số."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ so Chủ nhật với Thứ 2, bỏ Thứ 7 và không khuyên xếp người cuối tuần."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Khuyên tặng thêm món nhỏ làm mỏng lời thay vì mời gọi món thêm."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không bám chủ đề topping (0,35 phần/đơn), có việc quảng bá mạng xã hội chung chung."
+  },
+  {
+   "id": "D05_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định topping là nguyên nhân chính quá tay, việc tăng giá Trà dâu tây lạc đề."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc tăng giá Bạc xỉu không nêu mức, không nói đây mới là số 3 ngày."
+  },
+  {
+   "id": "D35_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dòng đầu nói doanh thu thay vì trả lời thẳng chưa so được lời, có câu lặp."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi số cả tháng là 'cuối tuần này' và nói gấp đôi 'ngày thường' là sai lệch."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Khuyên tặng thêm món nhỏ làm mỏng lời thay vì mời gọi món thêm."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất tặng topping và giảm giá đơn 100.000đ làm mỏng lời, bài dài và không nêu mục tiêu 0,35→0,5 phần/đơn."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D05_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu nhóm Topping giảm 30,1%, lý do chỉ đoán chung chung."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc tăng giá Bạc xỉu, ẩn Cà phê cốt dừa không gắn với chuyện doanh thu giảm."
+  },
+  {
+   "id": "D35_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu cuối lặp ý nhập giá vốn, tăng giá Trà dâu tây chưa có mức cụ thể."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói Chủ nhật gấp đôi 'ngày thường' là quá tay (so Thứ 5–6 chỉ gấp 1,5–1,8 lần)."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót nhóm Món thêm giảm 52,3%, việc tăng giá Cơm sườn lúc khách đang giảm là lạc đề."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng topping miễn phí cho đơn từ 70.000đ đi ngược mục tiêu bán thêm topping."
+  },
+  {
+   "id": "D05_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý giải 'topping chỉ 4% nên khách chọn món rẻ' sai logic, bỏ sót Topping giảm 30,1%."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc làm không gắn với chuyện giờ 7h giảm, không nói đây mới là số 3 ngày."
+  },
+  {
+   "id": "D35_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không chỉ ra Trà dâu tây 46% là món lời mỏng, việc thứ hai chung chung."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Khuyên khuyến mãi vào cuối tuần (đã đông nhất) là ngược hướng."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ sót nhóm Món thêm giảm 52,3%, việc tăng giá Cơm sườn và ẩn Cơm cá kho lạc đề."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không có câu mời topping của nhân viên, tặng topping miễn phí đi ngược mục tiêu."
+  }
+ ]
+}

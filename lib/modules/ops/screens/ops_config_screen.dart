@@ -97,14 +97,14 @@ class _OpsConfigScreenState extends ConsumerState<OpsConfigScreen>
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
-        title: Text('Xoá công việc?', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: _kNavy)),
-        content: Text('Xoá "${t.title}"?\nNhật ký cũ sẽ không bị ảnh hưởng.', style: GoogleFonts.outfit(color: _kMuted)),
+        title: Text('Xoá công việc?', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: _kNavy)),
+        content: Text('Xoá "${t.title}"?\nNhật ký cũ sẽ không bị ảnh hưởng.', style: GoogleFonts.plusJakartaSans(color: _kMuted)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Huỷ', style: GoogleFonts.outfit(color: _kMuted))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: _kMuted))),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: Text('Xoá', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+            child: Text('Xoá', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -121,14 +121,14 @@ class _OpsConfigScreenState extends ConsumerState<OpsConfigScreen>
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
-        title: Text('Xoá toàn bộ?', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFEF4444))),
-        content: Text('Toàn bộ mẫu công việc sẽ bị xoá.\nHành động này không thể hoàn tác.', style: GoogleFonts.outfit(color: _kMuted)),
+        title: Text('Xoá toàn bộ?', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: const Color(0xFFEF4444))),
+        content: Text('Toàn bộ mẫu công việc sẽ bị xoá.\nHành động này không thể hoàn tác.', style: GoogleFonts.plusJakartaSans(color: _kMuted)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Huỷ', style: GoogleFonts.outfit(color: _kMuted))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: _kMuted))),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: Text('Xoá tất cả', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+            child: Text('Xoá tất cả', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -179,8 +179,8 @@ class _OpsConfigScreenState extends ConsumerState<OpsConfigScreen>
             color: const Color(0xFFFFF8F0),
             child: TabBar(
               controller: _tab,
-              labelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800),
-              unselectedLabelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500),
+              labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800),
+              unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w500),
               labelColor: _kNavy,
               unselectedLabelColor: _kMuted,
               indicatorColor: _kNavy,
@@ -214,7 +214,7 @@ class _OpsConfigScreenState extends ConsumerState<OpsConfigScreen>
                 backgroundColor: _kNavy,
                 elevation: 4,
                 icon: const Icon(Icons.add_rounded, color: Colors.white),
-                label: Text('Thêm', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w800)),
+                label: Text('Thêm', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800)),
               )
             : const SizedBox.shrink(),
       ),
@@ -254,12 +254,12 @@ class _ListTab extends ConsumerWidget {
             // Action bar
             Row(
               children: [
-                Text('${templates.length} mẫu công việc', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                Text('${templates.length} mẫu công việc', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: onDeleteAll,
                   icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Color(0xFFEF4444)),
-                  label: Text('Xoá tất cả', style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFFEF4444), fontWeight: FontWeight.w700)),
+                  label: Text('Xoá tất cả', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFFEF4444), fontWeight: FontWeight.w700)),
                   style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
                 ),
               ],
@@ -289,8 +289,8 @@ class _PresetsTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
         // Header
-        Text('Chọn nhóm để nạp', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
-        Text('Checklist chuẩn theo từng vai trò', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+        Text('Chọn nhóm để nạp', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted)),
+        Text('Checklist chuẩn theo từng vai trò', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
         const SizedBox(height: 16),
 
         // Preset cards
@@ -334,9 +334,9 @@ class _PresetCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(pack.role, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy)),
+                Text(pack.role, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy)),
                 const SizedBox(height: 2),
-                Text(pack.desc, style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                Text(pack.desc, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
               ],
             ),
           ),
@@ -376,7 +376,7 @@ class _SeedBtnState extends State<_SeedBtn> {
         child: Center(
           child: _loading
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Text('Nạp', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+              : Text('Nạp', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
         ),
       ),
     );
@@ -403,12 +403,12 @@ class _RoleHeader extends StatelessWidget {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          Text(roleName, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
+          Text(roleName, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
           const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(20)),
-            child: Text('$count việc', style: GoogleFonts.outfit(fontSize: 10, color: _kNavy, fontWeight: FontWeight.w700)),
+            child: Text('$count việc', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kNavy, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -446,7 +446,7 @@ class _TemplateCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(template.title, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                  Text(template.title, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
                   const SizedBox(height: 5),
                   Wrap(spacing: 5, runSpacing: 4, children: [
                     // Tag giờ
@@ -502,7 +502,7 @@ class _TemplateCard extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 10, color: fg),
         const SizedBox(width: 3),
-        Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
       ]),
     );
   }
@@ -524,14 +524,14 @@ class _EmptyList extends StatelessWidget {
               decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(20)),
               child: const Icon(Icons.playlist_add_rounded, size: 36, color: _kMuted)),
             const SizedBox(height: 14),
-            Text('Chưa có công việc', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
+            Text('Chưa có công việc', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
             const SizedBox(height: 6),
-            Text('Thêm thủ công hoặc chọn tab "Bộ Mẫu" để nạp nhanh.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted), textAlign: TextAlign.center),
+            Text('Thêm thủ công hoặc chọn tab "Bộ Mẫu" để nạp nhanh.', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add_rounded),
-              label: Text('Thêm công việc', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+              label: Text('Thêm công việc', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(backgroundColor: _kNavy, foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), minimumSize: const Size(double.infinity, 52)),
             ),
@@ -546,7 +546,7 @@ class _EmptyList extends StatelessWidget {
     child: Row(children: [
       Icon(icon, size: 14, color: _kMuted),
       const SizedBox(width: 5),
-      Text(text, style: GoogleFonts.outfit(
+      Text(text, style: GoogleFonts.plusJakartaSans(
           fontSize: 12, fontWeight: FontWeight.w700, color: _kMuted)),
     ]),
   );
@@ -620,7 +620,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
 
   InputDecoration _dec(String label, {String? hint, Widget? prefix}) => InputDecoration(
     labelText: label, hintText: hint, prefixIcon: prefix,
-    labelStyle: GoogleFonts.outfit(color: _kMuted),
+    labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kNavy, width: 2)),
@@ -647,22 +647,22 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                     borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
             Text(widget.initial == null ? 'Thêm công việc' : 'Sửa công việc',
-              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
             const SizedBox(height: 20),
 
             // Tên công việc
             TextField(controller: _titleCtrl,
               decoration: _dec('Tên công việc *', hint: 'VD: Vệ sinh toilet lần 1'),
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             TextField(controller: _descCtrl, maxLines: 2,
               decoration: _dec('Mô tả / Hướng dẫn'),
-              style: GoogleFonts.outfit()),
+              style: GoogleFonts.plusJakartaSans()),
             const SizedBox(height: 12),
             TextField(controller: _timeCtrl,
               decoration: _dec('Giờ mục tiêu', hint: '09:00 hoặc "Cuối ca"',
                 prefix: const Icon(Icons.schedule_rounded, size: 18)),
-              style: GoogleFonts.outfit()),
+              style: GoogleFonts.plusJakartaSans()),
             const SizedBox(height: 12),
 
             // ── Yêu cầu ảnh bằng chứng ──────────────────────────────
@@ -687,10 +687,10 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Yêu cầu ảnh bằng chứng',
-                        style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700,
                           color: _requiresPhoto ? const Color(0xFF6366F1) : _kNavy)),
                       Text('Nhân viên phải chụp ảnh trước khi tick xong',
-                        style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                     ],
                   )),
                   AnimatedSwitcher(
@@ -712,10 +712,10 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
             const SizedBox(height: 10),
             Row(children: [
               for (final p in [
-                ('critical', '🔴', 'Critical', const Color(0xFFEF4444)),
-                ('high',     '🟠', 'High',     const Color(0xFFF97316)),
-                ('normal',   '🔵', 'Normal',   _kNavy),
-                ('low',      '⚪️', 'Low',      _kMuted),
+                ('critical', '🔴', 'Khẩn', const Color(0xFFEF4444)),
+                ('high',     '🟠', 'Cao',     const Color(0xFFF97316)),
+                ('normal',   '🔵', 'Thường', _kNavy),
+                  ('low', '⚪️', 'Thấp',      _kMuted),
               ]) ...[
                 Expanded(child: GestureDetector(
                   onTap: () => setState(() => _priority = p.$1),
@@ -738,7 +738,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                         Text(p.$2, style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 3),
                         Text(p.$3,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 11, fontWeight: FontWeight.w700,
                             color: _priority == p.$1 ? p.$4 : _kMuted,
                           )),
@@ -754,7 +754,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
             _sectionLabel('Chỉ hiện vào ngày', Icons.calendar_today_rounded),
             const SizedBox(height: 4),
             Text('(bỏ trống = hiện mọi ngày)',
-              style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontStyle: FontStyle.italic)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, fontStyle: FontStyle.italic)),
             const SizedBox(height: 10),
             Row(children: [
               for (final d in [
@@ -780,7 +780,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                     ),
                     child: Text(d.$2,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 11, fontWeight: FontWeight.w800,
                         color: _activeDays.contains(d.$1)
                             ? Colors.white : _kMuted,
@@ -809,9 +809,9 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                   decoration: _dec('Vai trò', hint: 'Để trống = tất cả'),
                   items: [
                     DropdownMenuItem(value: null,
-                        child: Text('Tất cả vai trò', style: GoogleFonts.outfit())),
+                        child: Text('Tất cả vai trò', style: GoogleFonts.plusJakartaSans())),
                     ...roles.map((r) => DropdownMenuItem(value: r,
-                        child: Text(r.name, style: GoogleFonts.outfit()))),
+                        child: Text(r.name, style: GoogleFonts.plusJakartaSans()))),
                   ],
                   onChanged: (v) => setState(() => _selectedRole = v),
                 );
@@ -839,10 +839,10 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                       prefix: const Icon(Icons.schedule_rounded, size: 18)),
                   items: [
                     DropdownMenuItem(value: null,
-                        child: Text('Tất cả ca', style: GoogleFonts.outfit())),
+                        child: Text('Tất cả ca', style: GoogleFonts.plusJakartaSans())),
                     ...shifts.map((s) => DropdownMenuItem(value: s,
                         child: Text('${s.name} (${s.timeLabel})',
-                            style: GoogleFonts.outfit()))),
+                            style: GoogleFonts.plusJakartaSans()))),
                   ],
                   onChanged: (v) => setState(() => _selectedShift = v),
                 );
@@ -863,11 +863,11 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                       const Icon(Icons.person_pin_rounded, size: 16, color: _kMuted),
                       const SizedBox(width: 6),
                       Text('Assign nhân viên cụ thể',
-                          style: GoogleFonts.outfit(fontSize: 12,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12,
                               color: _kMuted, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 4),
                       Text('(để trống = theo vai trò)',
-                          style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                     ]),
                     const SizedBox(height: 8),
                     Wrap(
@@ -902,7 +902,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                                     size: 12, color: _kNavy),
                               if (selected) const SizedBox(width: 4),
                               Text(m.name,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: selected
                                         ? FontWeight.w700 : FontWeight.w500,
@@ -929,7 +929,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
                     elevation: 0),
                 child: _saving
                     ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                    : Text('Lưu công việc', style: GoogleFonts.outfit(
+                    : Text('Lưu công việc', style: GoogleFonts.plusJakartaSans(
                         fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
               ),
             ),
@@ -944,7 +944,7 @@ class _TemplateFormSheetState extends ConsumerState<_TemplateFormSheet> {
     child: Row(children: [
       Icon(icon, size: 14, color: _kMuted),
       const SizedBox(width: 5),
-      Text(text, style: GoogleFonts.outfit(
+      Text(text, style: GoogleFonts.plusJakartaSans(
           fontSize: 12, fontWeight: FontWeight.w700, color: _kMuted)),
     ]),
   );
@@ -974,7 +974,7 @@ class _PermissionTab extends ConsumerWidget {
 
         if (templates.isEmpty) {
           return Center(
-            child: Text('Chưa có mẫu công việc.\nHãy thêm trong tab "Danh Sách".', style: GoogleFonts.outfit(color: _kMuted, fontSize: 14), textAlign: TextAlign.center),
+            child: Text('Chưa có mẫu công việc.\nHãy thêm trong tab "Danh Sách".', style: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 14), textAlign: TextAlign.center),
           );
         }
 
@@ -1037,8 +1037,8 @@ class _StatChip extends StatelessWidget {
   const _StatChip(this.value, this.label);
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w900, color: _kNavy)),
-    Text(label,  style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+    Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w900, color: _kNavy)),
+    Text(label,  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
   ]);
 }
 
@@ -1051,12 +1051,12 @@ class _PermRoleHeader extends StatelessWidget {
     child: Row(children: [
       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 8),
-      Text(roleName, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
+      Text(roleName, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
       const SizedBox(width: 6),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-        child: Text('$count việc', style: GoogleFonts.outfit(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
+        child: Text('$count việc', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
       ),
     ]),
   );
@@ -1093,7 +1093,7 @@ class _PermTaskCard extends StatelessWidget {
         Row(children: [
           Container(width: 4, height: 36, decoration: BoxDecoration(color: pc, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 10),
-          Expanded(child: Text(template.title, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy))),
+          Expanded(child: Text(template.title, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy))),
         ]),
         const SizedBox(height: 8),
         // Badges
@@ -1109,7 +1109,13 @@ class _PermTaskCard extends StatelessWidget {
           if (template.activeDays != null && template.activeDays!.isNotEmpty)
             _Badge(Icons.calendar_today_rounded, '${template.activeDays!.length} ngày/tuần', _kNavy),
           if (template.priority != 'normal')
-            _Badge(Icons.flag_rounded, template.priority, pc),
+            _Badge(Icons.flag_rounded,
+                    switch (template.priority) {
+                      'critical' => 'Khẩn',
+                      'high' => 'Cao',
+                      'low' => 'Thấp',
+                      _ => template.priority
+                    }, pc),
         ]),
       ]),
       ),  // end InkWell child Container
@@ -1131,7 +1137,7 @@ class _Badge extends StatelessWidget {
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 10, color: color),
       const SizedBox(width: 3),
-      Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
     ]),
   );
 }

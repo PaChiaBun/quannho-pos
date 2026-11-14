@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu doanh thu giảm 14,2%, lý do 7h/8h không có số tiền, chỉ 1 việc."
+  },
+  {
+   "id": "D33_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không nối việc 7h/8h với số giảm của các giờ đó (−229.000đ, −200.000đ)."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ sót khung 14–16h vắng; việc 'chạy quảng cáo nhỏ' cho Cà phê sữa đá còn chung chung, mở đầu vòng vo."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu số giảm 7h/8h để giải thích vì sao chọn khung giờ đó."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'ưu đãi hoặc món chủ lực' mơ hồ, không có mức ưu đãi hay mốc giữ/bỏ, chỉ 1 việc."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tự nói Cà phê sữa đá 'có lợi nhuận tốt' dù không có giá vốn món này; bỏ sót giờ chiều vắng."
+  },
+  {
+   "id": "D33_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc mơ hồ ('ưu đãi hoặc món chủ lực'), câu 'xem lại nhóm Cà phê để điều chỉnh hợp lý' sáo rỗng."
+  },
+  {
+   "id": "D01_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc; không nêu giá trị mỗi đơn giữ nguyên và nhóm/món giảm (Cà phê, Bánh mì)."
+  },
+  {
+   "id": "D01_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do 7h/8h chỉ có % chung, không số tiền; chỉ 1 việc."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ sót khung 14–16h vắng; 'quảng bá mạnh Cà phê sữa đá' chung chung; mở đầu vòng vo."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ sót khung 14–16h vắng; mục ẩn món chưa bán ít liên quan tăng doanh thu, hơi dài."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu doanh thu giảm 14,2%; lý do 7h/8h chỉ có % chung; chỉ 1 việc."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do chỉ nêu 7h/8h giảm ~20,2% chung chung, chỉ 1 việc, không nói giá trị mỗi đơn giữ nguyên."
+  },
+  {
+   "id": "D33_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không nêu số giảm giờ 7h/8h để giải thích vì sao nhắm khung đó."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc ở 7h/8h, bỏ combo đắt hơn lẻ và giờ chiều vắng; nói sai 1.475.000đ/ngày là 'quay về mức cũ' (thật ra là nửa đường)."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không nối việc 7h/8h với số giảm của các giờ đó."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'ưu đãi khách quen hoặc món chủ lực' còn mơ hồ, chỉ 1 việc (dù có mốc 1.794.000đ/ngày đúng)."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Đề nghị 'tạo combo Cà phê sữa đá + Bánh mì thịt rẻ hơn' trong khi combo đã có và đang đắt hơn lẻ — không phát hiện vấn đề; dài, 4 mục."
+  },
+  {
+   "id": "D33_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không nêu số giảm 7h/8h để giải thích vì sao nhắm khung đó."
+  },
+  {
+   "id": "D01_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do 7h/8h chỉ có % chung, không số tiền; chỉ 1 việc."
+  },
+  {
+   "id": "D01_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc; không nêu giá trị mỗi đơn giữ nguyên và nhóm/món kéo giảm."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đề nghị 'tạo combo' đã có sẵn, không thấy combo đang đắt hơn lẻ 2.000đ; chỉ nêu 7h/8h, bỏ giờ chiều."
+  },
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ tách 1 ý 7h/8h thành 2 việc, bỏ combo đắt hơn lẻ và giờ chiều vắng."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do 7h/8h chỉ có % chung, không số tiền; chỉ 1 việc."
+  }
+ ]
+}

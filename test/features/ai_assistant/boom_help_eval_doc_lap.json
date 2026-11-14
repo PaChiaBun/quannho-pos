@@ -1,0 +1,412 @@
+{
+ "_ghi_chu": "Bộ câu hỏi độc lập — người viết không xem bộ tìm kiếm.",
+ "cases": [
+  {
+   "q": "làm sao gửi món xuống bếp trước khi khách trả tiền",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-gui-bep-truoc-khi-thu-tien"
+   ]
+  },
+  {
+   "q": "tich diem cho khach thi gan sdt o dau vay",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem"
+   ]
+  },
+  {
+   "q": "khách đổi ý bỏ hết món, xóa giỏ order sao ạ",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-xoa-gio-hang"
+   ]
+  },
+  {
+   "q": "xem lai may don vua ban gan day",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-xem-don-gan-day"
+   ]
+  },
+  {
+   "q": "cai may in bill lan dau tren may tinh windows",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+   ]
+  },
+  {
+   "q": "tắt tự động in bill sau khi thanh toán đc ko",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-6-bat-tat-tu-dong-in-va-mo-ket"
+   ]
+  },
+  {
+   "q": "in tem dán ly trà sữa ở đâu",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ]
+  },
+  {
+   "q": "khach quet qr goi mon thi nv nhan don o dau",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-3-nhan-don-moi-nhan-vien",
+    "qr-goi-mon#cac-viec-thuong-lam-4-duyet-don-tai-ban"
+   ]
+  },
+  {
+   "q": "bật qr gọi món rồi dán mã ở bàn như nào",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ]
+  },
+  {
+   "q": "tu choi don qr cua khach vi het mon",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-6-tu-choi-don"
+   ]
+  },
+  {
+   "q": "tiền điện tháng này ghi vào đâu cho đúng",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ]
+  },
+  {
+   "q": "lỡ ghi nham khoan chi, xoa sao",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ]
+  },
+  {
+   "q": "xuat so quy gui ke toan",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ]
+  },
+  {
+   "q": "thêm topping trân châu vào món trà sữa",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-2-topping-tra-sua-com-them"
+   ]
+  },
+  {
+   "q": "nhap kho nhanh 1 mon",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon"
+   ]
+  },
+  {
+   "q": "tam het mon thi tat o dau, ko muon ban nua",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ]
+  },
+  {
+   "q": "tạo công thức cho ly cà phê để tự trừ nguyên liệu",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-2-tao-cong-thuc-mon"
+   ]
+  },
+  {
+   "q": "kiem ke kho cuoi thang lam sao",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-4-kiem-ke-kho"
+   ]
+  },
+  {
+   "q": "ghi nguyên liệu bị hao hụt đổ vỡ",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-5-ghi-hao-hut"
+   ]
+  },
+  {
+   "q": "chuyen ban 5 sang ban 7 duoc ko",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ]
+  },
+  {
+   "q": "khách bỏ về mà mình lỡ mở bàn rồi, hủy sao",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+   ]
+  },
+  {
+   "q": "in tam tinh cho khach xem truoc",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ]
+  },
+  {
+   "q": "khách gọi rồi đã gửi bếp mà muốn bớt 1 món thì xử lý sao",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ]
+  },
+  {
+   "q": "bep nhan phieu xong bam gi",
+   "expect": [
+    "bep#cac-viec-thuong-lam-1-nhan-va-lam-phieu"
+   ]
+  },
+  {
+   "q": "loc phieu theo tram bar hay bep",
+   "expect": [
+    "bep#cac-viec-thuong-lam-5-loc-theo-tram"
+   ]
+  },
+  {
+   "q": "phiếu trễ là sao, sao có phiếu đỏ",
+   "expect": [
+    "bep#cac-viec-thuong-lam-7-phieu-tre"
+   ]
+  },
+  {
+   "q": "tao ma giam gia 10% cho khach",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ]
+  },
+  {
+   "q": "nạp tiền vào ví cho khách quen",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+   ]
+  },
+  {
+   "q": "diem tich luy doi thuong the nao",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-5-phan-thuong-doi-diem",
+    "khach-hang#cach-tinh-diem-hang-vi"
+   ]
+  },
+  {
+   "q": "xóa nv nghỉ việc khỏi quán",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3-xoa-nhan-vien-khoi-quan"
+   ]
+  },
+  {
+   "q": "gan vai tro thu ngan cho nv moi vao",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-1-gan-doi-vai-tro-cho-nhan-vien"
+   ]
+  },
+  {
+   "q": "mã pin duyệt nhanh của quản lý là gì vậy",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-8-ma-pin-duyet-nhanh-chu-quan-quan-ly"
+   ]
+  },
+  {
+   "q": "nv vao ca bam o dau",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-2-vao-ca-nhan-vien"
+   ]
+  },
+  {
+   "q": "duyệt tăng ca ot cho nhân viên",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-5-duyet-tang-ca-ot"
+   ]
+  },
+  {
+   "q": "nhân viên quên chốt ca hôm qua, giờ làm sao",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ]
+  },
+  {
+   "q": "tao ky luong thang 10",
+   "expect": [
+    "luong#cac-viec-thuong-lam-2-tao-ky-luong"
+   ]
+  },
+  {
+   "q": "tra luong cho nv xong roi thi lam gi",
+   "expect": [
+    "luong#cac-viec-thuong-lam-5-tra-luong"
+   ]
+  },
+  {
+   "q": "nhân viên xem phiếu lương của mình và khiếu nại ở đâu",
+   "expect": [
+    "luong#cac-viec-thuong-lam-6-nhan-vien-xem-phieu-xac-nhan-khieu-nai"
+   ]
+  },
+  {
+   "q": "xem doanh thu hom nay",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ]
+  },
+  {
+   "q": "mon nao ban chay nhat tuan nay",
+   "expect": [
+    "bao-cao#tung-tab-san-pham"
+   ]
+  },
+  {
+   "q": "voucher da dung bao nhieu xem o dau",
+   "expect": [
+    "bao-cao#tung-tab-voucher"
+   ]
+  },
+  {
+   "q": "thêm cửa hàng thứ 2 vào chuỗi",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang",
+    "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+   ]
+  },
+  {
+   "q": "so sanh doanh thu giua cac chi nhanh",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-3-doc-bao-cao"
+   ]
+  },
+  {
+   "q": "mấy cái chip tăng giảm xanh đỏ trong báo cáo chuỗi nghĩa là gì",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-4-hieu-chip-tang-giam"
+   ]
+  },
+  {
+   "q": "tạo checklist mở cửa đóng cửa cho nhân viên",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist"
+   ]
+  },
+  {
+   "q": "ban giao ca cho nguoi sau ghi gi",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+   ]
+  },
+  {
+   "q": "quản lý theo dõi nv làm checklist trong ngày",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-6-quan-ly-theo-doi-trong-ngay"
+   ]
+  },
+  {
+   "q": "app bi loi, gui log cho nguoi ho tro kieu gi",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+   ]
+  },
+  {
+   "q": "muốn tra lại sự cố hôm qua thì xem nhật ký thế nào",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ]
+  },
+  {
+   "q": "xoá nhật ký cũ cho nhẹ máy",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-3-xoa-nhat-ky"
+   ]
+  },
+  {
+   "q": "hiện chữ 'Tải danh sách món thất bại. Hãy chụp lại báo chủ app' là sao",
+   "expect": [
+    "ban-hang#loi-tai-danh-sach-mon-that-bai-hay-chup-lai-bao-chu-app"
+   ]
+  },
+  {
+   "q": "no bao so du vi khong du chua ghi nhan thanh toan",
+   "expect": [
+    "ban-hang#loi-loi-so-du-vi-khong-du-chua-ghi-nhan-thanh-toan"
+   ]
+  },
+  {
+   "q": "báo Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher",
+   "expect": [
+    "ban-hang#loi-loi-don-hang-chua-dat-gia-tri-toi-thieu-de-ap-dung-voucher",
+    "khach-hang#loi-don-hang-chua-dat-gia-tri-toi-thieu-de-ap-dung-voucher"
+   ]
+  },
+  {
+   "q": "in ra bill bi cut mep chu to qua",
+   "expect": [
+    "in-hoa-don#loi-bill-bi-cut-mep-chu-qua-to"
+   ]
+  },
+  {
+   "q": "bep ko nghe chuong khi co don moi",
+   "expect": [
+    "bep#loi-khong-nghe-chuong"
+   ]
+  },
+  {
+   "q": "cham cong bao dinh vi lech pham vi",
+   "expect": [
+    "cham-cong#loi-dinh-vi-lech-pham-vi"
+   ]
+  },
+  {
+   "q": "báo Bạn không có quyền hủy đơn hàng",
+   "expect": [
+    "ban-hang#loi-ban-khong-co-quyen-huy-don-hang"
+   ]
+  },
+  {
+   "q": "kho hien ton am la sao vay",
+   "expect": [
+    "kho-hang#loi-ton-am",
+    "kho-chuyen-nghiep#loi-ton-nguyen-lieu-am"
+   ]
+  },
+  {
+   "q": "xoa khoan thu chi no bao nhap ly do it nhat 3 ky tu",
+   "expect": [
+    "thu-chi#loi-nhap-ly-do-xoa-it-nhat-3-ky-tu"
+   ]
+  },
+  {
+   "q": "hôm nay trời có mưa không",
+   "expect": []
+  },
+  {
+   "q": "công thức pha cà phê muối",
+   "expect": []
+  },
+  {
+   "q": "bàn ăn gỗ mua ở đâu rẻ",
+   "expect": []
+  },
+  {
+   "q": "thủ đô nước Pháp là gì",
+   "expect": []
+  },
+  {
+   "q": "kể chuyện cười đi",
+   "expect": []
+  },
+  {
+   "q": "cách nấu phở bò ngon",
+   "expect": []
+  },
+  {
+   "q": "giá vàng hôm nay bao nhiêu",
+   "expect": []
+  },
+  {
+   "q": "mở quán cà phê cần vốn bao nhiêu",
+   "expect": []
+  },
+  {
+   "q": "ghế nhân viên văn phòng loại nào tốt",
+   "expect": []
+  },
+  {
+   "q": "hello bạn tên gì",
+   "expect": []
+  },
+  {
+   "q": "thuê nhân viên phục vụ ở đâu tuyển",
+   "expect": []
+  },
+  {
+   "q": "cách tính thuế thu nhập cá nhân của nhân viên",
+   "expect": []
+  }
+ ]
+}

@@ -1,0 +1,475 @@
+[
+ {
+  "id": "D01_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Việc đề xuất (tăng giá Bạc xỉu, xem combo) không nhắm vào lấy lại số đơn; Thứ 7 thấp vốn có sẵn, không giải thích được mức giảm so tháng trước."
+ },
+ {
+  "id": "D11_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Có nêu combo đắt hơn lẻ 2.000đ nhưng không đưa giá mới, bỏ sót combo trà tắc + bánh mì chả chưa bán dù số liệu có sẵn."
+ },
+ {
+  "id": "D13_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Nói 'số đang nghiêng về mở' khi không có số, bỏ qua việc văn phòng nghỉ Chủ nhật và đòi xem số khách Chủ nhật trong khi quán vốn nghỉ."
+ },
+ {
+  "id": "D18_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 0,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Khuyên thử đóng ca tối ngay với tiêu chí rối, gọi doanh thu là 'số đơn', không tính chi phí người / gas ca tối."
+ },
+ {
+  "id": "D21_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Bỏ sót khung 14–16h vắng; bịa 'cà phê sữa đá lãi tốt' (không có giá vốn) và 'mỗi đơn chỉ 1 món' (thực tế ~1,3 phần/đơn)."
+ },
+ {
+  "id": "D22_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Hỏi tuần sau nhưng trả kế hoạch 4 tuần chép khuôn, không nêu số tuần này và bỏ sót khung 14–16h vắng."
+ },
+ {
+  "id": "D26_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Gán Khoai tây chiên 150 phần (số buổi tối) vào khung chiều và gọi chiều là 'giờ cao điểm'; việc làm còn chung chung."
+ },
+ {
+  "id": "D28_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không bàn Thứ 4 (chỉ ~55% ngày thường) mà lạc sang giờ vắng 16–19h và tăng giá cơm sườn."
+ },
+ {
+  "id": "D42_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Mở đầu vòng vo, không nói rõ chưa dự báo được; bịa 'cà phê sữa đá lợi nhuận tốt' và khuyên 'khuyến mãi combo' mơ hồ."
+ },
+ {
+  "id": "D48_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Ước ~3 triệu không nói rõ ca tối 16–20h chưa bán, cách tính mơ hồ; việc tăng giá cơm sườn lạc đề."
+ },
+ {
+  "id": "D57_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Giải thích vòng tròn ('vì quán vắng'), không nói số liệu không cho biết lý do; đẩy Bún bò Huế cho ca tối."
+ },
+ {
+  "id": "D58_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Không nối với giá trị đơn giảm 11,9%; bỏ sót đồ uống, đưa tăng giá cơm sườn lên đầu dù không giúp tăng doanh thu ngay."
+ },
+ {
+  "id": "D60_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 0,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C4"
+  ],
+  "loi_chinh": "Sai logic 'tăng giá giá vốn vẫn 48%', không đưa mức tăng cụ thể (3.000–5.000đ) hay cách giữ khách."
+ },
+ {
+  "id": "D01_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Việc làm chung chung (quảng bá món bán chạy, tăng giá Bạc xỉu) không kéo lại số đơn; đòi xem số theo thứ dù đã có."
+ },
+ {
+  "id": "D08_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C2"
+  ],
+  "loi_chinh": "Giải thích vòng tròn và đoán lý do; không so Thứ 4 với ~20,9 triệu ngày thường (~55%), 'thấp hơn 2 ngày cuối tuần' gây hiểu lầm."
+ },
+ {
+  "id": "D11_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Chỉ có một việc (hạ combo xuống 48.000đ); bỏ sót combo trà tắc + bánh mì chả chưa bán và combo cà phê đen đang ổn."
+ },
+ {
+  "id": "D13_2",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 0,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Nói 'số đang nghiêng về mở' khi không có số, bỏ qua việc văn phòng nghỉ Chủ nhật; không đề xuất thử nửa buổi rồi so chi phí."
+ },
+ {
+  "id": "D18_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Kết luận không đóng nhưng lý lẽ đưa ra lại nghiêng về đóng; chỉ 'giữ thêm 2 tuần theo dõi', không rút giờ / menu tối, không tính chi phí."
+ },
+ {
+  "id": "D21_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Bỏ sót khung 14–16h; tuần 2 tăng giá Bạc xỉu không giúp lấy lại số đơn; sai 'mỗi đơn chỉ 1 món'."
+ },
+ {
+  "id": "D22_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Hỏi tuần sau nhưng trả kế hoạch 4 tuần chép khuôn, không nêu số tuần này, bỏ sót khung 14–16h vắng."
+ },
+ {
+  "id": "D23_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Chung chung (email, mạng xã hội), không có cơ chế cụ thể như mua 9 tặng 1 / đặt trước theo phòng ban cho khách mua sáng."
+ },
+ {
+  "id": "D26_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Tự gán giá 54.000đ (giá combo với Khoai tây chiên) cho combo với Bánh tráng trộn; nhắc 'món chính' quán trà sữa không có."
+ },
+ {
+  "id": "D28_2",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không bàn Thứ 4 (~55% ngày thường); bịa 'mỗi đơn 1 món' và 'Bún thịt nướng lời tốt hơn' khi không có giá vốn."
+ },
+ {
+  "id": "D42_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Khuyên vừa quảng bá Bạc xỉu vừa tăng giá món lời mỏng này; việc làm thiếu combo / giờ chiều."
+ },
+ {
+  "id": "D48_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Ước ~3 triệu không nói ca tối 16–20h còn bán, không so Thứ 4 tuần trước; việc làm chỉ là 'xem trong app'."
+ },
+ {
+  "id": "D50_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 0,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C5"
+  ],
+  "loi_chinh": "Ngoại suy chắc chắn tháng sau tăng thêm 12,7 triệu (~70 triệu, cộng còn sai) thay vì nói không dự báo chắc; bỏ sót so doanh thu chỉ +2%."
+ },
+ {
+  "id": "D51_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Đề xuất combo 45.000đ như món mới thay vì sửa combo 52.000đ đang có; khuyến mãi Thứ 7 'tặng topping' quán không có; bỏ sót khung 14–16h."
+ },
+ {
+  "id": "D57_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Không nói rõ số liệu không cho biết lý do, giải thích vòng tròn; lạc sang tăng giá cơm sườn."
+ },
+ {
+  "id": "D58_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Không nối với giá trị đơn giảm 11,9%; bỏ sót đồ uống kèm (nước sâm / chanh); combo 'giá ưu đãi' là giảm giá."
+ }
+]

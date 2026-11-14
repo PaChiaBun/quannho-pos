@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D30_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Ghi so với 'thứ Hai tuần trước' trong khi 20/11/2026 là Thứ Sáu, và đoán khách là sinh viên/giáo viên trái hồ sơ quán gần chợ, công trình."
+  },
+  {
+   "id": "D30_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Khẳng định 20/11 'hợp với khách chính' của quán dù khách chủ yếu là người đi chợ, thợ công trình; dòng đầu chưa nói thẳng là không cần làm lớn."
+  },
+  {
+   "id": "D30_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "So với 'thứ Hai tuần trước' sai thứ (20/11 là Thứ Sáu) và bỏ sót việc nhận đặt suất cho trường gần đó."
+  },
+  {
+   "id": "D30_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Sai thứ ('thứ Tư tuần trước', 20/11 là Thứ Sáu), câu 'Vì sao' lạc đề, không có việc nhận đặt suất cho trường."
+  },
+  {
+   "id": "D30_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Cho rằng 20/11 'hợp với khách chính' của quán dù khách là người chợ, công trình; câu 'Vì' còn chung chung."
+  },
+  {
+   "id": "D30_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "So với 'thứ Tư tuần trước' sai thứ (20/11 là Thứ Sáu) và thiếu việc nhận đặt suất cho trường gần đó."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D30_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Giảm 10% gần như toàn menu và tặng nước mọi đơn, mặc định giáo viên là khách chính, kế hoạch 4 tuần quá nặng cho quán bún bình dân."
+  },
+  {
+   "id": "D30_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Giảm 10% cho đơn từ 2 món (gần như toàn menu) và mini game, voucher dựa trên giả định giáo viên là khách chính, không hợp quán gần chợ, công trình."
+  },
+  {
+   "id": "D30_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Đề xuất tiệc có nhạc sống, giao lưu và giảm 10% cho giáo viên, hoàn toàn trái quy mô quán bún 4 người gần chợ, công trình."
+  },
+  {
+   "id": "D30_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Mời giáo viên ăn miễn phí và tung món mới bún hải sản không có trong hồ sơ, giảm 10% gần như toàn menu."
+  },
+  {
+   "id": "D30_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa ngưỡng hóa đơn 300.000đ không hợp quán bình dân, thêm tiệc tri ân và đặt bàn trước trái loại quán."
+  },
+  {
+   "id": "D30_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Giảm 10%, tiệc cho giáo viên và mời khách mua quà tặng giáo viên để tăng giá trị đơn: lạc loại quán, gượng ép."
+  }
+ ]
+}

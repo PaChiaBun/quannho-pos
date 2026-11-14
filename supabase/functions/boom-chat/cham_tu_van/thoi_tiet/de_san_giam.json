@@ -1,0 +1,10 @@
+[
+  {"id":"S01","quan":"a","troi":"nang_nong","loai":"san_giao","q":"Mình tính đưa bạc xỉu lên ShopeeFood, sàn lấy 25% phí, giờ giảm 5 nghìn một ly cho dễ bán thì còn lời không?"},
+  {"id":"S02","quan":"a","troi":"mua_sang","loai":"san_giao","q":"sang mua ko ai ra quay, chay freeship tren grab cho ca phe sua da dc ko hay lo von"},
+  {"id":"S03","quan":"b","troi":"nang_nong","loai":"san_giao","q":"Trà đào cam sả để giá trên sàn bằng giá ở quán 32k thì có lỗ không em, sàn lấy 28%"},
+  {"id":"S04","quan":"b","troi":"mua_chieu","loai":"san_giao","q":"chieu mua don online nhieu, muon giam 15% tra sua tran chau duong den tren shopeefood co nen ko"},
+  {"id":"S05","quan":"c","troi":"mua_sang","loai":"san_giao","q":"com suon len grabfood thi tang gia bao nhieu moi bu dc phi san 30%"},
+  {"id":"S06","quan":"c","troi":"nang_nong","loai":"san_giao","q":"Nắng quá khách lười ra quán, bún bò Huế giảm 10% trên ShopeeFood có đáng không hay để nguyên giá?"},
+  {"id":"S07","quan":"d","troi":"mua_chieu","loai":"san_giao","q":"cơm tấm sườn trên Grab đang để 40k như ở quán, sàn ăn 25% thì mình còn lời bao nhiêu 1 phần"},
+  {"id":"S08","quan":"d","troi":"nang_nong","loai":"san_giao","q":"be moi tham gia ct giam 20k cho don tu 100k, com tam suon bi cha co nen vao ko"}
+]

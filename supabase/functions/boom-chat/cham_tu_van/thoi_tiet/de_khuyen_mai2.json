@@ -1,0 +1,18 @@
+[
+{"id":"K01","quan":"a","troi":"nang_nong","loai":"khuyen_mai","q":"giam 5k cho bac xiu de keo dan van phong thi co lo ko, phai ban them bao nhieu ly moi bu dc"},
+{"id":"K02","quan":"b","troi":"mua_chieu","loai":"khuyen_mai","q":"Em định giảm 20% trà dâu tây cho học sinh có thẻ thì còn lời không, phải bán thêm bao nhiêu ly mới bù?"},
+{"id":"K03","quan":"c","troi":"mua_sang","loai":"khuyen_mai","q":"Giảm 10% cơm sườn cho anh em công trình ăn trưa thì có lỗ không, cần bán thêm mấy dĩa?"},
+{"id":"K04","quan":"d","troi":"mua_chieu","loai":"khuyen_mai","q":"neu giam 7k com tam suon tren grab thi moi phan con lai bao nhieu, ban them may phan moi bu"},
+{"id":"K05","quan":"a","troi":"nang_nong","loai":"khuyen_mai","q":"Cold brew cam sả bán ế quá, hạ xuống 29k có nên không?"},
+{"id":"K06","quan":"b","troi":"mua_chieu","loai":"khuyen_mai","q":"tra sua pho mai tuoi e tinh ha con 35k cho de ban, nen ko"},
+{"id":"K07","quan":"c","troi":"mua_sang","loai":"khuyen_mai","q":"Cơm chiên dương châu ít người gọi, bán 35 nghìn thôi được không?"},
+{"id":"K08","quan":"d","troi":"nang_nong","loai":"khuyen_mai","q":"com tam bi cha 35k e muon ha xuong 30k cho hs truong thcs, co dang ko"},
+{"id":"K09","quan":"a","troi":"mua_sang","loai":"khuyen_mai","q":"tuan roi chay mua 2 tra dao tang 1 tra tac, thay dong hon ma ko biet co loi ko"},
+{"id":"K10","quan":"b","troi":"nang_nong","loai":"khuyen_mai","q":"Mấy hôm nay quán đang chạy mua 1 trà đào cam sả tặng 1 phần khoai tây chiên, vậy có hiệu quả không Boom?"},
+{"id":"K11","quan":"c","troi":"mua_chieu","loai":"khuyen_mai","q":"tu dau tuan dang chay an bun bo hue tang trung op la, co an thua ko"},
+{"id":"K12","quan":"d","troi":"mua_sang","loai":"khuyen_mai","q":"Tuần trước quán vừa chạy mua 3 cơm tấm sườn tặng 1 nước sâm, xem giúp có đáng làm tiếp không?"},
+{"id":"K13","quan":"a","troi":"nang_nong","loai":"khuyen_mai","q":"tinh lam gio vang 14h-16h giam 20% ca phe sua da, nen ko boom"},
+{"id":"K14","quan":"b","troi":"mua_chieu","loai":"khuyen_mai","q":"Đang tính mua trà sữa trân châu đường đen tặng thêm thạch phô mai cuối tuần, có nên làm không?"},
+{"id":"K15","quan":"c","troi":"nang_nong","loai":"khuyen_mai","q":"sap toi muon tang ly nuoc sam cho khach an trua tu 2 phan tro len, lam vay dc ko"},
+{"id":"K16","quan":"d","troi":"mua_chieu","loai":"khuyen_mai","q":"Định mua 1 tặng 1 trà tắc buổi tối cho khách ăn tại quán, có nên không em?"}
+]

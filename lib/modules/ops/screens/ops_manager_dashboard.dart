@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/ops_providers.dart';
 import '../repository/ops_repository.dart';
+import '../widgets/ops_handover_card.dart';
 
 const _kNavy   = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -135,6 +136,7 @@ class OpsManagerDashboard extends ConsumerWidget {
         SliverToBoxAdapter(child: _HeroCard(total: total, done: done, missed: missed, pct: pct)),
         if (overdueNames.isNotEmpty)
           SliverToBoxAdapter(child: _OverdueAlert(names: overdueNames.toList())),
+      const SliverToBoxAdapter(child: OpsHandoverCard()),
         if (total == 0)
           const SliverFillRemaining(child: _EmptyState()),
         if (roleGroups.isNotEmpty) ...[
@@ -193,10 +195,10 @@ class _HeroCard extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('TỔNG QUAN HÔM NAY', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+              Text('TỔNG QUAN HÔM NAY', style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
               const SizedBox(height: 4),
-              Text('${(pct * 100).round()}%', style: GoogleFonts.outfit(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w900, height: 1.0)),
-              Text('hoàn thành', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+              Text('${(pct * 100).round()}%', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w900, height: 1.0)),
+              Text('hoàn thành', style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 13)),
             ])),
             Container(
               padding: const EdgeInsets.all(16),
@@ -234,9 +236,9 @@ class _Pill extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.4))),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Text('$v', style: GoogleFonts.outfit(color: c, fontSize: 13, fontWeight: FontWeight.w800)),
+      Text('$v', style: GoogleFonts.plusJakartaSans(color: c, fontSize: 13, fontWeight: FontWeight.w800)),
       const SizedBox(width: 4),
-      Text(l, style: GoogleFonts.outfit(color: c.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600)),
+      Text(l, style: GoogleFonts.plusJakartaSans(color: c.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600)),
     ]),
   );
 }
@@ -259,7 +261,7 @@ class _OverdueAlert extends StatelessWidget {
       const SizedBox(width: 10),
       Expanded(child: Text(
         '${names.length} nhân viên có việc quá giờ: ${names.join(', ')}',
-        style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kRed),
+        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kRed),
       )),
     ]),
   );
@@ -279,7 +281,7 @@ class _SectionLabel extends StatelessWidget {
         child: Icon(icon, size: 14, color: _kNavy),
       ),
       const SizedBox(width: 8),
-      Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+      Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
     ]),
   );
 }
@@ -317,7 +319,7 @@ class _RoleCardState extends State<_RoleCard> {
               Container(width: 12, height: 12, decoration: BoxDecoration(color: rg.color, shape: BoxShape.circle)),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(rg.roleName, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+                Text(rg.roleName, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
@@ -326,8 +328,8 @@ class _RoleCardState extends State<_RoleCard> {
               ])),
               const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('${(rg.pct * 100).round()}%', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
-                Text('${rg.completed}/${rg.total}', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.w600)),
+                Text('${(rg.pct * 100).round()}%', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+                Text('${rg.completed}/${rg.total}', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontWeight: FontWeight.w600)),
               ]),
               const SizedBox(width: 8),
               Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, color: _kMuted),
@@ -348,11 +350,11 @@ class _RoleCardState extends State<_RoleCard> {
                   Container(
                     width: 36, height: 36,
                     decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.07), shape: BoxShape.circle),
-                    child: Center(child: Text(sg.name[0].toUpperCase(), style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kNavy))),
+                    child: Center(child: Text(sg.name[0].toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _kNavy))),
                   ),
                   const SizedBox(width: 10),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(sg.name, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                    Text(sg.name, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
                     const SizedBox(height: 3),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(3),
@@ -360,7 +362,7 @@ class _RoleCardState extends State<_RoleCard> {
                     ),
                   ])),
                   const SizedBox(width: 10),
-                  Text('${sg.completed}/${sg.total}', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: sColor)),
+                  Text('${sg.completed}/${sg.total}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: sColor)),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right_rounded, color: _kMuted, size: 18),
                 ]),
@@ -403,7 +405,7 @@ class _SlotCardState extends State<_SlotCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(8)),
-                child: Text(s.time, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
+                child: Text(s.time, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
               ),
               const SizedBox(width: 10),
               Expanded(child: ClipRRect(
@@ -411,7 +413,7 @@ class _SlotCardState extends State<_SlotCard> {
                 child: LinearProgressIndicator(value: s.pct.clamp(0.0, 1.0), minHeight: 6, backgroundColor: color.withValues(alpha: 0.15), valueColor: AlwaysStoppedAnimation(color)),
               )),
               const SizedBox(width: 10),
-              Text('${s.completed}/${s.total}', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+              Text('${s.completed}/${s.total}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
               const SizedBox(width: 4),
               Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, color: _kMuted, size: 18),
             ]),
@@ -431,8 +433,8 @@ class _SlotCardState extends State<_SlotCard> {
                 Icon(icon, size: 18, color: ic),
                 const SizedBox(width: 10),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(item.title, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
-                  Text(item.staff, style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                  Text(item.title, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+                  Text(item.staff, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                 ])),
               ]),
             );
@@ -460,12 +462,12 @@ class _ChecklistSheet extends StatelessWidget {
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.08), shape: BoxShape.circle),
-            child: Center(child: Text(group.name[0].toUpperCase(), style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy))),
+            child: Center(child: Text(group.name[0].toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy))),
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(group.name, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
-            Text('${group.completed}/${group.total} nhiệm vụ · ${(group.pct * 100).round()}%', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+            Text(group.name, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+            Text('${group.completed}/${group.total} nhiệm vụ · ${(group.pct * 100).round()}%', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
           ])),
         ]),
         const SizedBox(height: 16),
@@ -488,10 +490,10 @@ class _ChecklistSheet extends StatelessWidget {
                   Icon(icon, size: 22, color: ic),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(log.templateId.substring(0, 8), style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
-                    Text(label, style: GoogleFonts.outfit(fontSize: 11, color: ic, fontWeight: FontWeight.w600)),
+                    Text(log.templateId.substring(0, 8), style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                    Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: ic, fontWeight: FontWeight.w600)),
                     if (log.notes != null && log.notes!.isNotEmpty)
-                      Text(log.notes!, style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                      Text(log.notes!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                   ])),
                 ]),
               );
@@ -513,9 +515,9 @@ class _EmptyState extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 72, height: 72, decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.checklist_rounded, size: 36, color: _kMuted)),
         const SizedBox(height: 14),
-        Text('Chưa có dữ liệu hôm nay', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+        Text('Chưa có dữ liệu hôm nay', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
         const SizedBox(height: 6),
-        Text('Nhân viên chưa bắt đầu nhiệm vụ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted), textAlign: TextAlign.center),
+        Text('Nhân viên chưa bắt đầu nhiệm vụ.', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted), textAlign: TextAlign.center),
       ]),
     ),
   );

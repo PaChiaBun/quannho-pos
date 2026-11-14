@@ -1,0 +1,182 @@
+[
+ {
+  "id": "K01",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "chuan_bi",
+  "q": "Mai mưa sáng hả e, sáng mai chuẩn bị sao cho đỡ ế",
+  "y_chinh": "Dự báo mưa to Thứ Năm 29/10 khoảng 6h–12h (khả năng cao ~85%), đè đúng giờ đông nhất của quán là 7h–8h (7h ~19,6 triệu, 8h ~17,1 triệu trong tháng). Khách văn phòng mua mang đi: gợi ý nhận đặt trước/gọi điện, chuẩn bị túi/nắp chống nước, che chỗ đứng chờ, pha chế/bánh mì chuẩn bị vừa phải chứ không như ngày khô ráo; nói rõ đây là dự báo.",
+  "can_tranh": "Khẳng định chắc chắn mưa; khuyên đóng cửa cả buổi sáng; bịa con số khách giảm bao nhiêu %."
+ },
+ {
+  "id": "K02",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "nhap_hang",
+  "q": "tuần này nóng 35-37 độ, có nên nhập thêm đá với đào k",
+  "y_chinh": "Dự báo nắng nóng 35–37°C, gần như không mưa cả tuần. Có thể nhập thêm đá và nguyên liệu trà đào (trà đào bán chạy nhất nhóm trà, 300 ly/tháng; trà tắc bán nhiều buổi chiều) nhưng nhập vừa, theo ngày/2–3 ngày; nhớ quán nghỉ Chủ nhật 1/11 nên không nhập cho ngày đó.",
+  "can_tranh": "Nhập dồn số lượng lớn một lần cho cả tuần; tính hàng cho Chủ nhật; bịa phần trăm tăng doanh số chắc chắn."
+ },
+ {
+  "id": "K03",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "mo_nghi",
+  "q": "Chiều mai mưa, có nên đóng cửa sớm k em",
+  "y_chinh": "Dự báo mưa Thứ Năm 29/10 khoảng 15h–20h. Giờ đó là giờ vắng của quán: doanh thu 14h–17h chỉ khoảng 1,8–3,7 triệu mỗi giờ trong tháng, so với 7h ~19,6 triệu; quán vốn đóng 18h. Đóng sớm hơn chút có thể hợp lý nếu chiều thật sự vắng, so với chi phí người làm; buổi sáng không bị ảnh hưởng.",
+  "can_tranh": "Nói mưa đè giờ đông của quán; khuyên nghỉ cả ngày; khẳng định chắc chắn chiều mai mưa."
+ },
+ {
+  "id": "K04",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "bay",
+  "q": "Doanh thu tháng này giảm so vs tháng trước là do mưa hả e",
+  "y_chinh": "Doanh thu 1–28/10 ~95,95 triệu so với ~111,89 triệu cùng kỳ tháng 9 (giảm ~14%), đơn 3.046 so với 3.575; các món chính đều giảm cỡ như nhau, giảm nhiều nhất buổi sáng. Số liệu không có thời tiết của tháng qua nên không thể kết luận do mưa; dự báo chỉ nói về những ngày tới. Gợi ý xem nguyên nhân khác (lượng khách văn phòng, quán cạnh tranh, giá…) và nói rõ là chưa chắc.",
+  "can_tranh": "Đổ lỗi cho mưa/thời tiết; dùng dự báo tuần tới để giải thích doanh thu tháng đã qua; bịa số ngày mưa tháng 10."
+ },
+ {
+  "id": "K05",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "chi_tien",
+  "q": "troi nong vay tuan nay co nen thue them 1 nguoi ko e",
+  "y_chinh": "Dự báo nóng 35–37°C cả tuần, có thể bán đồ lạnh tốt hơn nhưng chưa có số chứng minh tăng. Quán có 3 nhân viên, đơn tháng này đang giảm (3.046 so với 3.575), giờ đông là 7h–8h sáng. Không nên thuê người chỉ vì dự báo; nếu thấy quá tải thì thử thêm người bán thời gian giờ sáng vài ngày; quán nghỉ Chủ nhật.",
+  "can_tranh": "Khuyên thuê thêm người cố định chỉ vì nắng nóng; bịa số đơn sẽ tăng."
+ },
+ {
+  "id": "K06",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gio_ban",
+  "q": "CN này mưa tối hả, cn là ngày bán đc nhất của quán đó",
+  "y_chinh": "Dự báo dông Chủ nhật 1/11 khoảng 16h–21h (~70%), đè đúng giờ đông 19h–21h (20h là giờ cao nhất) của ngày bán nhiều nhất (CN ~29,5 triệu/tháng). Gợi ý: kéo khách mua sớm trước 16h, đẩy mang về/giao hàng nếu quán có, chuẩn bị nguyên liệu tối vừa phải, xem lại dự báo sáng CN. Thứ Bảy 31/10 dự báo không mưa nên giữ chuẩn bị như thường.",
+  "can_tranh": "Khẳng định chắc chắn dông; khuyên nghỉ tối CN; giảm giá sâu chỉ vì dự báo; nói Thứ Bảy cũng mưa."
+ },
+ {
+  "id": "K07",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "nhap_hang",
+  "q": "Nóng 35 36 độ cả tuần, nhập đào với dâu bao nhiêu thì vừa e",
+  "y_chinh": "Dự báo nắng nóng 35–37°C cả tuần. Tính theo tháng: trà đào cam sả 518 ly, trà dâu tây 442 ly (khoảng 18 và 16 ly/ngày); nóng có thể tăng trà trái cây nhưng nên nhập theo ngày vì trái cây dễ hư, thêm cho Thứ Bảy, Chủ nhật vì cuối tuần đông nhất (~27,6 và ~29,5 triệu/tháng).",
+  "can_tranh": "Nhập dồn cả tuần một lần; bịa phần trăm tăng chắc chắn; bỏ qua chuyện trái cây dễ hư."
+ },
+ {
+  "id": "K08",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "mo_nghi",
+  "q": "sang mai mua co nen mo cua tre hon ko",
+  "y_chinh": "Dự báo mưa to sáng Thứ Năm 29/10 khoảng 6h–12h. Quán mở 9h, mà 9h–11h vốn là giờ ít nhất (9h ~2,2 triệu, 10h ~3,3 triệu trong tháng); giờ chính là tối 19h–21h không bị mưa. Mở trễ một chút là chấp nhận được, nhưng không cần đổi gì cho buổi tối.",
+  "can_tranh": "Khuyên nghỉ cả ngày; nói mưa sáng làm giảm doanh thu buổi tối; khẳng định chắc chắn."
+ },
+ {
+  "id": "K09",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "chi_tien",
+  "q": "Tối t6 với cn mưa, chạy km giảm 20% cho đơn ship được ko",
+  "y_chinh": "Dự báo mưa tối Thứ Sáu 30/10 (17h–21h, ~55–60%) và dông Chủ nhật 1/11 (~70%) đè giờ đông tối. Không nên giảm 20% cả tuần chỉ vì dự báo; nếu làm thì ưu đãi nhỏ, có hạn, chỉ bật khi trời mưa thật, ưu tiên món có lời rõ như trà đào cam sả (giá 32k, vốn 10k). Không có giá vốn trà sữa nên không tính được lời trà sữa.",
+  "can_tranh": "Khuyên chạy giảm 20% đại trà; bịa giá vốn trà sữa; khẳng định chắc chắn mưa."
+ },
+ {
+  "id": "K10",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "bay",
+  "q": "Menu có món nào bán chậm nên bỏ ko em",
+  "y_chinh": "Trả lời theo số bán: chậm là cá viên chiên 26, thạch dừa 34, trà ổi hồng 51; chưa bán được: trà sữa bạc hà, phô mai que, nem chua rán, gà lắc phô mai, trân châu trắng (nhóm ăn vặt có 4 món chưa bán). Gợi ý bỏ/gộp món chưa bán. Câu không liên quan thời tiết.",
+  "can_tranh": "Kéo dự báo nắng nóng vào để giữ hay bỏ món; bịa giá vốn món ăn vặt."
+ },
+ {
+  "id": "K11",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "gio_ban",
+  "q": "Mai mưa to buổi sáng, khách ăn sáng chắc ít, làm sao đây",
+  "y_chinh": "Dự báo mưa to Thứ Năm 29/10 khoảng 6h–12h (~85%), đè giờ ăn sáng 7h (~15,6 triệu/tháng) và đầu trưa 11h (~21,9 triệu). Gợi ý nấu nồi bún bò sáng vừa phải, nhận gọi mang về/giao gần cho chợ, công trình; mưa có thể ngớt sau 12h nên giữ đủ phần cho giờ 12h (giờ đông nhất ~25 triệu). Nói rõ là dự báo.",
+  "can_tranh": "Khuyên nghỉ cả ngày; nấu y như ngày thường không điều chỉnh; khẳng định chắc chắn mưa."
+ },
+ {
+  "id": "K12",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "chuan_bi",
+  "q": "Tuần này nắng nóng quá, quán cần chuẩn bị gì thêm ko",
+  "y_chinh": "Dự báo 35–37°C cả tuần, gần như không mưa. Đồ uống: trà đá 900 ly, nước sâm 210 ly/tháng → chuẩn bị đá và nước sâm nhiều hơn chút; giờ chính 11h–12h trưa khách công trình nên lo đá, chỗ ngồi mát giờ đó; chú ý bảo quản thịt, đồ sống khi nóng.",
+  "can_tranh": "Bịa phần trăm tăng; khuyên nhập món đồ uống đang chậm/chưa bán (nước chanh, nước cam, sữa đậu nành) vì nóng."
+ },
+ {
+  "id": "K13",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "nhap_hang",
+  "q": "chieu toi may hom toi mua, mai nhap thit nuong it lai ha",
+  "y_chinh": "Dự báo mưa chiều tối Thứ Năm 29/10 (15h–20h), Thứ Sáu, Chủ nhật, Thứ Hai; Thứ Bảy, Thứ Ba ít mưa. Ca chiều 16h–20h là ca nhỏ (khoảng 22 triệu/tháng so với trưa 11h–12h ~47 triệu); bún thịt nướng là món bán nhiều nhất buổi tối (210) → chỉ giảm phần thịt nướng cho ca tối những ngày dự báo mưa, ca sáng/trưa giữ nguyên.",
+  "can_tranh": "Giảm nhập cả ngày; giảm bún bò, cơm sườn cho buổi trưa; giảm cả ngày Thứ Bảy/Thứ Ba."
+ },
+ {
+  "id": "K14",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "bay",
+  "q": "Sao thứ 4 nào cũng bán kém z, có phải tại mưa ko",
+  "y_chinh": "Thứ Tư tháng này ~11,5 triệu so với ~20,9 triệu các ngày khác, trong khi tháng 9 Thứ Tư vẫn ~19,1 triệu như ngày thường → mới xảy ra tháng này. Số liệu không có thời tiết quá khứ nên không kết luận được do mưa; hỏi lại xem Thứ Tư có gì khác (chợ, công trình, quán nghỉ một buổi, thiếu người…).",
+  "can_tranh": "Đổ cho mưa; dùng dự báo mưa sáng nay/tuần này để giải thích các Thứ Tư trước."
+ },
+ {
+  "id": "K15",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "chi_tien",
+  "q": "Nóng thế này mua thêm cái tủ mát đựng nước tầm 8tr có đáng ko",
+  "y_chinh": "Dự báo nóng chỉ cho khoảng 1 tuần, không nên chi 8 triệu chỉ vì dự báo. Đồ uống chỉ khoảng 9,1 triệu doanh thu/tháng (trà đá 3.000đ/ly là chính) nên hoàn vốn tủ chậm; chỉ nên mua nếu có lý do lâu dài (đồ hư, thiếu chỗ chứa).",
+  "can_tranh": "Khuyên mua ngay vì nắng nóng; bịa số tăng doanh thu đồ uống."
+ },
+ {
+  "id": "K16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "chuan_bi",
+  "q": "T7 mưa trưa hả e, chuẩn bị sao cho đơn ship",
+  "y_chinh": "Dự báo mưa Thứ Bảy 31/10 khoảng 10h–14h (~70%), đè giờ trưa 11h–12h (11h là giờ đông nhất) của ngày bán nhiều nhất tuần (T7 ~26 triệu/tháng). Khách tại quán có thể giảm, đơn ShopeeFood/GrabFood có thể tăng: chuẩn bị hộp, túi chống nước, nướng sườn than dưới mái che/nướng sẵn trước 10h. Nói rõ là dự báo.",
+  "can_tranh": "Khẳng định chắc chắn mưa; giảm chuẩn bị mạnh cho T7; quên chuyện nướng than ngoài trời."
+ },
+ {
+  "id": "K17",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "mo_nghi",
+  "q": "Mấy hôm tới mưa chiều tối, ca tối có nên nghỉ luôn ko",
+  "y_chinh": "Dự báo mưa chiều tối Thứ Năm 29/10, Thứ Sáu 30/10, Thứ Hai 2/11 (Chủ nhật có dông nhưng quán nghỉ CN, Thứ Bảy và Thứ Ba ít mưa). Ca tối 17h–21h nhỏ (khoảng 19,5 triệu/tháng so với trưa) nhưng mưa thì đơn sàn có thể vẫn có → không nên nghỉ hẳn, chỉ giảm lượng sườn nướng ca tối, nướng than chỗ có mái che.",
+  "can_tranh": "Bàn chuẩn bị hay nghỉ cho Chủ nhật như ngày làm; khuyên nghỉ ca tối cả tuần; nói Thứ Bảy mưa."
+ },
+ {
+  "id": "K18",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "nhap_hang",
+  "q": "nang nong tuan nay nhap them nuoc sam voi tra tac ko e",
+  "y_chinh": "Dự báo 35–37°C cả tuần. Nước sâm bán 211 ly/tháng (giá 12k, vốn 4k), trà tắc 111 ly (12k, vốn 3,5k) → nhập thêm vừa phải, theo ngày; không nhập cho Chủ nhật (quán nghỉ); sữa đậu nành đang bán chậm (47) thì không cần nhập thêm.",
+  "can_tranh": "Khuyên nhập thêm sữa đậu nành; tính hàng cho Chủ nhật; bịa phần trăm tăng."
+ },
+ {
+  "id": "K19",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gio_ban",
+  "q": "sang mai mua to ma sang la gio dong, co nen day ban qua app ko",
+  "y_chinh": "Dự báo mưa to Thứ Năm 29/10 khoảng 6h–12h, đè giờ sáng 7h (~19,5 triệu/tháng) và trưa 11h (~22 triệu). Đẩy đơn qua ShopeeFood/GrabFood là hợp: chuẩn bị hộp, túi, che chỗ nướng than; khách học sinh THCS ăn sáng có thể giảm; mưa có thể ngớt sau 12h. Không cần giảm giá sâu trên sàn chỉ vì dự báo.",
+  "can_tranh": "Khuyên nghỉ buổi sáng; khẳng định chắc chắn mưa; khuyên chạy giảm giá lớn trên sàn."
+ },
+ {
+  "id": "K20",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "chuan_bi",
+  "q": "Thứ 7 này trời sao em, chuẩn bị sườn nhiều k",
+  "y_chinh": "Dự báo Thứ Bảy 31/10 nhiều mây, ít mưa (khả năng ~15%), cao ~33°C. T7 là ngày bán nhiều nhất (~26 triệu/tháng) nên chuẩn bị sườn như T7 thường; mưa chiều tối chỉ dự báo Thứ Năm, Thứ Sáu (và Chủ nhật, quán nghỉ).",
+  "can_tranh": "Nói Thứ Bảy mưa; khuyên giảm chuẩn bị sườn cho T7."
+ }
+]

@@ -1,0 +1,155 @@
+{
+ "note": "Bộ NGƯỜI MỚI giữ ngoài: câu nói khác, không dùng khi sửa bài.",
+ "cases": [
+  {
+   "q": "quán tui hay rớt mạng, lúc đó có tính tiền được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-3-mat-mang-co-ban-duoc-khong"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "không có internet app có dùng được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-3-mat-mang-co-ban-duoc-khong"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "wifi quán bị đứt giữa chừng thì sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-3-mat-mang-co-ban-duoc-khong"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "tui mới đổi iphone, món với đơn cũ còn không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-4-doi-may-moi-doi-dien-thoai-cai-lai-app"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "đổi sang máy khác có phải nhập lại món không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-4-doi-may-moi-doi-dien-thoai-cai-lai-app"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "cài lại app có mất dữ liệu không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-4-doi-may-moi-doi-dien-thoai-cai-lai-app"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "app này miễn phí hay trả tiền",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-5-app-co-mat-phi-khong-gia-bao-nhieu-dun"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "xài thử hết hạn rồi giờ sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-5-app-co-mat-phi-khong-gia-bao-nhieu-dun"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "giá bao nhiêu một tháng",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-5-app-co-mat-phi-khong-gia-bao-nhieu-dun"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "sửa tên cửa hàng trên bill",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-6-doi-sua-ten-quan-ten-cua-hang-in-tren"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "tên quán in sai muốn sửa lại",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-6-doi-sua-ten-quan-ten-cua-hang-in-tren"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "lần đầu dùng app này, nên làm gì trước",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-moi-tai-moi-cai-app-xong-bat-dau-tu-dau",
+    "bat-dau#cac-viec-thuong-lam-1-cai-theo-kieu-quan-quan-moi-nen-lam-gi"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "chỉ tôi cách dùng app từ đầu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-moi-tai-moi-cai-app-xong-bat-dau-tu-dau",
+    "bat-dau#cac-viec-thuong-lam-1-cai-theo-kieu-quan-quan-moi-nen-lam-gi"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "tính tiền cho khách kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-ban-1-don-cho-khach-tu-dau-den-cuoi",
+    "ban-hang#cac-viec-thuong-lam-thanh-toan"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "khách quẹt thẻ thì chọn sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-khach-chuyen-khoan-hoac-tra-the-thi-bam",
+    "ban-hang#cac-viec-thuong-lam-thanh-toan"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "khách ck thì làm thế nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-khach-chuyen-khoan-hoac-tra-the-thi-bam",
+    "ban-hang#cac-viec-thuong-lam-thanh-toan"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "máy in bill nối với app kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-ket-noi-cai-may-in-moi-mua-voi-app-chon"
+   ],
+   "chu_de": "ngoài"
+  },
+  {
+   "q": "mua máy in rồi cài sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-ket-noi-cai-may-in-moi-mua-voi-app-chon",
+    "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+   ],
+   "chu_de": "ngoài"
+  }
+ ]
+}
