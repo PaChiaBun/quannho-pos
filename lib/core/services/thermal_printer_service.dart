@@ -298,6 +298,23 @@ $bytes = [System.IO.File]::ReadAllBytes($env:QN_FILE)
 if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output "QN_OK" } else { Write-Output "QN_FAIL" }
 ''';
 
+  /// Gửi dãy byte thô (ESC/POS) thẳng tới máy in mạng [ip]:[port]. Không ném lỗi.
+  static Future<bool> sendRawNetwork(String ip, Uint8List bytes, {int port = _defaultPort}) async {
+    Socket? socket;
+    try {
+      socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 3));
+      socket.add(bytes);
+      await socket.flush().timeout(const Duration(seconds: 20));
+      await socket.close();
+      return true;
+    } catch (e) {
+      print('[sendRawNetwork Error] $ip: $e');
+      return false;
+    } finally {
+      try { socket?.destroy(); } catch (_) {}
+    }
+  }
+
   /// Gửi dãy byte thô (ESC/POS) vào hàng đợi máy in Windows [printerName] (rỗng = máy in mặc định).
   static Future<bool> sendRawWindows(String printerName, Uint8List bytes) async {
     if (kIsWeb || !Platform.isWindows) return false;

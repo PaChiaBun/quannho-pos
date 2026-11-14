@@ -1930,8 +1930,9 @@ class StationPrinterDispatcher {
         out.add(escposRaster(page.pixels, page.width, page.height, dotsWide: dots));
       }
       out.add(escposFeedAndCut());
-      final ok = await ThermalPrinterService.sendRawWindows(
-          config.name, out.toBytes());
+      final ok = config.type == 'network'
+          ? await ThermalPrinterService.sendRawNetwork(config.name, out.toBytes())
+          : await ThermalPrinterService.sendRawWindows(config.name, out.toBytes());
       writePrintLog('[_printRawRaster] $jobName -> ${config.name}: $ok');
       return ok;
     } catch (e) {
@@ -2015,27 +2016,9 @@ class StationPrinterDispatcher {
         return false;
       }
     } else {
-      writePrintLog('[_dispatchPrint] Checking IP printer ${config.name}:9100');
-      try {
-        final socket = await Socket.connect(
-          config.name,
-          9100,
-          timeout: const Duration(seconds: 3),
-        );
-        writePrintLog('[_dispatchPrint] Connected to IP ${config.name}.');
-        await socket.close();
-        final ok = await Printing.layoutPdf(
-          onLayout: (_) async => bytes,
-          name: jobName,
-          format: finalFormat,
-        );
-        return ok;
-      } catch (e) {
-        writePrintLog(
-          '[_dispatchPrint ERROR] Connection failed: $e. Fallback.',
-        );
-        return false;
-      }
+      // Máy in nhiệt mạng không nhận AirPrint / hộp in hệ thống: vẽ bill thành ảnh rồi gửi
+      // ESC/POS thẳng cổng 9100 như phiếu bếp (LILY 13–14/11: iPhone mở hộp in rồi báo "đã huỷ").
+      return _printRawRaster(bytes, config, jobName, finalFormat);
     }
   }
 }
