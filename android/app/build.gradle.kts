@@ -47,6 +47,13 @@ android {
         }
     }
 
+    // Nén thư viện máy trong APK: tệp tải cập nhật ~125 MB → ~70 MB (bản CH Play không đổi).
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = if (keystorePropertiesFile.exists()) {

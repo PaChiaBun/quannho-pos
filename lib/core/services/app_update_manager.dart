@@ -11,8 +11,9 @@
 // Loại bỏ 100% phụ thuộc GitHub API.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show File, HttpClient, Platform, Process, ProcessStartMode, exit;
+import 'dart:io' show File, FileMode, HttpClient, HttpHeaders, Platform, Process, ProcessStartMode, exit;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -206,6 +207,8 @@ class AppUpdateManager {
         bool isDownloading = false;
         String statusText = '';
         String? errorMessage;
+        bool showNotes = false;
+        bool cancelled = false;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -218,7 +221,8 @@ class AppUpdateManager {
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 420),
                   padding: const EdgeInsets.all(24),
-                  child: Column(
+                  child: SingleChildScrollView(
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -286,29 +290,37 @@ class AppUpdateManager {
                       ),
                       const SizedBox(height: 16),
 
-                      // ── Changelog / Nội dung thay đổi (Tiếng Việt) ──
+                      // ── Nội dung cập nhật: gọn mặc định, bấm mới hiện đủ ──
                       if (versionInfo.changelog.isNotEmpty) ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F8),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Có gì mới:',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF5A5260),
-                                ),
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () => setState(() => showNotes = !showNotes),
+                            icon: Icon(
+                              showNotes ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                              size: 18,
+                            ),
+                            label: Text(showNotes ? 'Thu gọn' : 'Xem nội dung cập nhật'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF5A5260),
+                              textStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(height: 6),
-                              Text(
+                            ),
+                          ),
+                        ),
+                        if (showNotes)
+                          Container(
+                            width: double.infinity,
+                            constraints: const BoxConstraints(maxHeight: 260),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F7F8),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: SingleChildScrollView(
+                              child: Text(
                                 versionInfo.changelog,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
@@ -316,9 +328,8 @@ class AppUpdateManager {
                                   color: const Color(0xFF1A1207),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 14),
                       ],
 
@@ -442,7 +453,9 @@ class AppUpdateManager {
                               try {
                                 await _handleAndroidUpdate(
                                   versionInfo,
+                                  isCancelled: () => cancelled,
                                   onProgress: (p) {
+                                    if (cancelled) return;
                                     setState(() {
                                       downloadProgress = p;
                                       statusText =
@@ -450,9 +463,10 @@ class AppUpdateManager {
                                     });
                                   },
                                   onStatus: (s) {
-                                    setState(() => statusText = s);
+                                    if (!cancelled) setState(() => statusText = s);
                                   },
                                 );
+                                if (cancelled) return;
                                 // Đã mở trình cài của Android: đóng hộp (huỷ cài thì lần mở app sau hỏi lại);
                                 // bắt buộc cập nhật thì hiện lại nút để bấm lại.
                                 if (!isForce) {
@@ -461,9 +475,10 @@ class AppUpdateManager {
                                   setState(() => isDownloading = false);
                                 }
                               } catch (err) {
+                                if (cancelled) return;
                                 setState(() {
                                   isDownloading = false;
-                                  errorMessage = 'Lỗi cập nhật APK: $err';
+                                  errorMessage = '$err'.replaceFirst('Exception: ', '');
                                 });
                               }
                             } else {
@@ -481,7 +496,7 @@ class AppUpdateManager {
                             size: 18,
                           ),
                           label: Text(
-                            isIos ? 'Mở App Store' : 'Cập nhật ngay',
+                            isIos ? 'Mở App Store' : (errorMessage != null ? 'Thử lại' : 'Cập nhật ngay'),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _kNavy,
@@ -511,7 +526,24 @@ class AppUpdateManager {
                           ),
                         ],
                       ],
+                      // Android đang tải: cho huỷ (trước đây không có nút, mạng đứng là kẹt hộp).
+                      if (isDownloading && isAndroid && !isForce)
+                        TextButton(
+                          onPressed: () {
+                            cancelled = true;
+                            Navigator.pop(dialogCtx);
+                          },
+                          child: Text(
+                            'Huỷ tải',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF9E9085),
+                            ),
+                          ),
+                        ),
                     ],
+                    ),
                   ),
                 ),
               ),
@@ -582,20 +614,31 @@ class AppUpdateManager {
     AppVersionInfo versionInfo, {
     required void Function(double progress) onProgress,
     required void Function(String status) onStatus,
+    bool Function()? isCancelled,
   }) async {
     final downloadUrl = versionInfo.downloadUrl.isNotEmpty
         ? versionInfo.downloadUrl
         : defaultAndroidDownloadUrl;
 
     final cacheDir = await getTemporaryDirectory();
-    final apkPath = '${cacheDir.path}/QuanNhoPOS-latest.apk';
+    // Tên theo số bản: tải dở / đã tải đủ thì lần bấm sau tải tiếp, không tải lại ~100 MB.
+    final apkPath = '${cacheDir.path}/QuanNhoPOS-${versionInfo.buildNumber}.apk';
+    try {
+      for (final f in cacheDir.listSync().whereType<File>()) {
+        final name = f.uri.pathSegments.last;
+        if (name.startsWith('QuanNhoPOS-') && name.endsWith('.apk') && f.path != apkPath) f.deleteSync();
+      }
+    } catch (_) {}
 
     onStatus('Đang tải gói cập nhật APK...');
     await downloadFileWithProgress(
       url: downloadUrl,
       targetPath: apkPath,
       onProgress: onProgress,
+      resume: true,
+      isCancelled: isCancelled,
     );
+    if (isCancelled?.call() == true) return;
 
     onStatus('Đang kích hoạt cài đặt...');
     onProgress(1.0);
@@ -623,46 +666,67 @@ class AppUpdateManager {
     }
   }
 
-  /// Tiện ích tải file HTTP dạng Stream có báo cáo tiến trình
+  /// Tiện ích tải file HTTP dạng Stream có báo cáo tiến trình.
+  /// Mạng đứng quá [idleTimeout] thì báo lỗi (trước đây chờ mãi, hộp cập nhật treo).
+  /// [resume]: tệp tải dở còn lại thì xin tải tiếp phần còn thiếu (Range), không tải lại từ đầu.
   static Future<File> downloadFileWithProgress({
     required String url,
     required String targetPath,
     required void Function(double progress) onProgress,
+    bool resume = false,
+    bool Function()? isCancelled,
+    Duration idleTimeout = const Duration(seconds: 30),
   }) async {
-    final client = HttpClient();
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
     try {
-      final request = await client.getUrl(Uri.parse(url));
-      final response = await request.close();
+      final file = File(targetPath);
+      if (!file.parent.existsSync()) {
+        file.parent.createSync(recursive: true);
+      }
+      final have = resume && file.existsSync() ? file.lengthSync() : 0;
 
-      if (response.statusCode != 200) {
+      final request = await client.getUrl(Uri.parse(url)).timeout(idleTimeout);
+      if (have > 0) request.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-');
+      final response = await request.close().timeout(idleTimeout);
+
+      // 416: tệp đã tải đủ từ lần trước.
+      if (have > 0 && response.statusCode == 416) {
+        await response.drain<void>();
+        onProgress(1.0);
+        return file;
+      }
+      final partial = have > 0 && response.statusCode == 206;
+      if (response.statusCode != 200 && !partial) {
         throw Exception(
           'Máy chủ trả về mã HTTP ${response.statusCode} khi tải file.',
         );
       }
 
-      final file = File(targetPath);
-      // Đảm bảo thư mục cha tồn tại
-      if (!file.parent.existsSync()) {
-        file.parent.createSync(recursive: true);
-      }
-
-      final fileSink = file.openWrite();
-      int downloadedBytes = 0;
-      final totalBytes = response.contentLength;
-
-      await for (final chunk in response) {
-        fileSink.add(chunk);
-        downloadedBytes += chunk.length;
-        if (totalBytes > 0) {
-          onProgress(downloadedBytes / totalBytes);
+      final start = partial ? have : 0;
+      final totalBytes = response.contentLength > 0 ? start + response.contentLength : -1;
+      final fileSink = file.openWrite(mode: partial ? FileMode.append : FileMode.write);
+      var downloadedBytes = start;
+      try {
+        await for (final chunk in response.timeout(idleTimeout)) {
+          if (isCancelled?.call() == true) throw Exception('Đã huỷ tải.');
+          fileSink.add(chunk);
+          downloadedBytes += chunk.length;
+          if (totalBytes > 0) onProgress(downloadedBytes / totalBytes);
         }
+      } on TimeoutException {
+        throw Exception('Mạng chập chờn, tải bị đứng. Bấm Thử lại để tải tiếp.');
+      } finally {
+        await fileSink.flush();
+        await fileSink.close();
       }
-
-      await fileSink.flush();
-      await fileSink.close();
+      if (totalBytes > 0 && downloadedBytes < totalBytes) {
+        throw Exception('Tải chưa đủ (mất kết nối). Bấm Thử lại để tải tiếp.');
+      }
       return file;
+    } on TimeoutException {
+      throw Exception('Không kết nối được máy chủ tải bản cập nhật. Kiểm tra mạng rồi thử lại.');
     } finally {
-      client.close();
+      client.close(force: true);
     }
   }
 }
