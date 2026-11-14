@@ -26,6 +26,8 @@ class MainActivity : FlutterActivity() {
                         Intent(Intent.ACTION_VIEW)
                             .setDataAndType(uri, "application/vnd.android.package-archive")
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            // Trình cài chạy ngăn riêng: chung ngăn với app thì cài xong (app bị tắt) bấm "Mở" không lên app (Sunmi 14/11).
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     )
                     result.success(true)
                 } catch (e: Exception) {
