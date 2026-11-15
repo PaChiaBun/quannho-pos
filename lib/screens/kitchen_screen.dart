@@ -286,6 +286,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       final t = tw.ticket;
       if (t.status == 'xong') {
         if (_optimisticDoneTickets.remove(t.id)) changed = true;
+        // Bấm "Bắt đầu" rồi "Xong" liền tay: máy chủ đã xong thì bỏ luôn cờ "đang làm",
+        // kẻo thẻ quay về cột Đang làm tới 15 giây (Bò Đen 14/11).
+        if (_optimisticStartedTickets.remove(t.id)) changed = true;
       } else if (t.status == 'dang_lam') {
         if (_optimisticStartedTickets.remove(t.id)) changed = true;
         if (_optimisticReopenedTickets.remove(t.id)) changed = true;
@@ -808,6 +811,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       HapticFeedback.mediumImpact();
     } else if (action == 'done') {
       setState(() {
+        _optimisticStartedTickets.remove(ticket.id);
+        _optimisticReopenedTickets.remove(ticket.id);
         if (stationFilter == 'all') {
           _optimisticDoneTickets.add(ticket.id);
         } else {
@@ -831,6 +836,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       }
     } else if (action == 'reopen') {
       setState(() {
+        _optimisticDoneTickets.remove(ticket.id);
+        for (final item in tw.items) _optimisticDoneItems.remove(item.id);
         if (stationFilter == 'all') {
           _optimisticReopenedTickets.add(ticket.id);
         } else {
