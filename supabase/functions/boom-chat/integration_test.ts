@@ -144,6 +144,7 @@ Deno.test('boom-chat chạy thật với máy chủ giả', async (t) => {
     env: {
       OPENAI_API_KEY: FAKE_KEY,
       BOOM_AI_ENABLED: 'true',
+      BOOM_MODEL_TU_VAN: 'gpt-test-tu-van', // 15/11: câu tư vấn dùng mô hình riêng
       BOOM_OPENAI_BASE_URL: `http://127.0.0.1:${MOCK}/v1`,
       BOOM_ALLOW_TEST_BASE: 'true',
       SUPABASE_URL: `http://127.0.0.1:${MOCK}`,
@@ -268,6 +269,9 @@ Deno.test('boom-chat chạy thật với máy chủ giả', async (t) => {
       const row = state.logs.find((l) => l.id === j.log_id)!;
       assertEquals(row.answer, CHAIN_LOG_NOTE);
       assert(String(row.model).includes('so_lieu') && String(row.model).includes('chuoi'));
+      assertEquals(state.openaiCalls.at(-1)!.body.model, 'gpt-test-tu-van');
+      assert(String(row.model).includes('+t2'));
+      assert(state.openaiCalls.some((c) => c.body.model !== 'gpt-test-tu-van'), 'câu hướng dẫn vẫn dùng mô hình thường');
       const f = await call(good, {
         store_id: S, question: 'so sánh doanh thu các chi nhánh', mode: 'feedback', rating: 'down',
         answer: 'CN Bí Mật 98.765.432đ', reason: null, tool: 'boom_so_lieu_chuoi_du_phong', chunk_ids: [],

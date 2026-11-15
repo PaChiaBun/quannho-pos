@@ -99,13 +99,17 @@ const QUOTA = {
 // chấm kín +3,3 / 16 so gpt-4o-mini, rẻ hơn, ~3,4 giây — .docs/lo-trinh-boom-co-van.md)
 const DOI_MOI = !/^gpt-(?:3|4)/.test(MODEL);
 const REASONING = env('BOOM_REASONING', 'none');
-// lần 211 (09/11, 72 cặp chấm mù trên 3 bộ kín độc lập: tư vấn 'low' hơn 'none' +0,65 ± 0,45, gọn hơn; chậm thêm ~3 giây, token ra ×1,7):
-// chỉ câu trả lời tư vấn suy nghĩ 'low'; rút ghi nhớ chạy ngầm và chế độ hướng dẫn giữ BOOM_REASONING
-const REASONING_TU_VAN = env('BOOM_REASONING_ADVICE', 'low');
+// lần 214 (09/11; 211 'low' cho mọi câu bị lỗi quá giờ 16 giây → hoàn tác): câu tư vấn gọi SONG SONG none + low; low xong trong
+// BOOM_LOW_CHO_MS (mặc định 9000) thì dùng low (chấm mù +0,65 ± 0,45 so none), không thì dùng none như cũ. 72 câu gọi thẳng: low ≤ 9 giây 55 / 72.
+const LOW_CHO_MS = Number(env('BOOM_LOW_CHO_MS', '9000')) || 0;
 const PRICES = {
   inPerM: num('BOOM_PRICE_IN_PER_M', MODEL === 'gpt-6-luna' ? 0.1 : 0.15),
   outPerM: num('BOOM_PRICE_OUT_PER_M', MODEL === 'gpt-6-luna' ? 0.5 : 0.6),
 };
+// 15/11: câu tư vấn (mode advice) dùng mô hình riêng BOOM_MODEL_TU_VAN; không đặt thì như cũ. gpt-6-sol chấm mù 180 cặp kín
+// +0,76 ± 0,26 / 16 so luna, nhanh hơn, đắt gấp ~17 (.docs/ke-hoach-boom-phan-tang-mo-hinh.md mục 4d). Giá riêng để trần tiền quán tính đúng.
+const MODEL_TV = env('BOOM_MODEL_TU_VAN', MODEL);
+const PRICES_TV = MODEL_TV === MODEL ? PRICES : { inPerM: num('BOOM_PRICE_TV_IN_PER_M', 2), outPerM: num('BOOM_PRICE_TV_OUT_PER_M', 10) };
 const UPSTREAM_TIMEOUT_MS = 12_000; // app chờ 20 giây — máy chủ bỏ trước để không trả tiền cho câu không ai thấy
 const SB_URL = env('SUPABASE_URL', 'http://kong:8000');
 const SERVICE_KEY = env('SUPABASE_SERVICE_ROLE_KEY');
@@ -760,10 +764,8 @@ Deno.serve(async (req) => {
   const memory = mem.turns;
   if (memory.length) kind += `+nho${mem.hasData && !kind.includes('so_lieu') ? '+so_lieu' : ''}`;
   const t0 = Date.now();
-  // lần 211: câu tư vấn suy nghĩ 'low' (~7 giây) → chờ 16 giây (app chờ 20 giây); câu khác giữ 12 giây
-  const choToiDa = r.mode === 'advice' ? 16_000 : UPSTREAM_TIMEOUT_MS;
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), choToiDa);
+  const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
   // Thời tiết cho câu tư vấn có liên quan, và câu hướng dẫn có chữ rõ về thời tiết (09/11); lỗi thì bỏ, không chậm quá 4 giây
   let thoiTiet = '';
   if (THOI_TIET && ((r.mode === 'advice' && HOI_THOI_TIET.test(r.question)) || (r.mode === 'answer' && HOI_THOI_TIET_RO.test(r.question)))) {
@@ -807,14 +809,13 @@ Deno.serve(async (req) => {
     : '';
   if (soTay) kind += '+so_tay';
   const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
-  // lần viết lại / hỏi lại dùng mức thường (nhanh): chỉ lần trả lời đầu của câu tư vấn suy nghĩ 'low'
-  const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = r.mode === 'advice' ? REASONING_TU_VAN : REASONING) =>
+  const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = REASONING) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
       signal,
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: MODEL,
+        model: r.mode === 'advice' ? MODEL_TV : MODEL,
         // hướng dẫn 450 → 650: chép đủ bước (26/10)
         ...((n: number) => DOI_MOI ? { max_completion_tokens: n * 2, reasoning_effort: nghi } : { temperature: 0.2, max_tokens: n })(
           r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650,
@@ -823,7 +824,24 @@ Deno.serve(async (req) => {
       }),
     });
   try {
-    const up = await callGpt(messages);
+    // lần 214: câu tư vấn chạy kèm một lượt 'low', chỉ chờ tới LOW_CHO_MS kể từ lúc gửi; lượt none vẫn chạy như cũ
+    const songSong = r.mode === 'advice' && DOI_MOI && LOW_CHO_MS > 0 && REASONING !== 'low' && MODEL_TV === MODEL; // có mô hình tư vấn riêng thì không gọi song song
+    if (r.mode === 'advice' && MODEL_TV !== MODEL) kind += '+t2';
+    const acLow = new AbortController();
+    const hetLow = setTimeout(() => acLow.abort(), LOW_CHO_MS);
+    const pLow = songSong
+      ? callGpt(messages, acLow.signal, 'low').then(async (x) => (x.ok ? await x.json() : (await x.body?.cancel(), null))).catch(() => null).finally(() => clearTimeout(hetLow))
+      : (clearTimeout(hetLow), Promise.resolve(null));
+    let up = await callGpt(messages);
+    let phuIn = 0, phuOut = 0, tuLow = false;
+    const dLow = await pLow;
+    if (dLow && plainAnswer(String(dLow?.choices?.[0]?.message?.content ?? '')).trim()) {
+      // lượt none đã xong: đọc token để tính đủ chi phí rồi bỏ câu trả lời của nó
+      if (up.ok) { try { const d0 = await up.json(); phuIn = Number(d0?.usage?.prompt_tokens) || 0; phuOut = Number(d0?.usage?.completion_tokens) || 0; } catch { /* bỏ */ } } else await up.body?.cancel();
+      up = new Response(JSON.stringify(dLow), { status: 200 });
+      tuLow = true;
+      kind += '+low';
+    }
     let latency = Date.now() - t0;
     if (!up.ok) {
       await up.body?.cancel();
@@ -835,10 +853,11 @@ Deno.serve(async (req) => {
     let answer = clipAnswer(plainAnswer(String(data?.choices?.[0]?.message?.content ?? '')));
     let inTok = Number(data?.usage?.prompt_tokens) || 0;
     let outTok = Number(data?.usage?.completion_tokens) || 0;
+    inTok += phuIn; outTok += phuOut;
     // GPT tự từ chối câu tư vấn mà bộ lọc luật không chặn (vd "đàm phán đại lý", "chủ nhà tăng tiền thuê") → hỏi lại
     // MỘT lần kèm nhắc phạm vi; câu thật sự ngoài phạm vi thì GPT vẫn giữ câu từ chối (chấm cố vấn 24/10).
     // Chỉ câu có từ khoá kinh doanh, còn ≥ 4 giây; lần hỏi lại có hẹn giờ riêng, lỗi thì giữ câu trả lời + token lần 1.
-    const left = choToiDa - (Date.now() - t0);
+    const left = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     if (isScopeRefusal(answer) && looksBusiness(r.question) && left >= 4000) {
       const ac2 = new AbortController();
       const timer2 = setTimeout(() => ac2.abort(), Math.min(left, 8000));
@@ -847,7 +866,7 @@ Deno.serve(async (req) => {
           ...messages.slice(0, 1),
           { role: 'system', content: RETRY_SCOPE_NOTE },
           ...messages.slice(1),
-        ], ac2.signal, REASONING);
+        ], ac2.signal);
         if (again.ok) {
           const d2 = await again.json();
           const a2 = clipAnswer(plainAnswer(String(d2?.choices?.[0]?.message?.content ?? '')));
@@ -867,16 +886,18 @@ Deno.serve(async (req) => {
     }
     // Tự kiểm (lần 41–42): số không có trong khối / không tính ra được, khuyên giảm giá món giá vốn cao, lộ tên dòng nội bộ
     // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
-    const left2 = choToiDa - (Date.now() - t0);
+    const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     const coSo = r.mode === 'advice' && !!(r.facts || r.modules || r.chain);
     // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
     const refKiem = coSo ? `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${thoiTiet}\n${boNho}\n${huongDan.map((c) => c.text).join('\n')}` : '';
     const bad = coSo && left2 >= 4000 ? kiemTraLoi(answer, refKiem) : [];
-    if (bad.length) {
+    // lần 213 (59 cặp ghép: câu low GỐC hơn câu đã viết lại +0,31 ± 0,32): câu lấy từ lượt low thì không viết lại, chỉ ghi dấu
+    if (bad.length && tuLow) kind += '+kiem_bo';
+    if (bad.length && !tuLow) {
       const ac3 = new AbortController();
       const timer3 = setTimeout(() => ac3.abort(), Math.min(left2, 8000));
       try {
-        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], ac3.signal, REASONING);
+        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], ac3.signal);
         if (again.ok) {
           const d3 = await again.json();
           const a3 = clipAnswer(plainAnswer(String(d3?.choices?.[0]?.message?.content ?? '')));
@@ -901,7 +922,7 @@ Deno.serve(async (req) => {
       answer = `Dạ ${goiNguoiHoi(who)} ơi, Bé Boom chưa thấy hướng dẫn cho việc này trong app ạ. ${goiNguoiHoi(who)} xem thử các mục hướng dẫn gần nhất hoặc gọi Hotline 0927 55 8888 nhé.`;
       kind += '+doan_nut';
     }
-    const cost = costUsd(inTok, outTok, PRICES);
+    const cost = costUsd(inTok, outTok, r.mode === 'advice' ? PRICES_TV : PRICES);
     if (!answer) {
       await finish(logId, { model: kind, status: 'error', latency_ms: latency, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, answer: 'EMPTY' });
       return json(502, { error: 'AI_EMPTY_ANSWER' });
