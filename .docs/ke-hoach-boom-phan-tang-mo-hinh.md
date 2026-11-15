@@ -1,4 +1,7 @@
-# Kế hoạch: phân tầng mô hình cho Boom theo loại câu hỏi (15/11/2026, NHÁP — chưa làm gì)
+# Kế hoạch: phân tầng mô hình cho Boom theo loại câu hỏi (15/11/2026)
+
+> Trạng thái: đã đo bậc giữa (mục 4d); **lần 249 ĐÃ ÁP 15/11 13:32 — mọi câu tư vấn dùng gpt-6-sol** (Chủ Quán chọn chuyển hết,
+> không chia tầng theo loại câu vì Sol hơn đều). Phần chia tầng chi tiết để dành khi lượng dùng tăng.
 
 Mục tiêu: câu nào mã đã lo được thì dùng mô hình rẻ (hoặc không gọi mô hình), chỉ câu phải lập luận mới dùng mô hình đắt.
 Đo bằng hai con số cùng lúc: **điểm chấm mù** và **tiền mỗi câu**. Không chốt danh sách bằng cảm tính.
