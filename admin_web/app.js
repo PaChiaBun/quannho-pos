@@ -432,7 +432,18 @@ function niceCeiling(maxVal) {
   return Math.ceil(niceStep * 4);
 }
 
+// Biểu đồ vẽ theo bề rộng thật → khung đổi bề rộng (xoay máy, kéo cửa sổ, mở tab đang ẩn) thì vẽ lại
+const chartResize = 'ResizeObserver' in window ? new ResizeObserver((entries) => {
+  for (const e of entries) {
+    const c = e.target, w = Math.round(e.contentRect.width);
+    if (c._chartArgs && c._chartW && w && Math.abs(Math.max(320, w) - c._chartW) > 24) renderChart(c, ...c._chartArgs);
+  }
+}) : null;
+
 function renderChart(container, metaBox, points, opts) {
+  container._chartArgs = [metaBox, points, opts];
+  container._chartW = 0;
+  if (chartResize) chartResize.observe(container);
   clear(container);
   clear(metaBox);
   metaBox.classList.remove('active');
@@ -453,7 +464,9 @@ function renderChart(container, metaBox, points, opts) {
     return;
   }
 
-  const W = 640, H = 220;
+  // Vẽ theo bề rộng thật của khung: chữ trục giữ đúng cỡ, cao cố định, không bị phóng/teo theo màn hình
+  const W = Math.max(320, Math.round(container.clientWidth) || 640), H = 220;
+  container._chartW = W;
   const padR = 16, padT = 30, padB = 28;
   const plotH = H - padT - padB;
   // Một ngày đột biến (vd ngày ra mắt) gấp > 3 lần ngày cao thứ nhì → cắt trục theo ngày thứ nhì, cột đột biến ghi số
@@ -480,13 +493,14 @@ function renderChart(container, metaBox, points, opts) {
   const count = points.length;
   const xIndices = [];
   if (count <= 14) {
-    for (let i = 0; i < count; i += 2) xIndices.push(i);
+    const every = plotW / count < 26 ? 3 : 2;  // khung hẹp (điện thoại) thì thưa nhãn hơn
+    for (let i = 0; i < count; i += every) xIndices.push(i);
     if (xIndices[xIndices.length - 1] !== count - 1) {
-      if (count - 1 - xIndices[xIndices.length - 1] < 2) xIndices.pop();
+      if (count - 1 - xIndices[xIndices.length - 1] < every) xIndices.pop();
       xIndices.push(count - 1);
     }
   } else {
-    const steps = 5;
+    const steps = Math.max(2, Math.min(5, Math.floor(plotW / 80)));  // ~80px mỗi nhãn để không chồng chữ
     for (let k = 0; k <= steps; k++) {
       xIndices.push(Math.round((k * (count - 1)) / steps));
     }

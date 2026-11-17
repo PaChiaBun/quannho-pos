@@ -838,7 +838,6 @@ textarea { width: 100%; min-height: 84px; resize: vertical; line-height: 1.5; }
 .chart svg {
   width: 100%;
   height: auto;
-  aspect-ratio: 640 / 220;
   display: block;
   touch-action: pan-y;
 }
@@ -1693,37 +1692,35 @@ pre.prompt {
 /* Việc cần làm: một dải gọn, chỉ hiện việc còn số */
 .ov-todo-list {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
 }
 .ov-todo-item {
   font: inherit;
   color: inherit;
   background: var(--card);
-  border: 0;
-  padding: 12px 16px;
-  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-height: 76px;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
   cursor: pointer;
   text-align: left;
   min-width: 0;
+  transition: border-color 0.15s, background 0.15s;
 }
-.ov-todo-item:hover { background: var(--surface-hover); }
+.ov-todo-item:hover { background: var(--surface-hover); border-color: var(--line-strong); }
 .ov-todo-item:focus-visible { outline-offset: -3px; }
 #ov-drop-panel { scroll-margin-top: 120px; }
-.ov-todo-v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ov-todo-v { font-size: 22px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .ov-todo-item.warn .ov-todo-v { color: var(--warn); }
 .ov-todo-item.bad .ov-todo-v { color: var(--bad); }
-.ov-todo-k { font-size: 13px; color: var(--muted); }
-.ov-todo-none { padding: 14px 18px; font-size: 14px; background: var(--card); }
-.ov-todo-list > .skel, .ov-todo-list > .error-state { margin: 0; border: 0; border-radius: 0; background-color: var(--card); }
+.ov-todo-k { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.ov-todo-none { grid-column: 1 / -1; padding: 14px 18px; font-size: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.ov-todo-list > .skel, .ov-todo-list > .error-state { grid-column: 1 / -1; margin: 0; }
 
 /* Hàng chỉ số chính: 4 ô chung một khung, ngăn bằng đường kẻ */
 .ov-panel.ov-kpis {
@@ -1732,11 +1729,11 @@ pre.prompt {
   padding: 0;
 }
 .ov-kpi {
-  padding: 18px 20px 14px;
+  padding: 18px 20px 16px;
   border-left: 1px solid var(--line);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  align-content: start;
   min-width: 0;
 }
 .ov-kpi:first-child { border-left: 0; }
@@ -1749,17 +1746,17 @@ pre.prompt {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-.ov-kpi-foot { min-height: 18px; }
+.ov-kpi-foot { min-height: 18px; line-height: 1.45; }
 .ov-delta { font-weight: 600; font-variant-numeric: tabular-nums; }
 .ov-delta.up { color: var(--good); }
 .ov-delta.down { color: var(--bad); }
-.ov-spark { width: 100%; height: 32px; display: block; margin-top: 8px; }
+.ov-spark { width: 100%; height: 36px; display: block; margin-top: auto; padding-top: 12px; box-sizing: content-box; flex: none; }
 .ov-spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .ov-spark-area { fill: var(--accent-soft); stroke: none; }
 
 /* Bố cục 2 cột */
 .ov-row { display: grid; gap: 20px; min-width: 0; }
-.ov-row-main-side { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.ov-row-main-side { grid-template-columns: minmax(0, 1fr); }
 .ov-row-half { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* Chọn Doanh thu / Số đơn */
@@ -1806,7 +1803,7 @@ pre.prompt {
 .ov-chart .skel { margin: 0; }
 
 /* Quán bán nhiều nhất */
-.ov-top { list-style: none; margin: 0; padding: 0; display: grid; }
+.ov-top { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); column-gap: 32px; }
 .ov-top-row {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);
@@ -1814,7 +1811,6 @@ pre.prompt {
   padding: 12px 0;
   border-top: 1px solid var(--line);
 }
-.ov-top-row:first-child { border-top: 0; padding-top: 2px; }
 .ov-rank { font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 22px; }
 .ov-top-main { display: grid; gap: 6px; min-width: 0; }
 .ov-top-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-width: 0; }
@@ -1932,11 +1928,8 @@ pre.prompt {
   .ov-panel.ov-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ov-kpi:nth-child(3) { border-left: 0; }
   .ov-kpi:nth-child(n + 3) { border-top: 1px solid var(--line); }
-  .ov-row-main-side { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
-  .ov-todo-list { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ov-todo-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .ov-row-half { grid-template-columns: minmax(0, 1fr); }
   .ov-funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }
   .ov-step:nth-child(3) { border-left: 0; padding-left: 0; }
@@ -1948,7 +1941,8 @@ pre.prompt {
   .ov-panel { padding: 16px; }
   .ov-kpi { padding: 14px 14px 12px; }
   .ov-kpi-val { font-size: 24px; }
-  .ov-todo-item { padding: 10px 14px; }
+  .ov-todo-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ov-todo-item { padding: 10px 12px; min-height: 68px; }
   .ov-todo-v { font-size: 18px; }
   .ov-step { padding: 0 12px; }
   .ov-step-val > span:first-child { font-size: 22px; }
@@ -1981,7 +1975,6 @@ pre.prompt {
   .ov-seg-btn, .ov-fold-sum { min-height: 44px; }
   .ov-list-row .btn, .ov-step-link, .ov-link { min-height: 44px; }
   .ov-rank { line-height: 44px; }
-  .ov-todo-item { min-height: 48px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ov-chart .bar { transition: none; }
