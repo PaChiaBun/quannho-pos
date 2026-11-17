@@ -528,6 +528,9 @@ Deno.test('Cố vấn: số tính sẵn (nguyên nhân đổi doanh thu, giờ, 
   };
   const t = formatFacts(parseFacts(base)!);
   assert(t.includes('→ GIẢM 18,3%'), t);
+  // 17/11: nhóm nguyên liệu không đếm vào menu / món chưa bán
+  const nl = formatFacts(parseFacts({ ...base, groups: [...base.groups, { name: 'Nguyên liệu', revenue: 0, qty: 0, items: 13, unsold: 13, top: [], slow: [], unsold_names: [] }] })!);
+  assert(t.includes('Menu đang bán 15 món, 3 món chưa bán phần nào trong kỳ') && nl.includes('Menu đang bán 15 món, 3 món chưa bán phần nào trong kỳ'), nl);
   assert(t.includes('số đơn -15,2%, giá trị trung bình mỗi đơn -3,7% → doanh thu đổi chủ yếu do SỐ ĐƠN'), t);
   assert(t.includes('KHÔNG có số liệu theo giờ'));
   assert(t.includes('KHÔNG có số liệu theo thứ') && t.includes('Chưa có giá vốn món'));

@@ -1849,7 +1849,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     }
   }
   if (f.groups?.length && f.orders > 0) {
-    const items = f.groups.reduce((s, g) => s + g.items, 0), unsold = f.groups.reduce((s, g) => s + g.unsold, 0);
+    // 17/11: nhóm nguyên liệu không phải món bán → không đếm vào menu / món chưa bán (Bò Đen: "13 món chưa bán" toàn nguyên liệu, Boom không có tên để kể)
+    const gb = f.groups.filter((g) => !NHOM_NL.test(g.name));
+    const items = gb.reduce((s, g) => s + g.items, 0), unsold = gb.reduce((s, g) => s + g.unsold, 0);
     lines.push(
       `Menu đang bán ${items} món${shortPeriod ? '' : `, ${unsold} món chưa bán phần nào trong kỳ`}. Bình quân mỗi đơn: ` +
         f.groups.map((g) => `${g.name} ${String(Math.round((g.qty / f.orders) * 100) / 100).replace('.', ',')} phần`).join('; ') + '.',
