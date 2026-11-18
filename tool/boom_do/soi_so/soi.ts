@@ -81,6 +81,9 @@ const CAU: Cau[] = [
   { q: 'mỗi ngày quán bán được bao nhiêu', mongKy: MAC_DINH },
   { q: 'món nào nên bỏ khỏi menu', mongKy: MAC_DINH },
   { q: 'tháng này quán lời bao nhiêu', mongKy: /^Tháng này/ },
+  { q: 'buổi sáng vắng quá, làm sao kéo khách', mongKy: MAC_DINH, buoi: ['sáng', 5, 11] },
+  { q: 'buổi chiều vắng quá, làm sao kéo khách', mongKy: MAC_DINH, buoi: ['chiều', 14, 17] },
+  { q: 'buổi tối vắng quá, làm sao kéo khách', mongKy: MAC_DINH, buoi: ['tối', 17, 24] },
 ];
 const boDau = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 /** Hai câu tăng giá cho món bán chạy nhất, theo MENU đủ của quán (không chỉ các món Boom nhìn thấy):

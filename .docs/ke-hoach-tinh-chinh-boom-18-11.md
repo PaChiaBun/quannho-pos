@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10 + việc tồn) chưa làm.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ SỬA trong mã 18/11, CHƯA áp production (chờ Chủ Quán duyệt lần 256). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -144,3 +144,20 @@ Làm theo thứ tự: thêm phép kiểm trước (K11 ngày nghỉ của quán 
 - Đã đọc lại bằng mắt khối số thật sau khi sửa của quán A (dòng ca ngừng bán: các giờ chiều tối chiếm khoảng một phần ba doanh thu kỳ trước và khoảng 70% mức giảm; riêng các giờ còn bán giảm khoảng 19%), quán D (chỉ tính từ ngày đầu có đơn, không còn "nghỉ Thứ …") và quán C (không còn % nghìn lần).
 - Chưa làm: chưa áp production; chưa hỏi mô hình câu nào trên bản này; B4, B6, B8, B10 còn nguyên.
 - **Đã áp 18/11 16:48 (lần 255):** Chủ Quán duyệt "Áp lên"; `KHO=1` trước, máy chủ đúng bản 254; chép `logic.ts` + `ban_hang.ts`; hàm chạy lại bình thường. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l255_ap_dung.sh 20261118_164850`.
+
+### 18/11 — Giai đoạn 2, lô 2: đã sửa trong mã (chưa áp)
+
+Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bất thường" khi quá ít số liệu, K18 combo ghép món vốn là combo, K19 hồ sơ ghi giờ bán gồm giờ lẻ tẻ, K20 hỏi riêng một buổi không phải giờ bán; thêm 3 câu hỏi mẫu theo buổi) → chạy trên 7 quán với mã lần 255: **21 cảnh báo khác nhau** → sửa → **0 cảnh báo**.
+
+| Lỗi | Sửa ở đâu | Cách sửa |
+|---|---|---|
+| B4 | `loaiQuan` (mới), `shopProfile` | Chỉ gọi "quán ăn" khi tên nhóm hoặc tên món bán chạy có chữ đồ ăn (từ 30% doanh thu); không thấy đồ ăn lẫn đồ uống thì ghi rõ có thể là tiệm dịch vụ, dặn không khuyên kiểu quán ăn; kỳ 0đ không suy loại hình |
+| B6 | `docBanHang` gửi thêm `ten_mon` (tên mọi món, không in vào khối số), `kichBanGia` | Tên gọi tắt ứng từ 2 món trong CẢ menu → dòng "TÊN MÓN CHƯA RÕ", dặn hỏi lại chủ quán thay vì tự chọn một món |
+| B8 | dòng "Combo tính sẵn" | Không ghép món có tên bắt đầu bằng "combo"; tiệm không phải ăn uống thì không gợi ý combo món |
+| B10 | dòng "Bất thường (tính sẵn)" | Một thứ chỉ bị gọi yếu bất thường khi có từ 2 ngày bán và quán từ 10 đơn mỗi ngày mở bán |
+| Giờ lẻ tẻ còn sót | `khungBan`, nhánh hỏi riêng một buổi | Hồ sơ "có bán a–b" dùng chung giờ bán chính với dòng theo giờ; hỏi về một buổi không có giờ bán chính thì ra dòng "Buổi … KHÔNG phải giờ bán của quán", không ra việc ưu đãi cho buổi đó |
+| Kỳ không có đơn nào | `formatFacts` | Không liệt kê cả menu là "chưa bán" (lộ ra khi soi câu "tháng trước" của quán mới mở tháng này) |
+
+- Test hàm 232 qua (thêm 1 test, sửa 1 test cũ có mẫu 10 đơn cả tháng cho hợp luật B10). Test bộ kiểm 2 qua.
+- Đã đọc lại bằng mắt trên số thật: quán T (câu "tăng giá trà sữa" ra dòng hỏi lại, hồ sơ ghi 18h–24h), quán D (hồ sơ không còn "quán ăn", không có combo), quán B (không còn combo vô lý), quán A (hỏi buổi tối ra dòng "không phải giờ bán").
+- Chưa làm: chưa áp production; chưa hỏi mô hình trên bản này; ba việc tồn ghi ở dòng Trạng thái.

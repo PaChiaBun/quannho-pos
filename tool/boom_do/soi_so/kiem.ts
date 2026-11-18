@@ -14,7 +14,7 @@ export type Thuc = {
   nhom: { ten: string; mon: number; chuaBan: number }[]; // mỗi nhóm: số món, số món 0 phần
 };
 /** `trungTen`: số món trong MENU cùng mang tên gọi tắt trong câu (≥ 2 thì khối số không được tự chọn một món). */
-export type Cau = { q: string; mongKy?: RegExp; soSanh?: boolean; canGia?: boolean; trungTen?: number };
+export type Cau = { q: string; mongKy?: RegExp; soSanh?: boolean; canGia?: boolean; trungTen?: number; buoi?: [string, number, number] };
 
 const so = (x: string) => +x.replace(/\./g, '');
 const THU = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -124,5 +124,32 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
   for (const g of t.nhom) if (g.mon > 0 && g.chuaBan === g.mon && /nguy[eê]n li[eệ]u|v[aậ]t t[uư]|bao b[iì]/i.test(g.ten) && cacNhom.split(', ').map((x) => x.trim()).includes(g.ten)) loi.push(`K14 nhóm không bán: "${g.ten}" nằm trong "Các nhóm quán đang bán"`);
   // K15: kỳ dưới 7 ngày có đơn mà vẫn kết luận món chưa bán / khuyên ẩn món
   if (nNgay > 0 && nNgay < 7 && /món chưa bán phần nào trong kỳ|cả kỳ chưa bán phần nào|ẨN khỏi menu/.test(khoi)) loi.push(`K15 kỳ ngắn: mới ${nNgay} ngày có đơn mà khối số vẫn nêu món chưa bán / khuyên ẩn món`);
+
+  // ---- lô 2 giai đoạn 2 ----
+  const AN_UONG = /[aă]n|u[oố]ng|c[oơ]m|b[uú]n|ph[oở]|m[iì]\b|mi[eế]n|h[uủ] ti[eế]u|b[aá]nh|x[oô]i|ch[aá]o|l[aẩ]u|n[uư][oớ]ng|ch[eè]|kem|dimsum|v[aặ]t|m[oó]n|tr[aà]|c[aà] ?ph[eê]|cafe|n[uư][oớ]c|sinh t[oố]|s[uữ]a|s[aâ]m|topping|combo|special/i;
+  // K16: hồ sơ gọi là quán ăn / quán đồ uống khi không nhóm nào của quán có chữ đồ ăn, đồ uống (tiệm dịch vụ)
+  const loai = /HỒ SƠ QUÁN[^\n]*?: (quán ăn|quán đồ uống|bán cả đồ ăn và đồ uống)/.exec(khoi)?.[1];
+  if (loai && t.nhom.length && !t.nhom.some((g) => AN_UONG.test(g.ten))) loi.push(`K16 loại quán: hồ sơ ghi "${loai}" nhưng không nhóm nào là đồ ăn / đồ uống (${t.nhom.slice(0, 3).map((g) => g.ten).join(', ')}…)`);
+  // K17: gọi một thứ là yếu bất thường khi thứ đó chưa đủ 2 ngày có đơn, hoặc quán dưới 10 đơn mỗi ngày
+  if (bt) {
+    for (const m of bt.matchAll(/(Thứ [2-7]|Chủ nhật) trung bình/g)) {
+      const n = tronNgay.filter((x) => thuCua(x.d) === THU.indexOf(m[1])).length, moiNgay = nNgay ? t.orders / nNgay : 0;
+      if (n < 2 || moiNgay < 10) loi.push(`K17 ít số liệu: ${m[1]} bị gọi yếu bất thường từ ${n} ngày có đơn, quán khoảng ${Math.round(moiNgay)} đơn mỗi ngày`);
+    }
+  }
+  // K18: combo tính sẵn ghép một món vốn đã là combo
+  const cb2 = /Combo tính sẵn[^:\n]*: ([^\n]*)/.exec(khoi)?.[1] ?? '';
+  for (const m of cb2.matchAll(/(?:^|; |\+ )(combo [^+:;]*)/gi)) loi.push(`K18 combo: gợi ý combo ghép món vốn đã là combo ("${m[1].trim()}")`);
+  // K19: hồ sơ ghi "có bán a–b" mà giờ mở đầu / kết thúc chỉ là đơn lẻ dưới 1% doanh thu
+  const hs = /HỒ SƠ QUÁN[^\n]*?có (?:bán|đơn lúc) ((?:\d{1,2}h–\d{1,2}h(?:, )?)+)/.exec(khoi)?.[1] ?? '';
+  if (tongGio > 0) for (const m of hs.matchAll(/(\d{1,2})h–(\d{1,2})h/g)) for (const h of [+m[1], +m[2] - 1]) {
+    const p = (t.by_hour[h] ?? 0) / tongGio;
+    if (p < 0.01) loi.push(`K19 giờ bán: hồ sơ ghi có bán ${m[0]}, nhưng ${h}h chỉ chiếm ${(p * 100).toFixed(1).replace('.', ',')}% doanh thu`);
+  }
+  // K20: hỏi riêng một buổi mà mọi giờ của buổi đó chỉ là đơn lẻ → không được ra việc ưu đãi cho buổi đó
+  if (cau.buoi && tongGio > 0) {
+    const [ten, a, b] = cau.buoi, coGio = t.by_hour.slice(a, b).some((v) => v / tongGio >= 0.01);
+    if (!coGio && new RegExp(`(?:Việc nên nhắm cho|Quyết định đóng) buổi ${ten}`).test(khoi)) loi.push(`K20 buổi: buổi ${ten} (${a}–${b}h) không có giờ bán nào từ 1% doanh thu mà khối số vẫn ra việc cho buổi này`);
+  }
   return loi;
 }

@@ -224,7 +224,9 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
       }
     }
     const truoc = nenNho ? { ...prev, revenue: 0, orders: 0, items: [], by_hour: prev.by_hour.map(() => 0), by_weekday: prev.by_weekday.map(() => 0) } : prev;
-    return { ...dungFacts(ky, cur, truoc, mons), ...soBaoCao(bao, ngay, huy), ...(zero ? { prev_zero: zero } : {}) };
+    // tên mọi món bán (không in vào khối số): để biết tên gọi tắt trong câu hỏi ứng mấy món của CẢ menu (lô 2 giai đoạn 2, B6)
+    const tenMon = mons.filter((p) => p.is_raw_material !== true).map((p) => clip(String(p.name ?? ''), 60)).filter(Boolean).slice(0, 400);
+    return { ...dungFacts(ky, cur, truoc, mons), ...soBaoCao(bao, ngay, huy), ...(zero ? { prev_zero: zero } : {}), ten_mon: tenMon };
   } catch {
     return null;
   }

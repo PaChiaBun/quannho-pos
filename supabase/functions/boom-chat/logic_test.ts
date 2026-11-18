@@ -820,7 +820,10 @@ Deno.test('Giai đoạn 2: tuần chưa trọn / hôm nay dở không gọi là 
   const t = formatFacts(f, NOW);
   assert(t.includes('Chủ nhật: quán NGHỈ'), t);
   assert(t.includes('Thứ 5 250đ (4 ngày'), t);
-  assert(t.includes('Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường'), t);
+  // lô 2 giai đoạn 2 (B10): quán dưới 10 đơn mỗi ngày thì không gọi thứ nào là "bất thường" (mẫu này chỉ 10 đơn cả tháng)
+  assert(!t.includes('Bất thường (tính sẵn)'), t);
+  const du = formatFacts({ ...f, orders: 300 }, NOW);
+  assert(du.includes('Bất thường (tính sẵn)') && du.includes('Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường'), du);
   // lần 83: hỏi kế hoạch cho một thứ yếu → việc riêng thứ đó (bớt nhập / người, ưu đãi chỉ ngày đó, tránh món giá vốn cao); thứ bình thường thì không
   const t7 = formatFacts(f, NOW, 'kế hoạch cho thứ 7 để bớt ế');
   assert(t7.includes('Việc nên nhắm cho Thứ 7 (tính sẵn): Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường') && t7.includes('KHÔNG dùng món giá vốn cao (Bạc xỉu)'), t7);
@@ -2745,4 +2748,45 @@ Deno.test('Lô 1 giai đoạn 2: nhóm nguyên liệu không bán, kỳ dưới 
   assert(!/kéo khách lại đúng (?:19|20|21)h/.test(tc) && tc.includes('kéo khách lại đúng 7h và 8h'), tc.split('\n').filter((x) => x.includes('kéo khách')).join('|'));
   // giờ kỳ trước chỉ bán lặt vặt (dưới 5%) mà nay 0đ thì không gọi là ca ngừng bán
   assertEquals(L.caNgung(parseFacts({ ...ca, prev_by_hour: gio({ 7: 60000000, 8: 60000000, 9: 55000000, 22: 5000000 }) })!), null);
+});
+
+Deno.test('Lô 2 giai đoạn 2: loại hình quán, combo, giờ lẻ tẻ còn sót, tên gọi tắt theo menu đủ', () => {
+  const it = (name: string, qty: number, price: number) => ({ name, qty, price, revenue: qty * price });
+  const now = new Date('2026-11-18T15:00:00+07:00');
+  const gio = (m: Record<number, number>) => Array.from({ length: 24 }, (_, h) => m[h] ?? 0);
+  const nhom = (name: string, top: ReturnType<typeof it>[]) => ({ name, revenue: top.reduce((a, t) => a + t.revenue, 0), qty: top.reduce((a, t) => a + t.qty, 0), items: top.length + 2, unsold: 0, unsold_names: [], slow: [], top });
+  const goc = { period: 'Tháng này (1/11–18/11)', revenue: 60000000, orders: 600, top: [], slow: [] };
+
+  // B4: tiệm dịch vụ không còn bị ghi "quán ăn"; quán ăn, quán nước thật thì vẫn như cũ
+  const dv = parseFacts({ ...goc, groups: [nhom('Chăm sóc da', [it('Gói da mặt cơ bản', 200, 150000), it('Combo da mặt và cổ', 30, 250000)]), nhom('Liệu trình', [it('Liệu trình 10 buổi', 20, 900000)])] })!;
+  assertEquals(L.loaiQuan(dv).khac, true);
+  const pd = L.shopProfile(dv);
+  assert(pd.includes('KHÔNG thấy nhóm đồ ăn / đồ uống (bán chính: Chăm sóc da') && !pd.includes('quán ăn (đồ ăn') && !formatFacts(dv, now, 'làm sao tăng doanh thu').includes('Combo tính sẵn'), pd);
+  const an = parseFacts({ ...goc, groups: [nhom('Món chính', [it('Cơm sườn', 500, 50000)]), nhom('Đồ uống', [it('Trà đá', 300, 5000)])] })!;
+  assert(L.shopProfile(an).includes('quán ăn (đồ ăn 94% doanh thu)') && !L.loaiQuan(an).khac);
+  // nhóm đặt tên lạ nhưng món bán chạy là đồ ăn → vẫn là quán ăn
+  assertEquals(L.loaiQuan(parseFacts({ ...goc, groups: [nhom('Nhà làm', [it('Bánh mì thịt', 500, 25000)])] })!).khac, false);
+
+  // B8: combo tính sẵn không ghép món vốn đã là combo
+  const cb = parseFacts({ ...goc, groups: [nhom('Nước sâm', [it('Sâm lạnh', 800, 20000)]), nhom('Ăn vặt', [it('Combo bánh tráng 3 món', 40, 95000), it('Bánh tráng trộn', 30, 25000)])] })!;
+  assert(!/Combo tính sẵn[^\n]*Combo bánh tráng/.test(formatFacts(cb, now, 'làm sao tăng doanh thu')));
+
+  // giờ lẻ tẻ còn sót: hồ sơ ghi giờ bán chính; hỏi riêng buổi không phải giờ bán thì không ra việc ưu đãi cho buổi đó
+  const toi = parseFacts({ ...goc, from: '2026-11-01', to: '2026-11-18', groups: [nhom('Đồ uống', [it('Trà sữa', 1000, 45000)])],
+    by_hour: gio({ 11: 120000, 16: 400000, 17: 380000, 18: 3400000, 19: 11000000, 20: 16000000, 21: 13500000, 22: 9200000, 23: 2000000 }),
+    by_band: [[], [{ name: 'Trà sữa', qty: 2 }], [{ name: 'Trà sữa', qty: 5 }], [{ name: 'Trà sữa', qty: 900 }]] })!;
+  assertEquals(L.khungBan(toi), ['18h–24h']);
+  const chieu = formatFacts(toi, now, 'buổi chiều vắng quá, làm sao kéo khách');
+  assert(chieu.includes('Buổi chiều KHÔNG phải giờ bán của quán: cả kỳ chỉ 400.000đ từ vài đơn lẻ lúc 14–17h (giờ bán chính: 18h–24h)') && !chieu.includes('Việc nên nhắm cho buổi chiều'), chieu);
+  assert(formatFacts(toi, now, 'buổi tối vắng quá, làm sao kéo khách').includes('Việc nên nhắm cho buổi tối'));
+
+  // B10 đã kiểm ở test "Giai đoạn 2"; B6: tên gọi tắt ứng 2 món trong CẢ menu thì hỏi lại, không tự chọn món Boom nhìn thấy
+  const menu = parseFacts({ ...goc, groups: [nhom('Đồ uống', [it('Trà Sữa Truyền Thống', 415, 45000), it('Trà Tắc', 348, 26000)])],
+    ten_mon: ['Trà Sữa Truyền Thống', 'Trà Sữa Bơ Đậu Phộng', 'Trà Tắc', 'Nước ép Táo'] })!;
+  const mh = kichBanGia(menu, 'có nên tăng giá trà sữa thêm 5 nghìn không');
+  assert(mh.startsWith('TÊN MÓN CHƯA RÕ (tính sẵn): "tra sua" trong câu hỏi ứng 2 món của menu (Trà Sữa Truyền Thống, Trà Sữa Bơ Đậu Phộng)'), mh);
+  assert(kichBanGia(menu, 'có nên tăng giá trà sữa truyền thống thêm 5 nghìn không').includes('món "Trà Sữa Truyền Thống" bán 415 phần'));
+  assert(kichBanGia(menu, 'có nên tăng giá trà tắc thêm 3 nghìn không').includes('món "Trà Tắc" bán 348 phần'));
+  // không có danh sách menu (app cũ gửi số) → giữ cách cũ: chỉ xét các món Boom nhìn thấy
+  assert(kichBanGia(parseFacts({ ...goc, groups: menu.groups })!, 'có nên tăng giá trà sữa thêm 5 nghìn không').includes('món "Trà Sữa Truyền Thống"'));
 });

@@ -208,6 +208,8 @@ export interface ShopFacts {
   prev_to?: string | null;
   prev_by_hour?: number[] | null;
   prev_by_weekday?: number[] | null;
+  /** Tên mọi món trong menu (máy chủ gửi; KHÔNG in vào khối số) — chỉ để biết một tên gọi tắt ứng mấy món. */
+  ten_mon?: string[] | null;
   /** Kỳ so sánh có 0 đơn (số thật, không phải thiếu số); `full` = trọn kỳ trước khi máy chủ đọc thêm được. */
   prev_zero?: { period: string; from: string; to: string; don: number; tien: number; full: { from: string; to: string; revenue: number; orders: number; days: number; first: string | null; last: string | null } | null } | null;
   /** Món đổi nhiều nhất so kỳ trước (app chọn ≤ 8 theo chênh lệch doanh thu). */
@@ -894,6 +896,7 @@ export function parseFacts(v: unknown): ShopFacts | null {
   const itemsRevenue = f.items_revenue === undefined || f.items_revenue === null ? null : num(f.items_revenue, 1e13);
   return {
     period, revenue, orders, prev_period: prevPeriod, prev_revenue: prevRevenue, prev_orders: prevOrders, top: outTop, slow: outSlow, groups,
+    ten_mon: Array.isArray(f.ten_mon) ? f.ten_mon.slice(0, 400).map((x: unknown) => cleanText(x, 60)).filter(Boolean) : null,
     prev_zero: (() => {
       const z = f.prev_zero as Record<string, unknown> | null | undefined, zf = ymd(z?.from), zt = ymd(z?.to);
       if (!z || typeof z !== 'object' || prevPeriod || !zf || !zt) return null;
@@ -1443,14 +1446,8 @@ export function phiSanTrongCau(question: string): number | null {
 /** Khung giờ có bán liền nhau ("6h–14h", "16h–20h": quán nghỉ trưa) theo doanh thu từng giờ.
  *  Khối dưới 3% doanh thu là đơn lẻ (Demo 2–5h = 0,7%), không tính là giờ bán, để mã kiểm vẫn bắt ưu đãi đặt vào giờ đó. */
 export function khungBan(f: ShopFacts): string[] {
-  const spans: string[] = [];
-  let st = -1;
-  const tongGio = (f.by_hour ?? []).reduce((a, v) => a + Math.max(0, v), 0);
-  (f.by_hour ?? []).concat(0).forEach((v, h) => {
-    if (v > 0 && st < 0) st = h;
-    if (v <= 0 && st >= 0) { if (f.by_hour!.slice(st, h).reduce((a, x) => a + x, 0) >= tongGio * 0.03) spans.push(`${st}h–${h}h`); st = -1; }
-  });
-  return spans;
+  // lô 2 giai đoạn 2: dùng chung giờ bán chính (gioChinh) — trước ghi "có bán 16h–24h" trong khi dòng theo giờ ghi giờ bán chính 18h–24h
+  return gioChinh(f).chinh.reduce<number[][]>((r, g) => (r.length && r[r.length - 1][1] === g ? (r[r.length - 1][1] = g + 1, r) : [...r, [g, g + 1]]), []).map(([a, b]) => `${a}h–${b}h`);
 }
 
 /** Giờ bán chính / giờ lẻ tẻ: khối giờ liền nhau dưới 3% doanh thu là đơn lẻ (như khungBan, caBan); ở HAI ĐẦU mỗi khối còn lại,
@@ -1472,16 +1469,27 @@ export function gioChinh(f: ShopFacts): { chinh: number[]; le: number[] } {
   return { chinh, le };
 }
 
+/** Tỉ trọng đồ uống và cờ `khac`: nhóm đồ uống dưới 30% mà cũng KHÔNG thấy chữ đồ ăn ở tên nhóm / tên món bán chạy (từ 30% doanh thu). */
+export function loaiQuan(f: ShopFacts): { dShare: number; khac: boolean } {
+  const gs = f.groups ?? [], total = gs.reduce((a, g) => a + g.revenue, 0);
+  const isDrink = (n: string) => /uống|cà phê|cafe|trà|sinh tố|nước|soda|matcha|sữa|topping/i.test(n);
+  const isFood = (n: string) => /(?<!\p{L})(?:ăn|cơm|bún|phở|mì|miến|hủ tiếu|bánh|xôi|cháo|lẩu|nướng|chiên|xào|chè|kem|dimsum|vặt|món|pizza|burger|gà|bò|heo|cá|tôm|mực|hải sản|chay|súp|canh|gỏi|cuốn|khai vị|tráng miệng)(?!\p{L})/iu.test(n); // không tính chữ "combo": tiệm dịch vụ cũng có "Combo wax …"
+  const phan = (ok: (g: FactGroup) => boolean) => (total > 0 ? gs.filter(ok).reduce((a, g) => a + g.revenue, 0) / total : 0);
+  const dShare = phan((g) => isDrink(g.name)), fShare = phan((g) => !isDrink(g.name) && (isFood(g.name) || g.top.some((t) => isFood(t.name))));
+  return { dShare, khac: gs.length > 0 && total > 0 && dShare <= 0.3 && fShare < 0.3 };
+}
+
 export function shopProfile(f: ShopFacts): string {
   const out: string[] = [];
   const gs = f.groups ?? [];
   if (gs.length) {
     // loại quán theo TỈ TRỌNG doanh thu (quán trà sữa có ăn vặt vẫn là quán đồ uống)
-    const isDrink = (n: string) => /uống|cà phê|cafe|trà|sinh tố|nước|soda|matcha|sữa|topping/i.test(n);
-    const total = gs.reduce((a, g) => a + g.revenue, 0);
-    const dShare = total > 0 ? gs.filter((g) => isDrink(g.name)).reduce((a, g) => a + g.revenue, 0) / total : 0;
-    out.push(
-      dShare >= 0.7 ? `quán đồ uống (đồ uống ${Math.round(dShare * 100)}% doanh thu)`
+    const total = gs.reduce((a, g) => a + g.revenue, 0), { dShare, khac } = loaiQuan(f);
+    // lô 2 giai đoạn 2 (B4): tiệm dịch vụ làm đẹp bị ghi "quán ăn (đồ ăn 100% doanh thu)" vì mọi thứ không phải đồ uống đều coi là đồ ăn
+    const chinh = [...gs].sort((a, b) => b.revenue - a.revenue).slice(0, 2).map((g) => `${g.name} ${total > 0 ? Math.round((g.revenue / total) * 100) : 0}%`).join(', ');
+    if (total > 0) out.push(
+      khac ? `KHÔNG thấy nhóm đồ ăn / đồ uống (bán chính: ${chinh}) → có thể là tiệm dịch vụ / cửa hàng: gọi "dịch vụ / mặt hàng", KHÔNG khuyên kiểu quán ăn (nguyên liệu tươi, mời thêm món, combo món)`
+        : dShare >= 0.7 ? `quán đồ uống (đồ uống ${Math.round(dShare * 100)}% doanh thu)`
         : dShare <= 0.3 ? `quán ăn (đồ ăn ${Math.round((1 - dShare) * 100)}% doanh thu)`
         : `bán cả đồ ăn và đồ uống (đồ uống ${Math.round(dShare * 100)}% doanh thu)`,
     );
@@ -1531,7 +1539,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const motNgayKy = /^(?:hôm (?:nay|qua|kia)|thứ \d|chủ nhật)/i.test(f.period.normalize('NFC'));
   // lô 1 giai đoạn 2 (B3): tiệm mới có 4 ngày có đơn vẫn bị ghi "125 món chưa bán … ẨN khỏi menu"; kỳ tuần mới 3 ngày cũng vậy
   const nCoDon = ngayMoBan(f), kyNgan = !motNgayKy && nCoDon > 0 && nCoDon < 7;
-  const shortPeriod = motNgayKy || duBao || kyNgan;
+  // kỳ không có đơn nào (vd "tháng trước" của quán mới mở tháng này): liệt kê cả menu là "chưa bán" chỉ gây nhiễu
+  const shortPeriod = motNgayKy || duBao || kyNgan || f.orders === 0;
   // Tính sẵn % so kỳ trước + giá trị đơn trung bình (GPT hay bỏ qua / tính sai — chấm cố vấn 24/10)
   const avg = f.orders > 0 ? ` Trung bình ${vnd(f.revenue / f.orders)} / đơn.` : '';
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
@@ -1776,11 +1785,13 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     // ngày, mỗi thứ chỉ 1 ngày → không kết luận
     if (cnt && cnt.reduce((a, b) => a + b, 0) >= 14) {
       // lần 238 (kiểm lần 7: "Thứ 4 trung bình 2.875.500đ" chia cả hôm nay mới tới 9h): thứ của hôm nay bỏ ngày dở như dòng theo thứ
-      const per = open.filter((x) => x.n).map((x) => ({ d: x.d, a: todayD >= 0 && x.d === days[todayD].d && x.n! > 1 ? (tienHomNay !== undefined ? (x.v - tienHomNay) / (x.n! - 1) : x.v / (x.n! - 1)) : x.v / x.n! }));
+      const per = open.filter((x) => x.n).map((x) => ({ d: x.d, n: x.n!, a: todayD >= 0 && x.d === days[todayD].d && x.n! > 1 ? (tienHomNay !== undefined ? (x.v - tienHomNay) / (x.n! - 1) : x.v / (x.n! - 1)) : x.v / x.n! }));
       const perFull = per.filter((x) => x.d !== (todayD >= 0 ? days[todayD].d : ''));
       const sorted = perFull.map((x) => x.a).sort((a, b) => a - b);
       const m2 = sorted.length >> 1, med = !sorted.length ? 0 : sorted.length % 2 ? sorted[m2] : (sorted[m2 - 1] + sorted[m2]) / 2;
-      const weak = perFull.filter((x) => med > 0 && x.a < med * 0.6);
+      // lô 2 giai đoạn 2 (B10): quán ~4 đơn mỗi ngày bị ghi "Thứ 7 yếu bất thường, bằng 30% ngày thường" từ đúng 1 ngày thứ Bảy
+      const duDon = f.orders / Math.max(1, ngayMoBan(f)) >= 10;
+      const weak = perFull.filter((x) => med > 0 && x.a < med * 0.6 && x.n >= 2 && duDon);
       if (weak.length) {
         lines.push(`Bất thường (tính sẵn): ${weak.map((x) => `${x.d} trung bình ${vnd(x.a)}/ngày, chỉ bằng ${Math.round((x.a / med) * 100)}% một ngày bình thường (${vnd(med)})`).join('; ')}.`);
       }
@@ -1932,12 +1943,19 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     if (quaTai >= 0) lines.push(`Buổi ${['sáng', 'trưa', 'chiều', 'tối'][quaTai]} chủ quán nói đang quá tải: KHÔNG ưu đãi kéo thêm khách vào buổi này; việc cho buổi này là chia ca, chuẩn bị trước, rút thời gian phục vụ.`);
     // lần 88: thêm "ca toi" / "buoi toi" không dấu (D18 lấy giờ 12h làm doanh thu tối)
     const ngayB = ngayMoBan(f);
-    if (bq >= 0 && /v[aắ]ng|[ií]t (?:kh[aá]ch|qu[aá])|ch[aậ]m|ế|c[aá]ch n[aà]o|l[aà]m (?:sao|g[iì])|k[eé]o kh[aá]ch/i.test(question) && f.by_band[bq]?.length && f.by_hour && ngayB) {
+    // lô 2 giai đoạn 2: hỏi "buổi tối vắng, làm sao kéo khách" ở quán đã nghỉ bán tối vẫn ra "ưu đãi chỉ trong 17–18h"
+    const gioB = bq >= 0 ? [[5, 11], [11, 14], [14, 17], [17, 24]][bq] : null, chinhB = gioB && f.by_hour ? gioChinh(f).chinh.filter((h) => h >= gioB[0] && h < gioB[1]) : [];
+    const hoiBuoi = bq >= 0 && /v[aắ]ng|[ií]t (?:kh[aá]ch|qu[aá])|ch[aậ]m|ế|c[aá]ch n[aà]o|l[aà]m (?:sao|g[iì])|k[eé]o kh[aá]ch/i.test(question);
+    if (hoiBuoi && gioB && f.by_hour && f.orders >= IT_DON && !chinhB.length) {
+      const tienB = f.by_hour.slice(gioB[0], gioB[1]).reduce((a, b) => a + b, 0);
+      lines.push(`Buổi ${['sáng', 'trưa', 'chiều', 'tối'][bq]} KHÔNG phải giờ bán của quán: cả kỳ ${tienB > 0 ? `chỉ ${vnd(tienB)} từ vài đơn lẻ` : 'không có đơn nào'} lúc ${gioB[0]}–${gioB[1]}h (giờ bán chính: ${khungBan(f).join(', ')}) → nói rõ quán hiện gần như không bán buổi này, KHÔNG khuyên ưu đãi kéo khách cho buổi này; hỏi chủ quán có định mở thêm buổi này không (mở thêm ca phải tính tiền người, điện).`);
+    }
+    if (hoiBuoi && (chinhB.length || f.orders < IT_DON) && f.by_band[bq]?.length && f.by_hour && ngayB) {
       // lần 88: khung tối cắt theo giờ có bán cuối cùng (D18 quán bún đóng 20h ghi "17–24h")
       const cuoi = f.by_hour.reduce((m, v, h) => (v > 0 ? h : m), 0);
       const [lo0, hi0] = [[5, 11], [11, 14], [14, 17], [17, Math.max(18, Math.min(24, cuoi + 1))]][bq];
       // 07/11: QC: "ưu đãi 5–11h" ở quán mở 9h, "14–17h" ở quán đóng 14–16h, "11–14h" ở quán đóng 13h
-      const coBan = Array.from({ length: hi0 - lo0 }, (_, i) => lo0 + i).filter((h) => f.by_hour![h] > 0);
+      const coBan = Array.from({ length: hi0 - lo0 }, (_, i) => lo0 + i).filter((h) => f.by_hour![h] > 0 && (!chinhB.length || chinhB.includes(h)));
       const [lo, hi] = coBan.length ? [coBan[0], coBan[coBan.length - 1] + 1] : [lo0, hi0];
       const dt = f.by_hour.slice(lo, hi).reduce((a, b) => a + b, 0) / ngayB, all = f.by_hour.reduce((a, b) => a + b, 0) / ngayB;
       const giaVon = (n: string) => (f.groups ?? []).some((g) => [...g.top, ...g.slow].some((t) => t.name === n && t.cost && t.price && t.cost / t.price > 0.35));
@@ -1964,7 +1982,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     // Gợi ý combo tính sẵn: món chạy nhất nhóm doanh thu cao nhất + món chạy nhất của 1–2 nhóm kế; giá rẻ hơn lẻ 5–10%
     // 06/11: người chấm: combo giảm giá ghép món giá vốn 51–54% rồi lại dặn đừng giảm món đó
     const vonCao = (t?: FactItem | null) => !!(t?.cost && t.price && t.cost / t.price > 0.45);
-    const lead = f.groups[0]?.top.find((t) => !vonCao(t));
+    // lô 2 giai đoạn 2 (B8): ghép "… + combo nước đậu" ra combo 130.000đ ở quán đơn trung bình 36.000đ
+    const laCombo = (t?: FactItem | null) => /^\s*combo(?!\p{L})/iu.test(t?.name ?? '');
+    const lead = loaiQuan(f).khac ? undefined : f.groups[0]?.top.find((t) => !vonCao(t) && !laCombo(t));
     // Ghép món chủ lực với món đi kèm: quán đồ uống → bánh / ăn vặt; quán đồ ăn → đồ uống / tráng miệng / ăn vặt
     // (rẻ hơn nhiều so với món chính). Không ghép 2 món chính, 2 đồ uống, món thêm / topping / combo.
     const drink = (n: string) => /uống|cà phê|cafe|coffee|trà|sinh tố|nước|soda|matcha|sữa|juice/i.test(n);
@@ -1973,7 +1993,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const pairs = f.groups.slice(1)
       .filter((g) => !addon(g.name) && (g.top[0]?.price ?? 0) > 5000 && lead?.price)
       .filter((g) => (leadDrink ? !drink(g.name) : (g.top[0].price ?? 0) < (lead!.price ?? 0) * 0.6))
-      .filter((g) => !vonCao(g.top[0]))
+      .filter((g) => !vonCao(g.top[0]) && !laCombo(g.top[0]))
       .slice(0, 2)
       .map((g) => g.top[0]);
     if (lead && pairs.length) {
@@ -3033,17 +3053,17 @@ function mucBot(f: ShopFacts, mon: string[], uong: boolean): string {
 /** Món được nhắc đích danh trong câu hỏi; lấy tên dài nhất. */
 /** 09/11: chủ quán gọi tắt tên món ("ca phe sua" cho "Cà phê sữa đá", "trà sữa", "cơm tấm"): khớp nguyên tên, rồi khớp phần đầu
  *  tên (≥ 2 chữ, ≥ 6 ký tự). Trả các món khớp, bán chạy trước, kèm vị trí cuối cụm tên trong câu (bỏ dấu, có khoảng trắng hai đầu). */
-export function monKhop(f: ShopFacts | null | undefined, question: string): { t: FactItem; het: number; tat: boolean; dai: number }[] {
+export function monKhop(f: ShopFacts | null | undefined, question: string): { t: FactItem; het: number; tat: boolean; dai: number; cum: string }[] {
   const q = ` ${boDauVc(question)} `;
   const mon = [...new Map((f?.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.name.length >= 5).map((t) => [t.name, t])).values()];
-  const out: { t: FactItem; het: number; tat: boolean; dai: number }[] = [];
+  const out: { t: FactItem; het: number; tat: boolean; dai: number; cum: string }[] = [];
   for (const t of mon) {
     const w = boDauVc(t.name).trim().split(' ');
     for (let k = w.length; k >= 2; k--) {
       const cum = w.slice(0, k).join(' ');
       if (cum.length < 6) break;
       const i = q.indexOf(` ${cum} `);
-      if (i >= 0) { out.push({ t, het: i + cum.length + 1, tat: k < w.length, dai: cum.length }); break; }
+      if (i >= 0) { out.push({ t, het: i + cum.length + 1, tat: k < w.length, dai: cum.length, cum }); break; }
     }
   }
   // khớp nguyên tên trước; cùng loại thì món bán chạy trước
@@ -3115,10 +3135,13 @@ export function kichBanGia(f: ShopFacts | null | undefined, question: string, ca
     const du = mon.filter((t) => q.includes(` ${boDauVc(t.name).trim()} `)).sort((a, b) => b.name.length - a.name.length)[0];
     const nhom = du ? undefined : (f.groups ?? []).find((g) => q.includes(` ${boDauVc(g.name).trim()} `));
     // tên gọi tắt chỉ nhận khi chỉ ra ĐÚNG một món ("trà sữa" ứng nhiều món thì không đoán)
-    const tat = du || nhom ? [] : monKhop(f, cau).sort((a, b) => b.dai - a.dai);
-    return { it: du ?? (tat[0] && tat[0].dai !== tat[1]?.dai ? tat[0].t : undefined), nhom };
+    const tat = du || nhom ? [] : monKhop(f, cau).sort((a, b) => b.dai - a.dai), mot = tat[0] && tat[0].dai !== tat[1]?.dai ? tat[0] : undefined;
+    // lô 2 giai đoạn 2 (B6): "trà sữa" chỉ khớp 1 món trong các món Boom nhìn thấy nhưng menu có 2 món "trà sữa …" → đếm trên CẢ menu
+    const trung = mot && f.ten_mon ? f.ten_mon.filter((n) => `${boDauVc(n).trim()} `.startsWith(`${mot.cum} `)) : [];
+    return { it: du ?? (trung.length >= 2 ? undefined : mot?.t), nhom, moHo: trung.length >= 2 ? { cum: mot!.cum, ten: trung } : undefined };
   };
-  let { it, nhom } = tim(question);
+  let { it, nhom, moHo } = tim(question);
+  if (moHo) return `TÊN MÓN CHƯA RÕ (tính sẵn): "${moHo.cum}" trong câu hỏi ứng ${moHo.ten.length} món của menu (${moHo.ten.slice(0, 4).join(', ')}${moHo.ten.length > 4 ? '…' : ''}) → HỎI LẠI chủ quán muốn nói món nào rồi mới tính; KHÔNG tự chọn một món để tính.`;
   if (!it && !nhom && cauTruoc) ({ it, nhom } = tim(cauTruoc));
   const ten = it?.name ?? nhom?.name, sl = it?.qty ?? nhom?.qty ?? 0, dt = it?.revenue ?? nhom?.revenue ?? 0;
   if (!ten || !(sl > 0) || !(dt > 0)) return '';
