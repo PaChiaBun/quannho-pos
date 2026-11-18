@@ -2666,3 +2666,27 @@ Deno.test('Giờ lẻ tẻ không xếp hạng vắng nhất (18/11 Bò Đen bá
   assertEquals(L.gioChinh(g).le, []);
   assertStringIncludes(formatFacts(g, new Date('2026-11-18T15:10:00+07:00'), 'giờ nào vắng nhất'), 'vắng nhất (trong giờ có bán): 10h, 13h, 11h.');
 });
+
+Deno.test('Kịch bản tăng giá: tên gọi tắt, câu nối tiếp lấy món lượt trước, "tăng lên 5 nghìn" (18/11 Bò Đen)', () => {
+  const it = (name: string, qty: number, price: number, cost?: number) => ({ name, qty, price, revenue: qty * price, ...(cost ? { cost } : {}) });
+  const f = parseFacts({ period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 57247400, orders: 576, top: [], slow: [],
+    groups: [{ name: 'Đồ uống', revenue: 40000000, qty: 1188, items: 9, unsold: 0, unsold_names: [], slow: [],
+      top: [it('Trà Sữa Hong Kong Truyền Thống (Đá/Nóng)', 415, 45000), it('Trà Tắc Cửu Long', 348, 26000), it('Chai Trà Sữa Hong Kong Truyền Thống Nguyên Chất', 144, 39000, 15000)] },
+    { name: 'Đồ ăn', revenue: 5000000, qty: 60, items: 2, unsold: 0, unsold_names: [], slow: [], top: [it('Cá Viên Chiên Sốt Me', 19, 59000), it('Cá Viên Chiên Sốt Tiêu Đen', 15, 59000)] }] })!;
+  const hk = 'món "Trà Sữa Hong Kong Truyền Thống (Đá/Nóng)" bán 415 phần trong kỳ, giá trung bình 45.000đ';
+  // gọi tắt + "tăng lên 5 nghìn" = tăng thêm 5 nghìn; hoà doanh thu 10%
+  for (const q of ['co nen tang gia tra sua hong kong len 5 nghin khong', 'có nên tăng giá trà sữa hong kong lên 5 nghìn không', 'có nên tăng giá Trà Sữa Hong Kong Truyền Thống (Đá/Nóng) thêm 5 nghìn không', 'tăng giá trà sữa hong kong lên 50 nghìn được không']) {
+    const k = kichBanGia(f, q);
+    assert(k.includes(`${hk}; tăng 5.000đ → nếu giữ số phần: thu thêm 2.075.000đ / kỳ`) && k.includes('giảm tối đa 10% thì doanh thu vẫn bằng cũ'), `${q} => ${k}`);
+  }
+  // câu nối tiếp không nêu món: lấy món của lượt trước, ngưỡng hoà 6,3% chứ không phải 10%
+  assertEquals(kichBanGia(f, 'neu tang 3 nghin thoi thi sao'), '');
+  const k3 = kichBanGia(f, 'neu tang 3 nghin thoi thi sao', 'co nen tang gia tra sua hong kong len 5 nghin khong');
+  assert(k3.includes(`${hk}; tăng 3.000đ → nếu giữ số phần: thu thêm 1.245.000đ / kỳ; nếu số phần giảm 10%: thu ÍT hơn 747.000đ; số phần được giảm tối đa 6,3%`), k3);
+  const m = buildMessages('neu tang 3 nghin thoi thi sao', [], null, { facts: f, history: { q: 'co nen tang gia tra sua hong kong len 5 nghin khong', a: 'Dạ…' } })[1].content;
+  assertStringIncludes(m, 'tăng 3.000đ → nếu giữ số phần: thu thêm 1.245.000đ');
+  // gọi tắt ứng nhiều món ("cá viên chiên") hoặc "lên 30 nghìn" (không rõ giá mới hay tăng thêm) → không đoán
+  assertEquals(kichBanGia(f, 'tăng giá cá viên chiên 5 nghìn được không'), '');
+  assertEquals(kichBanGia(f, 'tăng giá trà sữa hong kong lên 30 nghìn được không'), '');
+  assert(kichBanGia(f, 'tăng giá chai trà sữa hong kong thêm 2 nghìn được không').includes('món "Chai Trà Sữa Hong Kong Truyền Thống Nguyên Chất"'));
+});

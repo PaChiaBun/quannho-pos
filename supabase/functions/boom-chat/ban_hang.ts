@@ -206,7 +206,21 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
       (goi(ctx, 'rpc/get_daily_revenue_for_range_v1', { method: 'POST', body: JSON.stringify({ p_store_id: ctx.storeId, p_from: ky.tu, p_to: ky.den }) }) as Promise<Record<string, unknown>[]>).catch(() => null),
       (goi(ctx, `void_audit_logs?select=void_type,requested_by_name,amount&store_id=eq.${ctx.storeId}&created_at=gte.${encodeURIComponent(ky.tu)}&created_at=lt.${encodeURIComponent(ky.den)}&limit=1000`) as Promise<Record<string, unknown>[]>).catch(() => null),
     ]);
-    return { ...dungFacts(ky, cur, prev, mons), ...soBaoCao(bao, ngay, huy) };
+    // 18/11 Bò Đen: cùng kỳ trước 0 đơn (quán nghỉ đầu tuần trước) → Boom nói "chưa có doanh thu tuần trước". 0 đơn là số thật: báo rõ,
+    // và nếu kỳ trước còn dài hơn phần cùng kỳ thì đọc thêm TRỌN kỳ trước (tới đầu kỳ này) để có mốc; lỗi thì chỉ thiếu mốc đó.
+    let zero: Record<string, unknown> | null = null;
+    if (!(n(prev.orders) > 0) && n(cur.orders) > 0) {
+      const [zf, zt] = ngayKy(ky.truocTu, ky.truocDen);
+      zero = { period: clip(ky.nhanTruoc, 40), from: zf, to: zt };
+      if (Date.parse(ky.truocDen) < Date.parse(ky.tu)) {
+        const [tron, ngayT] = await Promise.all([raw(ky.truocTu, ky.tu).catch(() => null), docDoanhThuNgay(ctx, ky.truocTu, ky.tu)]);
+        if (tron && n(tron.orders) > 0) {
+          const [uf, ut] = ngayKy(ky.truocTu, ky.tu), ds = (ngayT ?? []).map((x) => x.d).sort();
+          zero.full = { from: uf, to: ut, revenue: n(tron.revenue), orders: n(tron.orders), days: ds.length, first: ds[0] ?? null, last: ds[ds.length - 1] ?? null };
+        }
+      }
+    }
+    return { ...dungFacts(ky, cur, prev, mons), ...soBaoCao(bao, ngay, huy), ...(zero ? { prev_zero: zero } : {}) };
   } catch {
     return null;
   }

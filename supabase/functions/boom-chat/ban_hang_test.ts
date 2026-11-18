@@ -69,3 +69,46 @@ Deno.test('ban_hang: kỳ trước không có đơn → không gửi phần so; 
   assert(r2 && r2.revenue === 1_000_000 && !('by_pay' in r2) && !('voids' in r2) && !('by_day' in r2));
   assertEquals(await docBanHang({ ...ctx, fetch: (async () => new Response('', { status: 404 })) as typeof fetch }, KY), null);
 });
+
+Deno.test('ban_hang: cùng kỳ trước 0 đơn là số thật — báo rõ và đọc thêm trọn kỳ trước (18/11 Bò Đen nghỉ đầu tuần trước)', async () => {
+  const ky: Ky = { tu: '2026-11-16T00:00:00+07:00', den: '2026-11-18T15:43:00+07:00', truocTu: '2026-11-09T00:00:00+07:00', truocDen: '2026-11-11T15:43:00+07:00', nhan: 'Tuần này (từ thứ Hai 16/11)', nhanTruoc: 'cùng kỳ tuần trước (9/11–11/11)' };
+  const KHONG: Tho = { revenue: 0, orders: 0, by_hour: h(0, 0), by_weekday: [0, 0, 0, 0, 0, 0, 0], items: [], bands: [[], [], [], []] };
+  const TRON: Tho = { ...PREV, revenue: 21_685_400, orders: 213, by_weekday: [0, 0, 4e6, 4e6, 4e6, 5e6, 4_685_400] };
+  const seen: string[] = [];
+  const mk = (tron: Tho | null) => ({ sbUrl: 'http://x', anonKey: 'anon', jwt: 'nguoi-hoi', storeId: '11111111-1111-1111-1111-111111111111', userId: 'u',
+    fetch: (async (u: string, i?: RequestInit) => {
+      const b = i?.body ? JSON.parse(String(i.body)) : {};
+      seen.push(`${String(u).split('/rest/v1/')[1].split('?')[0]} ${b.p_from ?? ''}→${b.p_to ?? ''}`);
+      if (String(u).includes('rpc/get_daily')) return Response.json(b.p_from === ky.truocTu ? ['11', '12', '13', '14', '15'].map((d) => ({ report_date: `2026-11-${d}`, total_revenue: 4e6, total_orders: 40 })) : [{ report_date: '2026-11-16', total_revenue: 1e6, total_orders: 40 }]);
+      if (String(u).includes('rpc/boom_sales_raw_v1')) {
+        if (b.p_from === ky.tu) return Response.json(CUR);
+        if (b.p_to === ky.truocDen) return Response.json(KHONG);
+        return tron ? Response.json(tron) : new Response('', { status: 500 });
+      }
+      if (String(u).includes('rpc/') || String(u).includes('void_audit_logs')) return new Response('', { status: 404 });
+      return Response.json(MONS);
+    }) as typeof fetch });
+  const r = await docBanHang(mk(TRON), ky);
+  assertEquals(r!.prev_zero, { period: 'cùng kỳ tuần trước (9/11–11/11)', from: '2026-11-09', to: '2026-11-11',
+    full: { from: '2026-11-09', to: '2026-11-15', revenue: 21_685_400, orders: 213, days: 5, first: '2026-11-11', last: '2026-11-15' } });
+  assert(seen.includes(`rpc/boom_sales_raw_v1 ${ky.truocTu}→${ky.tu}`) && !('prev_period' in r!), seen.join(' | '));
+  const t = formatFacts(parseFacts(r)!, new Date('2026-11-18T15:43:00+07:00'), 'tuần này so với tuần trước thế nào');
+  assert(t.includes('KỲ SO SÁNH KHÔNG CÓ ĐƠN') && t.includes('cùng kỳ tuần trước (9/11–11/11) quán có 0 đơn, 0đ'), t);
+  assert(t.includes('TRỌN kỳ trước (9/11–15/11): 21.685.400đ từ 213 đơn, có đơn 5 ngày (11/11–15/11), trung bình 4.337.080đ/ngày có đơn'), t);
+  // đọc trọn kỳ trước lỗi: vẫn báo rõ cùng kỳ 0 đơn, chỉ thiếu mốc trọn kỳ
+  const r2 = await docBanHang(mk(null), ky);
+  assertEquals(r2!.prev_zero, { period: 'cùng kỳ tuần trước (9/11–11/11)', from: '2026-11-09', to: '2026-11-11' });
+  assert(!formatFacts(parseFacts(r2)!, new Date('2026-11-18T15:43:00+07:00'), 'tuần này sao').includes('TRỌN kỳ trước'));
+  // kỳ trước đã trọn sẵn (không bị cắt) mà 0 đơn: không gọi thêm
+  seen.length = 0;
+  const r3 = await docBanHang({ ...mk(TRON), fetch: (async (u: string, i?: RequestInit) => {
+    const b = i?.body ? JSON.parse(String(i.body)) : {};
+    seen.push(String(u).split('/rest/v1/')[1].split('?')[0]);
+    if (String(u).includes('rpc/boom_sales_raw_v1')) return Response.json(b.p_from === KY.tu ? CUR : KHONG);
+    if (String(u).includes('rpc/') || String(u).includes('void_audit_logs')) return new Response('', { status: 404 });
+    return Response.json(MONS);
+  }) as typeof fetch }, KY);
+  assertEquals(r3!.prev_zero, { period: 'tháng 9', from: '2026-09-01', to: '2026-09-30' });
+  assertEquals(seen.filter((x) => x === 'rpc/boom_sales_raw_v1').length, 2);
+  assert(formatFacts(parseFacts(r3)!, new Date('2026-11-05T09:00:00+07:00'), 'so với tháng 9 thế nào').includes('tháng 9 (1/9–30/9) quán có 0 đơn, 0đ'));
+});

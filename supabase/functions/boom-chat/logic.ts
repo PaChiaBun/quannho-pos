@@ -208,6 +208,8 @@ export interface ShopFacts {
   prev_to?: string | null;
   prev_by_hour?: number[] | null;
   prev_by_weekday?: number[] | null;
+  /** Kỳ so sánh có 0 đơn (số thật, không phải thiếu số); `full` = trọn kỳ trước khi máy chủ đọc thêm được. */
+  prev_zero?: { period: string; from: string; to: string; full: { from: string; to: string; revenue: number; orders: number; days: number; first: string | null; last: string | null } | null } | null;
   /** Món đổi nhiều nhất so kỳ trước (app chọn ≤ 8 theo chênh lệch doanh thu). */
   moves?: { name: string; qty: number; prev_qty: number; revenue: number; prev_revenue: number }[] | null;
 }
@@ -891,6 +893,14 @@ export function parseFacts(v: unknown): ShopFacts | null {
   const itemsRevenue = f.items_revenue === undefined || f.items_revenue === null ? null : num(f.items_revenue, 1e13);
   return {
     period, revenue, orders, prev_period: prevPeriod, prev_revenue: prevRevenue, prev_orders: prevOrders, top: outTop, slow: outSlow, groups,
+    prev_zero: (() => {
+      const z = f.prev_zero as Record<string, unknown> | null | undefined, zf = ymd(z?.from), zt = ymd(z?.to);
+      if (!z || typeof z !== 'object' || prevPeriod || !zf || !zt) return null;
+      const u = (z.full && typeof z.full === 'object' ? z.full : null) as Record<string, unknown> | null;
+      const rev = u ? num(u.revenue, 1e13) : null, ord = u ? num(u.orders, 1e9) : null, uf = ymd(u?.from), ut = ymd(u?.to);
+      return { period: cleanText(z.period, 40) || 'kỳ trước', from: zf, to: zt,
+        full: rev && ord && uf && ut ? { from: uf, to: ut, revenue: rev, orders: ord, days: num(u!.days, 400) ?? 0, first: ymd(u!.first), last: ymd(u!.last) } : null };
+    })(),
     items_revenue: itemsRevenue,
     by_hour: numList(f.by_hour, 24),
     by_weekday: numList(f.by_weekday, 7),
@@ -1506,6 +1516,13 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     lines.push(`KỲ NÀY CHƯA CÓ ĐƠN NÀO (tới giờ này): chỉ trả lời 1–2 câu: nói ${f.period} chưa có đơn nào tới giờ này, nêu số của kỳ so sánh nếu có (trung bình mỗi ngày), rồi hỏi quán đã mở bán chưa hay bán ngoài app. KHÔNG nói "giảm 100%", KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG khuyên ẩn món, bỏ món hay nhập hàng vì "chưa bán".`);
   } else if (motNgayKy && f.orders === 0 && !chiHoiThoiTiet(question) && !xv && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
     lines.push('NGÀY NÀY KHÔNG CÓ ĐƠN: chỉ trả lời 1–2 câu: nói ngày đó 0đ, 0 đơn (nếu là hôm nay thì "tới giờ này"), nêu số của kỳ so sánh nếu có, rồi hỏi quán có nghỉ hay bán ngoài app không. KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG nhắc món, giá vốn, nguyên liệu.');
+  }
+  // 18/11 Bò Đen: "tuần này so với tuần trước" giữa tuần, 3 ngày đầu tuần trước quán nghỉ → cùng kỳ 0 đơn bị coi như thiếu số,
+  // Boom nói "chưa có doanh thu tuần trước" (thật: cả tuần trước 21.685.400đ / 213 đơn). 0 đơn là số thật; có trọn kỳ trước thì nêu.
+  if (f.prev_zero) {
+    const z = f.prev_zero, u = z.full, kg = (a: string, b: string) => (a === b ? ngayThang(a) : `${ngayThang(a)}–${ngayThang(b)}`);
+    lines.push(`KỲ SO SÁNH KHÔNG CÓ ĐƠN (số thật từ sổ bán hàng, KHÔNG phải thiếu số liệu): ${z.period}${z.period.includes('(') ? '' : ` (${kg(z.from, z.to)})`} quán có 0 đơn, 0đ → nói đúng như vậy, KHÔNG nói "chưa có số / chưa có doanh thu kỳ trước"; KHÔNG tính % tăng giảm với kỳ 0đ.` +
+      (u ? ` TRỌN kỳ trước (${kg(u.from, u.to)}): ${vnd(u.revenue)} từ ${u.orders} đơn${u.days > 0 && u.first && u.last ? `, có đơn ${u.days} ngày (${kg(u.first, u.last)}), trung bình ${vnd(Math.round(u.revenue / u.days))}/ngày có đơn` : ''} → nêu số này để chủ quán có mốc; kỳ này chưa trọn và khác ngày nên CHỈ so theo trung bình ngày có đơn, nói rõ là so tạm, hết kỳ mới so trọn được.` : ''));
   }
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
   const le = ngayLe(question, now);
@@ -2972,17 +2989,17 @@ function mucBot(f: ShopFacts, mon: string[], uong: boolean): string {
 /** Món được nhắc đích danh trong câu hỏi; lấy tên dài nhất. */
 /** 09/11: chủ quán gọi tắt tên món ("ca phe sua" cho "Cà phê sữa đá", "trà sữa", "cơm tấm"): khớp nguyên tên, rồi khớp phần đầu
  *  tên (≥ 2 chữ, ≥ 6 ký tự). Trả các món khớp, bán chạy trước, kèm vị trí cuối cụm tên trong câu (bỏ dấu, có khoảng trắng hai đầu). */
-export function monKhop(f: ShopFacts | null | undefined, question: string): { t: FactItem; het: number; tat: boolean }[] {
+export function monKhop(f: ShopFacts | null | undefined, question: string): { t: FactItem; het: number; tat: boolean; dai: number }[] {
   const q = ` ${boDauVc(question)} `;
   const mon = [...new Map((f?.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.name.length >= 5).map((t) => [t.name, t])).values()];
-  const out: { t: FactItem; het: number; tat: boolean }[] = [];
+  const out: { t: FactItem; het: number; tat: boolean; dai: number }[] = [];
   for (const t of mon) {
     const w = boDauVc(t.name).trim().split(' ');
     for (let k = w.length; k >= 2; k--) {
       const cum = w.slice(0, k).join(' ');
       if (cum.length < 6) break;
       const i = q.indexOf(` ${cum} `);
-      if (i >= 0) { out.push({ t, het: i + cum.length + 1, tat: k < w.length }); break; }
+      if (i >= 0) { out.push({ t, het: i + cum.length + 1, tat: k < w.length, dai: cum.length }); break; }
     }
   }
   // khớp nguyên tên trước; cùng loại thì món bán chạy trước
@@ -3039,22 +3056,34 @@ export function caBan(f: ShopFacts | null | undefined, question: string): string
 
 // Lô G (04/11): "tăng giá X nghìn thì thu thêm bao nhiêu" — bộ v2: Boom né ("số liệu chưa tách theo món") dù có số phần; điểm 8–10 / 16.
 // Tính sẵn kịch bản: thu thêm nếu giữ số phần, số phần được giảm tối đa để không thiệt (hoà), và nếu giảm 10%.
-export function kichBanGia(f: ShopFacts | null | undefined, question: string): string {
-  const m = /t[aă]ng(?: gi[aá])?[^\d]{0,40}?(\d+(?:[.,]\d+)?)\s*(ngh[iì]n|ng[aà]n|k\b|đ|000)/i.exec(question);
+/** `cauTruoc`: câu hỏi lượt trước — câu nối tiếp không nêu tên món ("nếu tăng 3 nghìn thôi thì sao") lấy món của lượt trước. */
+export function kichBanGia(f: ShopFacts | null | undefined, question: string, cauTruoc = ''): string {
+  // tên món dài ("Trà Sữa Hong Kong Truyền Thống (Đá/Nóng)" 40 ký tự) nằm giữa "tăng giá" và con số → cho tới 70 ký tự
+  const m = /t[aă]ng(?: gi[aá])?[^\d]{0,70}?(\d+(?:[.,]\d+)?)\s*(ngh[iì]n|ng[aà]n|k\b|đ|000)/i.exec(question);
   if (!f || !m) return '';
   const x = /đ/.test(m[2]) && +m[1].replace(/[.,]/g, '') >= 500 ? +m[1].replace(/[.,]/g, '') : Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
   if (!(x > 0 && x <= 100_000)) return '';
-  const q = ` ${boDauVc(question)} `;
   const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]);
-  const nhom = (f.groups ?? []).find((g) => q.includes(` ${boDauVc(g.name).trim()} `));
-  const it = mon.filter((t) => q.includes(` ${boDauVc(t.name).trim()} `)).sort((a, b) => b.name.length - a.name.length)[0];
+  // 18/11 Bò Đen: "tăng giá trà sữa hong kong" (tên đủ "Trà Sữa Hong Kong Truyền Thống (Đá/Nóng)") không ra dòng này → Boom tự đặt
+  // ngưỡng "giảm dưới 10%" cho cả mức +3.000đ (đúng 6,25%). Khớp nguyên tên trước, rồi tên gọi tắt dài nhất (monKhop), rồi nhóm.
+  const tim = (cau: string) => {
+    const q = ` ${boDauVc(cau)} `;
+    const du = mon.filter((t) => q.includes(` ${boDauVc(t.name).trim()} `)).sort((a, b) => b.name.length - a.name.length)[0];
+    const nhom = du ? undefined : (f.groups ?? []).find((g) => q.includes(` ${boDauVc(g.name).trim()} `));
+    // tên gọi tắt chỉ nhận khi chỉ ra ĐÚNG một món ("trà sữa" ứng nhiều món thì không đoán)
+    const tat = du || nhom ? [] : monKhop(f, cau).sort((a, b) => b.dai - a.dai);
+    return { it: du ?? (tat[0] && tat[0].dai !== tat[1]?.dai ? tat[0].t : undefined), nhom };
+  };
+  let { it, nhom } = tim(question);
+  if (!it && !nhom && cauTruoc) ({ it, nhom } = tim(cauTruoc));
   const ten = it?.name ?? nhom?.name, sl = it?.qty ?? nhom?.qty ?? 0, dt = it?.revenue ?? nhom?.revenue ?? 0;
   if (!ten || !(sl > 0) || !(dt > 0)) return '';
   // "tăng LÊN 45 nghìn" = giá mới, không phải tăng thêm 45 nghìn
   const gia = dt / sl;
   if (/l[eê]n\s*$/i.test(question.slice(0, m.index + m[0].length - m[1].length - m[2].length).trimEnd().replace(/\d+[.,]?$/, '')) || /l[eê]n\s*\d/i.test(m[0])) {
-    if (x <= gia) return '';
-    return kichBanGiaX(ten, it ? 'món' : 'nhóm', sl, dt, gia, x - gia, it?.cost);
+    // "tăng lên 5 nghìn" khi món giá 45.000đ = tăng THÊM 5 nghìn (số nhỏ hơn nửa giá không thể là giá mới); còn lại không đoán
+    if (x <= gia && x > gia * 0.5) return '';
+    if (x > gia) return kichBanGiaX(ten, it ? 'món' : 'nhóm', sl, dt, gia, x - gia, it?.cost);
   }
   return kichBanGiaX(ten, it ? 'món' : 'nhóm', sl, dt, gia, x, it?.cost);
 }
@@ -3145,7 +3174,7 @@ export function buildMessages(
     soNguoiCan(question),
     baiToanTiepThi(extra?.facts, extra?.modules, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
-    kichBanGia(extra?.facts, question),
+    kichBanGia(extra?.facts, question, extra?.history?.q ?? extra?.memory?.[extra.memory.length - 1]?.q ?? ''),
     giaKhacMenu(extra?.facts, question),
     extra?.thoiTiet ?? '',
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
@@ -4098,7 +4127,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     monTrongCau(extra?.facts, question) ? `MÓN ĐANG HỎI: ${monTrongCau(extra?.facts, question)}` : '',
     extra?.facts && ngayMoBan(extra.facts) ? `SỐ NGÀY KỲ: ${ngayMoBan(extra.facts)}` : '',
     ngayHoi(question, now, extra?.facts),
-    kichBanGia(extra?.facts, question),
+    kichBanGia(extra?.facts, question, extra?.history?.q ?? extra?.memory?.[extra.memory.length - 1]?.q ?? ''),
     giaKhacMenu(extra?.facts, question),
     todayBlock(now),
   ].filter(Boolean).join('\n');
