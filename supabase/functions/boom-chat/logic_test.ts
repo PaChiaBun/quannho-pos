@@ -2623,3 +2623,26 @@ Deno.test('lần 239: món chưa bán khớp đúng tên dài nhất', () => {
   assertEquals(L.monTrongCau(f, 'cơm tấm sườn cây sao không ai gọi'), 'Cơm tấm sườn cây');
   assertEquals(L.monTrongCau(f, 'cơm tấm sườn bán sao'), 'Cơm tấm sườn');
 });
+
+Deno.test('Trung bình theo thứ bỏ ngày không có đơn của thứ vẫn bán (18/11 Bò Đen nghỉ 9–10/11)', () => {
+  const now = new Date('2026-11-18T15:10:00+07:00');
+  // Thứ 2 … Chủ nhật; 1–18/11, hôm nay Thứ 4 18/11 chưa có đơn; 9/11 (Thứ 2) và 10/11 (Thứ 3) không có đơn
+  const ngay: [string, number][] = [['01', 3636333], ['02', 3481000], ['03', 4019000], ['04', 3532300], ['05', 4176750], ['06', 4191150], ['07', 5043000], ['08', 3636333],
+    ['11', 3532300], ['12', 4176750], ['13', 4191150], ['14', 5043000], ['15', 3636334], ['16', 3102000], ['17', 1850000]];
+  const base = { period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 57247400, orders: 576,
+    by_weekday: [6583000, 5869000, 7064600, 8353500, 8382300, 10086000, 10909000] };
+  const by_day = ngay.map(([d, revenue]) => ({ d: `2026-11-${d}`, revenue, orders: 30 }));
+  const f = parseFacts({ ...base, by_day })!;
+  assertEquals(L.ngayBan(f), { cnt: [2, 2, 3, 2, 2, 2, 3], le: ['2026-11-09', '2026-11-10'] });
+  const t = formatFacts(f, now, 'làm sao để tăng doanh thu tháng này lên 10%');
+  assertStringIncludes(t, 'Ngày KHÔNG có đơn trong kỳ: 9/11, 10/11');
+  assert(!t.includes('Bất thường (tính sẵn)') && !t.includes('1.956.333') && !t.includes('2.194.333'), t);
+  // dự báo: Thứ 2 3.291.500 × 2 + Thứ 3 2.934.500 + các thứ khác như cũ = 107.923.967
+  assertStringIncludes(t, '107.923.967');
+  // nhãn thứ của hôm nay trong dòng dự báo dùng đúng trung bình ngày đã trọn (3.532.300), không chia cả hôm nay đang dở
+  assert(!t.includes('2.354.867'), t);
+  // không có số từng ngày, hoặc số từng ngày không phủ đủ kỳ → giữ cách chia theo lịch như trước
+  const cu = formatFacts(parseFacts(base)!, now, 'làm sao để tăng doanh thu tháng này lên 10%');
+  assert(cu.includes('Bất thường (tính sẵn)') && cu.includes('1.956.333'), cu);
+  assertEquals(L.ngayBan(parseFacts({ ...base, by_day: by_day.slice(0, 5) })!).le, []);
+});

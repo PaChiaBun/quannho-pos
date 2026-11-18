@@ -202,3 +202,14 @@ Deno.test('lần 221: tổng … nhiêu rồi', () => {
   assertEquals(docKy('tổng thu nhập nhiêu rồi', n).nhan.startsWith('Tháng này'), true);
   assertEquals(docKy('ban duoc nhieu roi', n).nhan, 'Hôm nay');
 });
+
+Deno.test('Kỳ: "ngày nào / thứ mấy trong tuần" hỏi thứ nào yếu, không phải Tuần này', () => {
+  const now = new Date('2026-11-18T15:10:00+07:00'), nhan = (q: string) => docKy(q, now).nhan;
+  for (const q of ['ngày nào trong tuần bán yếu nhất, tôi nên làm gì', 'ngay nao trong tuan ban yeu nhat', 'thứ mấy trong tuần bán yếu nhất', 'thứ mấy trong tuần quán vắng nhất', 'các ngày trong tuần thì ngày nào đông nhất', 'trong tuần thì thứ mấy vắng nhất']) {
+    assertEquals(nhan(q), 'Tháng này (1/11–18/11)', q);
+  }
+  for (const q of ['trong tuần này bán được bao nhiêu', 'ngày nào trong tuần này bán yếu nhất', 'trong tuần quán bán được bao nhiêu', 'cả tuần bán được bao nhiêu', 'tuần này sao']) {
+    assert(nhan(q).startsWith('Tuần này'), `${q} => ${nhan(q)}`);
+  }
+  assert(nhan('trong tuần qua bán sao').startsWith('Tuần trước'), nhan('trong tuần qua bán sao'));
+});

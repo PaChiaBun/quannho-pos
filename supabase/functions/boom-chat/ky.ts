@@ -219,7 +219,9 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   // 05/11: "hôm kia bán bao nhiêu" rơi về 30 ngày qua
   them(/\b(?:hom kia|hum kia|bua kia)\b/, () => motNgay(cong(hn, -2 * D), now));
   them(/\b(?:(?:ngay )?hom qua|hqua|hum qua|hom wa|bua qua|toi qua|dem qua|sang qua|trua qua|chieu qua)\b/, () => kyCo('hom_qua', now));
-  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua))|dau tuan (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
+  // 18/11 Bò Đen: "ngày nào trong tuần bán yếu nhất" (hỏi THỨ nào yếu) bị đọc thành Tuần này, chỉ còn 2 ngày số liệu → không coi là tuần này.
+  // Thêm \b sau nhóm loại trừ: "trong tuần quán …" từng bị bỏ vì "quan" bắt đầu bằng "qua".
+  them(/\b(?:tuan nay|(?<!\b(?:(?:ngay|thu|hom|buoi) (?:nao|may)|(?:cac|nhung|moi) (?:ngay|thu)) )(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua)\b)(?! (?:thi |la )?(?:ngay|thu|hom) (?:nao|may)\b)|dau tuan (?:toi gio|toi h|den gio|den h|den nay|toi nay))\b/, () => kyCo('tuan_nay', now));
   them(/\btuan (?:truoc|trc|vua roi|vua qua|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
   them(/\b(?:thang|thg) nay nam (?:ngoai|truoc|trc|roi)\b/, () => thang(nowM, nowY - 1, now));
   them(/^tn (?=(?:ban|dc|duoc|thu|dt|doanh|don|chi|lai|loi|ck|tm|tien|mon|gio|bn)\b)/, () => kyCo('thang_nay', now));
