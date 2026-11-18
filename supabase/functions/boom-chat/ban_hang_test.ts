@@ -113,3 +113,23 @@ Deno.test('ban_hang: cùng kỳ trước 0 đơn là số thật — báo rõ v�
   assertEquals(seen.filter((x) => x === 'rpc/boom_sales_raw_v1').length, 2);
   assert(formatFacts(parseFacts(r3)!, new Date('2026-11-05T09:00:00+07:00'), 'so với tháng 9 thế nào').includes('tháng 9 (1/9–30/9) quán có 0 đơn, 0đ'));
 });
+
+Deno.test('ban_hang: cùng kỳ trước gần như chưa bán (1 đơn) → không gửi số để tính %, báo đúng số đơn (lô 1 giai đoạn 2, B5)', async () => {
+  const ky: Ky = { tu: '2026-11-01T00:00:00+07:00', den: '2026-11-18T17:00:00+07:00', truocTu: '2026-10-01T00:00:00+07:00', truocDen: '2026-10-18T17:00:00+07:00', nhan: 'Tháng này (1/11–18/11)', nhanTruoc: 'cùng kỳ tháng trước (1/10–18/10)' };
+  const mk = (donTruoc: number) => ({ sbUrl: 'http://x', anonKey: 'anon', jwt: 'j', storeId: '11111111-1111-1111-1111-111111111111', userId: 'u',
+    fetch: (async (u: string, i?: RequestInit) => {
+      const b = i?.body ? JSON.parse(String(i.body)) : {};
+      if (String(u).includes('rpc/get_daily')) return Response.json(b.p_from === ky.truocTu ? [{ report_date: '2026-10-25', total_revenue: 5e6, total_orders: 60 }] : [{ report_date: '2026-11-03', total_revenue: 1e6, total_orders: 40 }]);
+      if (String(u).includes('rpc/boom_sales_raw_v1')) return Response.json(b.p_from === ky.tu ? CUR : b.p_to === ky.truocDen ? { ...PREV, orders: donTruoc, revenue: donTruoc * 148000 } : { ...PREV, orders: 60, revenue: 5e6 });
+      if (String(u).includes('rpc/') || String(u).includes('void_audit_logs')) return new Response('', { status: 404 });
+      return Response.json(MONS);
+    }) as typeof fetch });
+  const r = await docBanHang(mk(1), ky);
+  assert(!('prev_period' in r!) && !('prev_revenue' in r!));
+  assertEquals(r!.prev_zero, { period: 'cùng kỳ tháng trước (1/10–18/10)', from: '2026-10-01', to: '2026-10-18', don: 1, tien: 148000,
+    full: { from: '2026-10-01', to: '2026-10-31', revenue: 5e6, orders: 60, days: 1, first: '2026-10-25', last: '2026-10-25' } });
+  const t = formatFacts(parseFacts(r)!, new Date('2026-11-18T17:00:00+07:00'), 'doanh thu tháng này so với tháng trước thế nào');
+  assert(t.includes('KỲ SO SÁNH GẦN NHƯ CHƯA BÁN') && t.includes('quán chỉ có 1 đơn, 148.000đ') && !/TĂNG [\d.,]+%|số đơn [+−]/.test(t), t);
+  // kỳ trước 4 đơn nhưng kỳ này chỉ 40 đơn (đúng 10%) → vẫn so bình thường; kỳ trước 12 đơn → so bình thường
+  for (const d of [4, 12]) assert('prev_period' in (await docBanHang(mk(d), ky))!, String(d));
+});

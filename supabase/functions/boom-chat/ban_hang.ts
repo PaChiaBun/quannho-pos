@@ -208,10 +208,13 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
     ]);
     // 18/11 Bò Đen: cùng kỳ trước 0 đơn (quán nghỉ đầu tuần trước) → Boom nói "chưa có doanh thu tuần trước". 0 đơn là số thật: báo rõ,
     // và nếu kỳ trước còn dài hơn phần cùng kỳ thì đọc thêm TRỌN kỳ trước (tới đầu kỳ này) để có mốc; lỗi thì chỉ thiếu mốc đó.
+    // lô 1 giai đoạn 2 (B5): cùng kỳ trước chỉ 1 đơn → "TĂNG 2087,6%", "số đơn +5250%". Dưới 10 đơn VÀ dưới 10% số đơn kỳ này thì coi như
+    // kỳ trước gần như chưa bán: không gửi số kỳ trước để tính %, chỉ báo số đơn và tiền thật.
     let zero: Record<string, unknown> | null = null;
-    if (!(n(prev.orders) > 0) && n(cur.orders) > 0) {
+    const donTruoc = n(prev.orders), nenNho = n(cur.orders) > 0 && donTruoc < 10 && donTruoc < n(cur.orders) * 0.1;
+    if (nenNho) {
       const [zf, zt] = ngayKy(ky.truocTu, ky.truocDen);
-      zero = { period: clip(ky.nhanTruoc, 40), from: zf, to: zt };
+      zero = { period: clip(ky.nhanTruoc, 40), from: zf, to: zt, ...(donTruoc > 0 ? { don: donTruoc, tien: n(prev.revenue) } : {}) };
       if (Date.parse(ky.truocDen) < Date.parse(ky.tu)) {
         const [tron, ngayT] = await Promise.all([raw(ky.truocTu, ky.tu).catch(() => null), docDoanhThuNgay(ctx, ky.truocTu, ky.tu)]);
         if (tron && n(tron.orders) > 0) {
@@ -220,7 +223,8 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
         }
       }
     }
-    return { ...dungFacts(ky, cur, prev, mons), ...soBaoCao(bao, ngay, huy), ...(zero ? { prev_zero: zero } : {}) };
+    const truoc = nenNho ? { ...prev, revenue: 0, orders: 0, items: [], by_hour: prev.by_hour.map(() => 0), by_weekday: prev.by_weekday.map(() => 0) } : prev;
+    return { ...dungFacts(ky, cur, truoc, mons), ...soBaoCao(bao, ngay, huy), ...(zero ? { prev_zero: zero } : {}) };
   } catch {
     return null;
   }

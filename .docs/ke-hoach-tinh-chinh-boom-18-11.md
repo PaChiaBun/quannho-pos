@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật 18/11 (Chủ Quán đồng ý "Soi 5 quán"), ra 10 lỗi mới (bảng ở mục 7); CHƯA sửa lỗi nào, chờ Chủ Quán duyệt lô 1.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ SỬA trong mã 18/11, CHƯA áp production (chờ Chủ Quán duyệt lần 255). Lô 2 (B4, B6, B8, B10 + việc tồn) chưa làm.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -127,3 +127,19 @@ Cảnh báo sai của bộ kiểm cần chỉnh: K4 báo một giờ vắng nằ
 
 **Lô 1 đề xuất (5 chỗ):** B1, B2 (gộp B9, cùng hàm đếm ngày), B3, B5, B7. Trước khi sửa, thêm phép kiểm cho B1, B2, B5, B7 vào `kiem.ts` để đo được "xong".
 **Lô 2:** B4, B6, B8, B10 và việc tồn ở giai đoạn 2 (bỏ món sót nhóm khác; hỏi riêng một buổi; hồ sơ quán lệch giờ bán chính; câu không dấu).
+
+### 18/11 — Giai đoạn 2, lô 1: đã sửa trong mã (chưa áp)
+
+Làm theo thứ tự: thêm phép kiểm trước (K11 ngày nghỉ của quán mới, K12 khuyên kéo khách ở giờ không có đơn, K13 tính % trên nền quá nhỏ, K14 nhóm nguyên liệu ghi là đang bán, K15 nêu món chưa bán khi kỳ dưới 7 ngày có đơn; K4 chỉ còn bắt giờ ở rìa) → chạy trên 6 quán thật + Demo với mã lần 254: **40 cảnh báo khác nhau** → sửa → chạy lại: **2 cảnh báo**, cả hai là B6 của lô 2.
+
+| Lỗi | Sửa ở đâu | Cách sửa |
+|---|---|---|
+| B7 | `parseFacts` | Bỏ nhóm nguyên liệu / vật tư không bán phần nào ngay khi đọc số, nên mọi dòng phía sau đều không còn nhóm này |
+| B3 | `formatFacts` | Kỳ dưới 7 ngày có đơn: không liệt kê món chưa bán, không khuyên ẩn món; thay bằng một dòng nói rõ chưa đủ ngày |
+| B2 + B9 | `ngayBan`, `ngayMoBan`, `moBanTb` | Kỳ so sánh và trọn kỳ trước đều 0 đơn thì chỉ đếm thứ từ ngày đầu có đơn (`batDau`), thêm dòng "quán CHỈ có đơn từ …"; số ngày mở bán = số ngày CÓ ĐƠN (`coDon`) khi số từng ngày đáng tin, thay cho trường `cuoi` của lần 254 |
+| B5 | `docBanHang`, `parseFacts`, `formatFacts` | Kỳ so sánh dưới 10 đơn VÀ dưới 10% số đơn kỳ này: không gửi số kỳ trước để tính %, báo "KỲ SO SÁNH GẦN NHƯ CHƯA BÁN" kèm số đơn, tiền thật và trọn kỳ trước |
+| B1 | `caNgung` (mới), `formatFacts`, hướng tăng doanh thu | Giờ kỳ trước bán thật (≥ 1%) mà nay 0đ hoặc chỉ còn đơn lẻ, gộp từ 5% doanh thu kỳ trước: thêm dòng "CA NGỪNG BÁN" (bao nhiêu % mức giảm là do các giờ này, mức tăng giảm riêng các giờ còn bán), dặn hỏi chủ quán; hai chỗ chọn "giờ mất nhiều nhất" chỉ xét giờ bán chính |
+
+- Test hàm 231 qua (thêm 2 test, số dựng lại, không dùng tên hay số của quán thật). Test bộ kiểm 2 qua.
+- Đã đọc lại bằng mắt khối số thật sau khi sửa của quán A (dòng ca ngừng bán: các giờ chiều tối chiếm khoảng một phần ba doanh thu kỳ trước và khoảng 70% mức giảm; riêng các giờ còn bán giảm khoảng 19%), quán D (chỉ tính từ ngày đầu có đơn, không còn "nghỉ Thứ …") và quán C (không còn % nghìn lần).
+- Chưa làm: chưa áp production; chưa hỏi mô hình câu nào trên bản này; B4, B6, B8, B10 còn nguyên.

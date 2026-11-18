@@ -54,9 +54,10 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
   // K4: giờ "vắng nhất" không được là giờ đơn lẻ dưới 1% doanh thu (lần 252: 11h có 1 đơn / 18 ngày)
   const vang = /vắng nhất \([^)]*\): ([^.\n]*)\./.exec(khoi)?.[1];
   if (vang && tongGio > 0) {
+    const ban = (h: number) => (t.by_hour[h] ?? 0) / tongGio >= 0.01;
     for (const m of vang.matchAll(/(\d{1,2})h/g)) {
-      const p = (t.by_hour[+m[1]] ?? 0) / tongGio;
-      if (p < 0.01) loi.push(`K4 giờ vắng: ${m[1]}h bị xếp vắng nhất nhưng chỉ chiếm ${(p * 100).toFixed(1).replace('.', ',')}% doanh thu (đơn lẻ, không phải giờ bán)`);
+      const h = +m[1], p = (t.by_hour[h] ?? 0) / tongGio, giua = t.by_hour.some((_, k) => k < h && ban(k)) && t.by_hour.some((_, k) => k > h && ban(k));
+      if (p < 0.01 && !giua) loi.push(`K4 giờ vắng: ${m[1]}h bị xếp vắng nhất nhưng chỉ chiếm ${(p * 100).toFixed(1).replace('.', ',')}% doanh thu (đơn lẻ, không phải giờ bán)`);
     }
   }
 
@@ -95,5 +96,33 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
     const dung = tb[THU.indexOf(m[1])];
     if (dung !== null && lech(so(m[2]), dung) > 0.03) loi.push(`K10 dự báo: nhãn ${m[1]} ghi ${m[2]}đ/ngày, ngày có đơn thật cho ${tien(dung)}/ngày`);
   }
+
+  // ---- lô 1 giai đoạn 2 (soi 5 quán thật 18/11) ----
+  // K11: gọi một thứ là ngày NGHỈ khi tính từ ngày quán bắt đầu có đơn trong kỳ thì thứ đó chưa đủ 2 lần (quán mới mở giữa tháng)
+  const dau = t.ngay.map((x) => x.d).sort()[0], cuoi = [...t.ngay.map((x) => x.d), t.homNay ?? ''].sort().pop();
+  if (dau && cuoi) {
+    const nghi = new Set<string>();
+    for (const m of khoi.matchAll(/(?:; nghỉ |\. )((?:(?:Thứ [2-7]|Chủ nhật)(?:, )?)+)(?=;|$|\n|: quán NGHỈ)/gm)) for (const x of m[1].matchAll(/Thứ [2-7]|Chủ nhật/g)) if (/nghỉ |quán NGHỈ/.test(khoi.slice(m.index, m.index + m[0].length + 12))) nghi.add(x[0]);
+    for (const ten of nghi) {
+      let n = 0;
+      for (let d = Date.parse(`${dau}T00:00:00Z`); d <= Date.parse(`${cuoi}T00:00:00Z`); d += 86_400_000) if (thuCua(new Date(d).toISOString().slice(0, 10)) === THU.indexOf(ten) && new Date(d).toISOString().slice(0, 10) !== t.homNay) n++;
+      if (n < 2) loi.push(`K11 ngày nghỉ: gọi ${ten} là ngày nghỉ, nhưng từ ngày đầu có đơn trong kỳ (${dau.slice(8)}/${dau.slice(5, 7)}) mới có ${n} ngày ${ten}`);
+    }
+  }
+  // K12: khuyên kéo khách / ưu đãi đúng giờ mà kỳ này quán KHÔNG có đơn nào (ca đã ngừng bán)
+  for (const m of khoi.matchAll(/kéo khách lại đúng ([^()\n]*)\(giờ mất nhiều nhất\)/g)) {
+    for (const x of m[1].matchAll(/(\d{1,2})h/g)) if (!(t.by_hour[+x[1]] > 0)) loi.push(`K12 giờ ngừng bán: khuyên kéo khách lại ${x[1]}h, nhưng kỳ này ${x[1]}h không có đơn nào`);
+  }
+  // K13: tính % tăng giảm trên nền kỳ trước gần như chưa bán (dưới 10 đơn và dưới 10% số đơn kỳ này)
+  if (t.truocDon !== null && t.truocDon > 0 && t.truocDon < 10 && t.truocDon < t.orders * 0.1) {
+    const pt = /(?:TĂNG|GIẢM) ([\d.]+)(?:,\d+)?%|số đơn [+−-]([\d.]+)(?:,\d+)?%/.exec(khoi);
+    if (pt) loi.push(`K13 nền quá nhỏ: kỳ so sánh chỉ có ${t.truocDon} đơn mà khối số vẫn tính "${pt[0]}"`);
+  }
+  // K14: nhóm nguyên liệu / vật tư không bán món nào vẫn được ghi là nhóm đang bán
+  for (const m of khoi.matchAll(/NHÓM "([^"]+)" \(\d+ món đang bán\): 0 phần/g)) if (/nguy[eê]n li[eệ]u|v[aậ]t t[uư]|bao b[iì]/i.test(m[1])) loi.push(`K14 nhóm không bán: nhóm "${m[1]}" (0 phần) vẫn ghi là món đang bán`);
+  const cacNhom = /Các nhóm quán đang bán: ([^\n(]*)/.exec(khoi)?.[1] ?? '';
+  for (const g of t.nhom) if (g.mon > 0 && g.chuaBan === g.mon && /nguy[eê]n li[eệ]u|v[aậ]t t[uư]|bao b[iì]/i.test(g.ten) && cacNhom.split(', ').map((x) => x.trim()).includes(g.ten)) loi.push(`K14 nhóm không bán: "${g.ten}" nằm trong "Các nhóm quán đang bán"`);
+  // K15: kỳ dưới 7 ngày có đơn mà vẫn kết luận món chưa bán / khuyên ẩn món
+  if (nNgay > 0 && nNgay < 7 && /món chưa bán phần nào trong kỳ|cả kỳ chưa bán phần nào|ẨN khỏi menu/.test(khoi)) loi.push(`K15 kỳ ngắn: mới ${nNgay} ngày có đơn mà khối số vẫn nêu món chưa bán / khuyên ẩn món`);
   return loi;
 }

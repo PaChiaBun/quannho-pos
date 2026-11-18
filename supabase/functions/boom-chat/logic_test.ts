@@ -2634,13 +2634,13 @@ Deno.test('Trung bình theo thứ bỏ ngày không có đơn của thứ vẫn 
   const by_day = ngay.map(([d, revenue]) => ({ d: `2026-11-${d}`, revenue, orders: 30 }));
   const f = parseFacts({ ...base, by_day })!;
   // hôm nay (Thứ 4 18/11) chưa có đơn: giữ trong cnt cho các dòng theo thứ, báo qua `cuoi` để số ngày mở bán là 15 chứ không phải 16
-  assertEquals(L.ngayBan(f), { cnt: [2, 2, 3, 2, 2, 2, 3], le: ['2026-11-09', '2026-11-10'], cuoi: 2 });
+  assertEquals(L.ngayBan(f), { cnt: [2, 2, 3, 2, 2, 2, 3], le: ['2026-11-09', '2026-11-10'], coDon: 15, batDau: null });
   const tin = buildMessages('doanh thu tháng này so với tháng trước thế nào', [], null, { facts: f, now })[1].content;
   assertStringIncludes(tin, 'khoảng 38 đơn mỗi ngày mở bán');
   assertStringIncludes(soLieuGoc('doanh thu tháng này so với tháng trước thế nào', { facts: f, now }), 'SỐ NGÀY KỲ: 15');
   // hôm nay đã có đơn thì vẫn tính là một ngày bán
   const coDon = parseFacts({ ...base, revenue: base.revenue + 150000, by_weekday: base.by_weekday.map((v, k) => (k === 2 ? v + 150000 : v)), by_day: [...by_day, { d: '2026-11-18', revenue: 150000, orders: 1 }] })!;
-  assertEquals(L.ngayBan(coDon).cuoi, -1);
+  assertEquals(L.ngayBan(coDon).coDon, 16);
   assertStringIncludes(soLieuGoc('tháng này sao', { facts: coDon, now }), 'SỐ NGÀY KỲ: 16');
   const t = formatFacts(f, now, 'làm sao để tăng doanh thu tháng này lên 10%');
   assertStringIncludes(t, 'Ngày KHÔNG có đơn trong kỳ: 9/11, 10/11');
@@ -2697,4 +2697,52 @@ Deno.test('Kịch bản tăng giá: tên gọi tắt, câu nối tiếp lấy m�
   assertEquals(kichBanGia(f, 'tăng giá cá viên chiên 5 nghìn được không'), '');
   assertEquals(kichBanGia(f, 'tăng giá trà sữa hong kong lên 30 nghìn được không'), '');
   assert(kichBanGia(f, 'tăng giá chai trà sữa hong kong thêm 2 nghìn được không').includes('món "Chai Trà Sữa Hong Kong Truyền Thống Nguyên Chất"'));
+});
+
+Deno.test('Lô 1 giai đoạn 2: nhóm nguyên liệu không bán, kỳ dưới 7 ngày có đơn, quán mới, ca ngừng bán', () => {
+  const it = (name: string, qty: number, price: number) => ({ name, qty, price, revenue: qty * price });
+  const now = new Date('2026-11-18T15:00:00+07:00');
+  const nhom = [
+    { name: 'Đồ uống', revenue: 9000000, qty: 300, items: 9, unsold: 2, unsold_names: ['Trà gừng', 'Trà quế'], slow: [], top: [it('Trà đào', 200, 30000)] },
+    { name: 'Nguyên liệu', revenue: 0, qty: 0, items: 14, unsold: 14, unsold_names: ['Bột kem', 'Syrup'], slow: [], top: [] },
+  ];
+  // B7: nhóm nguyên liệu không bán phần nào không còn là "nhóm quán đang bán"
+  const a = parseFacts({ period: 'Tháng này (1/11–18/11)', revenue: 9000000, orders: 250, top: [], slow: [], groups: nhom })!;
+  assertEquals(a.groups!.map((g) => g.name), ['Đồ uống']);
+  const ta = buildMessages('tháng này bán sao', [], null, { facts: a, now })[1].content;
+  assert(!ta.includes('Nguyên liệu') && ta.includes('Menu đang bán 9 món, 2 món chưa bán phần nào trong kỳ'), ta);
+  assertEquals(parseFacts({ period: 'x', revenue: 1, orders: 1, top: [], slow: [], groups: [{ ...nhom[1], qty: 3, revenue: 90000 }] })!.groups!.length, 1);
+
+  // B3 + B2: quán mới có đơn từ 13/11 (kỳ so sánh và trọn kỳ trước đều 0 đơn), mới 4 ngày có đơn
+  const ngay = [['13', 1100000], ['14', 150000], ['17', 2100000], ['18', 8400000]].map(([d, v]) => ({ d: `2026-11-${d}`, revenue: +v, orders: 20 }));
+  const moi = parseFacts({ period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 11750000, orders: 80, top: [], slow: [], groups: [nhom[0]],
+    by_weekday: [0, 2100000, 8400000, 0, 1100000, 150000, 0], by_day: ngay, prev_zero: { period: 'cùng kỳ tháng trước (1/10–18/10)', from: '2026-10-01', to: '2026-10-18' } })!;
+  assertEquals(L.ngayBan(moi), { cnt: [1, 1, 1, 0, 1, 1, 1], le: [], coDon: 4, batDau: '2026-11-13' });
+  const tm = buildMessages('tháng này bán sao, món nào chưa bán được', [], null, { facts: moi, now })[1].content;
+  assertStringIncludes(tm, 'Trong kỳ này quán CHỈ có đơn từ 13/11');
+  assertStringIncludes(tm, 'Kỳ mới có 4 ngày có đơn → CHƯA đủ để nói món nào không bán được');
+  assert(!/quán NGHỈ|; nghỉ Thứ|ẨN khỏi menu|món chưa bán phần nào trong kỳ/.test(tm), tm);
+  assertStringIncludes(soLieuGoc('tháng này bán sao', { facts: moi, now }), 'SỐ NGÀY KỲ: 4');
+  // cùng số liệu nhưng kỳ trước CÓ đơn (quán cũ): các ngày đầu tháng không đơn là ngày không bán, không phải "chưa bắt đầu"
+  assertEquals(L.ngayBan(parseFacts({ ...moi, prev_zero: undefined, prev_period: 'cùng kỳ tháng trước', prev_revenue: 9000000, prev_orders: 70 })!).batDau, null);
+
+  // B9: kỳ tuần, Thứ 2 không có đơn → 2 ngày có đơn chứ không phải 3 ngày mở bán
+  const tuan = parseFacts({ period: 'Tuần này (từ thứ Hai 16/11)', from: '2026-11-16', to: '2026-11-18', revenue: 10500000, orders: 62, top: [], slow: [],
+    by_weekday: [0, 2100000, 8400000, 0, 0, 0, 0], by_day: ngay.slice(2) })!;
+  assertStringIncludes(soLieuGoc('tuần này sao', { facts: tuan, now }), 'SỐ NGÀY KỲ: 2');
+
+  // B1: kỳ trước bán cả tối, kỳ này không còn đơn nào từ 18h → không khuyên kéo khách ở giờ không bán
+  const gio = (m: Record<number, number>) => Array.from({ length: 24 }, (_, h) => m[h] ?? 0);
+  const ca = parseFacts({ period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 100000000, orders: 700, top: [], slow: [],
+    prev_period: 'cùng kỳ tháng trước (1/10–18/10)', prev_revenue: 180000000, prev_orders: 1300, prev_from: '2026-10-01', prev_to: '2026-10-18',
+    by_hour: gio({ 7: 30000000, 8: 40000000, 9: 30000000 }), prev_by_hour: gio({ 7: 35000000, 8: 50000000, 9: 35000000, 19: 25000000, 20: 20000000, 21: 15000000 }) })!;
+  assertEquals(L.caNgung(ca), { gio: [19, 20, 21], truoc: 60000000, nay: 0, tongTruoc: 180000000 });
+  // giờ kỳ trước bán thật, nay chỉ còn vài đơn lẻ ở rìa cũng tính là ngừng bán
+  assertEquals(L.caNgung(parseFacts({ ...ca, by_hour: gio({ 7: 30000000, 8: 40000000, 9: 29800000, 19: 200000 }) })!)!.gio, [19, 20, 21]);
+  const tc = formatFacts(ca, now, 'vì sao doanh thu tháng này giảm, làm sao kéo lại');
+  assertStringIncludes(tc, 'CA NGỪNG BÁN (tính sẵn): kỳ này quán KHÔNG có đơn nào lúc 19h–22h; kỳ trước các giờ này bán 60.000.000đ (33,3% doanh thu kỳ trước), bằng khoảng 75% mức giảm doanh thu');
+  assertStringIncludes(tc, 'Riêng các giờ CÒN bán: kỳ trước 120.000.000đ → nay 100.000.000đ (−16,7%)');
+  assert(!/kéo khách lại đúng (?:19|20|21)h/.test(tc) && tc.includes('kéo khách lại đúng 7h và 8h'), tc.split('\n').filter((x) => x.includes('kéo khách')).join('|'));
+  // giờ kỳ trước chỉ bán lặt vặt (dưới 5%) mà nay 0đ thì không gọi là ca ngừng bán
+  assertEquals(L.caNgung(parseFacts({ ...ca, prev_by_hour: gio({ 7: 60000000, 8: 60000000, 9: 55000000, 22: 5000000 }) })!), null);
 });
