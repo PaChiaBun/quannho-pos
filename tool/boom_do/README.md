@@ -24,3 +24,13 @@ python3 tool/boom_do/do_tam/so_duong.py <nhãn> bo_so bo_h bo_j
 
 - Các script tạm chép file `zz_*_tam_test.dart` vào `test/features/ai_assistant/`, chạy xong thì xoá. Không chạy hai script cùng lúc.
 - `so_duong.py` so đường đi từng câu của bản mới với kết quả gần nhất trước đó.
+
+## Soi khối số quán thật (không gọi mô hình, 18/11)
+
+```bash
+deno run -A tool/boom_do/soi_so/soi.ts <mã quán> [mã quán…] [--ma <thư mục boom-chat khác>] [--now <giờ ISO>] [--ra <thư mục NGOÀI repo>] [--in]
+deno test tool/boom_do/soi_so/kiem_test.ts
+```
+
+- Đọc số bán hàng của quán bằng psql chỉ đọc qua ssh, dựng đúng khối số Boom gửi cho mô hình cho ~15 câu hỏi mẫu, rồi chạy bộ kiểm bất biến `kiem.ts` (K1–K10). 0 đồng, không trừ hạn mức quán. Kế hoạch: `.docs/ke-hoach-tinh-chinh-boom-18-11.md`.
+- Dữ liệu quán thật không ghi vào repo: `--ra` phải nằm ngoài repo.
