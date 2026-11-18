@@ -2646,3 +2646,23 @@ Deno.test('Trung bình theo thứ bỏ ngày không có đơn của thứ vẫn 
   assert(cu.includes('Bất thường (tính sẵn)') && cu.includes('1.956.333'), cu);
   assertEquals(L.ngayBan(parseFacts({ ...base, by_day: by_day.slice(0, 5) })!).le, []);
 });
+
+Deno.test('Giờ lẻ tẻ không xếp hạng vắng nhất (18/11 Bò Đen bán 18–23h, 11h chỉ 1 đơn / 18 ngày)', () => {
+  const by_hour = Array(24).fill(0);
+  Object.entries({ 11: 117000, 12: 150000, 14: 1381000, 16: 404000, 17: 387000, 18: 3431000, 19: 10896600, 20: 15829500, 21: 13472000, 22: 9215300, 23: 1964000 }).forEach(([h, v]) => (by_hour[+h] = v));
+  const f = parseFacts({ period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 57247400, orders: 576, by_hour })!;
+  assertEquals(L.gioChinh(f), { chinh: [18, 19, 20, 21, 22, 23], le: [11, 12, 14, 16, 17] });
+  const t = formatFacts(f, new Date('2026-11-18T15:10:00+07:00'), 'giờ nào trong ngày quán đông khách nhất, giờ nào vắng nhất');
+  assertStringIncludes(t, 'Đông nhất: 20h, 21h, 19h; vắng nhất (trong giờ bán chính): 23h, 18h, 22h.');
+  assertStringIncludes(t, 'Giờ bán chính 18h–24h chiếm 95,7% doanh thu kỳ.');
+  assertStringIncludes(t, '11h, 12h, 14h, 16h, 17h = tổng 2.439.000đ (4,3%)');
+  const dong = t.split('\n').find((x) => x.startsWith('Doanh thu theo giờ'))!;
+  // mã kiểm: gọi 23h vắng nhất là đúng; gọi 11h (giờ lẻ tẻ) vắng nhất thì bị nhắc
+  assertEquals(L.goiSaiCaoThap('Vắng nhất trong giờ bán là 23h vắng nhất, chỉ 1.964.000đ.', dong), []);
+  assertEquals(L.goiSaiCaoThap('Quán vắng nhất lúc 11h vắng nhất.', dong).length, 1);
+  // giờ vắng nằm GIỮA giờ bán vẫn là giờ bán; quán không có giờ lẻ tẻ thì dòng y như trước
+  const deu = Array(24).fill(0); [8, 9, 10, 11, 12, 13].forEach((h, k) => (deu[h] = [5000000, 4000000, 20000, 3000000, 6000000, 2000000][k]));
+  const g = parseFacts({ period: 'Tháng này (1/11–18/11)', from: '2026-11-01', to: '2026-11-18', revenue: 20020000, orders: 300, by_hour: deu })!;
+  assertEquals(L.gioChinh(g).le, []);
+  assertStringIncludes(formatFacts(g, new Date('2026-11-18T15:10:00+07:00'), 'giờ nào vắng nhất'), 'vắng nhất (trong giờ có bán): 10h, 13h, 11h.');
+});

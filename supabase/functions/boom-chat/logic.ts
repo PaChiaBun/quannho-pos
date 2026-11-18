@@ -1417,6 +1417,25 @@ export function khungBan(f: ShopFacts): string[] {
   return spans;
 }
 
+/** Giờ bán chính / giờ lẻ tẻ: khối giờ liền nhau dưới 3% doanh thu là đơn lẻ (như khungBan, caBan); ở HAI ĐẦU mỗi khối còn lại,
+ *  giờ dưới 1% cũng là lẻ (giờ vắng nằm GIỮA giờ bán vẫn là giờ bán). 18/11 Bò Đen bán 18–23h (96%) mà dòng theo giờ ghi
+ *  "vắng nhất: 11h" (1 đơn / 18 ngày) → Boom khuyên xếp người ca 11h, kéo khung 16–18h (3 đơn / 18 ngày). */
+export function gioChinh(f: ShopFacts): { chinh: number[]; le: number[] } {
+  const h = (f.by_hour ?? []).map((v) => Math.max(0, v || 0)), tong = h.reduce((a, v) => a + v, 0);
+  const chinh: number[] = [], le: number[] = [];
+  for (let i = 0; i < h.length;) {
+    if (!h[i]) { i++; continue; }
+    let j = i;
+    while (j < h.length && h[j] > 0) j++; // khối [i, j)
+    let a = i, b = j;
+    if (h.slice(i, j).reduce((x, v) => x + v, 0) < tong * 0.03) a = b;
+    else { while (a < b && h[a] < tong * 0.01) a++; while (b > a && h[b - 1] < tong * 0.01) b--; }
+    for (let k = i; k < j; k++) (k >= a && k < b ? chinh : le).push(k);
+    i = j;
+  }
+  return { chinh, le };
+}
+
 export function shopProfile(f: ShopFacts): string {
   const out: string[] = [];
   const gs = f.groups ?? [];
@@ -1585,10 +1604,15 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   if (f.by_hour) {
     const hours = f.by_hour.map((v, h) => ({ h, v })).filter((x) => x.v > 0);
     if (hours.length) {
-      const sorted = [...hours].sort((a, b) => b.v - a.v);
+      const { chinh, le: gioLe } = gioChinh(f), tachLe = gioLe.length > 0 && chinh.length >= 2;
+      // có giờ lẻ tẻ thì chỉ xếp hạng đông / vắng trong giờ bán chính; không có thì dòng y như trước
+      const sorted = [...hours].sort((a, b) => b.v - a.v).filter((x) => !tachLe || chinh.includes(x.h)), nX = sorted.length;
+      const tongH = hours.reduce((a, x) => a + x.v, 0), tienLe = hours.reduce((a, x) => a + (gioLe.includes(x.h) ? x.v : 0), 0);
+      const khoang = chinh.reduce<number[][]>((r, g) => (r.length && r[r.length - 1][1] === g ? (r[r.length - 1][1] = g + 1, r) : [...r, [g, g + 1]]), []).map(([a, b]) => `${a}h–${b}h`).join(', ');
       lines.push(
         `Doanh thu theo giờ trong kỳ (chỉ giờ có bán): ${hours.map((x) => `${x.h}h ${vnd(x.v)}`).join('; ')}. ` +
-          (hours.length >= 2 ? `Đông nhất: ${sorted.slice(0, Math.min(3, hours.length - 1)).map((x) => `${x.h}h`).join(', ')}; vắng nhất (trong giờ có bán): ${sorted.slice(Math.max(Math.min(3, hours.length - 1), hours.length - 3)).reverse().map((x) => `${x.h}h`).join(', ')}.` : ''),
+          (nX >= 2 ? `Đông nhất: ${sorted.slice(0, Math.min(3, nX - 1)).map((x) => `${x.h}h`).join(', ')}; vắng nhất (trong ${tachLe ? 'giờ bán chính' : 'giờ có bán'}): ${sorted.slice(Math.max(Math.min(3, nX - 1), nX - 3)).reverse().map((x) => `${x.h}h`).join(', ')}.` : '') +
+          (tachLe ? ` Giờ bán chính ${khoang} chiếm ${pctTxt(((tongH - tienLe) / tongH) * 100)}% doanh thu kỳ. Giờ lẻ tẻ ngoài giờ bán chính (vài đơn rải rác, KHÔNG phải giờ bán, không xếp hạng đông / vắng, không khuyên xếp người hay ưu đãi theo giờ này; cần thì hỏi chủ quán giờ đó quán có mở không): ${gioLe.map((g) => `${g}h`).join(', ')} = tổng ${vnd(tienLe)} (${pctTxt((tienLe / tongH) * 100)}%).` : ''),
       );
     }
   }
@@ -2827,9 +2851,9 @@ export function baiToanTiepThi(f: ShopFacts | null | undefined, m: ModuleFacts |
         if (it.a < giua * 0.8) co.push({ t: `${tenThu[it.i]} (${vnd(it.a)}/ngày) lên nửa khoảng cách với ngày giữa (${vnd(giua)}/ngày)`, v: ((giua - it.a) / 2) * cnt[it.i] });
       }
     }
-    const h = (f.by_hour ?? []).map((v) => nn(v)), mo = h.flatMap((v, i) => (v > 0 ? [i] : []));
+    const h = (f.by_hour ?? []).map((v) => nn(v)), mo = gioChinh(f).chinh; // không có giờ lẻ tẻ thì = mọi giờ có bán
     if (mo.length >= 6) {
-      const trong = mo.slice(1, -1).filter((i) => h[i + 1] > 0).map((i) => ({ i, a: h[i] + h[i + 1] })).sort((x, y) => x.a - y.a)[0];
+      const trong = mo.slice(1, -1).filter((i) => mo.includes(i + 1)).map((i) => ({ i, a: h[i] + h[i + 1] })).sort((x, y) => x.a - y.a)[0];
       const giua = [...mo.map((i) => h[i])].sort((x, y) => x - y)[Math.floor(mo.length / 2)];
       if (trong && trong.a < 2 * giua * 0.8 && !ngoaiBuoi(trong.i)) co.push({ t: `khung ${trong.i}–${trong.i + 2}h (${vnd(trong.a)}/kỳ) lên nửa khoảng cách với 2 giờ thường`, v: (2 * giua - trong.a) / 2 });
     }
@@ -3573,7 +3597,9 @@ export function goiSaiCaoThap(answer: string, ref: string): string[] {
       const thap = m[0].match(/thấp|ít|yếu|vắng/i) !== null;
       // "tối", "sáng" giới hạn phạm vi so
       const pv = /tối/i.test(cau) ? ([16, 23] as const) : /sáng/i.test(cau) ? ([5, 10] as const) : /trưa/i.test(cau) ? ([10, 14] as const) : /chiều/i.test(cau) ? ([13, 18] as const) : ([0, 23] as const);
-      const vs = [...gio].filter(([g]) => g >= pv[0] && g <= pv[1]);
+      // giờ lẻ tẻ (dòng theo giờ đã tách riêng) không xếp hạng → không bắt Boom gọi 11h (1 đơn) là "vắng nhất"
+      const leGio = new Set([...(/Giờ lẻ tẻ[^:]*: ([^=\n]*)/.exec(ref)?.[1] ?? '').matchAll(/(\d{1,2})h/g)].map((x) => +x[1]));
+      const vs = [...gio].filter(([g]) => g >= pv[0] && g <= pv[1] && !leGio.has(g));
       if (gio.has(h) && vs.length >= 2) {
         const dung = [...vs].sort((a, b) => (thap ? a[1] - b[1] : b[1] - a[1]))[0];
         if (dung[0] !== h && dung[1] !== gio.get(h)) out.push(`${h}h không phải giờ ${thap ? 'thấp' : 'cao'} nhất, ${dung[0]}h mới là`);
