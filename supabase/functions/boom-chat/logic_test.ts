@@ -2633,7 +2633,15 @@ Deno.test('Trung bình theo thứ bỏ ngày không có đơn của thứ vẫn 
     by_weekday: [6583000, 5869000, 7064600, 8353500, 8382300, 10086000, 10909000] };
   const by_day = ngay.map(([d, revenue]) => ({ d: `2026-11-${d}`, revenue, orders: 30 }));
   const f = parseFacts({ ...base, by_day })!;
-  assertEquals(L.ngayBan(f), { cnt: [2, 2, 3, 2, 2, 2, 3], le: ['2026-11-09', '2026-11-10'] });
+  // hôm nay (Thứ 4 18/11) chưa có đơn: giữ trong cnt cho các dòng theo thứ, báo qua `cuoi` để số ngày mở bán là 15 chứ không phải 16
+  assertEquals(L.ngayBan(f), { cnt: [2, 2, 3, 2, 2, 2, 3], le: ['2026-11-09', '2026-11-10'], cuoi: 2 });
+  const tin = buildMessages('doanh thu tháng này so với tháng trước thế nào', [], null, { facts: f, now })[1].content;
+  assertStringIncludes(tin, 'khoảng 38 đơn mỗi ngày mở bán');
+  assertStringIncludes(soLieuGoc('doanh thu tháng này so với tháng trước thế nào', { facts: f, now }), 'SỐ NGÀY KỲ: 15');
+  // hôm nay đã có đơn thì vẫn tính là một ngày bán
+  const coDon = parseFacts({ ...base, revenue: base.revenue + 150000, by_weekday: base.by_weekday.map((v, k) => (k === 2 ? v + 150000 : v)), by_day: [...by_day, { d: '2026-11-18', revenue: 150000, orders: 1 }] })!;
+  assertEquals(L.ngayBan(coDon).cuoi, -1);
+  assertStringIncludes(soLieuGoc('tháng này sao', { facts: coDon, now }), 'SỐ NGÀY KỲ: 16');
   const t = formatFacts(f, now, 'làm sao để tăng doanh thu tháng này lên 10%');
   assertStringIncludes(t, 'Ngày KHÔNG có đơn trong kỳ: 9/11, 10/11');
   assert(!t.includes('Bất thường (tính sẵn)') && !t.includes('1.956.333') && !t.includes('2.194.333'), t);

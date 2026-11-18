@@ -95,6 +95,7 @@ Deno.test('ban_hang: cùng kỳ trước 0 đơn là số thật — báo rõ v�
   const t = formatFacts(parseFacts(r)!, new Date('2026-11-18T15:43:00+07:00'), 'tuần này so với tuần trước thế nào');
   assert(t.includes('KỲ SO SÁNH KHÔNG CÓ ĐƠN') && t.includes('cùng kỳ tuần trước (9/11–11/11) quán có 0 đơn, 0đ'), t);
   assert(t.includes('TRỌN kỳ trước (9/11–15/11): 21.685.400đ từ 213 đơn, có đơn 5 ngày (11/11–15/11), trung bình 4.337.080đ/ngày có đơn'), t);
+  assert(t.includes('Kỳ này (tính sẵn, KHÔNG tự chia lại): 1.000.000đ trong 1 ngày có đơn đã trọn = 1.000.000đ/ngày có đơn'), t);
   // đọc trọn kỳ trước lỗi: vẫn báo rõ cùng kỳ 0 đơn, chỉ thiếu mốc trọn kỳ
   const r2 = await docBanHang(mk(null), ky);
   assertEquals(r2!.prev_zero, { period: 'cùng kỳ tuần trước (9/11–11/11)', from: '2026-11-09', to: '2026-11-11' });
