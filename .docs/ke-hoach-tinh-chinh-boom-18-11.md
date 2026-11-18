@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Chủ Quán duyệt bắt đầu 18/11 ("Bắt đầu"). Giai đoạn 1 XONG 18/11. Giai đoạn 2 chờ Chủ Quán đồng ý cho soi số 5 quán thật còn lại.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật 18/11 (Chủ Quán đồng ý "Soi 5 quán"), ra 10 lỗi mới (bảng ở mục 7); CHƯA sửa lỗi nào, chờ Chủ Quán duyệt lô 1.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -103,3 +103,27 @@ Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `2
 - **Phép thử bắt lỗi (đạt 5 / 5):** chạy trên bản mã trước lần 250 (commit `557bb82`) với cùng mốc giờ, bộ kiểm báo 24 cảnh báo thuộc K2 K3 K4 K5 K6 K7 K8 K9 K10 — đủ cả 5 lỗi đã sửa ở lần 250–254 (món chưa bán gồm nhóm Nguyên liệu; trung bình theo thứ chia cả ngày nghỉ; "ngày nào trong tuần" ra Tuần này; 11h bị xếp vắng nhất; kỳ so sánh 0 đơn không nói gì + câu tăng giá gọi tắt không ra dòng; số ngày mở bán 18 so với 15) và cả lỗi nhãn dự báo. Trên bản lần 254: Demo 0 cảnh báo, Bò Đen 1 cảnh báo.
 - **Lỗi mới bộ kiểm tìm ra (đưa vào lô đầu giai đoạn 2):** "có nên tăng giá trà sữa thêm 5 nghìn không" — menu Bò Đen có 2 món bắt đầu bằng "trà sữa" nhưng khối số tự tính cho Trà Sữa Hong Kong. `kichBanGia` chỉ xét trùng tên trong các món Boom nhìn thấy (3 chạy + 3 chậm mỗi nhóm), không phải cả menu.
 - Giới hạn: mới soi số BÁN HÀNG. Thu Chi, kho, khách, khuyến mãi, nhân sự (đọc qua nhiều bảng theo quyền người hỏi) chưa dựng lại. Bộ kiểm chưa bắt được loại "món nào nên bỏ sót nhóm khác" vì đó là lựa chọn của mô hình, không nằm trong khối số.
+
+### 18/11 — Giai đoạn 2: soi 5 quán thật còn lại (bản lần 254)
+
+Chạy `soi.ts` trên 5 quán thật còn lại: 40 giây, 0 đồng. Bộ kiểm báo 7 cảnh báo (2 quán không có cảnh báo). Đọc khối số bằng mắt ra thêm lỗi mà bộ kiểm chưa bao. Các điểm nghi ngờ đã đối chiếu sổ bằng truy vấn chỉ đọc.
+
+Theo nguyên tắc 6, quán ghi bằng mã, không ghi tên và doanh thu: **A** quán lớn nhất, bán ăn sáng–trưa; **B** quán nước mới mở cuối tháng 10; **C** quán chỉ có 2 món; **D** tiệm dịch vụ làm đẹp mới có đơn 4 ngày; **E** quán menu hơn 100 món mà mỗi ngày vài đơn; **T** quán đã thử trên Sunmi ở giai đoạn trước.
+
+| Mã | Quán | Lỗi trong khối số | Đối chiếu sổ | Bộ kiểm bắt được |
+|---|---|---|---|---|
+| B1 | A | Kỳ này quán không có đơn nào từ 18h (kỳ trước 19–21h có bán), khối số ghi "kéo khách lại đúng 19h và 20h bằng ưu đãi… bớt 2.000đ / đơn" và "ĐƠN ĐANG TỤT" | Có: đơn buổi tối về 0 từ một ngày cuối tháng 10, liên tục 4 tuần | Chưa |
+| B2 | D | Quán mới có đơn giữa tháng nhưng các ngày trước đó trong tháng bị tính là ngày mở: "nghỉ Thứ 2, Thứ 5, Chủ nhật", "quán NGHỈ (không mở bán)" | Có | Chưa |
+| B3 | D, E, A (kỳ tuần) | Kỳ quá ngắn hoặc quá ít đơn vẫn liệt kê hơn trăm "món chưa bán" và dặn "hướng đúng là ẨN khỏi menu" | Có | K5 (một phần) |
+| B4 | D | Hồ sơ ghi "quán ăn (đồ ăn 100% doanh thu)" cho một tiệm dịch vụ, không bán đồ ăn | Có | Chưa |
+| B5 | C | Cùng kỳ tháng trước chỉ có 1 đơn, khối số ghi tăng hơn 2.000%, số đơn tăng hơn 5.000% và cả đoạn "tăng ở đâu" | Có | Chưa |
+| B6 | T, D | Tên gọi tắt ứng nhiều món trong menu nhưng dòng tăng giá tự tính cho một món | Có | K9 |
+| B7 | A, T | Nhóm "Nguyên liệu" vẫn hiện là "N món đang bán", nằm trong "Các nhóm quán đang bán" và "Bình quân mỗi đơn" (lần 250 mới bỏ khỏi số món chưa bán) | Có | Chưa |
+| B8 | B | Gợi ý combo ghép một món vốn đã là combo, giá combo gấp hơn 3 lần đơn trung bình | Chưa | Chưa |
+| B9 | D (kỳ tuần) | Ngày không có đơn vẫn tính là ngày mở bán (ghi 3 ngày, sổ có 2) | Có | K6 |
+| B10 | E | Quán khoảng 4 đơn mỗi ngày vẫn bị gọi một thứ là "yếu bất thường, bằng 30% ngày thường" từ đúng 1 ngày | Có | Chưa |
+
+Cảnh báo sai của bộ kiểm cần chỉnh: K4 báo một giờ vắng nằm GIỮA hai giờ bán của quán E (theo thiết kế lần 252 vẫn là giờ bán) → K4 chỉ nên bắt giờ ở rìa.
+
+**Lô 1 đề xuất (5 chỗ):** B1, B2 (gộp B9, cùng hàm đếm ngày), B3, B5, B7. Trước khi sửa, thêm phép kiểm cho B1, B2, B5, B7 vào `kiem.ts` để đo được "xong".
+**Lô 2:** B4, B6, B8, B10 và việc tồn ở giai đoạn 2 (bỏ món sót nhóm khác; hỏi riêng một buổi; hồ sơ quán lệch giờ bán chính; câu không dấu).
