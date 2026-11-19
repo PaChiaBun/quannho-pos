@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); chờ Chủ Quán chọn cách đo thay thế. Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 đã sửa trong mã CHƯA áp, phần app chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -186,3 +186,36 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - **Lịch tự chạy (Chủ Quán duyệt 19/11):** tác vụ `bao-cao-boom-tuan` của app Claude trên máy Mac, 08:05 sáng thứ Hai, chạy `tool/boom_tuan.sh 7` rồi báo 5 dòng; chỉ đọc, không đọc nội dung câu. Chỉ chạy khi app Claude đang mở (đóng thì chạy bù lúc mở lại).
 - Chưa làm: đọc nội dung lượt bị chê — chờ Chủ Quán cho phép.
 
+
+### 19/11 — Giai đoạn 4: số đo giá vốn và ghi chi; lần 258 (đã sửa trong mã, CHƯA áp)
+
+**Số đo 30 ngày tới 19/11** (chỉ đọc; "có giá vốn" tính đúng như Boom: giá vốn trên dòng đơn lúc bán, không có thì giá vốn mới nhất, không có thì giá vốn nhập tay trên món):
+
+| Quán | Đơn | Món có bán | Trong đó có giá vốn | 10 món doanh thu cao nhất có giá vốn | % doanh thu thuộc món có giá vốn | Phiếu chi ghi tay | Công thức gắn món bán |
+|---|---|---|---|---|---|---|---|
+| A | 2.201 | 161 | 0 | 0 / 10 | 0% | 0 | 0 (có 5 công thức chưa gắn món) |
+| B | 2.034 | 11 | 0 | 0 / 10 | 0% | 0 | 0 |
+| C | 680 | 2 | 0 | 0 / 2 | 0% | 14 (đều trong tháng 10) | 0 |
+| D | 117 | 28 | 0 | 0 / 10 | 0% | 2 | 0 |
+| E | 71 | 61 | 0 | 0 / 10 | 0% | 0 | 0 |
+| T | 703 | 21 | 2 | 2 / 10 | 16% | 0 | 7 |
+
+- Cả hệ thống có 7 quán thật từ 30 đơn trong 30 ngày: 3 quán có ít nhất một món đang bán có giá vốn, 2 quán có phiếu chi ghi tay, 2 quán có công thức gắn với món bán.
+- Quán T: 5 món đang bán có công thức đủ nguyên liệu, nguyên liệu nào cũng có giá vốn, nhưng chính món bán thì chưa có giá vốn. 5 món này chiếm 31% doanh thu. App đã tính "giá vốn / phần" ở màn công thức (mô-đun Kho chuyên nghiệp) nhưng không ghi sang món bán, và Boom không đọc công thức để lấy giá vốn. Nếu dùng được giá vốn theo công thức thì quán T từ 16% lên 47% doanh thu có giá vốn mà chủ quán không phải nhập thêm gì.
+- Phiếu chi tự động của quán A (436 phiếu cũ) đều 0đ, không phải khoản chi thật.
+
+**Phần Boom (kiểm trước khi viết, như kế hoạch dặn).** Dòng "Món bán chạy CHƯA có giá vốn" đã có từ 05/11; dòng nhắc "chưa ghi phiếu chi nào → thu − chi không phải tiền lời" cũng đã có. Soi khối số 6 quán thật thấy hai chỗ cần sửa, đã sửa trong mã (lần 258, commit `b355463`):
+
+| # | Lỗi | Sửa |
+|---|---|---|
+| B11 | Quán D (tiệm dịch vụ, chưa nhập giá vốn món nào) vẫn nhận dòng "các món chạy nhất nhóm … đều giá vốn trên 45% giá bán" ở 18 / 18 câu. Dòng này chạy khi không chọn được món chủ lực để ghép combo; ở tiệm dịch vụ thì không chọn là do loại quán, không do giá vốn | Chỉ ra dòng này khi quán không phải tiệm dịch vụ và nhóm chủ lực thật sự có món giá vốn trên 45% |
+| — | Dòng "món bán chạy chưa có giá vốn" xếp theo số phần, lấy 5 món: topping vài nghìn đồng và món thêm đứng trước món chính (quán T, quán A), không cho biết nhập xong được gì | Xếp theo doanh thu, còn 3 món, ghi 3 món đó chiếm bao nhiêu % doanh thu và "nhập giá vốn các món này trước". Trên 6 quán thật: 20%, 29%, 40%, 52%, 79%, 100%. Món còn thiếu dưới 10% doanh thu thì chỉ kể tên như cũ |
+
+- Giới hạn đã biết: dòng mới chỉ xét 3 món doanh thu cao nhất của mỗi nhóm, nên có thể sót món hạng 4 của nhóm lớn khi 3 món đầu đã có món có giá vốn (quán T: món thứ ba được nêu không phải món doanh thu cao thứ ba còn thiếu). Con số % vẫn đúng với các món được nêu.
+- Bộ kiểm thêm K21 (khối ghi "chưa có giá vốn món" mà vẫn có dòng "giá vốn trên …% giá bán"): 18 cảnh báo ở quán D trước khi sửa, 0 trên 6 quán thật và quán Demo sau khi sửa. Test hàm 233 qua. `KHO=1` qua. Kịch bản áp: `db-fix/boom_l258_ap_dung.sh`. Chưa hỏi mô hình trên bản này.
+
+**Phần app — đề xuất, chờ Chủ Quán quyết** (cả ba đều phải phát hành app):
+
+1. **Giá vốn theo công thức** (đề xuất làm trước): món bán có công thức đủ giá nguyên liệu thì dùng luôn "giá vốn / phần" của công thức làm giá vốn món. Chủ quán không phải làm gì thêm; lợi ngay cho 2 / 7 quán (quán T: 16% → 47% doanh thu có giá vốn).
+2. **Màn nhập nhanh giá vốn**: một màn liệt kê các món doanh thu cao nhất còn thiếu giá vốn, mỗi món một ô, lưu một lần; mở được từ câu trả lời của Boom. Hiện phải vào Kho hàng → Thao tác trên món → Sửa thông tin món → ô Giá vốn, từng món một. Lợi cho 5 / 6 quán đã đo.
+3. **Lời nhắc ghi chi**: 5 / 7 quán không ghi phiếu chi nào trong 30 ngày. Nhắc lúc đóng ca hoặc đầu tháng (tiền mặt bằng, lương, nguyên liệu). Lợi lớn nhất nhưng đòi chủ quán đổi thói quen, nên xếp sau.
