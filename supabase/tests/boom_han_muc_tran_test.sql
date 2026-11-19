@@ -30,7 +30,7 @@ BEGIN
   EXECUTE 'SET LOCAL ROLE service_role';
   -- tham số: …, lượt / người / giờ, lượt không bài / giờ, trần ngày quán, trần tháng quán, trần tháng hệ thống
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 99, 99, 0, 9, 1e9);
-  PERFORM public._bt_ok(r = '{"ok": false, "status": "budget", "scope": "day"}'::jsonb, '1 chỉ chạm trần ngày → scope day — ' || r);
+  PERFORM public._bt_ok(r = '{"ok": false, "status": "budget", "scope": "day"}'::jsonb, '1 chỉ chạm trần ngày → scope day — ' || r::text);
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 99, 99, 9, 0, 1e9);
   PERFORM public._bt_ok(r->>'status' = 'budget' AND r->>'scope' = 'month', '2 chạm trần tháng của quán → scope month');
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 99, 99, 0, 0, 1e9);
@@ -38,7 +38,7 @@ BEGIN
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 99, 99, 9, 9, 0);
   PERFORM public._bt_ok(r->>'status' = 'budget' AND r->>'scope' = 'system', '4 chạm trần tháng của cả hệ thống → scope system');
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 0, 99, 9, 9, 1e9);
-  PERFORM public._bt_ok(r = '{"ok": false, "status": "rate_limited"}'::jsonb, '5 quá số câu / giờ → y như cũ, không có khoá scope — ' || r);
+  PERFORM public._bt_ok(r = '{"ok": false, "status": "rate_limited"}'::jsonb, '5 quá số câu / giờ → y như cũ, không có khoá scope — ' || r::text);
   SELECT count(*) INTO n FROM public.boom_qa_log WHERE store_id = S;
   PERFORM public._bt_ok(n = n0, '6 lượt bị chặn không ghi dòng nào vào sổ — ' || n0 || ' → ' || n);
   r := public.boom_ai_reserve_v1(S, A, 'x', '{}', 'advice', 99, 99, 9, 9, 1e9);
