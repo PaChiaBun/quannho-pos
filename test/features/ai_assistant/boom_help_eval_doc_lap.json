@@ -253,7 +253,7 @@
    "q": "thêm cửa hàng thứ 2 vào chuỗi",
    "expect": [
     "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang",
-    "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+    "bao-cao-chuoi#cac-viec-thuong-lam-1-thiet-lap-them-cua-hang-tu-1-quan-len"
    ]
   },
   {

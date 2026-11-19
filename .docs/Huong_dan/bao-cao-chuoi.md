@@ -2,12 +2,13 @@
 module: chain
 ten: Báo Cáo Nhiều Cửa Hàng / Chuỗi
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-11-19
 nguon:
   - lib/screens/chain_report_screen.dart, chain_manage_sheet.dart, chain_module_offer.dart
   - lib/core/repositories/chain_repository.dart (thông báo lỗi), lib/core/utils/chain_compare.dart, chain_insights.dart
   - .docs/Ai_Boom/cac-module/chuoi-cua-hang.md (tài liệu kỹ thuật đầy đủ: DB, RPC, quy tắc nhận xét, ngưỡng)
   - .docs/tinh-nang.md mục "Tạo thêm cửa hàng cho Chủ quán đã có quán"
+  - lib/screens/settings_screen.dart (Đổi quán, nút / dòng chỉ dẫn tạo cửa hàng), lib/core/widgets/create_store_sheet.dart
 ---
 
 # Báo Cáo Nhiều Cửa Hàng / Chuỗi
@@ -26,10 +27,17 @@ nguon:
 
 ## Các việc thường làm
 
-### 1. Có thêm cửa hàng
-Mở thêm chi nhánh / quán mới:
-1. **Cài đặt** → thẻ quán → **"Đổi quán"** → **"Tạo cửa hàng mới"**. Nút này chỉ có khi mở Quán Nhỏ bằng trình duyệt web; app cài trên điện thoại, máy POS, máy tính không có.
-2. Nhập tên quán, xác nhận mật khẩu. Quán mới **không tự vào chuỗi**.
+### 1. Thiết lập thêm cửa hàng (từ 1 quán lên nhiều quán)
+Mở thêm chi nhánh / quán mới. **Chỉ tạo được trên web**; trên app (iPhone, iPad, Android, máy POS, máy tính) mục **"Đổi quán"** chỉ có dòng chữ chỉ đường lên web, không có nút tạo.
+1. Mở trình duyệt (Chrome, Safari…) vào **quannho.lpm.vn/pos**, đăng nhập bằng **số điện thoại + mật khẩu của Chủ quán** (đúng tài khoản đang dùng trên app).
+2. **Cài đặt** → thẻ quán → **"Đổi quán"** → **"Tạo cửa hàng mới"**.
+3. Ở **"Tạo quán của bạn"**: nhập **"Tên quán"** → **"Tạo quán ngay"**.
+4. Nếu hiện hộp **"Xác thực tạo <tên quán>"**: nhập **mật khẩu đăng nhập** → **"Xác nhận"**. Web tự chuyển sang quán mới.
+5. Quán mới có sẵn 4 chức năng **Bán hàng, Báo cáo, Thu Chi, Kho hàng**, các nhóm thu chi và 3 vai trò Thu ngân / Nhân viên / Bếp. Muốn thêm chức năng khác: Trang chủ → **"Sửa"** → ô **"Thêm"**.
+6. Quán mới **trống thực đơn, kho, bàn, nhân viên**: nhập lại riêng cho quán này (không tự chép từ quán cũ).
+7. Trên app: **Cài đặt** → **"Đổi quán"** → chọn quán mới → nhập mật khẩu là làm việc được, không cần cài lại app.
+8. Nhân viên: đưa **mã quán mới** (ở Cài đặt, dạng QN-xxxx) để họ vào bằng **"Kết nối quán"**. Một nhân viên làm được ở nhiều quán; vai trò, chấm công, lương tính riêng từng quán.
+9. Quán mới **không tự vào chuỗi**: làm tiếp việc 2 bên dưới.
 
 ### 2. Tạo chuỗi và thêm cửa hàng
 Có 2 quán trở lên, muốn gom lại xem tổng doanh thu chung: tạo chuỗi rồi thêm các quán vào chuỗi.
@@ -59,7 +67,9 @@ Có 2 quán trở lên, muốn gom lại xem tổng doanh thu chung: tạo chu�
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
-| "Bạn cần là Chủ của từ 2 cửa hàng trở lên để lập chuỗi và so sánh." | Mới có 1 cửa hàng | Tạo thêm cửa hàng |
+| "Bạn cần là Chủ của từ 2 cửa hàng trở lên để lập chuỗi và so sánh." | Mới có 1 cửa hàng | Tạo thêm cửa hàng (việc 1) |
+| Trên app không thấy nút "Tạo cửa hàng mới" | Tạo cửa hàng chỉ làm trên web | Mở quannho.lpm.vn/pos trên trình duyệt, làm theo việc 1 |
+| Quán mới tạo không thêm / bỏ được chức năng ở Trang chủ | Quán tạo trước bản sửa 19/11 bị thiếu thiết lập ban đầu | Báo hỗ trợ Quán Nhỏ để bổ sung |
 | "Chuỗi chưa có cửa hàng nào…" | Chuỗi rỗng | "Quản lý chuỗi" → "Thêm vào chuỗi" |
 | "Cửa hàng này đã thuộc một chuỗi khác." | Mỗi quán chỉ ở 1 chuỗi | Gỡ khỏi chuỗi cũ trước |
 | "Bạn đã có chuỗi trùng tên này." / "Tên chuỗi phải từ 1 đến 80 ký tự." | Tên chuỗi | Đặt tên khác |
@@ -75,7 +85,8 @@ Có 2 quán trở lên, muốn gom lại xem tổng doanh thu chung: tạo chu�
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 1. Web có module chuỗi từ 17/10; APK Android và Windows từ bản 1.0.5 build 14; iOS 1.0.5 đang chờ Apple duyệt (nhật ký 17/10) — kiểm tra lại trạng thái phát hành trước khi hướng dẫn khách.
-2. Chưa làm: dùng chung ví/điểm/khách trong chuỗi; hồ sơ nhân viên nhiều cửa hàng (nhật ký 17/10).
+2. Chưa làm: dùng chung ví/điểm/khách trong chuỗi. Nhân viên nhiều cửa hàng: vào được bằng mã quán, vai trò/chấm công/lương riêng từng quán; tên ở báo cáo quán thứ hai lấy theo tài khoản (sửa 19/11, commit 92aa20f).
+6. Tạo cửa hàng chỉ trên web (Chủ Quán chốt 19/11); app hiện dòng chữ chỉ đường, cả iOS (không nút, không link). Quán thứ hai trở đi tạo trước bản 19/11 có thể thiếu cấu hình module; ba quán đã gieo bù trên máy chủ 19/11.
 3. Số liệu chuỗi dựa trên đơn `completed` — cùng nguồn với tab Doanh thu của Báo cáo, không bị ảnh hưởng bởi lỗi Thu Chi.
 4. Chi tiết quy tắc nhận xét và ngưỡng: `.docs/Ai_Boom/cac-module/chuoi-cua-hang.md`.
 5. Rà lại 23/10/2026: không có lỗi cần sửa ở module này.
