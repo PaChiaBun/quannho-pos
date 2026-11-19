@@ -1866,9 +1866,17 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       ? 'Có giá vốn ở một số món (ghi trong ngoặc) → chỉ nói lời / lãi gộp cho đúng các món đó.'
       : 'Chưa có giá vốn món → KHÔNG kết luận món nào có lời / lời nhiều.',
   );
+  const itemBase = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
   // 05/11: Boom bảo nhập giá vốn cả món đã có → code chọn sẵn, không để GPT tự lọc
-  const thieuVon = (f.groups ?? []).flatMap((g) => g.top).filter((t) => !t.cost && t.qty > 0).sort((a, b) => b.qty - a.qty).slice(0, 5).map((t) => t.name);
-  if (thieuVon.length) lines.push(`Món bán chạy CHƯA có giá vốn: ${[...new Set(thieuVon)].join(', ')}.`);
+  // giai đoạn 4 (19/11, 6 quán thật: 5 quán không món bán chạy nào có giá vốn): xếp theo DOANH THU thay cho số phần (số phần đưa topping
+  // 5.000đ, "trứng thêm" lên trước món chính), còn 3 món và nêu 3 món đó chiếm bao nhiêu % → chủ quán biết nhập ít mà được nhiều
+  // dưới 10% thì chỉ kể tên như cũ (quán đã nhập gần đủ, món còn thiếu chỉ là món phụ)
+  // shortcut: chỉ xét 3 món doanh thu cao nhất mỗi nhóm (g.top) nên sót món hạng 4 của nhóm khi 3 món đầu có món đã có giá vốn, cần đủ thì cho ban_hang.ts gửi danh sách riêng
+  const thieuVon = [...new Map((f.groups ?? []).flatMap((g) => g.top).filter((t) => !t.cost && t.qty > 0).map((t) => [t.name, t])).values()].sort((a, b) => b.revenue - a.revenue).slice(0, 3);
+  if (thieuVon.length) {
+    const p = itemBase > 0 ? Math.round((thieuVon.reduce((s, t) => s + t.revenue, 0) / itemBase) * 100) : 0;
+    lines.push(`Món bán chạy CHƯA có giá vốn: ${thieuVon.map((t) => t.name).join(', ')}${p >= 10 && p <= 100 ? ` (xếp theo doanh thu; cộng lại = ${p}% ${f.items_revenue && f.items_revenue > f.revenue ? 'tiền món cả quán (trước giảm giá)' : 'doanh thu cả quán'} → nhập giá vốn các món này trước)` : ''}.`);
+  }
   // lần 50: D35 "nhóm nào lời hơn" — GPT kết luận theo doanh thu dù nhóm kia chưa có giá vốn
   if (anyCost && (f.groups?.length ?? 0) > 1 && /lời|lãi/i.test(question)) {
     const gc = f.groups!.map((g) => {
@@ -2008,7 +2016,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
             return `${lead.name} + ${t.name}: lẻ ${vnd(sum)} → ${vnd(lo)}–${vnd(hi)}${lead.cost && t.cost ? ` (giá vốn ${vnd(von)}, mỗi combo còn lời khoảng ${vnd(lo - von)}–${vnd(hi - von)})` : ''}`;
           }).join('; ') + '.',
       );
-    } else if (!lead && f.groups[0]?.top.length) {
+    // giai đoạn 4 (quán D 19/11): tiệm dịch vụ chưa nhập giá vốn nào vẫn nhận câu "đều giá vốn trên 45%", vì lead rỗng do loại quán chứ không do giá vốn
+    } else if (!lead && !loaiQuan(f).khac && f.groups[0]?.top.some(vonCao)) {
       lines.push(`Combo: các món chạy nhất nhóm "${f.groups[0].name}" đều giá vốn trên 45% giá bán nên KHÔNG đề xuất combo giảm giá với các món này; muốn kéo đơn thì mời thêm món nhỏ giá vốn thấp, giữ nguyên giá món chính.`);
     }
     // lần 85: hỏi bán thêm MỘT nhóm (D27 "muốn bán thêm nước uống") — GPT quảng bá chung, bỏ sót nhóm chỉ ~7%, đẩy món chưa bán
@@ -2050,7 +2059,6 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const cb = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => /^combo/i.test(t.name) && t.price).map((t) => [t.name, t])).values()];
     if (cb.length) lines.push(`Giá combo ĐANG BÁN (in đúng một giá này lên bảng / bài; khoảng giá ở dòng combo khác chỉ là ĐỀ XUẤT, KHÔNG in): ${cb.map((t) => `${t.name} ${vnd(t.price!)}`).join('; ')}.`);
   }
-  const itemBase = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
   const it = (t: FactItem) =>
     `${t.name} (${t.qty} phần${t.price ? `, giá ${vnd(t.price)}` : ''}, ${vnd(t.revenue)}${
       // lần 231 (kiểm lần 4: Boom gọi 1% này là "% doanh thu nhóm cà phê"): ghi rõ là % cả quán

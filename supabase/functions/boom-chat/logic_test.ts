@@ -1383,8 +1383,21 @@ Deno.test('bản mẫu giữ chỗ chừa, chỉ gỡ ngoặc nhãn đầu dòng
 
 Deno.test('dòng món bán chạy chưa có giá vốn không kể món đã có', () => {
   const g = (name: string, top: unknown[]) => ({ name, revenue: 100, qty: 100, items: 3, unsold: 0, top, slow: [], unsold_names: [] });
-  const f = parseFacts({ period: 'Tháng này', revenue: 100, orders: 10, top: [], slow: [], groups: [g('A', [{ name: 'Có vốn', qty: 90, revenue: 50, price: 10, cost: 4 }, { name: 'Thiếu 1', qty: 50, revenue: 25, price: 10 }]), g('B', [{ name: 'Thiếu 2', qty: 70, revenue: 25, price: 10 }])] })!;
-  assertStringIncludes(buildMessages('món nào lời nhất', [], null, { facts: f })[1].content, 'Món bán chạy CHƯA có giá vốn: Thiếu 2, Thiếu 1.');
+  // giai đoạn 4: xếp theo doanh thu (topping bán 300 phần chỉ 5đ không được đứng đầu), còn 3 món, nêu 3 món đó chiếm bao nhiêu %
+  const f = parseFacts({ period: 'Tháng này', revenue: 100, orders: 10, top: [], slow: [], groups: [g('A', [{ name: 'Có vốn', qty: 90, revenue: 38, price: 10, cost: 4 }, { name: 'Thiếu 1', qty: 50, revenue: 25, price: 10 }]), g('B', [{ name: 'Thiếu 2', qty: 70, revenue: 30, price: 10 }, { name: 'Thiếu 3', qty: 9, revenue: 2, price: 10 }]), g('Topping', [{ name: 'Trân châu', qty: 300, revenue: 5, price: 1 }])] })!;
+  assertStringIncludes(buildMessages('món nào lời nhất', [], null, { facts: f })[1].content, 'Món bán chạy CHƯA có giá vốn: Thiếu 2, Thiếu 1, Trân châu (xếp theo doanh thu; cộng lại = 60% doanh thu cả quán → nhập giá vốn các món này trước).');
+  // quán đã nhập gần đủ: món còn thiếu dưới 10% doanh thu thì chỉ kể tên, không giục nhập trước
+  const du = parseFacts({ period: 'Tháng này', revenue: 100, orders: 10, top: [], slow: [], groups: [g('A', [{ name: 'Có vốn', qty: 90, revenue: 95, price: 10, cost: 4 }]), g('Topping', [{ name: 'Trân châu', qty: 300, revenue: 5, price: 1 }])] })!;
+  assertStringIncludes(buildMessages('món nào lời nhất', [], null, { facts: du })[1].content, 'Món bán chạy CHƯA có giá vốn: Trân châu.');
+});
+
+Deno.test('tiệm dịch vụ chưa nhập giá vốn: không có dòng "đều giá vốn trên 45%" (quán D 19/11)', () => {
+  const g = (name: string, top: unknown[]) => ({ name, revenue: 100, qty: 10, items: 2, unsold: 0, top, slow: [], unsold_names: [] });
+  const f = parseFacts({ period: 'Tháng này', revenue: 200, orders: 20, top: [], slow: [], groups: [g('Chăm sóc da', [{ name: 'Dịch vụ lẻ', qty: 8, revenue: 80, price: 10 }]), g('Gói liệu trình', [{ name: 'Gói 10 buổi', qty: 2, revenue: 100, price: 50 }])] })!;
+  assert(L.loaiQuan(f).khac);
+  const khoi = formatFacts(f, new Date('2026-11-19T10:00:00+07:00'), 'làm sao tăng doanh thu');
+  assert(!/giá vốn trên 45%/.test(khoi), khoi);
+  assertStringIncludes(khoi, 'Chưa có giá vốn món');
 });
 
 Deno.test('thứ cao thấp so theo trung bình mỗi ngày, không theo tổng kỳ', () => {

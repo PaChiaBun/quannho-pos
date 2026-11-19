@@ -151,5 +151,7 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
     const [ten, a, b] = cau.buoi, coGio = t.by_hour.slice(a, b).some((v) => v / tongGio >= 0.01);
     if (!coGio && new RegExp(`(?:Việc nên nhắm cho|Quyết định đóng) buổi ${ten}`).test(khoi)) loi.push(`K20 buổi: buổi ${ten} (${a}–${b}h) không có giờ bán nào từ 1% doanh thu mà khối số vẫn ra việc cho buổi này`);
   }
+  // K21: khối ghi quán chưa có giá vốn món nào mà vẫn có dòng kết luận theo giá vốn (quán D 19/11: tiệm dịch vụ, 0 món có giá vốn)
+  if (/Chưa có giá vốn món/.test(khoi) && /giá vốn trên \d+% giá bán/.test(khoi)) loi.push('K21 giá vốn: khối ghi chưa có giá vốn món nào mà vẫn có dòng "giá vốn trên …% giá bán"');
   return loi;
 }
