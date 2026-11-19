@@ -1788,9 +1788,8 @@ void _showStorePicker(BuildContext context, WidgetRef ref) async {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)))))
                 ]
-                // App cài máy: chỉ chỗ lên web. iOS không ghi, tránh bị coi là dẫn ra ngoài (3.1.1).
-                else if (stores.any((s) => s.isOwner) &&
-                    defaultTargetPlatform != TargetPlatform.iOS) ...[
+                // App cài máy (kể cả iOS, Chủ Quán chốt 19/11): chỉ ghi chữ dẫn lên web, không có nút/link.
+                else if (stores.any((s) => s.isOwner)) ...[
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,

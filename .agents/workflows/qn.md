@@ -49,7 +49,7 @@ Chủ Quán có thể điều phối chương trình đào tạo của AI Boom q
 Quy tắc nghiệp vụ lõi:
 
 - Đăng nhập bằng số điện thoại + mật khẩu; mã quán dùng khi tham gia quán. PIN chỉ dùng phê duyệt quản lý.
-- **RÀO CHẮN BẤT BIẾN CHO PHÁT HÀNH TRÊN iOS (Apple Guideline 3.1.1)**: **Tuyệt đối KHÔNG ĐƯỢC CÓ NÚT/TAB ĐĂNG KÝ trên iOS, CHỈ CHO PHÉP ĐĂNG NHẬP**. Mọi tính năng tạo tài khoản doanh nghiệp mới hoặc tạo quán mới (`+ Tạo quán mới`) phải bị ẩn hoàn toàn trên iOS (`defaultTargetPlatform == TargetPlatform.iOS`). Nhân viên chỉ vào quán bằng mã kết nối do chủ quán cấp. Web, Android và Windows giữ nguyên tính năng đăng ký tài khoản và tạo quán mới bình thường, tự động tích hợp cấu hình phiên bảo mật POS JWT. Riêng nút "Tạo cửa hàng mới" trong Cài đặt → Đổi quán chỉ hiện trên web (Chủ Quán chốt 19/11/2026).
+- **RÀO CHẮN BẤT BIẾN CHO PHÁT HÀNH TRÊN iOS (Apple Guideline 3.1.1)**: **Tuyệt đối KHÔNG ĐƯỢC CÓ NÚT/TAB ĐĂNG KÝ trên iOS, CHỈ CHO PHÉP ĐĂNG NHẬP**. Mọi tính năng tạo tài khoản doanh nghiệp mới hoặc tạo quán mới (`+ Tạo quán mới`) phải bị ẩn hoàn toàn trên iOS (`defaultTargetPlatform == TargetPlatform.iOS`). Nhân viên chỉ vào quán bằng mã kết nối do chủ quán cấp. Web, Android và Windows giữ nguyên tính năng đăng ký tài khoản và tạo quán mới bình thường, tự động tích hợp cấu hình phiên bảo mật POS JWT. Riêng nút "Tạo cửa hàng mới" trong Cài đặt → Đổi quán chỉ hiện trên web (Chủ Quán chốt 19/11/2026); app cài máy, kể cả iOS, chỉ hiện dòng chữ chỉ dẫn lên quannho.lpm.vn/pos (không nút, không link).
 - Nhiều nhân viên được order cùng bàn; lưu người mở bàn và người thêm từng món.
 - Món đã gửi Bếp chỉ Chủ quán/Quản lý được hủy, bắt buộc lý do, phê duyệt và audit.
 - Chỉ trừ kho sau thanh toán. Thiếu tồn chỉ cảnh báo; `is_available=false` mới khóa bán.
