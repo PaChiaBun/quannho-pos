@@ -2,6 +2,7 @@
 // A = gpt-6-luna không suy nghĩ (đang chạy); B = MODEL_B (mặc định gpt-6-sol) mức suy nghĩ NL_B (mặc định none).
 // Cùng mã, cùng khối số, cùng kiểm số; lần viết lại dùng đúng mô hình của bản đó. Ghi token vào / ra và số giây mỗi câu.
 // Không in nội dung câu. Bộ: KIN="16 18 21" (số của de_kinN.json). IDS="de_kin16:Q01 …" chỉ chạy các câu đó.
+// BAN="B" chỉ sinh bản B (vd đo bản mã mới bằng mô hình đang chạy, bản cũ đã có sẵn câu trả lời).
 // Chạy thử không gọi mạng (chỉ gắn nhãn + đếm chữ lời nhắc): deno run -A do_tang.ts <ra.json>
 // Chạy thật: OPENAI_API_KEY=... deno run -A do_tang.ts <ra.json>
 const R = decodeURIComponent(new URL('../../../supabase/functions/boom-chat/', import.meta.url).pathname);
@@ -24,7 +25,7 @@ const goi = async (ban: string, q: string, m: any) => {
 };
 const out: any[] = []; const loiGoi: Record<string, number> = {};
 const IDS = (Deno.env.get('IDS') ?? '').split(/\s+/).filter(Boolean);
-const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.de}:${c.id}`)).flatMap((c: any) => (KEY ? ['A', 'B'] : ['A']).map((ban) => async () => {
+const job = CA.filter((c: any) => !IDS.length || IDS.includes(`${c.de}:${c.id}`)).flatMap((c: any) => (KEY ? (Deno.env.get('BAN') ?? 'A B').split(/\s+/).filter(Boolean) : ['A']).map((ban) => async () => {
   const s = st[c.quan];
   const facts = L.parseFacts(JSON.parse(JSON.stringify(s.facts.thang_nay))), modules = L.parseModules({ ...s.modules.thang_nay });
   const w = TROI[c.troi];

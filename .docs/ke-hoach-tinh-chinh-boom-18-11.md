@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 coi như xong phần soi và sửa; việc kế là giai đoạn 3 (đo 60 câu, cần duyệt tiền). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); chờ Chủ Quán chọn cách đo thay thế. Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -54,6 +54,8 @@ Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `2
 - Cách đo: lấy 60 câu trong 180 câu kín `de_kin18` + `de_kin21`, chia đều theo lĩnh vực. Bản cũ (lần 249) đã có sẵn câu trả lời từ 15/11 nên chỉ sinh câu trả lời bản mới. Chấm mù bằng Claude như 15/11.
 - Tiền: khoảng 2,2 USD theo giá đủ (60 câu × 0,036). Công cụ đo đã ghi được % token lưu đệm nên lượt này cũng cho biết giá thật.
 - **Ngưỡng:** mới − cũ không thấp hơn −0,3 / 16 và số câu sai số không tăng thì giữ. Thấp hơn thì tìm lần sửa gây ra và hoàn tác riêng lần đó.
+
+> **19/11 — thiết kế trên không dùng được.** So nguyên văn lời nhắc của mã trước lần 250 với mã lần 256 trên cả 180 câu `de_kin18` + `de_kin21`: 180 / 180 giống hệt từng chữ. Bốn quán mẫu a–d không có tình huống nào mà lần 250–256 sửa. Đo 60 câu này chỉ đo độ ngẫu nhiên của mô hình. Cách thay thế đề xuất ở mục 7.
 
 ### Giai đoạn 4 — Gỡ nghẽn dữ liệu: giá vốn và ghi chi
 
@@ -162,3 +164,12 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Đã đọc lại bằng mắt trên số thật: quán T (câu "tăng giá trà sữa" ra dòng hỏi lại, hồ sơ ghi 18h–24h), quán D (hồ sơ không còn "quán ăn", không có combo), quán B (không còn combo vô lý), quán A (hỏi buổi tối ra dòng "không phải giờ bán").
 - Chưa làm: chưa áp production; chưa hỏi mô hình trên bản này; ba việc tồn ghi ở dòng Trạng thái.
 - **Đã áp 19/11 11:36 (lần 256):** Chủ Quán duyệt "Áp lên"; `KHO=1` trước, máy chủ đúng bản 255; chép `logic.ts` + `ban_hang.ts`; hàm chạy lại bình thường. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l256_ap_dung.sh 20261119_113621`.
+
+### 19/11 — Giai đoạn 3: dừng trước khi tốn tiền, đề xuất cách đo thay thế
+
+- Chủ Quán duyệt "Chạy đo" (60 câu kín, ~2,2 USD). Trước khi đưa lệnh cần khoá OpenAI, chạy thử không khoá thì thấy độ dài lời nhắc bản mới bằng bản cũ ở cả 60 câu. Viết `tool/boom_do/do_15_11/so_loi_nhac.ts` so nguyên văn lời nhắc + số gốc của hai bản mã: **180 / 180 câu giống hệt từng chữ.** Quán mẫu a–d: 0 ngày không đơn, số từng ngày không phủ đủ kỳ, 0 giờ lẻ tẻ, không ca ngừng bán, không nhóm nguyên liệu, đều là quán ăn uống. → KHÔNG chạy lượt đo, không tốn đồng nào.
+- Hệ quả 1: với quán "bình thường" như quán mẫu, lần 250–256 không đổi gì trong lời nhắc nên không thể làm câu trả lời xấu đi. Phần "không làm xấu" của giai đoạn 3 đạt mà không cần đo.
+- Hệ quả 2: bộ kín hiện có không nhìn thấy các tình huống của quán thật. Đây cũng là lý do nó không bắt được lỗi nào trong số 15 lỗi đã sửa.
+- Ngược lại, trên 6 quán thật + Demo (`soi.ts` chạy bằng cả hai bản mã, cùng mốc giờ): **128 / 130 câu hỏi mẫu có khối số đổi.**
+- **Cách đo thay thế đề xuất (3b):** chấm mù theo cặp trên chính khối số quán thật. Mỗi quán lấy 4–6 câu hỏi mẫu có khối số đổi; sinh câu trả lời bằng `gpt-6-sol` cho cả bản mã cũ lẫn bản mới (cùng số thật, chỉ khác phần mã chuẩn bị số); Claude chấm mù, có khối số mới và số đã đối chiếu sổ làm mốc. Ước 28–42 cặp, 2,8–4,2 USD. Số liệu quán chỉ nằm ở thư mục tạm; khi gọi mô hình thì đi tới OpenAI đúng như khi chính quán đó hỏi Boom. Cần viết thêm phần sinh câu trả lời từ khối số của `soi.ts` và cần Chủ Quán chạy lệnh có khoá trong Terminal.
+- Công cụ đo `do_tang.ts` thêm biến `BAN` (chỉ sinh một bản) cho các lượt sau.
