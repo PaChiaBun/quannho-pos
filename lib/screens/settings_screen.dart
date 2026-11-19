@@ -1787,6 +1787,34 @@ void _showStorePicker(BuildContext context, WidgetRef ref) async {
                                   fontSize: 14, fontWeight: FontWeight.w800),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)))))
+                ]
+                // App cài máy: chỉ chỗ lên web. iOS không ghi, tránh bị coi là dẫn ra ngoài (3.1.1).
+                else if (stores.any((s) => s.isOwner) &&
+                    defaultTargetPlatform != TargetPlatform.iOS) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF4EC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.language_rounded,
+                            size: 18, color: Color(0xFFE85D20)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Muốn tạo thêm quán: mở quannho.lpm.vn/pos trên trình duyệt, '
+                            'đăng nhập rồi vào Cài đặt → Đổi quán → Tạo cửa hàng mới.',
+                            style: TextStyle(
+                                fontSize: 13, color: Color(0xFF6B5E52), height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
           const SizedBox(height: 12),
         ],
