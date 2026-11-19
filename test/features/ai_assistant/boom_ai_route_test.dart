@@ -84,6 +84,22 @@ class FakeAi extends BoomAiService {
     return adviceNext;
   }
 
+  /// Giả máy chủ chặn đường hỏi mới (mode 'ask') vì hết lượt: mã như lỗi 429 thật; null = lỗi thường.
+  String? askLimit;
+
+  @override
+  Future<BoomAiReply?> askServer({
+    required String storeId,
+    required String question,
+    List<HelpChunk> chunks = const [],
+    int packVersion = 0,
+    BoomTurn? history,
+    DateTime? memorySince,
+  }) async {
+    lastLimit = askLimit;
+    return null;
+  }
+
   @override
   void logUnanswered({required String storeId, required String question}) =>
       unanswered.add(question);
@@ -207,6 +223,28 @@ void main() {
       expect(m.content, isNot(contains('Theo hướng dẫn')));
       expect(m.evidenceReference?['query_id'], 'log-1');
       expect(m.evidenceReference?['tool_name'], startsWith('huong_dan_gpt:'));
+    },
+  );
+
+  test(
+    'Đường hỏi máy chủ hết lượt (429) → câu trả lời tính trên máy vẫn nói rõ đã hết lượt, chỉ một lần (lỗi thật 18/11)',
+    () async {
+      const bao = 'Hôm nay quán đã dùng hết lượt hỏi Bé Boom phân tích';
+      // không hết lượt → không thêm gì
+      expect((await ask('doanh thu hôm nay')).content, isNot(contains(bao)));
+      ai.askLimit = 'BUDGET_EXCEEDED';
+      // câu số liệu app tự trả trên máy
+      expect((await ask('doanh thu hôm nay')).content, contains(bao));
+      // câu tư vấn: đường cũ gọi máy chủ lần nữa, vẫn hết lượt → đã có câu báo, không lặp
+      final m = await ask('món nào bán chạy, nên quảng cáo món nào');
+      expect(bao.allMatches(m.content).length, 1);
+      // lượt không hỏi máy chủ (chào hỏi) → không đọc nhầm mã hết lượt của lượt trước
+      expect((await ask('xin chào')).content, isNot(contains(bao)));
+      ai.askLimit = 'RATE_LIMITED';
+      expect(
+        (await ask('doanh thu hôm nay')).content,
+        contains('hỏi lại sau ít phút'),
+      );
     },
   );
 

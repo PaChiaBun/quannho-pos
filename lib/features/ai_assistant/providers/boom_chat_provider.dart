@@ -1679,6 +1679,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         : null;
     // Chặng 1.3: mọi câu không phải chào hỏi / quán khác / chuỗi / bấm gợi ý / hỏi cách làm → máy chủ tự đọc kỳ và lấy
     // đủ số (hỏi thật 03/11: app chọn sai đường làm gần nửa câu thiếu số). Lỗi → đường cũ bên dưới.
+    // lastLimit là của lần gọi máy chủ gần nhất: xoá trước để lượt không hỏi máy chủ không đọc nhầm giá trị cũ
+    aiForAdvice?.lastLimit = null;
     final asked =
         kBoomServerRoute &&
             chainFacts == null &&
@@ -1703,6 +1705,11 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           )
         : null;
     if (!_mounted || generation != _generation) return;
+    // Đường hỏi máy chủ bị chặn vì hết lượt (429) → đường cũ bên dưới vẫn trả lời bằng số tính trên máy;
+    // giữ câu báo để ghép vào cuối, không lặng lẽ trả câu thô (lỗi thật trên máy quán 18/11).
+    final hetLuot = asked == null
+        ? boomLimitText(aiForAdvice?.lastLimit, _goi)
+        : null;
     final dataAdvice =
         asked == null &&
         !usesData &&
@@ -2186,6 +2193,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             'Bé Boom chưa kết nối được dữ liệu của quán lúc này. $_goi thử lại sau một chút nhé!';
         suggestions = ['Món nào bán chạy nhất?', 'Kho có gì sắp hết?'];
       }
+    }
+
+    if (hetLuot != null && !fullReply.contains(hetLuot)) {
+      fullReply = fullReply.trim().isEmpty
+          ? hetLuot
+          : '${fullReply.trim()}\n\n$hetLuot';
     }
 
     processingTimer.stop();
