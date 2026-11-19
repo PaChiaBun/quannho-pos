@@ -1757,10 +1757,8 @@ void _showStorePicker(BuildContext context, WidgetRef ref) async {
               },
             ),
           ),
-                // Chủ quán thêm cửa hàng mới; iOS không được tạo quán (Guideline 3.1.1).
-                if (stores.any((s) => s.isOwner) &&
-                    (kIsWeb ||
-                        defaultTargetPlatform != TargetPlatform.iOS)) ...[
+                // Chủ quán thêm cửa hàng mới: chỉ trên web (Chủ Quán chốt 19/11; iOS cấm theo Guideline 3.1.1).
+                if (stores.any((s) => s.isOwner) && kIsWeb) ...[
                   const SizedBox(height: 12),
                   SizedBox(
                       width: double.infinity,

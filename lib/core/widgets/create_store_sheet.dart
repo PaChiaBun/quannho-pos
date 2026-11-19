@@ -146,6 +146,11 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
               password: pwd,
               phone: session.phone,
             );
+            if (ok) {
+              // Quán thứ hai đi đường mật khẩu: phải gieo module/thu chi/vai trò, không thì
+              // màn Chức năng không lưu được gì (Nhai Nhai - PVC 17/11).
+              await UserAuthService.seedNewStoreDefaults(membership.storeId);
+            }
             if (mounted && ok) {
               widget.ref.read(sessionProvider.notifier).updateStore(membership);
               Navigator.pop(context);
