@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ SỬA trong mã 18/11, CHƯA áp production (chờ Chủ Quán duyệt lần 256). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 coi như xong phần soi và sửa; việc kế là giai đoạn 3 (đo 60 câu, cần duyệt tiền). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -161,3 +161,4 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Test hàm 232 qua (thêm 1 test, sửa 1 test cũ có mẫu 10 đơn cả tháng cho hợp luật B10). Test bộ kiểm 2 qua.
 - Đã đọc lại bằng mắt trên số thật: quán T (câu "tăng giá trà sữa" ra dòng hỏi lại, hồ sơ ghi 18h–24h), quán D (hồ sơ không còn "quán ăn", không có combo), quán B (không còn combo vô lý), quán A (hỏi buổi tối ra dòng "không phải giờ bán").
 - Chưa làm: chưa áp production; chưa hỏi mô hình trên bản này; ba việc tồn ghi ở dòng Trạng thái.
+- **Đã áp 19/11 11:36 (lần 256):** Chủ Quán duyệt "Áp lên"; `KHO=1` trước, máy chủ đúng bản 255; chép `logic.ts` + `ban_hang.ts`; hàm chạy lại bình thường. Hoàn tác: `ROLLBACK=1 bash db-fix/boom_l256_ap_dung.sh 20261119_113621`.
