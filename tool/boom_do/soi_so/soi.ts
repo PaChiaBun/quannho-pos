@@ -2,10 +2,11 @@
 // Đọc số bằng ssh + psql CHỈ ĐỌC trên máy chủ (đúng 5 lượt đọc mà docBanHang gọi qua REST), chạy chính mã Boom để dựng khối số
 // cho các câu hỏi mẫu, rồi chạy bộ kiểm bất biến (kiem.ts). Không tốn tiền OpenAI, không trừ hạn mức quán, không cần đăng nhập.
 //
-// Chạy:  deno run -A soi.ts <mã quán> [mã quán…] [--ma <thư mục boom-chat>] [--now <giờ ISO>] [--ra <thư mục NGOÀI repo>] [--in]
+// Chạy:  deno run -A soi.ts <mã quán> [mã quán…] [--ma <thư mục boom-chat>] [--now <giờ ISO>] [--ra <thư mục NGOÀI repo>] [--xuat <tệp NGOÀI repo>] [--in]
 //   --ma   soi bằng bản mã khác (vd bản cũ lấy ra bằng git worktree) để so trước / sau
 //   --now  cố định "bây giờ" để chạy lại ra cùng kết quả
 //   --ra   ghi khối số từng câu ra tệp; --in in cả khối số ra màn hình
+//   --xuat ghi nguyên lời nhắc + số gốc + sổ thật từng câu ra một tệp JSON, để sinh.ts đo câu trả lời của hai bản mã (giai đoạn 3b)
 // Giới hạn: chỉ soi số BÁN HÀNG (ShopFacts). Các mục Thu Chi, kho, khách, khuyến mãi, nhân sự đọc qua nhiều bảng REST theo quyền
 //   người hỏi nên chưa dựng lại ở đây. Dữ liệu quán thật KHÔNG được ghi vào repo.
 import { type Cau, kiem, type Thuc } from './kiem.ts';
@@ -13,13 +14,13 @@ import { type Cau, kiem, type Thuc } from './kiem.ts';
 const GOC = decodeURIComponent(new URL('../../../', import.meta.url).pathname);
 const a = [...Deno.args], lay = (c: string) => { const i = a.indexOf(c); return i >= 0 ? a.splice(i, 2)[1] : undefined; };
 const co = (c: string) => { const i = a.indexOf(c); if (i >= 0) a.splice(i, 1); return i >= 0; };
-const MA = (lay('--ma') ?? `${GOC}supabase/functions/boom-chat`).replace(/\/?$/, '/'), RA = lay('--ra'), IN = co('--in');
+const MA = (lay('--ma') ?? `${GOC}supabase/functions/boom-chat`).replace(/\/?$/, '/'), RA = lay('--ra'), XUAT = lay('--xuat'), IN = co('--in');
 const now = new Date(lay('--now') ?? Date.now()), VPS = Deno.env.get('VPS') ?? 'azvn-vps';
 const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i, GIO = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/;
 if (!a.length || a.some((x) => !UUID.test(x)) || isNaN(now.getTime())) { console.error('Dùng: deno run -A soi.ts <mã quán> [mã quán…] [--ma dir] [--now ISO] [--ra dir] [--in]'); Deno.exit(2); }
-if (RA) {
-  await Deno.mkdir(RA, { recursive: true });
-  if ((await Deno.realPath(RA) + '/').startsWith(await Deno.realPath(GOC) + '/')) { console.error('--ra phải nằm NGOÀI repo (dữ liệu quán thật không vào repo)'); Deno.exit(2); }
+for (const d of [RA, XUAT && (XUAT.replace(/[^/]*$/, '') || '.')]) if (d) {
+  await Deno.mkdir(d, { recursive: true });
+  if ((await Deno.realPath(d) + '/').startsWith(await Deno.realPath(GOC) + '/')) { console.error('--ra / --xuat phải nằm NGOÀI repo (dữ liệu quán thật không vào repo)'); Deno.exit(2); }
 }
 const K = await import(`${MA}ky.ts`), B = await import(`${MA}ban_hang.ts`), L = await import(`${MA}logic.ts`);
 
@@ -102,6 +103,24 @@ function cauGia(f: { groups?: { top: { name: string; revenue: number }[] }[] } |
 }
 
 const ngayVN = (t: number) => new Date(t + 7 * 3600_000).toISOString().slice(0, 10);
+/** Sổ thật để người chấm đối chiếu: đọc thẳng từ số thô, không qua mã Boom (chỉ dùng khi --xuat). */
+function soThat(nhan: string, t: Thuc, ban: Record<string, unknown>, truoc: Record<string, unknown> | undefined, mon: Record<string, unknown>[]): string {
+  const tien = (x: unknown) => `${Math.round(Number(x) || 0).toLocaleString('vi-VN')}đ`, THU = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+  const gio = (v: unknown) => ((v ?? []) as number[]).map((x, h) => (Number(x) > 0 ? `${h}h ${tien(x)}` : '')).filter(Boolean).join(', ') || '(không có)';
+  const ten = new Map(mon.map((m) => [String(m.id), m]));
+  const da = ((ban.items ?? []) as { id: string; qty: number; revenue: number }[]).filter((x) => Number(x.qty) > 0).sort((x, y) => Number(y.revenue) - Number(x.revenue));
+  return [
+    `SỔ THẬT (đọc thẳng từ sổ bán hàng, KHÔNG qua mã Boom) — kỳ: ${nhan}`,
+    `Tổng kỳ này: ${tien(t.revenue)}, ${t.orders} đơn. Kỳ so sánh: ${truoc ? `${tien(truoc.revenue)}, ${Number(truoc.orders) || 0} đơn` : '(không đọc)'}`,
+    `Từng ngày CÓ đơn (${t.ngay.length} ngày; ngày không liệt kê = không có đơn): ${t.ngay.map((x) => `${x.d} ${THU[(new Date(`${x.d}T00:00:00Z`).getUTCDay() + 6) % 7]} ${tien(x.revenue)} / ${x.orders} đơn`).join('; ') || '(không có)'}`,
+    `Doanh thu theo giờ, cả kỳ: ${gio(t.by_hour)}`,
+    ...(truoc ? [`Doanh thu theo giờ, kỳ so sánh: ${gio(truoc.by_hour)}`] : []),
+    `Doanh thu theo thứ, TỔNG cả kỳ (chưa chia số ngày): ${t.by_weekday.map((v, d) => `${THU[d]} ${tien(v)}`).join(', ')}`,
+    `Món đã bán (${da.length} món; giá bán / giá vốn hiện tại): ${da.map((x) => { const m = ten.get(String(x.id)) ?? {}; return `${m.name ?? '(món đã xoá)'} [${String(m.category ?? '').trim() || 'không nhóm'}] ×${x.qty} = ${tien(x.revenue)} (bán ${tien(m.sell_price)}, vốn ${Number(m.cost_price_latest ?? m.cost_price) > 0 ? tien(m.cost_price_latest ?? m.cost_price) : 'chưa nhập'})`; }).join('; ') || '(không có)'}`,
+    `Menu đang bán theo nhóm: ${t.nhom.map((g) => `${g.ten}: ${g.mon} món, ${g.chuaBan} món chưa bán trong kỳ`).join('; ')}`,
+  ].join('\n');
+}
+const xuat: unknown[] = [];
 let tongLoi = 0;
 for (const quan of a) {
   const ctx = { sbUrl: 'http://soi', anonKey: 'soi', jwt: 'soi', storeId: quan, userId: 'soi', fetch: fetchGia };
@@ -116,7 +135,7 @@ for (const quan of a) {
     let ky = K.docKy(cau.q, now), f = await so(ky) as { orders: number } | null;
     if (f && !K.coNeuKy(cau.q, now) && /^Tháng này/.test(ky.nhan) && f.orders < 30) { ky = K.ky30Ngay(now); f = await so(ky) as { orders: number } | null; }
     if (!f) { console.log(`✗ ${cau.q} → ${ky.nhan}: KHÔNG đọc được số`); tongLoi++; continue; }
-    const khoi = String(L.buildMessages(cau.q, [], null, { facts: f, modules: null, now })[1].content);
+    const msgs = L.buildMessages(cau.q, [], null, { facts: f, modules: null, now }), khoi = String(msgs[1].content);
     const ban = thuc.ban.get(`${quan}|${ky.tu}|${ky.den}`) ?? {}, truoc = thuc.ban.get(`${quan}|${ky.truocTu}|${ky.truocDen}`);
     const sl = new Map(((ban.items ?? []) as { id: string; qty: number }[]).map((x) => [x.id, Number(x.qty) || 0]));
     const nhom = new Map<string, { ten: string; mon: number; chuaBan: number }>();
@@ -137,6 +156,7 @@ for (const quan of a) {
     console.log(`${loi.length ? '⚠' : '✓'} ${cau.q} → ${ky.nhan} · ${t.orders} đơn, ${Math.round(t.revenue).toLocaleString('vi-VN')}đ, ${t.ngay.length} ngày có đơn`);
     for (const x of loi) { console.log(`    ${x}`); gom.set(x, [...(gom.get(x) ?? []), cau.q]); }
     if (IN) console.log(khoi.split('\n').map((x) => `    │ ${x}`).join('\n'));
+    if (XUAT) xuat.push({ quan, q: cau.q, ky: ky.nhan, msgs, goc: L.soLieuGoc(cau.q, { facts: f, modules: null, now }), that: soThat(ky.nhan, t, ban, truoc, thuc.mon.get(quan) ?? []) });
     if (RA) await Deno.writeTextFile(`${RA}/${quan}_${String(i + 1).padStart(2, '0')}.txt`, `CÂU: ${cau.q}\nKỲ: ${ky.nhan}\nCẢNH BÁO:\n${loi.map((x) => `- ${x}`).join('\n') || '(không)'}\n\n${khoi}\n`);
   }
   const ma = [...new Set([...gom.keys()].map((x) => x.split(' ')[0]))].sort();
@@ -144,4 +164,5 @@ for (const quan of a) {
   for (const [x, cs] of gom) console.log(`   • ${x}  [${cs.length} câu]`);
   tongLoi += gom.size;
 }
+if (XUAT) await Deno.writeTextFile(XUAT, JSON.stringify({ ma: MA, now: now.toISOString(), cau: xuat }));
 console.log(`\nTổng: ${tongLoi} cảnh báo khác nhau trên ${a.length} quán.`);

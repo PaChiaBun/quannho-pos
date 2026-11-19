@@ -34,3 +34,4 @@ deno test tool/boom_do/soi_so/kiem_test.ts
 
 - Đọc số bán hàng của quán bằng psql chỉ đọc qua ssh, dựng đúng khối số Boom gửi cho mô hình cho ~15 câu hỏi mẫu, rồi chạy bộ kiểm bất biến `kiem.ts` (K1–K10). 0 đồng, không trừ hạn mức quán. Kế hoạch: `.docs/ke-hoach-tinh-chinh-boom-18-11.md`.
 - Dữ liệu quán thật không ghi vào repo: `--ra` phải nằm ngoài repo.
+- Đo câu trả lời của hai bản mã trên số quán thật (19/11, tốn tiền OpenAI, hỏi Chủ Quán trước): chạy `soi.ts … --ma <bản cũ> --now <mốc> --xuat <cũ.json>` rồi `soi.ts … --now <mốc> --xuat <mới.json>` (lần lượt, không song song: máy chủ từ chối bớt kết nối ssh), sau đó `deno run -A tool/boom_do/soi_so/sinh.ts <cũ.json> <mới.json> <ra.json>`. Không có `OPENAI_API_KEY` thì chỉ chọn câu và ước tiền. Kết quả đưa vào `do_09_11/tron.py` + `tong.py` như các lượt chấm mù khác.
