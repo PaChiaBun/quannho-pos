@@ -27,6 +27,22 @@ void main() {
       BoomAiService.limitOf(const FunctionException(status: 429, details: 'x')),
       'RATE_LIMITED',
     );
+    // máy chủ nói rõ trần bị chạm: tháng của quán / của cả hệ thống → "tháng sau"; trần ngày → như cũ
+    for (final (scope, ma) in [
+      ('month', 'BUDGET_MONTH'),
+      ('system', 'BUDGET_MONTH'),
+      ('day', 'BUDGET_EXCEEDED'),
+    ]) {
+      expect(
+        BoomAiService.limitOf(
+          FunctionException(
+            status: 429,
+            details: {'error': 'BUDGET_EXCEEDED', 'scope': scope},
+          ),
+        ),
+        ma,
+      );
+    }
     expect(
       BoomAiService.limitOf(
         const FunctionException(status: 503, details: {'error': 'AI_DISABLED'}),
@@ -42,6 +58,10 @@ void main() {
       contains('hỏi lại sau ít phút'),
     );
     expect(boomLimitText('BUDGET_EXCEEDED', 'Anh An'), contains('ngày mai'));
+    expect(
+      boomLimitText('BUDGET_MONTH', 'Anh An'),
+      allOf(contains('Tháng này'), contains('đầu tháng sau')),
+    );
     expect(boomLimitText(null, 'Anh An'), isNull);
   });
 }

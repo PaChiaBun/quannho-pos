@@ -536,7 +536,7 @@ async function reserve(r: { store_id: string; question: string; chunk_ids: strin
       p_mode: r.mode,
       ...QUOTA,
     }),
-  }) as { ok: boolean; status: string; id?: string };
+  }) as { ok: boolean; status: string; id?: string; scope?: string };
 }
 
 async function finish(id: string, row: Record<string, unknown>) {
@@ -742,7 +742,8 @@ Deno.serve(async (req) => {
   }
   if (!res.ok || !res.id) {
     const [code, err] = STATUS_ERROR[res.status] ?? [503, 'QUOTA_UNAVAILABLE'];
-    return json(code, { error: err });
+    // scope = trần tiền bị chạm ('day' | 'month' | 'system') để app nói đúng "ngày mai" hay "tháng sau"; app cũ bỏ qua
+    return json(code, { error: err, ...(typeof res.scope === 'string' ? { scope: res.scope } : {}) });
   }
   const logId = res.id;
   // Sổ ghi rõ lượt có số liệu quán / lượt trước: câu trả lời riêng của một quán, không duyệt vào bộ nhớ dùng chung.

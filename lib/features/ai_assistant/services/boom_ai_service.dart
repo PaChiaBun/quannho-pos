@@ -54,6 +54,8 @@ String? boomLimitText(String? code, String goi) => switch (code) {
         '$goi hỏi lại sau ít phút nhé!',
   'BUDGET_EXCEEDED' =>
     'Hôm nay quán đã dùng hết lượt hỏi Bé Boom phân tích. $goi hỏi lại vào ngày mai nhé!',
+  'BUDGET_MONTH' =>
+    'Tháng này quán đã dùng hết lượt hỏi Bé Boom phân tích. $goi hỏi lại vào đầu tháng sau nhé!',
   _ => null,
 };
 
@@ -73,16 +75,19 @@ class BoomAiService {
   /// Máy đang đăng nhập bằng vé thật (gửi được tới hàm boom-chat).
   bool get canSend => _authHeader != null;
 
-  /// Lần gọi gần nhất bị máy chủ chặn vì hết lượt: 'RATE_LIMITED' (quá số câu / giờ) hoặc 'BUDGET_EXCEEDED'
-  /// (hết hạn mức hôm nay); null = không phải lỗi hết lượt.
+  /// Lần gọi gần nhất bị máy chủ chặn vì hết lượt: 'RATE_LIMITED' (quá số câu / giờ), 'BUDGET_EXCEEDED'
+  /// (hết hạn mức hôm nay) hoặc 'BUDGET_MONTH' (hết hạn mức tháng); null = không phải lỗi hết lượt.
   String? lastLimit;
 
   /// Mã hết lượt trong lỗi trả về (429 + {error: …}); null nếu là lỗi khác.
   static String? limitOf(Object e) {
     if (e is! FunctionException || e.status != 429) return null;
     final d = e.details;
-    final code = d is Map ? d['error'] : null;
-    return code == 'BUDGET_EXCEEDED' ? code : 'RATE_LIMITED';
+    if (d is! Map || d['error'] != 'BUDGET_EXCEEDED') return 'RATE_LIMITED';
+    // máy chủ (từ 19/11) nói thêm trần nào bị chạm; máy chủ cũ không có trường này → coi như trần ngày
+    return d['scope'] == 'month' || d['scope'] == 'system'
+        ? 'BUDGET_MONTH'
+        : 'BUDGET_EXCEEDED';
   }
 
   Future<Map<String, dynamic>?> _invoke(
