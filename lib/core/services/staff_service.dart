@@ -2759,3 +2759,27 @@ class ShiftConfigService {
         .eq('user_id', userId);
   }
 }
+
+/// Tên theo tài khoản cho các mã chưa có hồ sơ ở quán đang mở. Mỗi người chỉ có MỘT dòng
+/// staff_members (ở quán vào đầu tiên), nên nhân viên làm thêm quán thứ hai không có hồ sơ ở đó.
+Future<Map<String, String>> accountNamesFor(
+  SupabaseClient db,
+  Iterable<String> ids,
+) async {
+  final need = ids.toSet().toList();
+  if (need.isEmpty) return {};
+  try {
+    final rows = await db
+        .from('user_accounts')
+        .select('id, display_name')
+        .inFilter('id', need);
+    return {
+      for (final r in rows)
+        if ((r['display_name'] as String?)?.trim().isNotEmpty == true)
+          r['id'] as String: (r['display_name'] as String).trim(),
+    };
+  } catch (e) {
+    debugPrint('[accountNamesFor] $e');
+    return {};
+  }
+}

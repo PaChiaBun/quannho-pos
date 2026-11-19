@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/utils/app_logger.dart';
+import '../core/services/staff_service.dart' show accountNamesFor;
 import '../core/services/store_auth_service.dart';
 
 /// Tag nhật ký nghiệp vụ/kiểm toán — không xoá được từ app. Giữ khớp
@@ -113,6 +114,16 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           uniqueStaff.add(name);
         }
       }
+      // Nhân viên có hồ sơ ở quán khác (làm nhiều quán): lấy tên theo tài khoản.
+      final members = await Supabase.instance.client
+          .from('store_members')
+          .select('user_id')
+          .eq('store_id', storeId);
+      uniqueStaff.addAll((await accountNamesFor(
+        Supabase.instance.client,
+        [for (final m in members) if (m['user_id'] is String) m['user_id'] as String],
+      )).values);
+      if (!mounted) return;
 
       setState(() {
         _staffNames = uniqueStaff.toList()..sort();

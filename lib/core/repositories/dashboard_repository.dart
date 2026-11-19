@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/store_auth_service.dart';
+import '../services/staff_service.dart' show accountNamesFor;
 import '../utils/string_utils.dart' show toppingSales;
 
 final _uuidRe = RegExp(
@@ -597,6 +598,10 @@ class DashboardRepository {
             final id = r['id'] as String;
             nameMap[id] = (r['name'] as String?) ?? 'Chưa rõ';
           }
+          nameMap.addAll(await accountNamesFor(
+            _sb,
+            staffIds.where((id) => !nameMap.containsKey(id)),
+          ));
         }
 
         staffRevenuesRaw.forEach((staffId, val) {
@@ -650,6 +655,10 @@ class DashboardRepository {
           final id = r['id'] as String;
           nameMap[id] = (r['name'] as String?) ?? 'Chưa rõ';
         }
+        nameMap.addAll(await accountNamesFor(
+          _sb,
+          waiterIds.where((id) => !nameMap.containsKey(id)),
+        ));
 
         waiterCountsRaw.forEach((waiterId, val) {
           final name = nameMap[waiterId] ?? 'Nhân viên ẩn';

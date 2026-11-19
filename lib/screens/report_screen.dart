@@ -14,6 +14,7 @@ import 'package:printing/printing.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../core/providers/app_providers.dart';
+import '../core/services/staff_service.dart' show accountNamesFor;
 import '../core/providers/dashboard_providers.dart';
 import '../core/repositories/dashboard_repository.dart';
 import '../core/services/store_auth_service.dart';
@@ -3897,6 +3898,16 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
           .gte('clock_in', start)
           .lt('clock_in', end);
 
+      if (!mounted || requestId != _loadRequestId) return;
+
+      final noProfile = {
+        for (final s in (shiftsRes as List))
+          if (s['user_id'] is String && !memberMap.containsKey(s['user_id']))
+            s['user_id'] as String,
+      };
+      (await accountNamesFor(db, noProfile)).forEach(
+        (id, name) => memberMap[id] = _StaffInfo(name: name, role: 'staff'),
+      );
       if (!mounted || requestId != _loadRequestId) return;
 
       int totalShifts = 0;

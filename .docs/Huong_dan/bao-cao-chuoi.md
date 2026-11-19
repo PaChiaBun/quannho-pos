@@ -28,7 +28,7 @@ nguon:
 
 ### 1. Có thêm cửa hàng
 Mở thêm chi nhánh / quán mới:
-1. **Cài đặt** → thẻ quán → **"Đổi quán"** → **"Tạo cửa hàng mới"** (không có trên iPhone cài từ App Store).
+1. **Cài đặt** → thẻ quán → **"Đổi quán"** → **"Tạo cửa hàng mới"**. Nút này chỉ có khi mở Quán Nhỏ bằng trình duyệt web; app cài trên điện thoại, máy POS, máy tính không có.
 2. Nhập tên quán, xác nhận mật khẩu. Quán mới **không tự vào chuỗi**.
 
 ### 2. Tạo chuỗi và thêm cửa hàng

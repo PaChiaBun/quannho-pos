@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/services/staff_service.dart'
-    show StaffService, kDefaultPerms;
+    show StaffService, kDefaultPerms, accountNamesFor;
 import '../../../core/utils/paged_query.dart';
 import '../../../modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart';
 import 'boom_read_only_data_service.dart' show BoomPeriodRange;
@@ -361,12 +361,15 @@ class BoomModuleDataService {
     };
     // Tên như màn Chấm công (staff_members.name); user_accounts không mở quyền đọc cho app
     final users = ids.isEmpty
-        ? const <Map<String, dynamic>>[]
-        : await _db
+        ? <Map<String, dynamic>>[]
+        : List<Map<String, dynamic>>.of(await _db
               .from('staff_members')
               .select('id,name')
               .eq('store_id', storeId)
-              .inFilter('id', ids.toList());
+              .inFilter('id', ids.toList()));
+    final seen = {for (final u in users) u['id']};
+    (await accountNamesFor(_db, ids.where((id) => !seen.contains(id))))
+        .forEach((id, name) => users.add({'id': id, 'name': name}));
     // Kỳ lương gần nhất (chỉ chủ / quản lý)
     final periods = onlyUserId != null
         ? const <Map<String, dynamic>>[]
