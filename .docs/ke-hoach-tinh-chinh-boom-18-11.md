@@ -339,3 +339,37 @@ Test hàm 237 qua (thêm ca vào test "tuần này chưa có đơn": không còn
 **Thấy khi soi, CHƯA sửa:** dòng kỳ trước ghi "7 ngày mở bán" cho trọn tuần trước dù quán chỉ có đơn 5 ngày (khối số không có số từng ngày của kỳ trước ở nhánh này), nên trung bình mỗi ngày của kỳ trước bị thấp hơn trung bình ngày có đơn.
 
 **ĐÃ ÁP máy chủ 21/11 04:00** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261121_040057` (`ROLLBACK=1 bash db-fix/boom_l262_ap_dung.sh 20261121_040057`, trả `logic.ts` về bản 261). Kiểm sau áp: `logic.ts` trên máy chủ khớp bản mới và có dấu bản 262, `ban_hang.ts` vẫn là bản 261; sao lưu có `logic.ts`; container chạy, không tự khởi động lại, healthy; log không có dòng lỗi; `boom_changelog` có dòng "lần 262"; gọi hàm không vé trả 401. Chưa có lượt hỏi thật nào đi qua bản mới; chưa hỏi mô hình trên bản này.
+
+### 21/11 — Đọc và chấm câu hỏi thật của khách (12/11–18/11)
+
+Chủ Quán bảo kiểm các câu khách hỏi Boom, chấm điểm, xem có cần dạy lại. Đọc `boom_qa_log` + `boom_qa_full` (chỉ đọc), bỏ quán Demo và 31 lượt Claude hỏi thử ở quán T (18, 20, 21/11). Tệp này KHÔNG ghi nguyên văn câu hỏi, tên quán, số liệu quán; bản sao tạm nằm ngoài repo.
+
+**Số đếm:** 110 lượt ghi sổ của 18 quán + 29 lượt app tự trả lời; 25 lượt lỗi (HTTP 401, khoá OpenAI hỏng 15–16/11, 13 câu hỏi khác nhau ở 4 quán), 6 lượt không ra câu trả lời. Chấm 99 lượt có câu trả lời (thang 0–10, Claude chấm; 8 lượt là thẻ hướng dẫn khách tự bấm, không chấm): trung bình 5,4; đạt (7–10) 48, tạm (4–6) 20, hỏng (0–3) 31. Một lượt bị chê (đã sửa ở lần 250).
+
+| Loại câu | Lượt | Điểm TB | Hỏng |
+|---|---|---|---|
+| Cách dùng app | 50 | 5,6 | 15 |
+| Số liệu quán | 18 | 6,3 | 4 |
+| Trò chuyện, hỏi về app / dữ liệu | 14 | 5,1 | 6 |
+| Thời tiết (câu gợi ý ở Trang chủ) | 13 | 4,5 | 5 |
+| Tư vấn / lương | 4 | 4,5 | 1 |
+
+Điều thấy rõ nhất: khách hỏi CÁCH DÙNG APP là chính (một nửa số lượt: máy in, chấm công, xoá bill, tài khoản nhân viên, sửa món, nhiều quán), không phải phân tích kinh doanh. Bộ đo tự soạn và các lần 250–262 gần như không chạm tới phần này.
+
+**Nhóm cần làm (xếp theo mức hại):**
+
+| # | Hiện tượng | Lượt / khách | Loại việc |
+|---|---|---|---|
+| 1 | Hỏi dữ liệu có an toàn không → Boom nói "chưa thấy thông tin, không dám khẳng định an toàn"; khách kết luận không dùng app; câu chốt của khách có chữ "cảm ơn" nên app đáp câu có sẵn "Dạ không có gì ạ!" | 4 / 1 | Thiếu bài hướng dẫn (cần Chủ Quán cho nội dung) + sửa app |
+| 2 | Câu nối tiếp ngắn ("ở chỗ nào", "không thấy", "bước số 4") → Boom quên bài vừa dùng, bảo gọi Hotline, trái với câu trước | 4 / 3 | Sửa mã (giữ bài hướng dẫn của lượt trước) |
+| 3 | Bài CÓ SẴN nhưng Boom nói "chưa thấy hướng dẫn": vào nhiều quán, nhân viên làm ở quán khác, cài chấm công (gõ sai chính tả), chủ quán xoá bill đã thu, thêm máy in từ điện thoại / iPhone, nhập món hàng loạt | 9 / 5 | Bổ sung cách hỏi / câu trả lời thẳng vào bài hướng dẫn |
+| 4 | Lúc khoá OpenAI hỏng: khách bấm chính câu gợi ý thời tiết của app thì nhận "Bé Boom chưa hiểu rõ lắm, hãy hỏi doanh thu hôm nay…" | 5 / 5 (+25 lượt lỗi) | Sửa app: báo đúng là Boom đang trục trặc |
+| 5 | Xin đổi cách xưng hô ("gọi tôi là …") → Boom trả lời vòng vo, không đổi; khách chê | 6 / 1 | Sửa mã (ghi nhớ cách gọi) |
+| 6 | Hỏi theo ngày cụ thể ("thứ 6 tuần rồi bán bao nhiêu phần …"): app tự chặn kỳ dù máy chủ trả lời được; lượt sau Boom nói "không xem được báo cáo, gửi ảnh" | 3 / 1 | Sửa app (không chặn kỳ ở app) |
+| 7 | "Mã quán" bị hiểu thành mã giảm giá | 1 / 1 | Sửa mã |
+| 8 | Hỏi tính hoa hồng / lương theo % (tiệm dịch vụ), cho người góp vốn cùng xem: app chưa có hoặc chưa có bài → "chưa thấy hướng dẫn" | 4 / 2 | Thêm mục "app chưa có…" + cách làm thay |
+| 9 | Câu thời tiết bị gắn đuôi "Số trên là của 30 ngày qua" (bản hiện tại vẫn còn) | 2 / 1 | Sửa mã máy chủ, nhỏ |
+| 10 | Câu lặp lần ba không ra câu trả lời → app in số bán hàng không liên quan | 1 / 1 | Sửa app |
+
+Đã sửa rồi, không cần làm: "món chưa bán" kể cả nguyên liệu (lượt bị chê, lần 250); kỳ so sánh, bỏ món, chữ "e" (lần 253–262). Kiểm 0 đồng trên bản hiện tại: máy chủ đọc đúng kỳ "thứ 6 tuần rồi" và có số món được hỏi (lỗi ở #6 nằm phía app); dòng kỳ thừa ở câu thời tiết vẫn còn.
+
