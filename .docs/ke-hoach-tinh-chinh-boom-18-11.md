@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn) ĐÃ SỬA MÃ 21/11, CHƯA ÁP; đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn, commit `c0919a6`) ĐÃ ÁP máy chủ 21/11 02:03 (mốc hoàn tác `20261121_020327`); đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -263,7 +263,7 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 
 Công cụ soi thêm tuỳ chọn `--cau "<câu>"` để dựng khối số đúng một câu vừa hỏi (0 đồng).
 
-### 21/11 — Lần 260: khối số mang đủ món giữa nhóm (ĐÃ SỬA MÃ, CHƯA ÁP)
+### 21/11 — Lần 260: khối số mang đủ món giữa nhóm (ĐÃ ÁP máy chủ 21/11 02:03)
 
 Chủ Quán bảo "Sửa đi" sau lượt hỏi thử. Chỉ sửa mã máy chủ (`ban_hang.ts`, `logic.ts`), không thêm lượt đọc nào, không đụng cơ sở dữ liệu, không cần phát hành app.
 
@@ -294,4 +294,4 @@ Test hàm 236 qua (thêm 1 test, sửa 1 chỗ mong đợi cũ: tên gọi tắt
 
 **Giới hạn đã biết.** Món giữa nhóm chưa có giá vốn và không được nhắc tên thì vẫn không in (cố ý, để khối số không dài). Menu rất lớn (gói vượt 12 KB) thì mất món giữa nhóm chưa có giá vốn, trở về như bản 259 cho các món đó. Gói số từ app bản cũ (đường hỏi cũ) không có `mid`, `costed` → như trước. Chưa hỏi mô hình trên bản này, chưa chấm mù.
 
-Kịch bản áp: `db-fix/boom_l260_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp).
+**ĐÃ ÁP máy chủ 21/11 02:03** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261121_020327` (`ROLLBACK=1 bash db-fix/boom_l260_ap_dung.sh 20261121_020327`, trả cả `ban_hang.ts` và `logic.ts` về bản 259). Kiểm sau áp: hai tệp trên máy chủ khớp bản mới, có dấu bản 260; sao lưu đủ 2 tệp; container chạy, không tự khởi động lại, healthy; log không có dòng lỗi; `boom_changelog` có dòng "lần 260"; gọi hàm không vé trả 401. Lúc áp là 2 giờ sáng nên chưa có lượt hỏi thật nào đi qua bản mới; chưa hỏi mô hình trên bản này.
