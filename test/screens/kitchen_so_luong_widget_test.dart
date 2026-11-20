@@ -63,14 +63,14 @@ void main() {
     expect(find.text('2 món'), findsOneWidget); // mỗi món 1 phần thì không lặp lại con số
     expect(find.text('x1.5'), findsOneWidget);
 
-    double doDacNen(String soLuong) => (tester
+    Color mauNen(String soLuong) => (tester
                 .widget<Container>(find
                     .ancestor(of: find.text(soLuong).first, matching: find.byType(Container))
                     .first)
                 .decoration as BoxDecoration)
-            .color!
-            .a;
-    expect(doDacNen('x12'), 1.0); // nhiều phần: tô đặc
-    expect(doDacNen('x1'), lessThan(0.5)); // 1 phần: nền nhạt
+            .color!;
+    // Nhiều phần: ô tô đặc màu mực, chữ trắng; 1 phần: ô nhạt.
+    expect(mauNen('x12'), const Color(0xFF0F172A));
+    expect(mauNen('x1'), isNot(mauNen('x12')));
   });
 }

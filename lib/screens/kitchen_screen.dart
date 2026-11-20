@@ -38,6 +38,11 @@ void clearSeenCancelledTickets() => _seenCancelledIds.clear();
 const _kBg     = Color(0xFF0D1117);
 const _kCard   = Color(0xFF1A2233);
 const _kCardBorder = Color(0xFF2D3748);
+// Thẻ phiếu kiểu phiếu giấy: nền trắng, chữ mực tối, ít ô viền — đọc rõ trong bếp sáng đèn.
+const _kPaper   = Color(0xFFFFFFFF);
+const _kInk     = Color(0xFF0F172A); // chữ chính (17,8:1 trên trắng)
+const _kInkSoft = Color(0xFF94A3B8); // món đã xong / đã huỷ
+const _kLine    = Color(0xFFE2E8F0); // vạch ngăn giữa các món
 
 // Kanban 3 cột cần ~905dp nội dung mới không tràn thẻ phiếu (đo bằng test) — hẹp hơn dùng dạng tab.
 const _kKanbanMinWidth = 920.0;
@@ -1729,447 +1734,305 @@ class _TicketCard extends ConsumerWidget {
         .where((i) => waiting > 0 ? !i.done : !i.cancelled)
         .fold<double>(0, (s, i) => s + i.quantity);
 
+    // Dải đầu phiếu mang màu mức gấp (xanh → vàng → cam → đỏ); phiếu đã xong thì dịu lại.
+    final head = isDone ? const Color(0xFFDCFCE7) : accent;
+    final sub = GoogleFonts.plusJakartaSans(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: _kInk.withValues(alpha: 0.78),
+    );
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(16),
+        color: _kPaper,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: isDone ? 0.04 : 0.18),
-            blurRadius: 20,
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Urgency left strip (KDS pattern) ──
-              Container(
-                width: 6,
-                decoration: BoxDecoration(
-                  color: accent,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [accent, accent.withValues(alpha: 0.6)],
-                  ),
-                ),
-              ),
-
-              // ── Card content ──
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    // ── Header ──
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Đầu phiếu ──
+            Container(
+              color: head,
+              padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if ((ticket.zoneLabel ?? ticket.zoneId ?? '').isNotEmpty)
+                          Text(
+                            (ticket.zoneLabel ?? ticket.zoneId ?? '').toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: _kInk.withValues(alpha: 0.7),
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        Text(
+                          ticket.tableLabel ?? 'Bàn',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: _kInk,
+                            height: 1.1,
                           ),
                         ),
-                        gradient: LinearGradient(
-                          colors: [
-                            accent.withValues(alpha: isDone ? 0.04 : 0.11),
-                            Colors.transparent,
+                        const SizedBox(height: 3),
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            Text('Đợt ${ticket.round}', style: sub),
+                            Text('·', style: sub),
+                            Text(
+                              portions == itemCount
+                                  ? '$itemCount món'
+                                  : '$itemCount món · ${qtyText(portions)} phần',
+                              style: sub,
+                            ),
                           ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
                         ),
-                      ),
-                      child: Row(
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Zone separator + Table badge
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if ((ticket.zoneLabel ?? ticket.zoneId ?? '').isNotEmpty)
-                                Text(
-                                  (ticket.zoneLabel ?? ticket.zoneId ?? '').toUpperCase(),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: accent.withValues(alpha: 0.7),
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              Text(
-                                ticket.tableLabel ?? 'Bàn',
+                          if (!isDone)
+                            Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _kInk,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                isOverdue ? 'TRỄ 30P!' : isNew ? 'MỚI' : 'LÀM',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 22,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  height: 1.1,
+                                  letterSpacing: 1,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 10),
-                          // Round + Item count
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.07),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'Đợt ${ticket.round}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white54,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                portions == itemCount
-                                    ? '$itemCount món'
-                                    : '$itemCount món · ${qtyText(portions)} phần',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white60,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          // Status pill + Timer
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (!isDone)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                                  margin: const EdgeInsets.only(bottom: 4),
-                                  decoration: BoxDecoration(
-                                    color: isOverdue
-                                        ? _kRed.withValues(alpha: 0.2)
-                                        : isNew
-                                            ? _kOrange.withValues(alpha: 0.15)
-                                            : _kAmber.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isOverdue
-                                          ? _kRed
-                                          : isNew
-                                              ? _kOrange.withValues(alpha: 0.5)
-                                              : _kAmber.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isOverdue ? 'TRỄ 30P!' : isNew ? 'MỚI' : 'LÀM',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: isOverdue ? _kRed : isNew ? _kOrange : _kAmber,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                              _WaitTimer(sentAt: ticket.sentAt, status: status),
-                              const SizedBox(height: 6),
-                              // ── Nút in phiếu bếp (hiện mọi trạng thái) ──
-                              GestureDetector(
-                                onTap: () => _printKitchenTicket(context, ref),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF97316)
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                        color: const Color(0xFFF97316)
-                                            .withValues(alpha: 0.35)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.print_rounded,
-                                          size: 13,
-                                          color: Color(0xFFF97316)),
-                                      const SizedBox(width: 3),
-                                      Text('In phiếu',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFFF97316),
-                                          )),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // ── Items list ──
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                      child: Column(
-                        children: [...items.map((item) {
-                          // Món huỷ: máy chủ để done = true — không hiện như món xong, không bấm được
-                          final isCancelled = item.cancelled;
-                          final isItemDone = item.done && !isCancelled;
-                          final strike = isCancelled ? TextDecoration.lineThrough : null;
-                          // Modifiers — JSON array từ POS (ghi vào kitchen_note)
-                          List modifiers = [];
-                          final _rawModNote = item.kitchenNote; // ✅ FIX: dùng kitchenNote
-                          if (_rawModNote != null && _rawModNote.trim().startsWith('[')) {
-                            try { modifiers = jsonDecode(_rawModNote); } catch (_) {}
-                          }
-
-                          return InkWell(
-                            onTap: isDone || isCancelled
-                                ? null
-                                : () => _showItemBottomSheet(context, item),
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 11),
-                              decoration: BoxDecoration(
-                                color: isCancelled
-                                    ? _kRed.withValues(alpha: 0.08)
-                                    : isItemDone
-                                    ? _kGreen.withValues(alpha: 0.06)
-                                    : Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isCancelled
-                                      ? _kRed.withValues(alpha: 0.35)
-                                      : isItemDone
-                                      ? _kGreen.withValues(alpha: 0.25)
-                                      : Colors.white.withValues(alpha: 0.08),
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // Món huỷ: nhãn HUỶ thay vòng tròn (không bấm xong được)
-                                  if (isCancelled)
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 10),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: _kRed,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text('HUỶ',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                          )),
-                                    )
-                                  // Status circle — tap để toggle done
-                                  else GestureDetector(
-                                    onTap: isDone
-                                        ? () async {
-                                            HapticFeedback.selectionClick();
-                                            await ref.read(kitchenRepositoryProvider)
-                                                .toggleItemDone(item.id, ticket.id, false);
-                                          }
-                                        : () async {
-                                            HapticFeedback.selectionClick();
-                                            await ref.read(kitchenRepositoryProvider)
-                                                .toggleItemDone(item.id, ticket.id, true);
-                                          },
-                                    child: Container(
-                                      width: 28,
-                                      height: 28,
-                                      margin: const EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isItemDone ? _kGreen : Colors.transparent,
-                                        border: isItemDone
-                                            ? null
-                                            : Border.all(color: Colors.white38, width: 2),
-                                      ),
-                                      child: isItemDone
-                                          ? const Icon(Icons.check_rounded,
-                                              size: 16, color: Colors.white)
-                                          : null,
-                                    ),
-                                  ),
-                                  // Ô số lượng: rộng cố định để tên món thẳng cột; từ 2 phần trở lên tô đặc
-                                  // cho bếp khỏi làm thiếu (trước đây x1 và x12 trông như nhau).
-                                  Container(
-                                    constraints: const BoxConstraints(minWidth: 50),
-                                    alignment: Alignment.center,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    margin: const EdgeInsets.only(right: 10),
-                                    decoration: BoxDecoration(
-                                      color: item.quantity > 1 && !isItemDone && !isCancelled
-                                          ? accent
-                                          : accent.withValues(alpha: 0.18),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'x${qtyText(item.quantity)}',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                        color: item.quantity > 1 && !isItemDone && !isCancelled
-                                            ? const Color(0xFF0F172A)
-                                            : accent,
-                                        decoration: strike,
-                                      ),
-                                    ),
-                                  ),
-                                  // Name + notes
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.productName,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w700,
-                                            color: isItemDone || isCancelled
-                                                ? Colors.white38
-                                                : Colors.white.withValues(alpha: 0.95),
-                                            decoration: strike,
-                                            decorationColor: _kRed,
-                                            decorationThickness: 2,
-                                          ),
-                                        ),
-                                         if (modifiers.isNotEmpty)
-                                           Padding(
-                                             padding: const EdgeInsets.only(top: 3),
-                                             child: Wrap(
-                                               spacing: 4,
-                                               runSpacing: 3,
-                                               children: modifiers.map<Widget>((m) {
-                                                 final isMap = m is Map;
-                                                 // Topping bàn có "type"; topping QR chỉ có "quantity" (mỗi phần)
-                                                 final isTopping = isMap && isToppingModifier(m);
-                                                 final label = isTopping
-                                                     ? '${m['name']} x${qtyText(toppingTotal(m, item.quantity))}'
-                                                     : isMap
-                                                         ? (m['name'] as String? ?? '$m')
-                                                         : '$m';
-                                                 return Container(
-                                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                                   decoration: BoxDecoration(
-                                                     color: isTopping
-                                                         ? _kOrange.withValues(alpha: 0.15)
-                                                         : Colors.white.withValues(alpha: 0.08),
-                                                     borderRadius: BorderRadius.circular(5),
-                                                     border: isTopping
-                                                         ? Border.all(color: _kOrange.withValues(alpha: 0.4))
-                                                         : null,
-                                                   ),
-                                                   child: Text(
-                                                     label,
-                                                     style: GoogleFonts.plusJakartaSans(
-                                                       fontSize: 11,
-                                                       fontWeight: isTopping ? FontWeight.w700 : FontWeight.w400,
-                                                       color: isTopping ? _kOrange : Colors.white54,
-                                                     ),
-                                                   ),
-                                                 );
-                                               }).toList(),
-                                             ),
-                                           ),
-                                        // ── Free note: "không hành", "ít cay"... ──
-                                        if (item.freeNote != null &&
-                                            item.freeNote!.trim().isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4),
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: _kAmber.withValues(alpha: 0.18),
-                                                borderRadius: BorderRadius.circular(7),
-                                                border: Border.all(
-                                                  color: _kAmber.withValues(alpha: 0.5),
-                                                  width: 1.2,
-                                                ),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Text('📌', style: TextStyle(fontSize: 11)),
-                                                  const SizedBox(width: 4),
-                                                  Flexible(
-                                                    child: Text(
-                                                      item.freeNote!.trim(),
-                                                      style: GoogleFonts.plusJakartaSans(
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w700,
-                                                        color: _kAmber,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        // 👨‍🍳 Ghi chú nội bộ bếp (chỉ hiện nếu không phải JSON modifiers)
-                                        if (item.kitchenNote != null &&
-                                            item.kitchenNote!.trim().isNotEmpty &&
-                                            !item.kitchenNote!.trim().startsWith('['))
-                                          _NoteChip(
-                                              text: item.kitchenNote!.trim(),
-                                              icon: '👨‍🍳',
-                                              color: const Color(0xFF818CF8)),
-                                        // 📝 note: chỉ hiện nếu không phải JSON array
-                                        if (modifiers.isEmpty &&
-                                            item.note != null &&
-                                            item.note!.isNotEmpty)
-                                          _NoteChip(
-                                              text: item.note!,
-                                              icon: '📝',
-                                              color: _kAmber),
-                                      ],
-                                    ),
-                                  ),
-                                  if (!isDone && !isCancelled)
-                                    Icon(Icons.edit_note_rounded,
-                                        size: 17, color: Colors.white24),
-                                ],
                               ),
                             ),
-                          );
-
-                        })],
+                          _WaitTimer(sentAt: ticket.sentAt, status: status),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      // ── Nút in phiếu bếp (hiện mọi trạng thái) ──
+                      GestureDetector(
+                        onTap: () => _printKitchenTicket(context, ref),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: _kInk.withValues(alpha: 0.55)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.print_rounded, size: 14, color: _kInk),
+                              const SizedBox(width: 4),
+                              Text('In phiếu',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: _kInk,
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                    // ── Action button ──
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
-                      child: _buildActionButton(context, status, accent, ref),
-                    ),
-                  ],
+            // ── Danh sách món: mỗi món một dòng, ngăn nhau bằng vạch mảnh ──
+            for (final (index, item) in items.indexed)
+              _buildItemRow(context, ref, item, first: index == 0, ticketDone: isDone),
+
+            // ── Nút hành động ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: _buildActionButton(context, status, accent, ref),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemRow(
+    BuildContext context,
+    WidgetRef ref,
+    KitchenTicketItemModel item, {
+    required bool first,
+    required bool ticketDone,
+  }) {
+    final ticket = tw.ticket;
+    // Món huỷ: máy chủ để done = true — không hiện như món xong, không bấm được
+    final isCancelled = item.cancelled;
+    final isItemDone = item.done && !isCancelled;
+    final quiet = isItemDone || isCancelled; // không còn phải làm: chữ xám, nhãn dịu
+    final many = item.quantity > 1 && !quiet; // từ 2 phần: ô số lượng tô đặc cho bếp khỏi làm thiếu
+    final strike = isCancelled ? TextDecoration.lineThrough : null;
+    // Modifiers — JSON array từ POS (ghi vào kitchen_note)
+    List modifiers = [];
+    final rawModNote = item.kitchenNote;
+    if (rawModNote != null && rawModNote.trim().startsWith('[')) {
+      try { modifiers = jsonDecode(rawModNote); } catch (_) {}
+    }
+
+    final extras = <Widget>[
+      for (final m in modifiers)
+        // Topping bàn có "type"; topping QR chỉ có "quantity" (mỗi phần)
+        if (m is Map && isToppingModifier(m))
+          _Tag('${m['name']} x${qtyText(toppingTotal(m, item.quantity))}',
+              bg: const Color(0xFFFFEDD5), fg: const Color(0xFF9A3412), icon: Icons.add_rounded)
+        else
+          _Tag(m is Map ? (m['name'] as String? ?? '$m') : '$m',
+              bg: const Color(0xFFF1F5F9), fg: const Color(0xFF334155), size: 14),
+      // Ghi chú khách khi gọi món: "không hành", "ít cay"...
+      if (item.freeNote != null && item.freeNote!.trim().isNotEmpty)
+        _Tag(item.freeNote!.trim(),
+            bg: const Color(0xFFFEF3C7), fg: const Color(0xFF78350F), icon: Icons.push_pin_rounded),
+      // Ghi chú nội bộ bếp (chỉ hiện nếu không phải JSON modifiers)
+      if (item.kitchenNote != null &&
+          item.kitchenNote!.trim().isNotEmpty &&
+          !item.kitchenNote!.trim().startsWith('['))
+        _Tag(item.kitchenNote!.trim(),
+            bg: const Color(0xFFE0E7FF), fg: const Color(0xFF3730A3), icon: Icons.soup_kitchen_rounded),
+      // note: chỉ hiện nếu không phải JSON array
+      if (modifiers.isEmpty && item.note != null && item.note!.isNotEmpty)
+        _Tag(item.note!,
+            bg: const Color(0xFFFEF3C7), fg: const Color(0xFF78350F), icon: Icons.sticky_note_2_rounded),
+    ];
+
+    return InkWell(
+      onTap: ticketDone || isCancelled ? null : () => _showItemBottomSheet(context, item),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: isCancelled ? const Color(0xFFFEF2F2) : null,
+          border: first ? null : const Border(top: BorderSide(color: _kLine)),
+        ),
+        child: Row(
+          children: [
+            // Món huỷ: nhãn HUỶ thay vòng tròn (không bấm xong được)
+            if (isCancelled)
+              Container(
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('HUỶ',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    )),
+              )
+            // Vòng tròn — chạm để đánh dấu món xong
+            else
+              GestureDetector(
+                onTap: ticketDone
+                    ? () async {
+                        HapticFeedback.selectionClick();
+                        await ref.read(kitchenRepositoryProvider)
+                            .toggleItemDone(item.id, ticket.id, false);
+                      }
+                    : () async {
+                        HapticFeedback.selectionClick();
+                        await ref.read(kitchenRepositoryProvider)
+                            .toggleItemDone(item.id, ticket.id, true);
+                      },
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isItemDone ? const Color(0xFF16A34A) : _kPaper,
+                    border: isItemDone ? null : Border.all(color: _kInkSoft, width: 2),
+                  ),
+                  child: isItemDone
+                      ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+                      : null,
                 ),
               ),
-            ],
-          ),
+            // Ô số lượng: rộng cố định để tên món thẳng cột
+            Container(
+              constraints: const BoxConstraints(minWidth: 50),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: many ? _kInk : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'x${qtyText(item.quantity)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: many ? Colors.white : quiet ? _kInkSoft : _kInk,
+                  decoration: strike,
+                ),
+              ),
+            ),
+            // Tên món + topping / tuỳ chọn / ghi chú
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.productName,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: quiet ? _kInkSoft : _kInk,
+                      height: 1.2,
+                      decoration: strike,
+                      decorationColor: _kRed,
+                      decorationThickness: 2,
+                    ),
+                  ),
+                  if (extras.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Opacity(
+                        opacity: quiet ? 0.5 : 1,
+                        child: Wrap(spacing: 6, runSpacing: 5, children: extras),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!ticketDone && !isCancelled)
+              const Icon(Icons.edit_note_rounded, size: 20, color: _kInkSoft),
+          ],
         ),
       ),
     );
@@ -2198,24 +2061,17 @@ class _TicketCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: _kAmber,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: _kAmber.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4)),
-            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.play_arrow_rounded,
-                  size: 22, color: Colors.white),
+              const Icon(Icons.play_arrow_rounded, size: 22, color: _kInk),
               const SizedBox(width: 8),
               Text('Bắt đầu làm',
                   style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white)),
+                      color: _kInk)),
             ],
           ),
         ),
@@ -2229,24 +2085,17 @@ class _TicketCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: _kGreen,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: _kGreen.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4)),
-            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.check_circle_rounded,
-                  size: 22, color: Colors.white),
+              const Icon(Icons.check_circle_rounded, size: 22, color: _kInk),
               const SizedBox(width: 8),
               Text('Xong',
                   style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white)),
+                      color: _kInk)),
             ],
           ),
         ),
@@ -2261,19 +2110,18 @@ class _TicketCard extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               decoration: BoxDecoration(
-                color: _kAmber.withValues(alpha: 0.12),
+                color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _kAmber.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.undo_rounded, size: 15, color: _kAmber),
+                  const Icon(Icons.undo_rounded, size: 16, color: Color(0xFF78350F)),
                   const SizedBox(width: 4),
                   Text('Mở lại',
                       style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: _kAmber)),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF78350F))),
                 ],
               ),
             ),
@@ -2286,20 +2134,19 @@ class _TicketCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.archive_outlined, size: 16, color: Colors.white30),
+                    const Icon(Icons.archive_outlined, size: 16, color: Color(0xFF334155)),
                     const SizedBox(width: 4),
                     Text('Dọn phiếu',
                         style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white30)),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF334155))),
                   ],
                 ),
               ),
@@ -2312,21 +2159,18 @@ class _TicketCard extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF97316).withValues(alpha: 0.12),
+                color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: const Color(0xFFF97316).withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.print_outlined,
-                      size: 16, color: Color(0xFFF97316)),
+                  const Icon(Icons.print_outlined, size: 16, color: Color(0xFF334155)),
                   const SizedBox(width: 4),
                   Text('In',
                       style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFF97316))),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF334155))),
                 ],
               ),
             ),
@@ -2394,30 +2238,29 @@ class _TicketCard extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // NOTE CHIP — Ghi chú nhỏ gọn
 // ─────────────────────────────────────────────────────────────────────────────
-class _NoteChip extends StatelessWidget {
+class _Tag extends StatelessWidget {
   final String text;
-  final String icon;
-  final Color color;
-  const _NoteChip({required this.text, required this.icon, required this.color});
+  final Color bg;
+  final Color fg;
+  final IconData? icon;
+  final double size;
+  const _Tag(this.text, {required this.bg, required this.fg, this.icon, this.size = 15});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          Icon(icon, size: size + 1, color: fg),
+          const SizedBox(width: 3),
+        ],
+        Flexible(
+          child: Text(text,
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: size, fontWeight: FontWeight.w800, color: fg, height: 1.2)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(icon, style: const TextStyle(fontSize: 12)),
-          const SizedBox(width: 5),
-          Flexible(child: Text(text,
-            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: color.withValues(alpha: 0.9),
-                fontStyle: FontStyle.italic))),
-        ]),
-      ),
+      ]),
     );
   }
 }
@@ -2619,19 +2462,6 @@ class _WaitTimerState extends State<_WaitTimer> {
   Widget build(BuildContext context) {
     final totalMin = _elapsed.inMinutes;
 
-    // Màu urgency: xanh → vàng → cam → đỏ
-    final Color color;
-    if (widget.status == 'xong') {
-      color = _kGreen;
-    } else if (widget.status == 'dang_lam') {
-      color = totalMin >= 20 ? _kRed : totalMin >= 10 ? const Color(0xFFF97316) : _kAmber;
-    } else {
-      color = totalMin >= 20 ? _kRed
-           : totalMin >= 10 ? const Color(0xFFF97316)
-           : totalMin >= 5  ? _kAmber
-           : _kGreen;
-    }
-
     final label = totalMin == 0
         ? '< 1 phút'
         : totalMin < 60
@@ -2639,27 +2469,22 @@ class _WaitTimerState extends State<_WaitTimer> {
             : '${totalMin ~/ 60}g ${totalMin % 60}p';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: totalMin >= 10 ? 0.18 : 0.1),
+        color: _kPaper.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(8),
-        border: totalMin >= 20
-            ? Border.all(color: color.withValues(alpha: 0.5), width: 1)
-            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer_rounded,
-              size: 13,
-              color: color),
+          const Icon(Icons.timer_rounded, size: 14, color: _kInk),
           const SizedBox(width: 4),
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: _kInk,
             ),
           ),
         ],
