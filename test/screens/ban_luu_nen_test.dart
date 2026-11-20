@@ -77,7 +77,7 @@ void main() {
 
   test('gửi bếp, thanh toán, huỷ bàn, gộp bàn đều chờ món lưu nền xong', () {
     String head(String sig, int n) => screen.substring(screen.indexOf(sig)).substring(0, n);
-    expect(head('Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {', 400),
+    expect(head('Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {', 700),
         contains('_awaitPendingAdds()'));
     expect(head('Future<void> _cancelSession() async {', 200), contains('_awaitPendingAdds()'));
     final checkout = screen.substring(screen.indexOf('Future<void> _openCheckout('));

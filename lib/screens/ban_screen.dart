@@ -4587,11 +4587,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         st,
       );
     }
-    ref.invalidate(sessionItemsProvider(widget.session.id));
+    // Bảng bàn đã đóng trong lúc lưu thì không còn gì để làm mới (ref lúc này ném lỗi).
+    if (mounted) ref.invalidate(sessionItemsProvider(widget.session.id));
   }
 
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
+    // Lấy kho provider ngay lúc bấm: bảng bàn đóng giữa chừng thì `ref` ném lỗi và món không tới bếp
+    // (KAY 16/11, bàn C 2). Đã bấm Gửi bếp thì phải gửi xong dù bảng đã đóng.
+    final container = ProviderScope.containerOf(context, listen: false);
     // Món vừa thêm còn đang lưu nền: chờ lưu xong rồi lấy danh sách mới nhất để gửi đủ món.
     if (BanRepository.pendingFor(widget.session.id).isNotEmpty) {
       if (!await _awaitPendingAdds()) return;
@@ -4638,9 +4642,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       return;
     }
     final stopwatch = Stopwatch()..start();
-    setState(() {
-      _isSendingToKitchen = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isSendingToKitchen = true;
+      });
+    }
     try {
       final List<BanSessionItemModel> updatedItems = [];
       final savedReps = <String>{};
@@ -4672,7 +4678,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         updatedItems.add(item);
       }
       _dirtyNoteIds.removeAll(savedReps);
-      await _sendToKitchenImpl(updatedItems).timeout(
+      await _sendToKitchenImpl(updatedItems, container).timeout(
         const Duration(seconds: 40),
         onTimeout: () => throw KitchenStepTimeout(
           'toàn bộ việc gửi bếp',
@@ -4732,7 +4738,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
-  Future<void> _sendToKitchenImpl(List<BanSessionItemModel> items) async {
+  Future<void> _sendToKitchenImpl(
+    List<BanSessionItemModel> items,
+    ProviderContainer container,
+  ) async {
     final unsent = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
     if (unsent.isEmpty) return;
 
@@ -4746,7 +4755,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
     final unsentIds = unsent.map((i) => i.id).toList();
-    final session = ref.read(sessionProvider);
+    final session = container.read(sessionProvider);
 
     // ‼️ BƯỚC 1: Ưu tiên gọi RPC nguyên tử send_kitchen_ticket_v2 (Chống duplicate & độ trễ < 200ms)
     try {
@@ -4767,7 +4776,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       if (rpcRes != null && rpcRes is Map) {
         final success = rpcRes['success'] == true;
         if (success) {
-          ref.invalidate(sessionItemsProvider(widget.session.id));
+          container.invalidate(sessionItemsProvider(widget.session.id));
           final itemsSummary = unsent
               .map((i) => '${i.productName} (x${i.quantity.toInt()})')
               .join(', ');
@@ -4879,7 +4888,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       );
 
       // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
-      ref.invalidate(sessionItemsProvider(widget.session.id));
+      container.invalidate(sessionItemsProvider(widget.session.id));
 
       final itemsSummary = unsent
           .map((i) => '${i.productName} (x${i.quantity.toInt()})')
@@ -4914,7 +4923,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
-      final settings = ref.read(printerSettingsProvider);
+      final settings = container.read(printerSettingsProvider);
       final kitchenCfg = StationPrinterDispatcher.effectiveSettings(settings);
       final hasKitchenPrinter =
           (kitchenCfg.bepNong.enabled &&
@@ -4948,7 +4957,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           );
         }
 
-        final session = ref.read(sessionProvider);
+        final session = container.read(sessionProvider);
         final billData = BillData(
           shopName: storeInfo['store_name'] ?? 'QUÁN NHỎ POS',
           shopAddress: storeInfo['address'] ?? '',
