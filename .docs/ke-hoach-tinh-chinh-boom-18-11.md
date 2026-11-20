@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn, commit `c0919a6`) ĐÃ ÁP máy chủ 21/11 02:03 (mốc hoàn tác `20261121_020327`); lần 261 (ba lỗi nhỏ còn tồn: hỏi bỏ món sót nhóm khác, chữ "e" không dấu, kỳ so sánh 0 đơn khi kỳ này chưa có đơn) ĐÃ SỬA MÃ 21/11, CHƯA ÁP; đề xuất app 2 (màn nhập nhanh giá vốn) đang làm ở phiên riêng từ 21/11, đề xuất 3 chờ Chủ Quán quyết (mục 7).
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn, commit `c0919a6`) ĐÃ ÁP máy chủ 21/11 02:03 (mốc hoàn tác `20261121_020327`); lần 261 (ba lỗi nhỏ còn tồn: hỏi bỏ món sót nhóm khác, chữ "e" không dấu, kỳ so sánh 0 đơn khi kỳ này chưa có đơn, commit `49a9239`) ĐÃ ÁP máy chủ 21/11 02:40 (mốc hoàn tác `20261121_024051`); đề xuất app 2 (màn nhập nhanh giá vốn): Chủ Quán mở phiên riêng 21/11 rồi bảo "cái này ko cần đâu", phiên đó dừng, chưa viết mã; đề xuất 3 chờ Chủ Quán quyết (mục 7).
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -298,7 +298,7 @@ Test hàm 236 qua (thêm 1 test, sửa 1 chỗ mong đợi cũ: tên gọi tắt
 
 **Hỏi lại sau áp, 21/11 02:05** (quán T, bản web, 1 câu, 0,03 USD): đúng câu "<món X> lời bao nhiêu một ly" hôm trước Boom không trả lời được. Nay Boom nêu giá bán, giá vốn "theo công thức" và lãi gộp mỗi ly, cả ba khớp phép tính tay; có nói rõ chưa trừ mặt bằng, lương, điện nước và ghi kỳ số liệu. Log hàm không có lỗi. Mới hỏi 1 câu, chưa chấm rộng.
 
-### 21/11 — Lần 261: ba lỗi nhỏ còn tồn từ giai đoạn 2 (ĐÃ SỬA MÃ, CHƯA ÁP)
+### 21/11 — Lần 261: ba lỗi nhỏ còn tồn từ giai đoạn 2 (ĐÃ ÁP máy chủ 21/11 02:40)
 
 Chủ Quán bảo "Sửa đi". Chỉ sửa mã máy chủ, cả ba đều làm bằng mã, không thêm lời dặn chung.
 
@@ -318,4 +318,4 @@ Test hàm 237 qua (thêm 1 test bỏ món, thêm ca cho `goTat` và cho kỳ so 
 
 **Giới hạn đã biết.** Chưa hỏi mô hình trên bản này: riêng lỗi chữ "e" chỉ chắc là khối số đã ghi chú, chưa chắc mô hình trả lời đúng. Cụm "ban e" không dấu cũng có thể là "bạn em" (mã có sẵn đã coi là "bán ế" từ trước).
 
-Kịch bản áp: `db-fix/boom_l261_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp).
+**ĐÃ ÁP máy chủ 21/11 02:40** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261121_024051` (`ROLLBACK=1 bash db-fix/boom_l261_ap_dung.sh 20261121_024051`, trả cả `ban_hang.ts` và `logic.ts` về bản 260). Kiểm sau áp: hai tệp trên máy chủ khớp bản mới, có đủ ba dấu của bản 261; sao lưu đủ 2 tệp; container chạy, không tự khởi động lại, healthy; log không có dòng lỗi; `boom_changelog` có dòng "lần 261"; gọi hàm không vé trả 401. Chưa có lượt hỏi thật nào đi qua bản mới; chưa hỏi mô hình trên bản này.
