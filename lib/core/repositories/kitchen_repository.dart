@@ -355,19 +355,6 @@ class KitchenRepository {
     final cancelledSince =
         DateTime.now().subtract(cancelledTicketWindow).toUtc().toIso8601String();
 
-    Set<String> openSessionIds = {};
-    try {
-      final openSessions = await _sb
-          .from('ban_sessions')
-          .select('id')
-          .eq('store_id', storeId)
-          .eq('status', 'open')
-          .timeout(const Duration(seconds: 4));
-      openSessionIds = openSessions.map((r) => r['id'] as String).toSet();
-    } catch (e) {
-      debugPrint('[KitchenRepo] fetch open sessions error: $e');
-    }
-
     final tickets = await _sb
         .from('kitchen_tickets')
         .select()
@@ -401,15 +388,9 @@ class KitchenRepository {
 
     final shown = ticketModels.where((ticket) {
       if (ticket.status == 'huy') return isRecentCancelledTicket(ticket, now);
-      // ‼️ Lọc phiếu của các bàn đã thanh toán
-      // Chỉ ẩn phiếu nếu phiếu đó đã HOÀN THÀNH ('xong') VÀ session đã đóng (không còn nằm trong openSessionIds).
-      // Nếu phiếu chưa làm xong ('cho' hoặc 'dang_lam'), BẮT BUỘC phải hiển thị để bếp làm (đơn mang đi hoặc bàn chưa đủ món).
-      if (ticket.sessionId != null && !openSessionIds.contains(ticket.sessionId)) {
-        if (ticket.status == 'xong') {
-          return false;
-        }
-      }
-
+      // Phiếu xong KHÔNG còn ẩn theo "bàn đã thanh toán" (Chủ Quán 21/11): Bò Đen 7 ngày có 31% phiếu
+      // biến mất ngay lúc bấm Xong, trung vị ở lại 46 giây (mang về thường trả tiền trước). Phiếu xong
+      // ở lại tới khi bếp bấm Dọn phiếu / Dọn Phiếu Đã Xong, hoặc tự ẩn sau 15 phút.
       // Tự động dọn phiếu Hoàn thành sau 15 phút (hoặc khi bấm Dọn phiếu)
       if (ticket.status == 'xong' && ticket.doneAt != null) {
         final doneTime = DateTime.fromMillisecondsSinceEpoch(ticket.doneAt!);
@@ -632,9 +613,13 @@ class KitchenRepository {
   }
 
   /// Ẩn phiếu khỏi màn hình bếp (lùi done_at về quá khứ 1 ngày)
-  Future<void> archiveTicket(String ticketId) async {
+  Future<void> archiveTicket(String ticketId) => archiveTickets([ticketId]);
+
+  /// Dọn nhiều phiếu trong một lượt ghi (nút "Dọn Phiếu Đã Xong").
+  Future<void> archiveTickets(List<String> ticketIds) async {
+    if (ticketIds.isEmpty) return;
     final past = DateTime.now().subtract(const Duration(days: 1)).toUtc().toIso8601String();
-    await _sb.from('kitchen_tickets').update({'done_at': past}).eq('id', ticketId);
+    await _sb.from('kitchen_tickets').update({'done_at': past}).inFilter('id', ticketIds);
   }
 
   /// Per-item check-off — tick ✓ từng món riêng lẻ
@@ -704,7 +689,10 @@ class KitchenRepository {
         .lt('sent_at', endOfDay); // ‼️ FIX: thêm lt upper bound
 
     final models = tickets.map(KitchenTicketModel.fromMap).toList();
-    final done   = models.where((t) => t.doneAt != null && t.startedAt != null).toList();
+    // Phiếu đã dọn có done_at bị lùi 1 ngày (xem archiveTickets): bỏ khỏi thời gian chờ trung bình.
+    final done   = models
+        .where((t) => t.doneAt != null && t.startedAt != null && t.doneAt! >= t.sentAt)
+        .toList();
     int totalWait = 0;
     for (final t in done) {
       totalWait += (t.doneAt! - t.sentAt);

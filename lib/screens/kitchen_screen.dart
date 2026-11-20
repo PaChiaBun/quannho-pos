@@ -593,6 +593,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                           color: _kGreen,
                           bgColor: const Color(0x1522C55E),
                           tickets: doneTickets,
+                          onClearAll: () => _clearDoneTickets(context, kitchenRepo, doneTickets),
                           onAction: (tw, act) => _handleAction(
                               context, kitchenRepo, tw, act, stationFilter),
                           getStatus: effectiveStatus,
@@ -683,13 +684,30 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                         getStatus: effectiveStatus,
                         overdueIds: _overdueCardIds,
                       ),
-                      _TicketList(
-                        tickets: doneTickets,
-                        emptyIcon: Icons.check_circle_outline_rounded,
-                        emptyLabel: 'Chưa có phiếu hoàn thành',
-                        onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
-                        getStatus: effectiveStatus,
-                        overdueIds: _overdueCardIds,
+                      Column(
+                        children: [
+                          if (doneTickets.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: _ClearAllButton(
+                                  onTap: () =>
+                                      _clearDoneTickets(context, kitchenRepo, doneTickets),
+                                ),
+                              ),
+                            ),
+                          Expanded(
+                            child: _TicketList(
+                              tickets: doneTickets,
+                              emptyIcon: Icons.check_circle_outline_rounded,
+                              emptyLabel: 'Chưa có phiếu hoàn thành',
+                              onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
+                              getStatus: effectiveStatus,
+                              overdueIds: _overdueCardIds,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -700,6 +718,44 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
         },
       ),
     );
+  }
+
+  /// Dọn mọi phiếu đã xong đang hiện. Chỉ dọn phiếu máy chủ đã ghi "xong": khi lọc theo trạm, cột
+  /// Hoàn thành còn chứa phiếu trạm khác chưa làm xong.
+  Future<void> _clearDoneTickets(
+    BuildContext context,
+    KitchenRepository repo,
+    List<_TicketWithItems> doneTickets,
+  ) async {
+    final ids = [
+      for (final tw in doneTickets)
+        if (tw.ticket.status == 'xong') tw.ticket.id,
+    ];
+    if (ids.isEmpty) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Dọn ${ids.length} phiếu đã xong?'),
+        content: const Text(
+            'Phiếu sẽ ẩn khỏi màn Bếp. Phiếu đang chờ và đang làm không bị ảnh hưởng.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Không')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Dọn')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await repo.archiveTickets(ids);
+    HapticFeedback.lightImpact();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Đã dọn ${ids.length} phiếu',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+        backgroundColor: _kGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+    }
   }
 
   PreferredSizeWidget _buildAppBar(AsyncValue<List<_TicketWithItems>> ticketsAsync) {
@@ -1511,6 +1567,29 @@ class _TabWithBadge extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // KANBAN COLUMN — Một cột trong Kanban board (tablet/desktop)
 // ─────────────────────────────────────────────────────────────────────────────
+class _ClearAllButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ClearAllButton({required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        // Nền cam chữ đen (Chủ Quán chọn 21/11); tương phản 6,4.
+        decoration: BoxDecoration(color: _kOrange, borderRadius: BorderRadius.circular(10)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.cleaning_services_rounded, size: 16, color: _kInk),
+          const SizedBox(width: 6),
+          Text('Dọn Phiếu Đã Xong',
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13, fontWeight: FontWeight.w800, color: _kInk)),
+        ]),
+      ),
+    );
+  }
+}
+
 class _KanbanColumn extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -1521,6 +1600,7 @@ class _KanbanColumn extends StatelessWidget {
   final void Function(_TicketWithItems tw, String action) onAction;
   final String Function(_TicketWithItems tw) getStatus;
   final Set<String> overdueIds;
+  final VoidCallback? onClearAll; // chỉ cột Hoàn thành
 
   const _KanbanColumn({
     required this.label,
@@ -1532,6 +1612,7 @@ class _KanbanColumn extends StatelessWidget {
     required this.getStatus,
     this.isBlinking = false,
     this.overdueIds = const {},
+    this.onClearAll,
   });
 
   @override
@@ -1574,6 +1655,10 @@ class _KanbanColumn extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (onClearAll != null && tickets.isNotEmpty) ...[
+                    _ClearAllButton(onTap: onClearAll!),
+                    const SizedBox(width: 8),
+                  ],
                   // Count badge
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
