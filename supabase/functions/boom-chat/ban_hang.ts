@@ -126,7 +126,7 @@ export function dungFacts(ky: Ky, cur: Tho, prev: Tho, mons: Mon[], ct: Map<stri
     const r = comboRetail(t);
     return { name: clip(t.name, 60), qty: t.quantity, revenue: t.revenue, price: t.price, ...(t.unitCost > 0 ? { cost: t.unitCost } : {}), ...(r !== null ? { retail: r } : {}) };
   };
-  // Theo nhóm món (không phân biệt hoa thường), 3 chạy / 3 chậm / 3 tên chưa bán mỗi nhóm, nhiều nhất 8 nhóm
+  // Theo nhóm món (không phân biệt hoa thường), 3 chạy / 3 chậm / món có bán còn lại / 3 tên chưa bán mỗi nhóm, nhiều nhất 8 nhóm
   const byCat = new Map<string, Do[]>();
   for (const t of all) {
     const k = t.category.trim().toLowerCase();
@@ -135,6 +135,10 @@ export function dungFacts(ky: Ky, cur: Tho, prev: Tho, mons: Mon[], ct: Map<stri
   const groups = [...byCat.values()].map((items) => {
     const selling = items.filter((t) => t.quantity > 0).sort((a, b) => b.revenue - a.revenue);
     const slow = selling.slice(3).sort((a, b) => a.quantity - b.quantity).slice(0, 3);
+    // lần 260 (hỏi thử 20/11: hỏi đích danh món giữa nhóm 9 món → Boom "không có giá bán, giá vốn"; "có giá vốn 4/9" mà thật là 6/9):
+    // gửi thêm món có bán nằm ngoài 3 chạy / 3 chậm, và số món của nhóm có giá vốn (kể cả món chưa bán)
+    const mid = selling.slice(3).filter((t) => !slow.includes(t));
+    const costed = items.filter((t) => t.unitCost > 0).length;
     const unsold = items.filter((t) => t.quantity <= 0);
     const k = items[0].category.trim().toLowerCase();
     return {
@@ -146,6 +150,8 @@ export function dungFacts(ky: Ky, cur: Tho, prev: Tho, mons: Mon[], ct: Map<stri
       unsold: unsold.length,
       top: selling.slice(0, 3).map(item),
       slow: slow.map(item),
+      ...(mid.length ? { mid: mid.map(item) } : {}),
+      ...(costed ? { costed } : {}),
       unsold_names: unsold.slice(0, 3).map((t) => clip(t.name, 60)),
     };
   }).sort((a, b) => b.revenue - a.revenue);
@@ -195,6 +201,8 @@ export function dungFacts(ky: Ky, cur: Tho, prev: Tho, mons: Mon[], ct: Map<stri
   // Gói ≤ 12 KB: menu nhiều nhóm / tên dài → bớt dần chi tiết (như app)
   const size = () => new TextEncoder().encode(JSON.stringify(facts)).length;
   const gs = facts.groups as Record<string, unknown>[];
+  if (size() > 12000) gs.forEach((g) => { if (g.mid) g.mid = (g.mid as { cost?: number }[]).filter((t) => t.cost); }); // menu lớn: giữ món giữa nhóm có giá vốn (cần để xếp lời)
+  if (size() > 12000) gs.forEach((g) => delete g.mid);
   if (size() > 12000) gs.forEach((g) => (g.unsold_names = []));
   if (size() > 12000) gs.forEach((g) => (g.slow = []));
   if (size() > 12000) facts.groups = gs.slice(0, 5);

@@ -87,6 +87,8 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
   if (cau.canGia && !khoi.includes('KỊCH BẢN TĂNG GIÁ')) loi.push(`K9 tăng giá: câu "${cau.q}" không ra dòng kịch bản tăng giá`);
   const chon = /KỊCH BẢN TĂNG GIÁ[^\n]*?món "([^"]+)"/.exec(khoi)?.[1];
   if ((cau.trungTen ?? 0) >= 2 && chon) loi.push(`K9 tăng giá: câu "${cau.q}" ứng ${cau.trungTen} món trong menu nhưng khối số tự tính cho "${chon}"`);
+  // lần 260: tên gọi tắt ứng nhiều món mà không ra dòng nào (không hỏi lại, không tính theo nhóm) thì Boom tự chọn món
+  if ((cau.trungTen ?? 0) >= 2 && !/TÊN MÓN CHƯA RÕ|KỊCH BẢN TĂNG GIÁ/.test(khoi)) loi.push(`K9 tăng giá: câu "${cau.q}" ứng ${cau.trungTen} món trong menu nhưng khối số không có dòng hỏi lại`);
 
   // K10: dự báo cả tháng không nhỏ hơn số đã có; nhãn trung bình trong dòng dự báo phải khớp trung bình thật
   const db = /Dự báo cả tháng[^\n]*?: khoảng ([\d.]+)đ \(đã có ([\d.]+)đ/.exec(khoi);

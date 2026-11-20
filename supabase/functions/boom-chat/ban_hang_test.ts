@@ -85,6 +85,45 @@ Deno.test('ban_hang: giá vốn theo công thức — đủ giá mọi nguyên l
   assert(!('von_ct' in cu) && !formatFacts(parseFacts(cu)!, new Date('2026-11-03T09:00:00+07:00'), 'món nào lời nhất').includes('CÔNG THỨC'));
 });
 
+Deno.test('ban_hang: món giữa nhóm lớn (ngoài 3 chạy / 3 chậm) vẫn có giá bán, giá vốn; đếm món có giá vốn cho đủ (lần 260)', () => {
+  const mon = (id: string, name: string, gia: number, von: number | null = null, category = 'Nước'): Mon => ({ id, name, category, sell_price: gia, cost_price: von, cost_price_latest: null, is_topping: false, is_raw_material: false });
+  // nhóm "Nước" 10 món: 9 món có bán + 1 món chưa bán; giá vốn ở n2, n6, n9, n10 (nhập tay) và n4 (công thức)
+  const mons: Mon[] = [mon('n1', 'Trà chanh sả', 20000), mon('n2', 'Trà gừng mật ong', 25000, 10000), mon('n3', 'Sữa bắp nóng', 30000), mon('n4', 'Sữa đậu nành', 20000), mon('n5', 'Nước mơ ngâm', 30000),
+    mon('n6', 'Cacao sữa đá', 35000, 14000), mon('n7', 'Trà atiso đỏ', 25000), mon('n8', 'Nước sâm lạnh', 15000), mon('n9', 'Sữa chua đá', 20000, 9000), mon('n10', 'Trà quế hồi', 25000, 8000), mon('m1', 'Bánh flan', 15000, null, 'Bánh')];
+  const sl: [string, number][] = [['n1', 100], ['n2', 60], ['n3', 40], ['n4', 50], ['n5', 30], ['n6', 20], ['n7', 5], ['n8', 6], ['n9', 4], ['m1', 10]];
+  const items = sl.map(([id, qty]) => ({ id, qty, revenue: qty * mons.find((m) => m.id === id)!.sell_price!, cost: 0, cost_qty: 0 }));
+  const cur: Tho = { revenue: items.reduce((s, x) => s + x.revenue, 0), orders: 200, by_hour: h(9, 1), by_weekday: [1, 0, 0, 0, 0, 0, 0], items, bands: [[], [], [], []] };
+  const f = dungFacts(KY, cur, { ...PREV, orders: 0 }, mons, new Map([['n4', 6000]]));
+  const g = (f.groups as { name: string; items: number; costed?: number; top: { name: string }[]; slow: { name: string }[]; mid?: { name: string; price?: number; cost?: number }[] }[])[0];
+  assertEquals([g.name, g.items, g.costed], ['Nước', 10, 5]);
+  assertEquals([g.top.map((t) => t.name), g.slow.map((t) => t.name)], [['Trà chanh sả', 'Trà gừng mật ong', 'Sữa bắp nóng'], ['Sữa chua đá', 'Trà atiso đỏ', 'Nước sâm lạnh']]);
+  assertEquals(g.mid, [{ name: 'Sữa đậu nành', qty: 50, revenue: 1_000_000, price: 20000, cost: 6000 }, { name: 'Nước mơ ngâm', qty: 30, revenue: 900_000, price: 30000 }, { name: 'Cacao sữa đá', qty: 20, revenue: 700_000, price: 35000, cost: 14000 }] as unknown as typeof g.mid);
+  assert(!('mid' in (f.groups as Record<string, unknown>[])[1]) && !('costed' in (f.groups as Record<string, unknown>[])[1])); // nhóm nhỏ, chưa có giá vốn: gói như cũ
+  const luc = new Date('2026-11-03T09:00:00+07:00'), khoi = (q: string) => formatFacts(parseFacts(f)!, luc, q);
+  const loi = khoi('món nào lời nhất tháng này');
+  // đếm đủ 5/10 (trước: 2/10, chỉ đếm trong 6 món được gửi); xếp lời trên cả 4 món có bán có giá vốn; món công thức ở giữa nhóm được nêu nguồn
+  assert(/nhóm "Nước" có giá vốn 5\/10 món \(Trà gừng mật ong 40%, Sữa chua đá 45%, Sữa đậu nành 30%, Cacao sữa đá 40%\)/.test(loi), loi);
+  assert(loi.includes('trong 4 món đã có giá vốn') && /LẤY TỪ CÔNG THỨC[^\n]*: Sữa đậu nành →/.test(loi), loi);
+  assert(/Món khác của nhóm[^\n]*: Sữa đậu nành \(50 phần, giá 20\.000đ[^\n]*giá vốn 6\.000đ = 30% giá bán[^\n]*Cacao sữa đá \(20 phần, giá 35\.000đ/.test(loi), loi);
+  // món giữa nhóm chưa có giá vốn: không in số khi câu hỏi không nhắc tới, nhưng vẫn được xét ở dòng "chưa có giá vốn" (trước: chỉ 3 món đầu nhóm)
+  assert(!loi.includes('Nước mơ ngâm (30 phần, giá') && loi.includes('CHƯA có giá vốn: Trà chanh sả, Sữa bắp nóng, Nước mơ ngâm'), loi);
+  // hỏi đích danh món giữa nhóm → có giá bán của món đó
+  assert(khoi('nước mơ ngâm lời bao nhiêu một ly').includes('Nước mơ ngâm (30 phần, giá 30.000đ'));
+  assert(khoi('sữa đậu nành lời bao nhiêu một ly').includes('Sữa đậu nành (50 phần, giá 20.000đ'));
+  // câu nêu rõ "nước mơ ngâm" thì không kể món chỉ trùng phần đầu tên ("Nước mơ muối"); gọi tắt "nước mơ" thì kể cả hai
+  const gs = f.groups as Record<string, unknown>[], haiMo = parseFacts({ ...f, groups: [{ ...gs[0], mid: [...(gs[0].mid as unknown[]), { name: 'Nước mơ muối', qty: 25, revenue: 750_000, price: 30000 }] }, gs[1]] })!;
+  assert(!formatFacts(haiMo, luc, 'nước mơ ngâm lời bao nhiêu một ly').includes('Nước mơ muối (25 phần'));
+  assert(/Món khác của nhóm[^\n]*Nước mơ ngâm \(30 phần[^\n]*Nước mơ muối \(25 phần/.test(formatFacts(haiMo, luc, 'nước mơ bán được bao nhiêu ly')));
+  // gói từ app bản cũ (không có mid, costed) vẫn đọc được, đếm như trước
+  const cu = formatFacts(parseFacts({ ...f, groups: (f.groups as Record<string, unknown>[]).map(({ mid: _m, costed: _c, ...x }) => x) })!, luc, 'món nào lời nhất tháng này');
+  assert(/nhóm "Nước" có giá vốn 2\/10 món/.test(cu) && !cu.includes('Món khác của nhóm'), cu);
+  // menu lớn vượt 12 KB: chỉ giữ món giữa nhóm có giá vốn
+  const lon: Mon[] = Array.from({ length: 150 }, (_, i) => mon(`k${i}`, `Món thử số ${i} tên khá dài cho đủ cỡ gói số liệu`, 20000, i === 70 || i === 80 ? 5000 : null));
+  const fl = dungFacts(KY, { ...cur, items: lon.map((m, i) => ({ id: m.id, qty: 300 - i, revenue: (300 - i) * 20000, cost: 0, cost_qty: 0 })) }, { ...PREV, orders: 0 }, lon);
+  assertEquals(((fl.groups as { mid?: { name: string }[] }[])[0].mid ?? []).map((t) => t.name.split(' ')[3]), ['70', '80']);
+  assert(new TextEncoder().encode(JSON.stringify(fl)).length <= 12000);
+});
+
 Deno.test('ban_hang: món kỳ trước đã xoá khỏi menu → không so nhóm, so món (không báo nhóm tăng khi doanh thu giảm)', () => {
   const p = { ...PREV, revenue: 20_000_000, items: [...PREV.items, { id: 'da-xoa', qty: 500, revenue: 18_800_000, cost: 0, cost_qty: 0 }] };
   const f = dungFacts(KY, CUR, p, MONS);

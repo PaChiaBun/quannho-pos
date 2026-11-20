@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn) ĐÃ SỬA MÃ 21/11, CHƯA ÁP; đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -256,9 +256,42 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Câu "món nào lời nhất tháng này": đúng theo khối số — lãi gộp mỗi phần và tổng lãi gộp trong kỳ khớp phép tính tay (giá bán − giá vốn, nhân số phần); món lấy giá vốn công thức được ghi rõ "theo công thức"; có nhắc nhập giá vốn 3 món bán chạy còn thiếu.
 - Câu "<món X> lời bao nhiêu một ly" (món X có giá vốn công thức, nhưng trong kỳ "tháng này" nằm giữa nhóm 9 món): Boom trả lời "số liệu hiện có không ghi giá bán và giá vốn của món này" và xin chủ quán tự cho số. Không bịa, nhưng vô ích vì app biết cả hai số.
 
-**Lỗi lộ ra (có từ trước lần 259, nay dễ gặp hơn vì nhiều món có giá vốn hơn) — đề xuất lần 260, chờ Chủ Quán:**
+**Lỗi lộ ra (có từ trước lần 259, nay dễ gặp hơn vì nhiều món có giá vốn hơn) — sửa ở lần 260 bên dưới:**
 
 1. Khối số chỉ mang giá bán / giá vốn của 3 món chạy nhất + 3 món chậm nhất mỗi nhóm (`ban_hang.ts dungFacts`). Món ở giữa nhóm lớn không có số nào, kể cả khi câu hỏi nêu đích danh món đó.
 2. Dòng "Tính sẵn lời theo nhóm: … có giá vốn X/Y món" (`logic.ts formatFacts`) lấy X từ 6 món được in, Y từ cả nhóm → đếm thiếu (quán T: in 4/9, thật là 6/9). Boom nhắc lại con số thiếu này ("trong 4 món đã có giá vốn").
 
 Công cụ soi thêm tuỳ chọn `--cau "<câu>"` để dựng khối số đúng một câu vừa hỏi (0 đồng).
+
+### 21/11 — Lần 260: khối số mang đủ món giữa nhóm (ĐÃ SỬA MÃ, CHƯA ÁP)
+
+Chủ Quán bảo "Sửa đi" sau lượt hỏi thử. Chỉ sửa mã máy chủ (`ban_hang.ts`, `logic.ts`), không thêm lượt đọc nào, không đụng cơ sở dữ liệu, không cần phát hành app.
+
+| Chỗ | Trước | Nay |
+|---|---|---|
+| `ban_hang.ts dungFacts` | mỗi nhóm gửi 3 món chạy + 3 món chậm | gửi thêm `mid` (món có bán còn lại của nhóm) và `costed` (số món của nhóm có giá vốn, kể cả món chưa bán); gói vượt 12 KB thì chỉ giữ món giữa nhóm có giá vốn, vẫn vượt thì bỏ `mid` |
+| `logic.ts` | 22 chỗ ghép `[...g.top, ...g.slow]` | một hàm `cacMon(g)` gồm cả `mid` → xếp món theo tiền lời, bài toán tiền, điểm cần chú ý, xếp theo số phần, combo đang bán, tìm món trong câu hỏi đều xét đủ món có bán |
+| Dòng nhóm trong khối số | chỉ in 3 chạy / 3 chậm | in thêm "Món khác của nhóm" cho món giữa nhóm CÓ giá vốn hoặc được câu hỏi nhắc tới (không in hết: menu lớn sẽ dài thêm cả nghìn chữ mỗi câu); món chỉ trùng phần đầu tên với một món đã được nêu rõ thì không kể |
+| "có giá vốn X/Y món" | X đếm trong 6 món được gửi | X = `costed` của cả nhóm |
+| "Món bán chạy CHƯA có giá vốn" | chỉ xét 3 món đầu mỗi nhóm (ghi chú `shortcut` cũ) | xét mọi món có bán |
+| `kichBanGia` — tên gọi tắt ứng 2 món cùng nằm trong khối số | không ra dòng nào (Boom tự chọn) | ra dòng "TÊN MÓN CHƯA RÕ … HỎI LẠI" như trường hợp B6 |
+
+Dòng cuối là lỗi do chính thay đổi này lộ ra khi soi: khối số thấy thêm món giữa nhóm nên câu "tăng giá trà sữa" từ chỗ khớp 1 món (rồi đếm trên cả menu ra 2 món → hỏi lại) thành khớp 2 món → rơi vào nhánh im lặng có sẵn. Bộ kiểm thêm một ý vào K9: tên gọi tắt ứng ≥ 2 món mà khối số không có dòng hỏi lại lẫn dòng kịch bản thì báo.
+
+**Kiểm trên số thật 21/11** (bản 259 lấy bằng `git worktree`, hai bản soi ở cùng một mốc giờ, 0 đồng): 0 cảnh báo trên 6 quán thật + Demo ở cả hai bản.
+
+| Quán | Câu mẫu đổi khối số | Khối số dài thêm | Đổi gì |
+|---|---|---|---|
+| T | 18 / 19 | 7,2% | in 2 món giữa nhóm có giá vốn công thức; đếm 6/9 thay 4/9; xếp lời trên 6 món; món chưa có giá vốn thứ hai đổi sang món giữa nhóm doanh thu cao hơn (3 món cộng 45% thay 41%); thêm một điểm cần chú ý |
+| D | 3 / 19 | 0,4% | "xếp theo số phần" nay đúng 5 món nhiều phần nhất (trước sót 2 món giữa nhóm 13 và 9 phần, kể 2 món 5 và 4 phần); danh sách combo đang bán đủ hơn 2 món; tên gọi tắt ứng 6 món → hỏi lại |
+| E | 2 / 19 | 0,2% | "xếp theo số phần" đổi 1 món cho đúng; câu tên gọi tắt in các món giữa nhóm cùng tên |
+| C | 1 / 19 | 0,2% | tên gọi tắt ứng 2 món cùng nằm trong khối số → hỏi lại (trước im lặng) |
+| A, B, Demo | 0 | 0 | không đổi |
+
+Hai câu đã hỏi thử ở quán T, dựng lại khối số bằng `--cau`: món được hỏi nay có giá bán và giá vốn công thức; hai món giữa nhóm khớp phép tính tay (giá bán − giá vốn, nhân số phần).
+
+Test hàm 236 qua (thêm 1 test, sửa 1 chỗ mong đợi cũ: tên gọi tắt ứng 2 món nay ra dòng hỏi lại thay cho chuỗi rỗng).
+
+**Giới hạn đã biết.** Món giữa nhóm chưa có giá vốn và không được nhắc tên thì vẫn không in (cố ý, để khối số không dài). Menu rất lớn (gói vượt 12 KB) thì mất món giữa nhóm chưa có giá vốn, trở về như bản 259 cho các món đó. Gói số từ app bản cũ (đường hỏi cũ) không có `mid`, `costed` → như trước. Chưa hỏi mô hình trên bản này, chưa chấm mù.
+
+Kịch bản áp: `db-fix/boom_l260_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp).

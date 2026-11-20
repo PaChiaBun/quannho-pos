@@ -2709,8 +2709,8 @@ Deno.test('Kịch bản tăng giá: tên gọi tắt, câu nối tiếp lấy m�
   assert(k3.includes(`${hk}; tăng 3.000đ → nếu giữ số phần: thu thêm 1.245.000đ / kỳ; nếu số phần giảm 10%: thu ÍT hơn 747.000đ; số phần được giảm tối đa 6,3%`), k3);
   const m = buildMessages('neu tang 3 nghin thoi thi sao', [], null, { facts: f, history: { q: 'co nen tang gia tra sua hong kong len 5 nghin khong', a: 'Dạ…' } })[1].content;
   assertStringIncludes(m, 'tăng 3.000đ → nếu giữ số phần: thu thêm 1.245.000đ');
-  // gọi tắt ứng nhiều món ("cá viên chiên") hoặc "lên 30 nghìn" (không rõ giá mới hay tăng thêm) → không đoán
-  assertEquals(kichBanGia(f, 'tăng giá cá viên chiên 5 nghìn được không'), '');
+  // gọi tắt ứng nhiều món ("cá viên chiên") → không đoán, nhắc hỏi lại (lần 260; trước đó không ra dòng nào); "lên 30 nghìn" (không rõ giá mới hay tăng thêm) → không đoán
+  assert(kichBanGia(f, 'tăng giá cá viên chiên 5 nghìn được không').startsWith('TÊN MÓN CHƯA RÕ (tính sẵn): "ca vien chien" trong câu hỏi ứng 2 món của menu (Cá Viên Chiên Sốt Me, Cá Viên Chiên Sốt Tiêu Đen)'));
   assertEquals(kichBanGia(f, 'tăng giá trà sữa hong kong lên 30 nghìn được không'), '');
   assert(kichBanGia(f, 'tăng giá chai trà sữa hong kong thêm 2 nghìn được không').includes('món "Chai Trà Sữa Hong Kong Truyền Thống Nguyên Chất"'));
 });
@@ -2802,4 +2802,11 @@ Deno.test('Lô 2 giai đoạn 2: loại hình quán, combo, giờ lẻ tẻ còn
   assert(kichBanGia(menu, 'có nên tăng giá trà tắc thêm 3 nghìn không').includes('món "Trà Tắc" bán 348 phần'));
   // không có danh sách menu (app cũ gửi số) → giữ cách cũ: chỉ xét các món Boom nhìn thấy
   assert(kichBanGia(parseFacts({ ...goc, groups: menu.groups })!, 'có nên tăng giá trà sữa thêm 5 nghìn không').includes('món "Trà Sữa Truyền Thống"'));
+  // lần 260: khối số thấy cả món giữa nhóm → hai món cùng khớp "trà sữa" đều nằm trong khối số thì vẫn hỏi lại (trước: không ra dòng nào)
+  const hai = parseFacts({ ...goc, groups: [{ ...nhom('Đồ uống', [it('Trà Sữa Truyền Thống', 415, 45000), it('Trà Tắc', 348, 26000)]), mid: [it('Trà Sữa Bơ Đậu Phộng', 120, 39000)] }], ten_mon: menu.ten_mon })!;
+  assert(kichBanGia(hai, 'có nên tăng giá trà sữa thêm 5 nghìn không').startsWith('TÊN MÓN CHƯA RÕ (tính sẵn): "tra sua" trong câu hỏi ứng 2 món của menu (Trà Sữa Truyền Thống, Trà Sữa Bơ Đậu Phộng)'));
+  assert(kichBanGia(parseFacts({ ...goc, groups: hai.groups })!, 'có nên tăng giá trà sữa thêm 5 nghìn không').startsWith('TÊN MÓN CHƯA RÕ (tính sẵn): "tra sua" trong câu hỏi ứng 2 món của menu (Trà Sữa Truyền Thống, Trà Sữa Bơ Đậu Phộng)'));
+  assert(kichBanGia(hai, 'có nên tăng giá trà sữa bơ đậu phộng thêm 5 nghìn không').includes('món "Trà Sữa Bơ Đậu Phộng" bán 120 phần'));
+  // hai món khác tên (tên gọi tắt dài bằng nhau) cùng được nhắc → như cũ: không tự chọn, không báo "chưa rõ"
+  assertEquals(kichBanGia(parseFacts({ ...goc, groups: [nhom('Đồ uống', [it('Trà Sữa Truyền Thống', 415, 45000), it('Trà Đào Cam Sả', 348, 26000)])] })!, 'có nên tăng giá trà sữa với trà đào thêm 5 nghìn không'), '');
 });
