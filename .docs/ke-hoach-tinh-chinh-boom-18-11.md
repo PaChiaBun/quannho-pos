@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`), phần app chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) đã sửa trong mã CHƯA áp; đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -215,8 +215,35 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Bộ kiểm thêm K21 (khối ghi "chưa có giá vốn món" mà vẫn có dòng "giá vốn trên …% giá bán"): 18 cảnh báo ở quán D trước khi sửa, 0 trên 6 quán thật và quán Demo sau khi sửa. Test hàm 233 qua. `KHO=1` qua. Kịch bản áp: `db-fix/boom_l258_ap_dung.sh`. Chưa hỏi mô hình trên bản này.
 - **ĐÃ ÁP máy chủ 20/11 13:40** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261120_134013` (`ROLLBACK=1 bash db-fix/boom_l258_ap_dung.sh 20261120_134013`). Kiểm sau áp: `logic.ts` trên máy chủ khớp bản mới, hàm trả 401 khi không có vé, container không tự khởi động lại, log không lỗi, `boom_changelog` có dòng "lần 258". Chưa có lượt hỏi thật nào đi qua bản này lúc kiểm.
 
-**Phần app — đề xuất, chờ Chủ Quán quyết** (cả ba đều phải phát hành app):
+**Phần app — đề xuất, chờ Chủ Quán quyết** (đề xuất 2 và 3 phải phát hành app; đề xuất 1 hoá ra làm ở máy chủ, xem mục lần 259 bên dưới):
 
-1. **Giá vốn theo công thức** (đề xuất làm trước): món bán có công thức đủ giá nguyên liệu thì dùng luôn "giá vốn / phần" của công thức làm giá vốn món. Chủ quán không phải làm gì thêm; lợi ngay cho 2 / 7 quán (quán T: 16% → 47% doanh thu có giá vốn).
+1. **Giá vốn theo công thức** (Chủ Quán bảo "Làm đi" 20/11 → lần 259): món bán có công thức đủ giá nguyên liệu thì dùng luôn "giá vốn / phần" của công thức làm giá vốn món. Chủ quán không phải làm gì thêm; lợi ngay cho 2 / 7 quán (quán T: 16% → 47% doanh thu có giá vốn).
 2. **Màn nhập nhanh giá vốn**: một màn liệt kê các món doanh thu cao nhất còn thiếu giá vốn, mỗi món một ô, lưu một lần; mở được từ câu trả lời của Boom. Hiện phải vào Kho hàng → Thao tác trên món → Sửa thông tin món → ô Giá vốn, từng món một. Lợi cho 5 / 6 quán đã đo.
 3. **Lời nhắc ghi chi**: 5 / 7 quán không ghi phiếu chi nào trong 30 ngày. Nhắc lúc đóng ca hoặc đầu tháng (tiền mặt bằng, lương, nguyên liệu). Lợi lớn nhất nhưng đòi chủ quán đổi thói quen, nên xếp sau.
+
+### 20/11 — Lần 259: giá vốn theo công thức (đã sửa trong mã, CHƯA áp)
+
+**Chỗ sửa.** Đọc mã thì thấy không cần phát hành app: từ 08/11 app và web đều hỏi qua máy chủ (`kBoomServerRoute = true`), giá vốn món cho Boom chỉ tính ở một chỗ là `ban_hang.ts` (`doMon`). App vốn đã hiện "Giá vốn/phần" ở màn công thức; thứ duy nhất chưa đọc số đó là Boom. Nên sửa ở mã Boom trên máy chủ (commit `b84a161`), không đổi cơ sở dữ liệu, không ghi gì vào món.
+
+| Việc | Cách làm |
+|---|---|
+| Đọc công thức | `docBanHang` thêm một lượt đọc song song: `recipes` (chưa xoá, có món đích, đúng điều kiện lúc trừ kho) lồng `recipe_ingredients` theo khoá ngoại. Giá và đơn vị nguyên liệu lấy từ danh sách món đã đọc sẵn (thêm 3 cột `unit, conversion_rate, conversion_unit`). Đọc lỗi thì chỉ thiếu giá vốn công thức |
+| Tính | `vonCongThuc`: mỗi dòng = lượng ÷ hệ số hao hụt, đổi sang đơn vị kho, nhân giá nhập gần nhất (không có thì giá vốn nhập tay) — như `RecipeModel.costPerServing` của app và như lượng trừ kho lúc bán. Làm tròn đồng |
+| Khi nào dùng | Chỉ khi món không có giá vốn nào khác (dòng đơn lúc bán, giá nhập gần nhất, giá nhập tay đều 0). Số chủ quán nhập vẫn thắng |
+| Khi nào bỏ | Một dòng bất kỳ không tính được: nguyên liệu chưa có giá, đã ẩn / xoá, dòng không gắn nguyên liệu, hoặc đơn vị không đổi được (`doiDonVi` trả null). App trong trường hợp cuối trả nguyên số lượng (coi 1 gram = 1 gói) và hiện cảnh báo vàng; Boom không dùng số đó |
+| Nói rõ nguồn | Gói số thêm `von_ct` (tên món có bán lấy giá vốn công thức). Khối số thêm dòng "Giá vốn LẤY TỪ CÔNG THỨC … : tên món", chỉ kể món mà khối số có in giá vốn |
+
+**Kiểm trên số thật (chỉ đọc, 20/11).**
+
+- Soi 6 quán thật và quán Demo: 0 cảnh báo. Chỉ quán T có công thức dùng được; khối số 6 quán còn lại không đổi.
+- Quán T: 7 công thức gắn món. 4 món được giá vốn theo công thức (30–47% giá bán), số từng món khớp cách tính bằng hàm `convert_recipe_ingredient_qty_v1` của cơ sở dữ liệu. 1 món đã có giá vốn nhập tay nên giữ số nhập tay. 1 công thức là cốt nấu theo mẻ, không phải món bán. 1 món bị bỏ vì một dòng ghi "gram" trong khi kho tính "gói" và chưa khai quy cách.
+- Phần tiền món 30 ngày thuộc món có giá vốn ở quán T: 15% → 43% (món bị bỏ vì lệch đơn vị chiếm 3%; số 47% ước hôm 19/11 tính cả món này).
+- Dịch vụ đọc dữ liệu thật nhận câu đọc lồng (thử với giới hạn 0 dòng, không vé: 200; câu đối chứng sai quan hệ: PGRST200).
+- Test hàm 235 qua. `KHO=1 bash db-fix/boom_l259_ap_dung.sh` qua.
+
+**Giới hạn đã biết.**
+
+- Luật đổi đơn vị nay có ba bản chép (Dart, SQL, `ban_hang.ts`); đổi luật phải sửa cả ba. Muốn hết thì chuyển phần tính sang một hàm SQL gọi `convert_recipe_ingredient_qty_v1` (phải thêm migration).
+- Báo cáo của app vẫn tính lãi gộp theo giá vốn ghi trên dòng đơn; giá vốn công thức chỉ đến Boom.
+- Bản app cũ đi đường hỏi cũ (app tự gom số) không có giá vốn công thức.
+- Chưa hỏi mô hình trên bản này; chưa đọc được bảng công thức bằng vé của người dùng thật (mới kiểm bằng kết nối nội bộ và lượt đọc 0 dòng).
