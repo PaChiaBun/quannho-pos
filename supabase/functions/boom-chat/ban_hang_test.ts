@@ -1,5 +1,5 @@
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { docBanHang, dungFacts, type Mon, type Tho } from './ban_hang.ts';
+import { type CongThuc, docBanHang, doiDonVi, dungFacts, type Mon, type Tho, vonCongThuc } from './ban_hang.ts';
 import { formatFacts, parseFacts } from './logic.ts';
 import type { Ky } from './lay_so.ts';
 
@@ -37,6 +37,54 @@ Deno.test('ban_hang: dựng facts như app — parseFacts nhận, formatFacts c�
   assert(t.includes('Doanh thu 1.000.000đ từ 40 đơn') && t.includes('GIẢM 16,7%'), t);
 });
 
+Deno.test('ban_hang: đổi đơn vị công thức → kho như app (test/core/recipe_unit_cost_test.dart); không đổi được thì null', () => {
+  assertEquals(doiDonVi(1, 'gram', 'gói', 1000, 'gram'), 1 / 1000); // gói 1000 g giá 50.000 → 50đ/gram
+  assertEquals(doiDonVi(1, 'gram', 'kg'), 1 / 1000);
+  assertEquals(doiDonVi(1, 'kg', 'Kg '), 1);
+  assertEquals(doiDonVi(20, 'ml', 'lon', 385, 'ml'), 20 / 385);
+  assertEquals(doiDonVi(1, 'cái', 'cái'), 1);
+  assertEquals(doiDonVi(0.385, 'lít', 'lon', 385, 'ml'), (0.385 * 1000) / 385);
+  assertEquals(doiDonVi(500, 'g', 'thùng', 2, 'kg'), 0.25);
+  assertEquals(doiDonVi(2, 'Lít', 'ml'), 2000);
+  assertEquals(doiDonVi(5, 'cc', 'gam'), 5);
+  // app trả nguyên số lượng (1 gram = 1 gói) → giá vốn sai ~1.000 lần; Boom không dùng
+  assertEquals(doiDonVi(1, 'gram', 'gói'), null);
+  assertEquals(doiDonVi(1, 'gói', 'kg', 500, 'g'), null);
+});
+
+Deno.test('ban_hang: giá vốn theo công thức — đủ giá mọi nguyên liệu mới dùng; số chủ quán nhập vẫn thắng (giai đoạn 4, 20/11)', () => {
+  const nlMoi = (id: string, gia: number, unit: string, them: Partial<Mon> = {}): Mon => ({ id, name: id, category: 'NL', sell_price: 0, cost_price: gia, cost_price_latest: null, is_topping: false, is_raw_material: true, unit, ...them });
+  const mons: Mon[] = [...MONS, nlMoi('bot', 0, 'kg', { cost_price_latest: 40000 }), nlMoi('sua', 22000, 'lon', { conversion_rate: 385, conversion_unit: 'ml' }), nlMoi('dao', 50000, 'gói'), nlMoi('chua-gia', 0, 'kg')];
+  const dong = (ingredient_id: string | null, quantity: number, unit: string, yield_factor: number | null = 1) => ({ ingredient_id, quantity, unit, yield_factor });
+  const cts: CongThuc[] = [
+    { pos_product_id: 'b', recipe_ingredients: [dong('bot', 100, 'gram', 0.8), dong('sua', 38.5, 'ml', null)] }, // 125 g × 40đ + 0,1 lon × 22.000đ = 7.200đ
+    { pos_product_id: 'a', recipe_ingredients: [dong('bot', 50, 'g')] }, // 2.000đ, nhưng món a đã có giá vốn theo dòng đơn
+    { pos_product_id: 'f', recipe_ingredients: [dong('bot', 50, 'g'), dong('dao', 30, 'gram')] }, // gram → gói không quy cách
+    { pos_product_id: 'c', recipe_ingredients: [dong('bot', 50, 'g'), dong('chua-gia', 10, 'g')] }, // một nguyên liệu chưa có giá
+    { pos_product_id: 'd', recipe_ingredients: [dong(null, 1, 'phần')] }, // dòng không gắn nguyên liệu
+    { pos_product_id: 'x', recipe_ingredients: [] },
+    { pos_product_id: 'y', recipe_ingredients: [dong('da-an-hoac-xoa', 1, 'kg')] },
+    { pos_product_id: 'z', recipe_ingredients: [dong('bot', 1, 'kg')] }, { pos_product_id: 'z', recipe_ingredients: [dong('bot', 500, 'g')] }, // 2 công thức: trừ kho cả hai
+    { pos_product_id: 'w', recipe_ingredients: [dong('bot', 1, 'kg')] }, { pos_product_id: 'w', recipe_ingredients: [] }, // một cái hỏng → bỏ cả món
+    { pos_product_id: null, recipe_ingredients: [dong('bot', 1, 'kg')] },
+  ];
+  const von = vonCongThuc(cts, mons);
+  assertEquals(Object.fromEntries(von), { b: 7200, a: 2000, z: 60000 });
+  const f = dungFacts(KY, CUR, PREV, mons, von);
+  const g = f.groups as { name: string; top: { name: string; cost?: number }[] }[];
+  assertEquals(g.map((x) => x.name), ['Cà phê', 'Bánh', 'Combo', 'Topping', 'Trà']); // nguyên liệu không thành món
+  assertEquals([g[0].top[0].cost, g[1].top[0].cost, g[2].top[0].cost], [9000, 7200, undefined]);
+  assertEquals(f.von_ct, ['Bánh mì']);
+  const khoi = formatFacts(parseFacts(f)!, new Date('2026-11-03T09:00:00+07:00'), 'món nào lời nhất');
+  assert(khoi.includes('Giá vốn LẤY TỪ CÔNG THỨC') && /LẤY TỪ CÔNG THỨC[^\n]*: Bánh mì →/.test(khoi), khoi);
+  assert(!/CHƯA có giá vốn: [^\n]*Bánh mì/.test(khoi), khoi);
+  // món lấy giá vốn công thức nhưng khối số không in giá vốn của nó (ngoài 3 chạy / 3 chậm) thì không kể tên
+  assert(/LẤY TỪ CÔNG THỨC[^\n]*: Bánh mì →/.test(formatFacts(parseFacts({ ...f, von_ct: ['Món hạng tư của nhóm', 'Bánh mì'] })!, new Date('2026-11-03T09:00:00+07:00'), 'món nào lời nhất')));
+  // quán không có công thức: gói số như cũ
+  const cu = dungFacts(KY, CUR, PREV, MONS);
+  assert(!('von_ct' in cu) && !formatFacts(parseFacts(cu)!, new Date('2026-11-03T09:00:00+07:00'), 'món nào lời nhất').includes('CÔNG THỨC'));
+});
+
 Deno.test('ban_hang: món kỳ trước đã xoá khỏi menu → không so nhóm, so món (không báo nhóm tăng khi doanh thu giảm)', () => {
   const p = { ...PREV, revenue: 20_000_000, items: [...PREV.items, { id: 'da-xoa', qty: 500, revenue: 18_800_000, cost: 0, cost_qty: 0 }] };
   const f = dungFacts(KY, CUR, p, MONS);
@@ -55,18 +103,22 @@ Deno.test('ban_hang: kỳ trước không có đơn → không gửi phần so; 
       if (String(u).includes('rpc/get_daily')) return Response.json([{ report_date: '2026-11-03', total_revenue: 500000, total_orders: 7 }]);
       if (String(u).includes('void_audit_logs')) return Response.json([{ void_type: 'void_item', requested_by_name: 'Lan', amount: 30000 }, { void_type: 'cancel_table', requested_by_name: 'Lan', amount: 70000 }]);
       if (String(u).includes('rpc/')) return Response.json(JSON.parse(String(i!.body)).p_from === KY.tu ? CUR : PREV);
+      // Bánh mì chưa nhập giá vốn, công thức 0,1 hộp sữa đặc 20.000đ → 2.000đ
+      if (String(u).includes('/recipes?')) return Response.json([{ pos_product_id: 'b', recipe_ingredients: [{ ingredient_id: 'e', quantity: 0.1, unit: 'hộp', yield_factor: 1 }] }]);
       return Response.json(MONS);
     }) as typeof fetch };
   const r = await docBanHang(ctx, KY);
   assert(r && r.revenue === 1_000_000);
-  assertEquals(seen.sort(), ['Bearer nguoi-hoi products', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/get_daily_revenue_for_range_v1', 'Bearer nguoi-hoi rpc/get_report_stats_for_range_v1', 'Bearer nguoi-hoi void_audit_logs']);
+  assertEquals(r!.von_ct, ['Bánh mì']);
+  assertEquals(seen.sort(), ['Bearer nguoi-hoi products', 'Bearer nguoi-hoi recipes', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/get_daily_revenue_for_range_v1', 'Bearer nguoi-hoi rpc/get_report_stats_for_range_v1', 'Bearer nguoi-hoi void_audit_logs']);
   assertEquals(r!.by_pay, { cash: 690000, transfer: 180000, card: 0 });
   assertEquals(r!.cashiers, [{ name: 'Lan', revenue: 500000 }, { name: 'Minh', revenue: 370000 }]);
   assertEquals(r!.by_day, [{ d: '2026-11-03', revenue: 500000, orders: 7 }]);
   assertEquals(r!.voids, { count: 2, amount: 100000, by_type: { void_item: 1, cancel_table: 1 }, by_person: [{ name: 'Lan', count: 2, amount: 100000 }] });
   // RPC báo cáo lỗi: chỉ thiếu phương thức thanh toán, vẫn có số bán hàng
-  const r2 = await docBanHang({ ...ctx, fetch: (async (u: string, i?: RequestInit) => /rpc\/get_(?:report|daily)|void_audit/.test(String(u)) ? new Response('', { status: 404 }) : ctx.fetch!(u, i)) as typeof fetch }, KY);
-  assert(r2 && r2.revenue === 1_000_000 && !('by_pay' in r2) && !('voids' in r2) && !('by_day' in r2));
+  // đọc công thức lỗi: chỉ thiếu giá vốn công thức
+  const r2 = await docBanHang({ ...ctx, fetch: (async (u: string, i?: RequestInit) => /rpc\/get_(?:report|daily)|void_audit|\/recipes\?/.test(String(u)) ? new Response('', { status: 404 }) : ctx.fetch!(u, i)) as typeof fetch }, KY);
+  assert(r2 && r2.revenue === 1_000_000 && !('by_pay' in r2) && !('voids' in r2) && !('by_day' in r2) && !('von_ct' in r2));
   assertEquals(await docBanHang({ ...ctx, fetch: (async () => new Response('', { status: 404 })) as typeof fetch }, KY), null);
 });
 

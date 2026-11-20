@@ -210,6 +210,8 @@ export interface ShopFacts {
   prev_by_weekday?: number[] | null;
   /** Tên mọi món trong menu (máy chủ gửi; KHÔNG in vào khối số) — chỉ để biết một tên gọi tắt ứng mấy món. */
   ten_mon?: string[] | null;
+  /** Món có bán mà giá vốn máy chủ lấy từ công thức gắn món (chủ quán chưa nhập giá vốn cho món), xếp theo doanh thu, ≤ 20 tên. */
+  von_ct?: string[] | null;
   /** Kỳ so sánh có 0 đơn (số thật, không phải thiếu số); `full` = trọn kỳ trước khi máy chủ đọc thêm được. */
   prev_zero?: { period: string; from: string; to: string; don: number; tien: number; full: { from: string; to: string; revenue: number; orders: number; days: number; first: string | null; last: string | null } | null } | null;
   /** Món đổi nhiều nhất so kỳ trước (app chọn ≤ 8 theo chênh lệch doanh thu). */
@@ -897,6 +899,7 @@ export function parseFacts(v: unknown): ShopFacts | null {
   return {
     period, revenue, orders, prev_period: prevPeriod, prev_revenue: prevRevenue, prev_orders: prevOrders, top: outTop, slow: outSlow, groups,
     ten_mon: Array.isArray(f.ten_mon) ? f.ten_mon.slice(0, 400).map((x: unknown) => cleanText(x, 60)).filter(Boolean) : null,
+    von_ct: Array.isArray(f.von_ct) ? f.von_ct.slice(0, 20).map((x: unknown) => cleanText(x, 60)).filter(Boolean) : null,
     prev_zero: (() => {
       const z = f.prev_zero as Record<string, unknown> | null | undefined, zf = ymd(z?.from), zt = ymd(z?.to);
       if (!z || typeof z !== 'object' || prevPeriod || !zf || !zt) return null;
@@ -1866,6 +1869,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       ? 'Có giá vốn ở một số món (ghi trong ngoặc) → chỉ nói lời / lãi gộp cho đúng các món đó.'
       : 'Chưa có giá vốn món → KHÔNG kết luận món nào có lời / lời nhiều.',
   );
+  // giai đoạn 4 (20/11, lần 259): món chưa nhập giá vốn mà công thức đủ giá nguyên liệu thì máy chủ lấy giá vốn công thức; nói rõ nguồn để
+  // chủ quán thấy số lạ biết sửa ở công thức / giá nguyên liệu, và Boom không nói "anh đã nhập giá vốn"
+  // chỉ kể món mà khối số có in giá vốn (3 chạy / 3 chậm mỗi nhóm): kể món không in số thì Boom nói "có giá vốn" mà không có số nào
+  const vonCt = (f.von_ct ?? []).filter((ten) => (f.groups ?? []).some((g) => [...g.top, ...g.slow].some((t) => t.cost && t.name === ten)));
+  if (vonCt.length) lines.push(`Giá vốn LẤY TỪ CÔNG THỨC (chủ quán chưa nhập giá vốn cho món; tính từ giá nguyên liệu, như số "Giá vốn/phần" ở màn công thức của Kho Chuyên Nghiệp): ${vonCt.join(', ')} → nêu giá vốn / lãi gộp các món này thì ghi rõ "theo công thức".`);
   const itemBase = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
   // 05/11: Boom bảo nhập giá vốn cả món đã có → code chọn sẵn, không để GPT tự lọc
   // giai đoạn 4 (19/11, 6 quán thật: 5 quán không món bán chạy nào có giá vốn): xếp theo DOANH THU thay cho số phần (số phần đưa topping

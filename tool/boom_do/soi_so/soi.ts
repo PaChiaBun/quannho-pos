@@ -52,8 +52,11 @@ const fetchGia = (async (url: string, init?: RequestInit) => {
       thuc.ngay.set(`${b.p_store_id}|${b.p_from}|${b.p_to}`, JSON.parse(out));
     } else if (ten === 'products') {
       const s = (th.get('store_id') ?? '').replace(/^eq\./, '');
-      out = await sql(`select coalesce(jsonb_agg(t), '[]')::text from (select id, name, category, sell_price, cost_price, cost_price_latest, is_topping, is_raw_material from products where store_id = ${chu(s, UUID)} and is_active is true and is_deleted is false) t`);
+      out = await sql(`select coalesce(jsonb_agg(t), '[]')::text from (select id, name, category, sell_price, cost_price, cost_price_latest, is_topping, is_raw_material, unit, conversion_rate, conversion_unit from products where store_id = ${chu(s, UUID)} and is_active is true and is_deleted is false) t`);
       thuc.mon.set(s, JSON.parse(out));
+    } else if (ten === 'recipes') { // cùng dạng PostgREST lồng recipe_ingredients theo khoá ngoại
+      const s = (th.get('store_id') ?? '').replace(/^eq\./, '');
+      out = await sql(`select coalesce(jsonb_agg(t), '[]')::text from (select r.pos_product_id, coalesce((select jsonb_agg(jsonb_build_object('ingredient_id', ri.ingredient_id, 'quantity', ri.quantity, 'unit', ri.unit, 'yield_factor', ri.yield_factor)) from recipe_ingredients ri where ri.recipe_id = r.id), '[]'::jsonb) as recipe_ingredients from recipes r where r.store_id = ${chu(s, UUID)} and r.is_deleted is false and r.pos_product_id is not null) t`);
     } else if (ten === 'void_audit_logs') {
       const s = (th.get('store_id') ?? '').replace(/^eq\./, ''), [tu, den] = th.getAll('created_at').map((x) => x.replace(/^(?:gte|lt)\./, ''));
       out = await sql(`select coalesce(jsonb_agg(t), '[]')::text from (select void_type, requested_by_name, amount from void_audit_logs where store_id = ${chu(s, UUID)} and created_at >= ${chu(tu, GIO)} and created_at < ${chu(den, GIO)} limit 1000) t`);
