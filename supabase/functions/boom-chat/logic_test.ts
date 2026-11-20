@@ -1580,6 +1580,9 @@ Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {
   assertStringIncludes(goTat('tn ban dc bn'), 'tn = tháng này');
   assertStringIncludes(goTat('tt ck bn'), 'ck = chuyển khoản');
   assertEquals(goTat('tháng này doanh thu bao nhiêu'), '');
+  // lần 261: "e" không dấu = "ế" (18/11: "gio nao quan e khach nhat" bị trả lời giờ đông nhất); "e" = "em" hoặc câu đã gõ "ế" thì không giải nghĩa
+  for (const q of ['gio nao quan e khach nhat', 'mon nao ban e nhat', 'dao nay quan e qua lam sao', 'hang bi e nhieu']) assertStringIncludes(goTat(q), 'e = ế (vắng khách / bán chậm, KHÔNG phải đông khách)', q);
+  for (const q of ['giờ nào quán ế khách nhất', 'e muon hoi doanh thu hom nay', 'quan e ban dc bao nhieu', 'cho e hoi mon nao ban chay']) assert(!goTat(q).includes('ế'), q);
 });
 
 Deno.test('soNguoiCan: không chốt số người khi không có căn cứ', () => {

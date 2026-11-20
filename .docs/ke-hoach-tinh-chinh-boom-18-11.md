@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn, commit `c0919a6`) ĐÃ ÁP máy chủ 21/11 02:03 (mốc hoàn tác `20261121_020327`); đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); lần 260 (khối số mang đủ món giữa nhóm, đếm đúng món có giá vốn, commit `c0919a6`) ĐÃ ÁP máy chủ 21/11 02:03 (mốc hoàn tác `20261121_020327`); lần 261 (ba lỗi nhỏ còn tồn: hỏi bỏ món sót nhóm khác, chữ "e" không dấu, kỳ so sánh 0 đơn khi kỳ này chưa có đơn) ĐÃ SỬA MÃ 21/11, CHƯA ÁP; đề xuất app 2 (màn nhập nhanh giá vốn) đang làm ở phiên riêng từ 21/11, đề xuất 3 chờ Chủ Quán quyết (mục 7).
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -297,3 +297,25 @@ Test hàm 236 qua (thêm 1 test, sửa 1 chỗ mong đợi cũ: tên gọi tắt
 **ĐÃ ÁP máy chủ 21/11 02:03** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261121_020327` (`ROLLBACK=1 bash db-fix/boom_l260_ap_dung.sh 20261121_020327`, trả cả `ban_hang.ts` và `logic.ts` về bản 259). Kiểm sau áp: hai tệp trên máy chủ khớp bản mới, có dấu bản 260; sao lưu đủ 2 tệp; container chạy, không tự khởi động lại, healthy; log không có dòng lỗi; `boom_changelog` có dòng "lần 260"; gọi hàm không vé trả 401. Lúc áp là 2 giờ sáng nên chưa có lượt hỏi thật nào của quán đi qua bản mới.
 
 **Hỏi lại sau áp, 21/11 02:05** (quán T, bản web, 1 câu, 0,03 USD): đúng câu "<món X> lời bao nhiêu một ly" hôm trước Boom không trả lời được. Nay Boom nêu giá bán, giá vốn "theo công thức" và lãi gộp mỗi ly, cả ba khớp phép tính tay; có nói rõ chưa trừ mặt bằng, lương, điện nước và ghi kỳ số liệu. Log hàm không có lỗi. Mới hỏi 1 câu, chưa chấm rộng.
+
+### 21/11 — Lần 261: ba lỗi nhỏ còn tồn từ giai đoạn 2 (ĐÃ SỬA MÃ, CHƯA ÁP)
+
+Chủ Quán bảo "Sửa đi". Chỉ sửa mã máy chủ, cả ba đều làm bằng mã, không thêm lời dặn chung.
+
+| Lỗi | Nguyên nhân | Sửa |
+|---|---|---|
+| "món nào nên bỏ" chỉ nêu món ít phần của một nhóm, sót món cùng số phần ở nhóm khác | dòng "Món bán ÍT PHẦN NHẤT" chỉ ra khi câu có "chậm nhất / ít nhất / ế nhất…"; câu hỏi bỏ món không có dòng tính sẵn nên mô hình tự chọn; dòng cũ cắt đúng 3 món dù món thứ tư cùng số phần | `logic.ts formatFacts`: câu hỏi bỏ / cắt / ẩn / dẹp món cũng ra dòng này; món đồng số phần với món thứ ba được kể luôn (tối đa 6), còn nữa thì ghi "và N món khác cũng X phần (chưa kể tên)" |
+| "gio nao quan e khach nhat" bị trả lời giờ ĐÔNG nhất | mô hình đọc "e" không dấu thành câu hỏi đông khách; mã không có luật nào | `logic.ts goTat`: các cụm không dấu "e khach / e am / e hang / e nhat / e qua / ban e / bi e" (và câu không có sẵn chữ "ế") → thêm "e = ế (vắng khách / bán chậm, KHÔNG phải đông khách)" vào dòng "CÁCH GÕ TẮT TRONG CÂU"; "e" = "em" ("e muon hoi", "quan e ban…") không dính |
+| kỳ này chưa có đơn mà cùng kỳ trước cũng 0 đơn → khối số không có gì về kỳ trước | `ban_hang.ts docBanHang` chỉ dựng `prev_zero` khi kỳ này có đơn | kỳ này 0 đơn và cùng kỳ trước 0 đơn → vẫn dựng `prev_zero` và đọc trọn kỳ trước làm mốc; dòng trong khối số đổi đuôi thành "kỳ này chưa có đơn nên CHƯA so được, chỉ nêu làm mốc" |
+
+Bộ kiểm: K8 nay xét cả khi kỳ này chưa có đơn; thêm K22 (câu hỏi bỏ món phải có dòng "Món bán ÍT PHẦN NHẤT").
+
+**Kiểm trên số thật 21/11** (bản 260 lấy bằng `git worktree`, cùng mốc giờ, 0 đồng): bản 261 0 cảnh báo trên 6 quán thật + Demo; bản 260 bị K22 báo ở cả 7 quán. Mỗi quán đổi 1–5 trên 18–19 câu mẫu, khối số dài thêm 0,06%–0,72%. Ba quán có nhiều món chỉ bán 1 phần: dòng cũ kể 3 món bất kỳ trong số đó, dòng mới kể 6 món và ghi còn 1, 11, 22 món nữa cùng 1 phần. Dựng riêng bằng `--cau`: câu "gio nao quan e khach nhat" có dòng "e = ế"; câu "hôm nay so với hôm qua" lúc sáng chưa có đơn ở hai quán có dòng kỳ so sánh 0 đơn kèm số trọn hôm qua.
+
+Test hàm 237 qua (thêm 1 test bỏ món, thêm ca cho `goTat` và cho kỳ so sánh 0 đơn).
+
+**Thấy khi soi, CHƯA sửa:** sáng Thứ 2 hỏi "tuần này so với tuần trước" (kỳ so sánh là trọn tuần trước, có đơn) thì khối số vừa dặn "KHÔNG nói giảm 100%" vừa in sẵn "GIẢM 100% theo trung bình mỗi ngày" và bảng "GIẢM Ở ĐÂU … −100%", và ghi "kỳ mới có 1 ngày có đơn" khi chưa có đơn nào. Lần 162 đã kiểm là mô hình theo lời dặn, nên để nguyên; muốn sạch thì bỏ các dòng tính % khi kỳ này 0 đơn.
+
+**Giới hạn đã biết.** Chưa hỏi mô hình trên bản này: riêng lỗi chữ "e" chỉ chắc là khối số đã ghi chú, chưa chắc mô hình trả lời đúng. Cụm "ban e" không dấu cũng có thể là "bạn em" (mã có sẵn đã coi là "bán ế" từ trước).
+
+Kịch bản áp: `db-fix/boom_l261_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp).

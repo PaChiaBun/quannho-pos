@@ -203,6 +203,43 @@ Deno.test('ban_hang: cùng kỳ trước 0 đơn là số thật — báo rõ v�
   assertEquals(r3!.prev_zero, { period: 'tháng 9', from: '2026-09-01', to: '2026-09-30' });
   assertEquals(seen.filter((x) => x === 'rpc/boom_sales_raw_v1').length, 2);
   assert(formatFacts(parseFacts(r3)!, new Date('2026-11-05T09:00:00+07:00'), 'so với tháng 9 thế nào').includes('tháng 9 (1/9–30/9) quán có 0 đơn, 0đ'));
+  // lần 261: kỳ này cũng chưa có đơn (sáng Thứ 2 hỏi so với tuần trước) → vẫn báo cùng kỳ 0 đơn là số thật và đọc trọn kỳ trước làm mốc
+  const goc = mk(TRON), chuaBan = (truoc: Tho) => ({ ...goc, fetch: (async (u: string, i?: RequestInit) => {
+    const b = i?.body ? JSON.parse(String(i.body)) : {};
+    if (String(u).includes('rpc/boom_sales_raw_v1') && b.p_from === ky.tu) return Response.json(KHONG);
+    if (String(u).includes('rpc/boom_sales_raw_v1') && b.p_to === ky.truocDen) return Response.json(truoc);
+    if (String(u).includes('rpc/get_daily') && b.p_from === ky.tu) return Response.json([]);
+    return goc.fetch(u, i);
+  }) as typeof fetch });
+  const r4 = await docBanHang(chuaBan(KHONG), ky);
+  assertEquals([r4!.orders, (r4!.prev_zero as { full?: { revenue: number } }).full?.revenue, 'prev_period' in r4!], [0, 21_685_400, false]);
+  const t4 = formatFacts(parseFacts(r4)!, new Date('2026-11-18T15:43:00+07:00'), 'tuần này so với tuần trước thế nào');
+  assert(t4.includes('KỲ NÀY CHƯA CÓ ĐƠN NÀO') && t4.includes('cùng kỳ tuần trước (9/11–11/11) quán có 0 đơn, 0đ'), t4);
+  assert(t4.includes('TRỌN kỳ trước (9/11–15/11): 21.685.400đ từ 213 đơn') && t4.includes('kỳ này chưa có đơn nên CHƯA so được, chỉ nêu làm mốc') && !t4.includes('Kỳ này (tính sẵn'), t4);
+  // kỳ này chưa có đơn mà cùng kỳ trước có vài đơn: gửi số kỳ trước như thường, không coi là 0
+  const r5 = await docBanHang(chuaBan({ ...KHONG, revenue: 300_000, orders: 3 }), ky);
+  assertEquals(['prev_zero' in r5!, r5!.prev_orders], [false, 3]);
+});
+
+Deno.test('ban_hang: "món nào nên bỏ" — tính sẵn món ít phần nhất của MỌI nhóm, kể cả món đồng hạng (lần 261)', () => {
+  const mon = (id: string, name: string, category: string): Mon => ({ id, name, category, sell_price: 30000, cost_price: null, cost_price_latest: null, is_topping: false, is_raw_material: false });
+  const mons = [mon('a1', 'Cơm gà xối mỡ', 'Cơm'), mon('a2', 'Cơm sườn nướng', 'Cơm'), mon('a3', 'Cơm cá kho tộ', 'Cơm'), mon('a4', 'Cơm bò lúc lắc', 'Cơm'), mon('b1', 'Nước cam vắt', 'Nước'), mon('b2', 'Nước dưa hấu', 'Nước'), mon('b3', 'Nước ổi ép', 'Nước'), mon('c1', 'Chè đậu đỏ', 'Chè')];
+  const sl: [string, number][] = [['a1', 100], ['a2', 50], ['a3', 4], ['a4', 4], ['b1', 30], ['b2', 4], ['b3', 9], ['c1', 4]];
+  const items = sl.map(([id, qty]) => ({ id, qty, revenue: qty * 30000, cost: 0, cost_qty: 0 }));
+  const f = parseFacts(dungFacts(KY, { revenue: items.reduce((x, y) => x + y.revenue, 0), orders: 150, by_hour: h(11, 1), by_weekday: [1, 1, 1, 1, 1, 1, 1], items, bands: [[], [], [], []] }, { ...PREV, orders: 0 }, mons))!;
+  const luc = new Date('2026-11-03T09:00:00+07:00'), dong = (q: string) => /Món bán ÍT PHẦN NHẤT[^\n]*/.exec(formatFacts(f, luc, q))?.[0] ?? '';
+  // 4 món cùng 4 phần ở 3 nhóm: kể đủ cả 4 (trước: câu "nên bỏ" không có dòng này, Boom tự chọn và sót nhóm khác)
+  for (const q of ['món nào nên bỏ khỏi menu', 'mon nao nen bo', 'nên cắt món nào', 'bỏ bớt món nào được', 'món nào bán ế nhất']) {
+    const d = dong(q);
+    assert(['Cơm cá kho tộ 4 phần', 'Cơm bò lúc lắc 4 phần', 'Nước dưa hấu 4 phần', 'Chè đậu đỏ 4 phần'].every((x) => d.includes(x)) && !d.includes('Nước ổi ép'), `${q} => ${d}`);
+  }
+  for (const q of ['loại món nào bán chạy nhất', 'món nào nên bổ sung', 'mon nao nen bo sung', 'có nên bỏ ca tối không', 'khach an mon nao nhieu']) assertEquals(dong(q), '', q);
+  assert(!dong('món nào nên bỏ khỏi menu').includes('món khác cũng'));
+  // 9 món cùng 1 phần: kể 6 món và nói rõ còn 3 món nữa cũng 1 phần
+  const nhieu = Array.from({ length: 9 }, (_, i) => mon(`k${i}`, `Bánh thử số ${i}`, i < 5 ? 'Bánh ngọt' : 'Bánh mặn')), ban = [...nhieu.map((m) => ({ id: m.id, qty: 1, revenue: 30000, cost: 0, cost_qty: 0 })), { id: 'a1', qty: 80, revenue: 2_400_000, cost: 0, cost_qty: 0 }];
+  const fn = parseFacts(dungFacts(KY, { revenue: 2_670_000, orders: 60, by_hour: h(11, 1), by_weekday: [1, 1, 1, 1, 1, 1, 1], items: ban, bands: [[], [], [], []] }, { ...PREV, orders: 0 }, [...nhieu, mons[0]]))!;
+  const dn = /Món bán ÍT PHẦN NHẤT[^\n]*/.exec(formatFacts(fn, luc, 'món nào nên bỏ khỏi menu'))![0];
+  assert((dn.match(/ 1 phần/g) ?? []).length === 7 && dn.includes('và 3 món khác cũng 1 phần (chưa kể tên)'), dn);
 });
 
 Deno.test('ban_hang: cùng kỳ trước gần như chưa bán (1 đơn) → không gửi số để tính %, báo đúng số đơn (lô 1 giai đoạn 2, B5)', async () => {

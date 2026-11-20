@@ -1578,7 +1578,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     lines.push((z.don > 0
       ? `KỲ SO SÁNH GẦN NHƯ CHƯA BÁN (số thật từ sổ bán hàng): ${kyZ} quán chỉ có ${z.don} đơn, ${vnd(z.tien)} → nền quá nhỏ: KHÔNG tính % tăng giảm, KHÔNG nói "tăng gấp N lần"; chỉ nêu hai con số và nói kỳ trước quán gần như chưa bán.`
       : `KỲ SO SÁNH KHÔNG CÓ ĐƠN (số thật từ sổ bán hàng, KHÔNG phải thiếu số liệu): ${kyZ} quán có 0 đơn, 0đ → nói đúng như vậy, KHÔNG nói "chưa có số / chưa có doanh thu kỳ trước"; KHÔNG tính % tăng giảm với kỳ 0đ.`) +
-      (u ? ` TRỌN kỳ trước (${kg(u.from, u.to)}): ${vnd(u.revenue)} từ ${u.orders} đơn${u.days > 0 && u.first && u.last ? `, có đơn ${u.days} ngày (${kg(u.first, u.last)}), trung bình ${vnd(Math.round(u.revenue / u.days))}/ngày có đơn` : ''} → nêu số này để chủ quán có mốc; kỳ này chưa trọn và khác ngày nên CHỈ so theo trung bình ngày có đơn, nói rõ là so tạm, hết kỳ mới so trọn được.${nayN ? ` Kỳ này (tính sẵn, KHÔNG tự chia lại): ${vnd(nayT)} trong ${nayN} ngày có đơn đã trọn = ${vnd(Math.round(nayT / nayN))}/ngày có đơn.` : ''}` : ''));
+      (u ? ` TRỌN kỳ trước (${kg(u.from, u.to)}): ${vnd(u.revenue)} từ ${u.orders} đơn${u.days > 0 && u.first && u.last ? `, có đơn ${u.days} ngày (${kg(u.first, u.last)}), trung bình ${vnd(Math.round(u.revenue / u.days))}/ngày có đơn` : ''} → nêu số này để chủ quán có mốc; ${f.orders > 0 ? 'kỳ này chưa trọn và khác ngày nên CHỈ so theo trung bình ngày có đơn, nói rõ là so tạm, hết kỳ mới so trọn được' : 'kỳ này chưa có đơn nên CHƯA so được, chỉ nêu làm mốc'}.${nayN ? ` Kỳ này (tính sẵn, KHÔNG tự chia lại): ${vnd(nayT)} trong ${nayN} ngày có đơn đã trọn = ${vnd(Math.round(nayT / nayN))}/ngày có đơn.` : ''}` : ''));
   }
   if (kyNgan && (f.groups ?? []).some((g) => g.unsold > 0)) lines.push(`Kỳ mới có ${nCoDon} ngày có đơn → CHƯA đủ để nói món nào không bán được: KHÔNG liệt kê món chưa bán, KHÔNG khuyên ẩn / bỏ món theo kỳ này.`);
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
@@ -2067,9 +2067,15 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   }
   if (f.slow.length) lines.push('Món bán chậm nhất: ' + f.slow.map((t) => `${t.name} (${t.qty} phần)`).join('; ') + '.');
   // lần 238 (kiểm lần 7: "món chậm nhất là Canh thêm 90 phần" khi Nước chanh 80): hỏi chậm / ít nhất → xếp trên MỌI món có bán của mọi nhóm
-  if (/ch[aậ]m nh[aấ]t|[ií]t nh[aấ]t|[eế] nh[aấ]t|b[aá]n (?:k[eé]m|[eế])|kh[oô]ng ai (?:g[oọ]i|mua)/i.test(question)) {
-    const tat = [...new Map((f.groups ?? []).flatMap((g) => cacMon(g)).filter((t) => t.qty > 0).map((t) => [t.name, t])).values()].sort((a, b) => a.qty - b.qty).slice(0, 3);
-    if (tat.length) lines.push(`Món bán ÍT PHẦN NHẤT (tính sẵn, trong mọi nhóm, chỉ món có bán): ${tat.map((t) => `${t.name} ${t.qty} phần`).join('; ')}.`);
+  // lần 261 (18/11 quán thật: "món nào nên bỏ" chỉ nêu 2 món ít phần của một nhóm, sót món cũng 4 phần ở nhóm khác): câu hỏi bỏ / cắt món
+  // cũng ra dòng này, và món đồng số phần với món thứ ba thì kể luôn (nhiều nhất 6 món)
+  const hoiBo = /(?:b[oỏ]|c[aắ]t|ẩn|d[eẹ]p)(?: b[oớ]t| đi)? (?:(?:nh[uữ]ng|v[aà]i|m[aấ]y) )?m[oó]n|b[oỏ] kh[oỏ]i (?:menu|th[uự]c)|m[oó]n n[aà]o (?:(?:n[eê]n|c[aầ]n|đ[aá]ng) )?(?:b[oỏ]|lo[aạ]i|c[aắ]t|ẩn|d[eẹ]p)(?: (?!sung)|[?,.]|$)/i.test(question);
+  if (hoiBo || /ch[aậ]m nh[aấ]t|[ií]t nh[aấ]t|[eế] nh[aấ]t|b[aá]n (?:k[eé]m|[eế])|kh[oô]ng ai (?:g[oọ]i|mua)/i.test(question)) {
+    const ds = [...new Map((f.groups ?? []).flatMap((g) => cacMon(g)).filter((t) => t.qty > 0).map((t) => [t.name, t])).values()].sort((a, b) => a.qty - b.qty);
+    const tat = ds.filter((t, i) => i < 3 || (i < 6 && t.qty === ds[2].qty));
+    // còn món đồng số phần với món cuối danh sách mà không kể hết (menu nhiều món 1 phần) → nói rõ còn bao nhiêu, kẻo Boom coi 6 món này là tất cả
+    const cuoi = tat[tat.length - 1]?.qty, con = ds.filter((t) => t.qty === cuoi).length - tat.filter((t) => t.qty === cuoi).length;
+    if (tat.length) lines.push(`Món bán ÍT PHẦN NHẤT (tính sẵn, trong mọi nhóm, chỉ món có bán): ${tat.map((t) => `${t.name} ${t.qty} phần`).join('; ')}${con > 0 ? `; và ${con} món khác cũng ${cuoi} phần (chưa kể tên)` : ''}.`);
   }
   // lần 238 (kiểm lần 7: bảng giá in combo "45.000–47.000đ" không treo được): xin bảng giá / bài đăng → giá ĐANG BÁN của combo
   if (/b[aả]ng gi[aá]|menu|th[uự]c đ[oơ]n|in (?:ra|gi[aá])|treo|b[aà]i đ[aă]ng|caption/i.test(question)) {
@@ -2750,6 +2756,8 @@ const GO_TAT: [RegExp, string][] = [[/^tn\b/, 'tn = tháng này'], [/^tt\b/, 'tt
 /** 06/11: "tn ban dc bn" có lượt Boom hỏi lại "tn là gì" dù đã đưa đúng số tháng này. */
 export function goTat(question: string): string {
   const f = boDau(question), co = GO_TAT.filter(([re]) => re.test(f)).map(([, y]) => y);
+  // lần 261 (18/11 máy quán: "gio nao quan e khach nhat" bị trả lời giờ ĐÔNG nhất): "e" không dấu trong các cụm này là "ế", không phải "em"
+  if (!/ế/i.test(question.normalize('NFC')) && /\be (?:khach|am|hang|nhat|qua)\b|\b(?:ban|bi) e\b/.test(f)) co.push('e = ế (vắng khách / bán chậm, KHÔNG phải đông khách)');
   return co.length ? `CÁCH GÕ TẮT TRONG CÂU: ${co.join(', ')}. Hiểu theo đó, không hỏi lại nghĩa.` : '';
 }
 

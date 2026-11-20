@@ -279,7 +279,8 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
     // lô 1 giai đoạn 2 (B5): cùng kỳ trước chỉ 1 đơn → "TĂNG 2087,6%", "số đơn +5250%". Dưới 10 đơn VÀ dưới 10% số đơn kỳ này thì coi như
     // kỳ trước gần như chưa bán: không gửi số kỳ trước để tính %, chỉ báo số đơn và tiền thật.
     let zero: Record<string, unknown> | null = null;
-    const donTruoc = n(prev.orders), nenNho = n(cur.orders) > 0 && donTruoc < 10 && donTruoc < n(cur.orders) * 0.1;
+    // lần 261: kỳ này cũng chưa có đơn (sáng Thứ 2 hỏi "tuần này so với tuần trước") mà cùng kỳ trước 0 đơn → vẫn báo 0 đơn là số thật và đọc trọn kỳ trước làm mốc
+    const donTruoc = n(prev.orders), nenNho = n(cur.orders) > 0 ? donTruoc < 10 && donTruoc < n(cur.orders) * 0.1 : donTruoc === 0;
     if (nenNho) {
       const [zf, zt] = ngayKy(ky.truocTu, ky.truocDen);
       zero = { period: clip(ky.nhanTruoc, 40), from: zf, to: zt, ...(donTruoc > 0 ? { don: donTruoc, tien: n(prev.revenue) } : {}) };
