@@ -249,3 +249,16 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Chưa hỏi mô hình trên bản này; chưa đọc được bảng công thức bằng vé của người dùng thật (mới kiểm bằng kết nối nội bộ và lượt đọc 0 dòng).
 
 **ĐÃ ÁP máy chủ 20/11 14:13** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261120_141333` (`ROLLBACK=1 bash db-fix/boom_l259_ap_dung.sh 20261120_141333`, trả cả `ban_hang.ts` và `logic.ts` về bản 258). Kiểm sau áp: hai tệp trên máy chủ khớp bản mới, hàm trả 401 khi không có vé, container không tự khởi động lại, log không lỗi, `boom_changelog` có dòng "lần 259". Lúc kiểm chưa có lượt hỏi thật nào đi qua bản này, nên lượt đọc công thức bằng vé người dùng thật vẫn chưa được thấy chạy.
+
+**Hỏi thử sau áp, 20/11 15:51** (quán T, bản web, 2 câu, 0,06 USD; Chủ Quán tự đăng nhập):
+
+- Đường đọc công thức bằng tài khoản người dùng thật chạy: 2 lượt đọc `recipes` lồng `recipe_ingredients` qua cổng đều trả 200, log hàm không có lỗi.
+- Câu "món nào lời nhất tháng này": đúng theo khối số — lãi gộp mỗi phần và tổng lãi gộp trong kỳ khớp phép tính tay (giá bán − giá vốn, nhân số phần); món lấy giá vốn công thức được ghi rõ "theo công thức"; có nhắc nhập giá vốn 3 món bán chạy còn thiếu.
+- Câu "<món X> lời bao nhiêu một ly" (món X có giá vốn công thức, nhưng trong kỳ "tháng này" nằm giữa nhóm 9 món): Boom trả lời "số liệu hiện có không ghi giá bán và giá vốn của món này" và xin chủ quán tự cho số. Không bịa, nhưng vô ích vì app biết cả hai số.
+
+**Lỗi lộ ra (có từ trước lần 259, nay dễ gặp hơn vì nhiều món có giá vốn hơn) — đề xuất lần 260, chờ Chủ Quán:**
+
+1. Khối số chỉ mang giá bán / giá vốn của 3 món chạy nhất + 3 món chậm nhất mỗi nhóm (`ban_hang.ts dungFacts`). Món ở giữa nhóm lớn không có số nào, kể cả khi câu hỏi nêu đích danh món đó.
+2. Dòng "Tính sẵn lời theo nhóm: … có giá vốn X/Y món" (`logic.ts formatFacts`) lấy X từ 6 món được in, Y từ cả nhóm → đếm thiếu (quán T: in 4/9, thật là 6/9). Boom nhắc lại con số thiếu này ("trong 4 món đã có giá vốn").
+
+Công cụ soi thêm tuỳ chọn `--cau "<câu>"` để dựng khối số đúng một câu vừa hỏi (0 đồng).

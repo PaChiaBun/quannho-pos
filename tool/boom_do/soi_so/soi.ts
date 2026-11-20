@@ -6,6 +6,7 @@
 //   --ma   soi bằng bản mã khác (vd bản cũ lấy ra bằng git worktree) để so trước / sau
 //   --now  cố định "bây giờ" để chạy lại ra cùng kết quả
 //   --ra   ghi khối số từng câu ra tệp; --in in cả khối số ra màn hình
+//   --cau  chỉ soi đúng một câu (vd câu chủ quán vừa hỏi) thay cho bộ câu mẫu
 //   --xuat ghi nguyên lời nhắc + số gốc + sổ thật từng câu ra một tệp JSON, để sinh.ts đo câu trả lời của hai bản mã (giai đoạn 3b)
 // Giới hạn: chỉ soi số BÁN HÀNG (ShopFacts). Các mục Thu Chi, kho, khách, khuyến mãi, nhân sự đọc qua nhiều bảng REST theo quyền
 //   người hỏi nên chưa dựng lại ở đây. Dữ liệu quán thật KHÔNG được ghi vào repo.
@@ -14,7 +15,7 @@ import { type Cau, kiem, type Thuc } from './kiem.ts';
 const GOC = decodeURIComponent(new URL('../../../', import.meta.url).pathname);
 const a = [...Deno.args], lay = (c: string) => { const i = a.indexOf(c); return i >= 0 ? a.splice(i, 2)[1] : undefined; };
 const co = (c: string) => { const i = a.indexOf(c); if (i >= 0) a.splice(i, 1); return i >= 0; };
-const MA = (lay('--ma') ?? `${GOC}supabase/functions/boom-chat`).replace(/\/?$/, '/'), RA = lay('--ra'), XUAT = lay('--xuat'), IN = co('--in');
+const MA = (lay('--ma') ?? `${GOC}supabase/functions/boom-chat`).replace(/\/?$/, '/'), RA = lay('--ra'), XUAT = lay('--xuat'), RIENG = lay('--cau'), IN = co('--in');
 const now = new Date(lay('--now') ?? Date.now()), VPS = Deno.env.get('VPS') ?? 'azvn-vps';
 const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i, GIO = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/;
 if (!a.length || a.some((x) => !UUID.test(x)) || isNaN(now.getTime())) { console.error('Dùng: deno run -A soi.ts <mã quán> [mã quán…] [--ma dir] [--now ISO] [--ra dir] [--in]'); Deno.exit(2); }
@@ -131,7 +132,7 @@ for (const quan of a) {
   const so = (ky: Record<string, string>) => demSo.get(JSON.stringify(ky)) ?? demSo.set(JSON.stringify(ky), B.docBanHang(ctx, ky).then((x: unknown) => (x ? L.parseFacts(x) : null))).get(JSON.stringify(ky))!;
   console.log(`\n══ quán ${quan} · mã ${MA.split('/').slice(-5, -1).join('/')} · lúc ${now.toISOString()}`);
   const thang = await so(K.docKy('tháng này', now)) as Parameters<typeof cauGia>[0];
-  const ds = [...CAU, ...cauGia(thang, (thuc.mon.get(quan) ?? []).filter((m) => m.is_raw_material !== true).map((m) => String(m.name ?? '')))];
+  const ds = RIENG ? [{ q: RIENG, mongKy: /./ }] : [...CAU, ...cauGia(thang, (thuc.mon.get(quan) ?? []).filter((m) => m.is_raw_material !== true).map((m) => String(m.name ?? '')))];
   const gom = new Map<string, string[]>();
   for (const [i, cau] of ds.entries()) {
     // như hoi.ts laySoChoCau: không nêu kỳ mà "tháng này" dưới 30 đơn thì đọc 30 ngày qua
