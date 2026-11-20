@@ -1988,6 +1988,17 @@ Deno.test('09/11: tuần này chưa có đơn thì trả lời ngắn, không kh
   const f = L.parseFacts({ period: 'Tuần này (từ thứ Hai 9/11)', revenue: 0, orders: 0, top: [], slow: [], from: '2026-11-09', to: '2026-11-09',
     prev_period: 'trọn tuần trước (2/11–8/11)', prev_revenue: 560_000, prev_orders: 7 })!;
   assertStringIncludes(L.formatFacts(f, new Date('2026-11-09T12:00:00+07:00'), 'Tuần này so với tuần trước thế nào?'), 'KỲ NÀY CHƯA CÓ ĐƠN NÀO');
+  // lần 262: kỳ chưa có đơn thì khối số không in sẵn "GIẢM 100%" / bảng "GIẢM Ở ĐÂU" (trước: in ngay dưới lời dặn không nói giảm 100%)
+  const k0 = L.formatFacts(L.parseFacts({ period: 'Tuần này (từ thứ Hai 9/11)', revenue: 0, orders: 0, top: [], slow: [], from: '2026-11-09', to: '2026-11-09', prev_period: 'trọn tuần trước (2/11–8/11)', prev_revenue: 560_000, prev_orders: 7,
+    prev_from: '2026-11-02', prev_to: '2026-11-08', prev_by_weekday: [80_000, 80_000, 80_000, 80_000, 80_000, 80_000, 80_000],
+    groups: [{ name: 'Nước', revenue: 0, prev_revenue: 560_000, qty: 0, items: 2, unsold: 2, top: [], slow: [], unsold_names: ['Trà đá', 'Nước cam'] }] })!, new Date('2026-11-09T12:00:00+07:00'), 'Tuần này so với tuần trước thế nào?');
+  assert(!/GIẢM 100|[−-]100%|GIẢM Ở ĐÂU|1 ngày có đơn/.test(k0), k0);
+  assert(k0.includes('trọn tuần trước (2/11–8/11): 7 ngày mở bán, trung bình 80.000đ/ngày. Kỳ này chưa có đơn nào → chỉ nêu số kỳ trước làm mốc, KHÔNG tính % tăng giảm.') && k0.includes('Kỳ chưa có đơn nào → CHƯA đủ để nói món nào không bán được'), k0);
+  const hn = L.formatFacts(L.parseFacts({ period: 'Hôm nay', revenue: 0, orders: 0, top: [], slow: [], from: '2026-11-09', to: '2026-11-09', prev_period: 'cùng giờ hôm qua', prev_revenue: 2_305_000, prev_orders: 27 })!, new Date('2026-11-09T12:00:00+07:00'), 'hôm nay so với hôm qua thế nào');
+  assert(hn.includes('NGÀY NÀY KHÔNG CÓ ĐƠN') && hn.includes('cùng giờ hôm qua: 2.305.000đ, 27 đơn') && !/GIẢM 100|[−-]100%/.test(hn), hn);
+  // kỳ có đơn, và kỳ ĐÃ QUA trọn mà 0 đơn (giảm 100% là số thật): giữ như cũ
+  assertStringIncludes(L.formatFacts(L.parseFacts({ period: 'Hôm nay', revenue: 1_000_000, orders: 10, top: [], slow: [], from: '2026-11-09', to: '2026-11-09', prev_period: 'cùng giờ hôm qua', prev_revenue: 2_000_000, prev_orders: 20 })!, new Date('2026-11-09T12:00:00+07:00'), 'hôm nay so với hôm qua thế nào'), 'GIẢM 50%');
+  assertStringIncludes(L.formatFacts(L.parseFacts({ period: 'Tháng trước (tháng 10)', revenue: 0, orders: 0, top: [], slow: [], from: '2026-10-01', to: '2026-10-31', prev_period: 'tháng 9', prev_revenue: 2_000_000, prev_orders: 20 })!, new Date('2026-11-09T12:00:00+07:00'), 'tháng trước so với tháng 9 thế nào'), 'GIẢM 100%');
   // 09/11 máy ảo: câu chỉ hỏi thời tiết không bị chen "tuần này chưa có đơn"
   assert(!L.formatFacts(f, new Date('2026-11-09T12:00:00+07:00'), 'ngay mai may gio thi de mua nhat?').includes('CHƯA CÓ ĐƠN'));
 });

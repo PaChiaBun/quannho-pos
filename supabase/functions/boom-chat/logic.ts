@@ -1561,6 +1561,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   // lần 217c (Demo 10/11: "viết bài đăng fb hôm nay" lúc chưa có đơn → chỉ báo "chưa có đơn", không viết bài): câu xin viết không áp hai luật này
   const xv = xinViet(question);
   const kyChayKhongDon = f.orders === 0 && /^(?:Tuần này|Tháng này)/.test(f.period.normalize('NFC')) && !chiHoiThoiTiet(question) && !xv;
+  // lần 262 (soi 21/11, sáng Thứ 2 "tuần này so với tuần trước"): kỳ đang chạy / một ngày chưa có đơn nào mà khối số vẫn in sẵn "GIẢM 100%" và
+  // bảng "GIẢM Ở ĐÂU … −100%", ngay dưới lời dặn không nói giảm 100% → kỳ chưa có đơn thì không tính % với kỳ trước, chỉ nêu số kỳ trước làm mốc
+  const chuaDon = f.orders === 0 && (motNgayKy || /^(?:Tuần này|Tháng này)/.test(f.period.normalize('NFC')));
   if (kyChayKhongDon && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
     lines.push(`KỲ NÀY CHƯA CÓ ĐƠN NÀO (tới giờ này): chỉ trả lời 1–2 câu: nói ${f.period} chưa có đơn nào tới giờ này, nêu số của kỳ so sánh nếu có (trung bình mỗi ngày), rồi hỏi quán đã mở bán chưa hay bán ngoài app. KHÔNG nói "giảm 100%", KHÔNG viết mục Vì sao, Việc tuần này, Cần xem lại; KHÔNG khuyên ẩn món, bỏ món hay nhập hàng vì "chưa bán".`);
   } else if (motNgayKy && f.orders === 0 && !chiHoiThoiTiet(question) && !xv && !['quyet_dinh', 'ke_hoach'].includes(loaiCau(question) ?? '')) {
@@ -1580,7 +1583,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       : `KỲ SO SÁNH KHÔNG CÓ ĐƠN (số thật từ sổ bán hàng, KHÔNG phải thiếu số liệu): ${kyZ} quán có 0 đơn, 0đ → nói đúng như vậy, KHÔNG nói "chưa có số / chưa có doanh thu kỳ trước"; KHÔNG tính % tăng giảm với kỳ 0đ.`) +
       (u ? ` TRỌN kỳ trước (${kg(u.from, u.to)}): ${vnd(u.revenue)} từ ${u.orders} đơn${u.days > 0 && u.first && u.last ? `, có đơn ${u.days} ngày (${kg(u.first, u.last)}), trung bình ${vnd(Math.round(u.revenue / u.days))}/ngày có đơn` : ''} → nêu số này để chủ quán có mốc; ${f.orders > 0 ? 'kỳ này chưa trọn và khác ngày nên CHỈ so theo trung bình ngày có đơn, nói rõ là so tạm, hết kỳ mới so trọn được' : 'kỳ này chưa có đơn nên CHƯA so được, chỉ nêu làm mốc'}.${nayN ? ` Kỳ này (tính sẵn, KHÔNG tự chia lại): ${vnd(nayT)} trong ${nayN} ngày có đơn đã trọn = ${vnd(Math.round(nayT / nayN))}/ngày có đơn.` : ''}` : ''));
   }
-  if (kyNgan && (f.groups ?? []).some((g) => g.unsold > 0)) lines.push(`Kỳ mới có ${nCoDon} ngày có đơn → CHƯA đủ để nói món nào không bán được: KHÔNG liệt kê món chưa bán, KHÔNG khuyên ẩn / bỏ món theo kỳ này.`);
+  if (kyNgan && (f.groups ?? []).some((g) => g.unsold > 0)) lines.push(`Kỳ ${f.orders > 0 ? `mới có ${nCoDon} ngày có đơn` : 'chưa có đơn nào'} → CHƯA đủ để nói món nào không bán được: KHÔNG liệt kê món chưa bán, KHÔNG khuyên ẩn / bỏ món theo kỳ này.`);
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
   const le = ngayLe(question, now);
   if (le) lines.push(le);
@@ -1618,11 +1621,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       f = { ...f, prev_revenue: quy(revGoc), prev_orders: f.prev_orders ? quy(f.prev_orders) : f.prev_orders, prev_by_hour: f.prev_by_hour?.map(quy) ?? f.prev_by_hour,
         groups: f.groups?.map((g) => (g.prev_revenue ? { ...g, prev_revenue: quy(g.prev_revenue) } : g)), moves: f.moves?.map((m) => ({ ...m, prev_qty: quy(m.prev_qty), prev_revenue: quy(m.prev_revenue) })) };
     }
-    const pct = f.prev_revenue! > 0 ? Math.round(((f.revenue - f.prev_revenue!) / f.prev_revenue!) * 1000) / 10 : null;
+    const pct = !chuaDon && f.prev_revenue! > 0 ? Math.round(((f.revenue - f.prev_revenue!) / f.prev_revenue!) * 1000) / 10 : null;
     const trend = pct === null ? '' : pct === 0 ? ' → KHÔNG ĐỔI' : ` → ${pct >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(pct))}%`;
     lines.push(khacNgay
       // không ghi tổng kỳ trước trừ khi hỏi đúng số đó: có tổng là mô hình tự trừ ra "giảm 3%" (đo 05/11)
-      ? `${f.prev_period}: ${/bao nhi[eê]u/i.test(question) ? `${vnd(revGoc)}${poGoc} trong ` : ''}${n0} ngày mở bán, trung bình ${vnd(revGoc / n0)}/ngày. Kỳ này ${n1} ngày, trung bình ${vnd(f.revenue / n1)}/ngày${trend} theo trung bình mỗi ngày. Hai kỳ khác số ngày nên KHÔNG so tổng; các số kỳ trước bên dưới đã quy về cùng ${n1} ngày.`
+      ? `${f.prev_period}: ${/bao nhi[eê]u/i.test(question) ? `${vnd(revGoc)}${poGoc} trong ` : ''}${n0} ngày mở bán, trung bình ${vnd(revGoc / n0)}/ngày. ${chuaDon ? 'Kỳ này chưa có đơn nào → chỉ nêu số kỳ trước làm mốc, KHÔNG tính % tăng giảm.' : `Kỳ này ${n1} ngày, trung bình ${vnd(f.revenue / n1)}/ngày${trend} theo trung bình mỗi ngày. Hai kỳ khác số ngày nên KHÔNG so tổng; các số kỳ trước bên dưới đã quy về cùng ${n1} ngày.`}`
       : `${f.prev_period}: ${vnd(revGoc)}${poGoc}${trend}.`);
     // lần 45: hỏi "món nào giảm nhiều nhất so tháng trước" → GPT bịa số món kỳ trước (D32), hỏi lại vẫn bịa số khác;
     // 45b: chỉ ghi khi câu hỏi so món với kỳ trước — ghi ở mọi câu làm phần việc làm dè dặt hơn (0,95 → 0,79)
@@ -1672,7 +1675,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       }
       lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.${vi}${viec}`);
     }
-    const ch = hoiVi ? changeLine(f, todayD) : '';
+    const ch = hoiVi && !chuaDon ? changeLine(f, todayD) : '';
     if (ch) lines.push(ch);
     const cn = caNgung(f);
     if (cn) {
@@ -1869,7 +1872,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     lines.push(`Cùng kỳ năm trước (${f.yoy.period}): ${vnd(f.yoy.revenue)}, ${f.yoy.orders} đơn${p === null ? '' : ` → năm nay ${p >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(p))}%`}.`);
   }
   // lần 53: "hôm nay chắc cả ngày được bao nhiêu" — GPT tự đặt ~3 triệu (D48); khối không có số cả ngày của ngày so sánh
-  if (duBao && /^hôm nay/i.test(f.period.normalize('NFC'))) lines.push(`Hôm nay CHƯA hết ngày; khối KHÔNG có số cả ngày của ngày so sánh (chỉ có cùng giờ) → KHÔNG tự đặt con số cả ngày. Trả lời: tới giờ được ${vnd(f.revenue)}${f.prev_revenue !== null ? `, so cùng giờ ${f.prev_period} ${f.prev_revenue >= f.revenue ? 'thấp hơn' : 'cao hơn'} ${pctTxt(Math.abs(((f.revenue - f.prev_revenue) / Math.max(1, f.prev_revenue)) * 100))}%` : ''}; cả ngày tuỳ các giờ còn lại quán còn mở (ca chiều / tối) → hỏi lại quán còn bán tới mấy giờ, hoặc xem Báo cáo cuối ngày.`);
+  if (duBao && /^hôm nay/i.test(f.period.normalize('NFC'))) lines.push(`Hôm nay CHƯA hết ngày; khối KHÔNG có số cả ngày của ngày so sánh (chỉ có cùng giờ) → KHÔNG tự đặt con số cả ngày. Trả lời: tới giờ được ${vnd(f.revenue)}${f.prev_revenue !== null && !chuaDon ? `, so cùng giờ ${f.prev_period} ${f.prev_revenue >= f.revenue ? 'thấp hơn' : 'cao hơn'} ${pctTxt(Math.abs(((f.revenue - f.prev_revenue) / Math.max(1, f.prev_revenue)) * 100))}%` : ''}; cả ngày tuỳ các giờ còn lại quán còn mở (ca chiều / tối) → hỏi lại quán còn bán tới mấy giờ, hoặc xem Báo cáo cuối ngày.`);
   if (!f.by_hour) lines.push('KHÔNG có số liệu theo giờ (đừng đoán khung giờ đông / vắng).');
   if (!f.by_weekday) lines.push('KHÔNG có số liệu theo thứ trong tuần (đừng đoán ngày đông / vắng).');
   const anyCost = (f.groups ?? []).some((g) => cacMon(g).some((t) => t.cost));

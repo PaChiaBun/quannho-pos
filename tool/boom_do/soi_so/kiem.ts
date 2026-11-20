@@ -157,6 +157,9 @@ export function kiem(cau: Cau, nhanKy: string, khoi: string, t: Thuc): string[] 
   // K22 (lần 261): hỏi bỏ món thì phải có dòng món ít phần nhất của mọi nhóm (không có thì Boom tự chọn, sót nhóm khác)
   if (/nên bỏ/.test(cau.q) && t.orders > 0 && !khoi.includes('Món bán ÍT PHẦN NHẤT')) loi.push('K22 bỏ món: câu hỏi bỏ món mà khối số không có dòng "Món bán ÍT PHẦN NHẤT"');
 
+  // K23 (lần 262): kỳ chưa có đơn nào mà khối số vẫn in sẵn "giảm 100%" (mâu thuẫn với lời dặn không nói giảm 100%)
+  if (/KỲ NÀY CHƯA CÓ ĐƠN NÀO|NGÀY NÀY KHÔNG CÓ ĐƠN/.test(khoi) && /GIẢM 100%|[−-]100%\)/.test(khoi)) loi.push('K23 chưa có đơn: khối ghi kỳ này chưa có đơn mà vẫn in sẵn "giảm 100%"');
+
   // K21: khối ghi quán chưa có giá vốn món nào mà vẫn có dòng kết luận theo giá vốn (quán D 19/11: tiệm dịch vụ, 0 món có giá vốn)
   if (/Chưa có giá vốn món/.test(khoi) && /giá vốn trên \d+% giá bán/.test(khoi)) loi.push('K21 giá vốn: khối ghi chưa có giá vốn món nào mà vẫn có dòng "giá vốn trên …% giá bán"');
   return loi;
