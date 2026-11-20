@@ -1,6 +1,6 @@
 # Kế hoạch tinh chỉnh AI Boom sau khi thử trên quán thật (lập 18/11/2026)
 
-**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) đã sửa trong mã CHƯA áp; đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
+**Trạng thái:** Giai đoạn 1 XONG 18/11. Giai đoạn 2: đã soi đủ 6 quán thật, ra 10 lỗi mới (bảng ở mục 7). Lô 1 (B1, B2, B3, B5, B7, B9) ĐÃ ÁP production 18/11 16:48 (lần 255, TS `20261118_164850`). Lô 2 (B4, B6, B8, B10, giờ lẻ tẻ còn sót) ĐÃ ÁP production 19/11 11:36 (lần 256, TS `20261119_113621`). Giai đoạn 2 xong phần soi và sửa. **Giai đoạn 3 như thiết kế KHÔNG chạy (19/11):** bộ kín không đo được các lần sửa này (xem mục 7); cách đo thay thế 3b Chủ Quán quyết không đo. Giai đoạn 5 xong 19/11 (lần 257 ĐÃ ÁP 16:54, phần app chưa phát hành). **Giai đoạn 4 (19/11):** đã đo 6 quán, lần 258 ĐÃ ÁP máy chủ 20/11 13:40 (mốc hoàn tác `20261120_134013`); lần 259 (giá vốn theo công thức, làm ở máy chủ, commit `b84a161`) ĐÃ ÁP máy chủ 20/11 14:13 (mốc hoàn tác `20261120_141333`); đề xuất app 2 và 3 chờ Chủ Quán quyết (mục 7). Còn tồn: "món nào nên bỏ" sót nhóm khác; câu gõ không dấu bị hiểu ngược; kỳ so sánh 0 đơn khi kỳ này cũng chưa có đơn.
 
 Bản đang chạy khi lập: Boom máy chủ lần 254 (commit `8dddfe6`, TS `20261118_161027`); câu tư vấn dùng `gpt-6-sol`, hướng dẫn dùng `gpt-6-luna`; hạn mức mỗi quán 1,5 USD / ngày, 3 USD / tháng, cả hệ thống 10 USD / tháng.
 
@@ -221,7 +221,7 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 2. **Màn nhập nhanh giá vốn**: một màn liệt kê các món doanh thu cao nhất còn thiếu giá vốn, mỗi món một ô, lưu một lần; mở được từ câu trả lời của Boom. Hiện phải vào Kho hàng → Thao tác trên món → Sửa thông tin món → ô Giá vốn, từng món một. Lợi cho 5 / 6 quán đã đo.
 3. **Lời nhắc ghi chi**: 5 / 7 quán không ghi phiếu chi nào trong 30 ngày. Nhắc lúc đóng ca hoặc đầu tháng (tiền mặt bằng, lương, nguyên liệu). Lợi lớn nhất nhưng đòi chủ quán đổi thói quen, nên xếp sau.
 
-### 20/11 — Lần 259: giá vốn theo công thức (đã sửa trong mã, CHƯA áp)
+### 20/11 — Lần 259: giá vốn theo công thức (ĐÃ ÁP máy chủ 20/11 14:13)
 
 **Chỗ sửa.** Đọc mã thì thấy không cần phát hành app: từ 08/11 app và web đều hỏi qua máy chủ (`kBoomServerRoute = true`), giá vốn món cho Boom chỉ tính ở một chỗ là `ban_hang.ts` (`doMon`). App vốn đã hiện "Giá vốn/phần" ở màn công thức; thứ duy nhất chưa đọc số đó là Boom. Nên sửa ở mã Boom trên máy chủ (commit `b84a161`), không đổi cơ sở dữ liệu, không ghi gì vào món.
 
@@ -247,3 +247,5 @@ Cùng cách làm: thêm phép kiểm trước (K16 loại hình quán, K17 "bấ
 - Báo cáo của app vẫn tính lãi gộp theo giá vốn ghi trên dòng đơn; giá vốn công thức chỉ đến Boom.
 - Bản app cũ đi đường hỏi cũ (app tự gom số) không có giá vốn công thức.
 - Chưa hỏi mô hình trên bản này; chưa đọc được bảng công thức bằng vé của người dùng thật (mới kiểm bằng kết nối nội bộ và lượt đọc 0 dòng).
+
+**ĐÃ ÁP máy chủ 20/11 14:13** (Chủ Quán bảo "Áp lên"), mốc hoàn tác `20261120_141333` (`ROLLBACK=1 bash db-fix/boom_l259_ap_dung.sh 20261120_141333`, trả cả `ban_hang.ts` và `logic.ts` về bản 258). Kiểm sau áp: hai tệp trên máy chủ khớp bản mới, hàm trả 401 khi không có vé, container không tự khởi động lại, log không lỗi, `boom_changelog` có dòng "lần 259". Lúc kiểm chưa có lượt hỏi thật nào đi qua bản này, nên lượt đọc công thức bằng vé người dùng thật vẫn chưa được thấy chạy.
