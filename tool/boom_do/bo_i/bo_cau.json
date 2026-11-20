@@ -1,0 +1,781 @@
+{
+ "note": "Bộ I – câu có mốc thời gian và xin phân tích theo số của quán; hôm nay 27/10/2026 (thứ Ba)",
+ "cases": [
+  {
+   "q": "hnay quán bán đc bao nhiêu tiền rồi e",
+   "loai": "SO_LIEU",
+   "ky": "today",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hom nay co bao nhieu don roi",
+   "loai": "SO_LIEU",
+   "ky": "today",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hôm qua doanh thu nhiêu vậy",
+   "loai": "SO_LIEU",
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "qua ban duoc may ly tra sua the",
+   "loai": "SO_LIEU",
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần này tới giờ thu đc bao nhiu",
+   "loai": "SO_LIEU",
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuan nay mon nao ban chay nhat",
+   "loai": "SO_LIEU",
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần rồi quán thu bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuan truoc chi phi het bao nhieu",
+   "loai": "SO_LIEU",
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần trc có bn đơn bị huỷ",
+   "loai": "SO_LIEU",
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng này lãi hay lỗ đó",
+   "loai": "SO_LIEU",
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thang nay tong chi bao nhieu roi",
+   "loai": "SO_LIEU",
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng trước doanh thu tổng là nhiu",
+   "loai": "SO_LIEU",
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 9 quán lời đc bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thang truoc mon nao ban e nhat",
+   "loai": "SO_LIEU",
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "7 ngày qua bán đc bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "days:7",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "10 ngay gan day doanh thu sao",
+   "loai": "SO_LIEU",
+   "ky": "days:10",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "14 ngày vừa rồi có bao nhiêu đơn",
+   "loai": "SO_LIEU",
+   "ky": "days:14",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "2 tuần qua món nào bán chạy",
+   "loai": "SO_LIEU",
+   "ky": "days:14",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "30 ngay qua mon nao ban e",
+   "loai": "SO_LIEU",
+   "ky": "days:30",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "3 tuần nay chi phí điện nước hết bn",
+   "loai": "SO_LIEU",
+   "ky": "days:21",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "45 ngày qua TB mỗi đơn bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "ky": "days:45",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "3 tháng nay doanh thu tổng bn",
+   "loai": "SO_LIEU",
+   "ky": "days:90",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 8 bán đc nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "month:2026-8",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thang 7 lai lo the nao",
+   "loai": "SO_LIEU",
+   "ky": "month:2026-7",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 6 có bao nhiu đơn vậy e",
+   "loai": "SO_LIEU",
+   "ky": "month:2026-6",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 12 năm rồi doanh thu bao nhiêu, tết bán đc ko",
+   "loai": "SO_LIEU",
+   "ky": "month:2025-12",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 3 top 5 món bán chạy là món gì",
+   "loai": "SO_LIEU",
+   "ky": "month:2026-3",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quý 3 quán thu đc bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quy nay doanh thu toi dau roi",
+   "loai": "SO_LIEU",
+   "ky": "quarter:2026-4",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quý 2 chi phí tổng hết bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "quarter:2026-2",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quý 1 bán đc mấy đơn",
+   "loai": "SO_LIEU",
+   "ky": "quarter:2026-1",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "năm nay quán thu tổng bao nhiêu rồi",
+   "loai": "SO_LIEU",
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tu dau nam toi gio lai bao nhieu",
+   "loai": "SO_LIEU",
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "năm ngoái doanh thu cả năm là nhiu",
+   "loai": "SO_LIEU",
+   "ky": "year:2025",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "năm 2025 món nào bán chạy nhất",
+   "loai": "SO_LIEU",
+   "ky": "year:2025",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hôm kia bán đc bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thu 7 tuan truoc doanh thu bn",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "ngày 20/10 quán bán đc nhiu tiền",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "cuối tuần rồi đông ko, thu bn",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "buổi sáng nay bán đc mấy ly",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần trước nữa doanh thu sao e",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thang 5 nam ngoai ban duoc bao nhieu",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "từ 1/10 đến 15/10 doanh thu bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "doanh thu quán mình nhiêu rồi",
+   "loai": "SO_LIEU",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "mon nao ban chay nhat quan minh",
+   "loai": "SO_LIEU",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "lương nhân viên phải trả bao nhiêu",
+   "loai": "SO_LIEU",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quán đang lời hay lỗ vậy",
+   "loai": "SO_LIEU",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "còn món nào bán ế ko e",
+   "loai": "SO_LIEU",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "dựa trên số tháng 9 đề xuất giúp a nên tăng giá món nào",
+   "loai": "TU_VAN_SO",
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quy 3 ban te qua, phan tich gium chi xem sao",
+   "loai": "TU_VAN_SO",
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "mon e 30 ngay qua nen bo mon nao",
+   "loai": "TU_VAN_SO",
+   "ky": "days:30",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần này so tuần trước sao giảm vậy, phân tích dùm",
+   "loai": "TU_VAN_SO",
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng này chi phí cao quá, xem khoản nào nên cắt",
+   "loai": "TU_VAN_SO",
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hôm qua doanh thu thấp bất thường, tại sao vậy e",
+   "loai": "TU_VAN_SO",
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "nhìn số 7 ngày qua thì giờ nào nên thêm người",
+   "loai": "TU_VAN_SO",
+   "ky": "days:7",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "thang 8 voi thang 7 thang nao lai hon, vi sao",
+   "loai": "TU_VAN_SO",
+   "ky": "month:2026-8",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "năm nay bán vậy có ổn ko, nhận xét giùm",
+   "loai": "TU_VAN_SO",
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "2 tuần qua món nào nên đẩy khuyến mãi",
+   "loai": "TU_VAN_SO",
+   "ky": "days:14",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quý này so quý trước đang tăng hay giảm, đánh giá giúp",
+   "loai": "TU_VAN_SO",
+   "ky": "quarter:2026-4",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "dua vao so thang truoc thi thang toi nen nhap bao nhieu tra",
+   "loai": "TU_VAN_SO",
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hôm nay vắng quá, xem số rồi gợi ý cách kéo khách buổi tối",
+   "loai": "TU_VAN_SO",
+   "ky": "today",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tuần trước lương NV chiếm bao nhiêu % doanh thu, có cao ko",
+   "loai": "TU_VAN_SO",
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "3 tháng nay món nào lời nhất nên đẩy mạnh",
+   "loai": "TU_VAN_SO",
+   "ky": "days:90",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "năm ngoái tháng nào bán tốt nhất, năm nay nên chuẩn bị gì",
+   "loai": "TU_VAN_SO",
+   "ky": "year:2025",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 6 bán ế, phân tích nguyên nhân giúp",
+   "loai": "TU_VAN_SO",
+   "ky": "month:2026-6",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hôm kia bán tệ quá, phân tích giùm",
+   "loai": "TU_VAN_SO",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quan minh dang lam an the nao, danh gia tong quat giup",
+   "loai": "TU_VAN_SO",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "60 ngày qua tiền huỷ món nhiều ko, có đáng lo ko",
+   "loai": "TU_VAN_SO",
+   "ky": "days:60",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "xem báo cáo quý 3 ở đâu vậy e",
+   "loai": "HUONG_DAN",
+   "ky": "quarter:2026-3",
+   "expect": [
+    "bao-cao#man-hinh-gom-nhung-gi"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "xuat excel so thu chi thang 7 cho ke toan sao",
+   "loai": "HUONG_DAN",
+   "ky": "month:2026-7",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "sửa giờ chấm công 3 ngày trước nv quên chốt ca làm sao",
+   "loai": "HUONG_DAN",
+   "ky": "days:3",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "muốn coi doanh thu tuần trước thì bấm chỗ nào",
+   "loai": "HUONG_DAN",
+   "ky": "last_week",
+   "expect": [
+    "bao-cao#man-hinh-gom-nhung-gi",
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "in báo cáo doanh thu tháng 9 ra giấy sao e",
+   "loai": "HUONG_DAN",
+   "ky": "last_month",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "tìm lại bill hôm qua để in lại ở đâu",
+   "loai": "HUONG_DAN",
+   "ky": "yesterday",
+   "expect": [
+    "bao-cao#tung-tab-hoa-don",
+    "bao-cao#loi-khong-tim-thay-bill-cu-o-tab-hoa-don"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "tim bill ngay 15/10 ko thay dau het",
+   "loai": "HUONG_DAN",
+   "ky": "unsupported",
+   "expect": [
+    "bao-cao#loi-khong-tim-thay-bill-cu-o-tab-hoa-don",
+    "bao-cao#tung-tab-hoa-don"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "thu chi coi 7 ngay qua chon o dau",
+   "loai": "HUONG_DAN",
+   "ky": "days:7",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-2-xem-theo-khoang-thoi-gian"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "sao báo cáo tháng này lợi nhuận khác với thu chi vậy",
+   "loai": "HUONG_DAN",
+   "ky": "this_month",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi",
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng trước lợi nhuận thấp hơn thực tế, sửa sao",
+   "loai": "HUONG_DAN",
+   "ky": "last_month",
+   "expect": [
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te",
+    "luong#loi-so-thu-chi-khong-co-khoan-luong"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "tạo kỳ lương tháng 10 cho nv thế nào",
+   "loai": "HUONG_DAN",
+   "ky": "this_month",
+   "expect": [
+    "luong#cac-viec-thuong-lam-2-tao-ky-luong"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "xem bao cao luong thang truoc o dau",
+   "loai": "HUONG_DAN",
+   "ky": "last_month",
+   "expect": [
+    "luong#cac-viec-thuong-lam-7-bao-cao-luong"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "coi tuần này ai đi trễ mấy lần ở đâu",
+   "loai": "HUONG_DAN",
+   "ky": "this_week",
+   "expect": [
+    "bao-cao#tung-tab-nhan-vien"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "muốn xem tuần trước bếp huỷ món nhiu tiền thì vô đâu",
+   "loai": "HUONG_DAN",
+   "ky": "last_week",
+   "expect": [
+    "bao-cao#tung-tab-huy-duyet"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "xem voucher tháng này dùng bao nhiêu lần chỗ nào",
+   "loai": "HUONG_DAN",
+   "ky": "this_month",
+   "expect": [
+    "bao-cao#tung-tab-voucher"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "bao cao hom nay hien chua co giao dich ma minh ban roi",
+   "loai": "HUONG_DAN",
+   "ky": "today",
+   "expect": [
+    "bao-cao#loi-chua-co-giao-dich-hom-nay-chua-co-doanh-thu-ky-nay"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "xem báo cáo chuỗi 2 quán tháng trước kiểu gì",
+   "loai": "HUONG_DAN",
+   "ky": "last_month",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-3-doc-bao-cao"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "ghi tiền điện tháng 9 vô app sao e",
+   "loai": "HUONG_DAN",
+   "ky": "last_month",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "tab kho báo cáo nhập hàng tháng này ko hiện",
+   "loai": "HUONG_DAN",
+   "ky": "this_month",
+   "expect": [
+    "bao-cao#loi-module-kho-dang-tat",
+    "bao-cao#tung-tab-kho"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "coi lại nhật ký log hôm qua có ai xoá đơn ko",
+   "loai": "HUONG_DAN",
+   "ky": "yesterday",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "duyệt tăng ca tuần trước cho nv ở đâu",
+   "loai": "HUONG_DAN",
+   "ky": "last_week",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-5-duyet-tang-ca-ot"
+   ],
+   "nhom": "I"
+  },
+  {
+   "q": "quý 4 nộp thuế khoán khi nào vậy",
+   "loai": "TU_VAN",
+   "ky": "quarter:2026-4",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 12 nên chạy khuyến mãi gì cho quán trà sữa",
+   "loai": "TU_VAN",
+   "ky": "month:2025-12",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tết năm nay nên nghỉ mấy ngày",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "nghi tet nhan vien di lam co phai tra luong gap 3 ko",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tháng 11 trời lạnh nên thêm món nóng gì",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "hộ kinh doanh doanh thu 1 năm bao nhiêu thì phải đóng thuế",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "20/11 nên làm chương trình gì cho thầy cô",
+   "loai": "TU_VAN",
+   "ky": "unsupported",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "cuoi nam nen thuong tet nv bao nhieu thi hop ly",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "noel nên trang trí quán từ ngày nào",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "quán mới mở 3 tháng đầu nên tập trung vào gì",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "làm 6 ngày 1 tuần thì nv được nghỉ phép năm mấy ngày",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "mùa mưa tháng 10 khách vắng, nên làm gì",
+   "loai": "TU_VAN",
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "tăng giá vào tháng 1 có nên ko hay đợi sau tết",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "bao lâu nên kiểm kho 1 lần, mỗi tuần hay mỗi tháng",
+   "loai": "TU_VAN",
+   "ky": "none",
+   "expect": [],
+   "nhom": "I"
+  },
+  {
+   "q": "nộp thuế quý 3 trễ hạn bị phạt sao",
+   "loai": "TU_VAN",
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "I"
+  }
+ ]
+}

@@ -1,0 +1,212 @@
+[
+ {
+  "id": "J01",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "thu_yeu",
+  "q": "Thứ Tư nào cũng vắng hoe, hôm nay cũng vậy, sao kỳ vậy em"
+ },
+ {
+  "id": "J02",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "thu_yeu",
+  "q": "dau tuan t2 t3 vang qua, co nen mo tre hay dong som ko"
+ },
+ {
+  "id": "J03",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "thu_yeu",
+  "q": "Thứ bảy bán có chút xíu, chị nghỉ luôn thứ bảy được không?"
+ },
+ {
+  "id": "J04",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "thu_yeu",
+  "q": "Trong tuần ngày nào quán yếu nhất? Tính làm ưu đãi riêng ngày đó"
+ },
+ {
+  "id": "J05",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "thu_yeu",
+  "q": "thu 4 cho nguoi lam nghi luon co duoc ko em"
+ },
+ {
+  "id": "J06",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "thu_yeu",
+  "q": "Muốn chạy ưu đãi thứ Hai cho tụi học sinh, có đáng không hay phí tiền"
+ },
+ {
+  "id": "J07",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "ma_giam",
+  "q": "Mã SANGVUI chạy cả tháng rồi, có lời gì không hay chỉ mất tiền?"
+ },
+ {
+  "id": "J08",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "ma_giam",
+  "q": "Hai mã GIAM15 với HSSV10, cái nào nên tắt bớt?"
+ },
+ {
+  "id": "J09",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "ma_giam",
+  "q": "ma TRUAVUI giam 5k co ai xai ko, giu hay bo"
+ },
+ {
+  "id": "J10",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "ma_giam",
+  "q": "Mã giao hàng 10% thấy khách dùng hoài mà doanh thu tháng này vẫn thấp hơn tháng trước, là sao?"
+ },
+ {
+  "id": "J11",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "ma_giam",
+  "q": "Khách xài mã quá trời mà số đơn vẫn tụt, em coi giùm chị"
+ },
+ {
+  "id": "J12",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "ma_giam",
+  "q": "Tháng này giảm giá cho khách hết bao nhiêu rồi, đáng không?"
+ },
+ {
+  "id": "J13",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "mon_cham",
+  "q": "Món nào bán ế nhất quán chị?"
+ },
+ {
+  "id": "J14",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "mon_cham",
+  "q": "đồ ăn vặt nhiều món ko ai mua, bỏ bớt món nào đây"
+ },
+ {
+  "id": "J15",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "mon_cham",
+  "q": "Cơm cá kho với cơm chiên có nên gạch đi không em"
+ },
+ {
+  "id": "J16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "mon_cham",
+  "q": "mon nao nen day manh them thang toi"
+ },
+ {
+  "id": "J17",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "mon_cham",
+  "q": "Topping nào bán chậm, cắt được không?"
+ },
+ {
+  "id": "J18",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "mon_cham",
+  "q": "Món nào chậm mà còn cứu được, món nào nên bỏ khỏi thực đơn?"
+ },
+ {
+  "id": "J19",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "bang_gia",
+  "q": "Làm giúp anh cái bảng giá để in dán trước xe, có cả combo sáng"
+ },
+ {
+  "id": "J20",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "bang_gia",
+  "q": "Viết bài đăng fb có giá mấy món bán chạy nha"
+ },
+ {
+  "id": "J21",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "bang_gia",
+  "q": "Soạn menu treo tường, chia món chính, đồ uống, món thêm cho dễ nhìn"
+ },
+ {
+  "id": "J22",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "bang_gia",
+  "q": "lam bang gia com tam de in kho A4 dan quay"
+ },
+ {
+  "id": "J23",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "bang_gia",
+  "q": "Viết bài giới thiệu combo sáng kèm giá để đăng nhóm zalo văn phòng"
+ },
+ {
+  "id": "J24",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "bang_gia",
+  "q": "Soạn bài đăng các món sườn có giá, nhắc luôn mã giao hàng"
+ },
+ {
+  "id": "J25",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khach",
+  "q": "Quán có bao nhiêu khách quen vậy?"
+ },
+ {
+  "id": "J26",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "khach moi thang nay dc bao nhieu, giu chan sao"
+ },
+ {
+  "id": "J27",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "khach",
+  "q": "Mấy anh công trình ăn hoài, quán chưa có tích điểm, giữ họ quay lại bằng cách nào?"
+ },
+ {
+  "id": "J28",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "Khách mới có mà ít người quay lại, tính sao giờ"
+ },
+ {
+  "id": "J29",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "Nạp ví có ai nạp không? Có nên đẩy nạp ví tặng thêm tiền không"
+ },
+ {
+  "id": "J30",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "tich diem co tac dung gi ko hay bo cho do"
+ }
+]

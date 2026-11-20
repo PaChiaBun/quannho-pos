@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nói 0,55 phần/đơn 'thấp hơn mong đợi', không chỉ ra trà đá 3.000đ chiếm phần lớn ly và món chưa bán; chỉ 1 việc."
+  },
+  {
+   "id": "D54_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không đặt mốc đo (0,45 phần/đơn) và không nhắc trân châu trắng chưa bán."
+  },
+  {
+   "id": "D54_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, lý lẽ 'có thể giúp tăng' chung chung, không có mốc đo cụ thể."
+  },
+  {
+   "id": "D10_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không chỉ ra trà đá 3.000đ chiếm 900/1.340 ly; 'thấp hơn mong đợi' không có mốc so."
+  },
+  {
+   "id": "D54_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu mốc đo mục tiêu (0,45 phần/đơn) và chưa nhắc ẩn trân châu trắng."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ 1 việc, không có mốc đo mục tiêu, lý lẽ chung chung."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu nhắc ẩn trân châu trắng chưa bán; còn lại tốt."
+  },
+  {
+   "id": "D10_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nhắc 2 món chưa bán, chỉ 1 việc, không mốc đo."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "'Thấp hơn mong đợi' không có mốc; bỏ sót trà đá áp đảo và món chưa bán; chỉ 1 việc."
+  },
+  {
+   "id": "D54_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không gọi tên trân châu trắng dù số liệu có sẵn; lý lẽ lặp lại số chứ không giải thích."
+  },
+  {
+   "id": "D10_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do 'khách chủ yếu chọn món chính' chung chung, không chỉ ra trà đá 3.000đ và món chưa bán."
+  },
+  {
+   "id": "D10_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Viết như thể đồ uống 'bán chạy' nhờ trà đá 900 phần (điều cần tránh), lý lẽ chung chung, hơi dài."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đổ lỗi đồ uống bán ít cho 2 món chưa bán (sai nhân quả), combo giảm giá kèm trà đá 3.000đ yếu."
+  },
+  {
+   "id": "D54_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lan sang ăn vặt/mạng xã hội, không chỉ ra vấn đề topping 0,35 phần/đơn, việc làm chung chung."
+  },
+  {
+   "id": "D54_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất dàn trải (tích điểm, mua 2 tặng 1 ăn vặt) lệch khỏi topping, thiếu số liệu chứng minh."
+  },
+  {
+   "id": "D10_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đổ lỗi cho 2 món chưa bán (sai nhân quả), khuyến mãi trà đá 3.000đ vô nghĩa."
+  },
+  {
+   "id": "D54_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi combo khoai tây chiên là 'Trà sữa + Topping' (lẫn lộn), lệch sang mạng xã hội, không nêu vấn đề topping."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa giá 'topping chỉ 5.000đ', lệch sang ăn vặt, số topping 4,2% để cuối."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất tặng topping miễn phí/giảm món thứ hai (điều cần tránh), không dùng số liệu topping."
+  },
+  {
+   "id": "D10_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu Sữa đậu nành (sót Nước cam) và coi đó là nguyên nhân bán ít; khuyến mãi trà đá chung chung."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Coi 2 món chưa bán là nguyên nhân, 'quảng bá Nước sâm và Trà đá' chung chung, không chỉ ra trà đá giá 3.000đ kéo thấp tỷ trọng."
+  },
+  {
+   "id": "D54_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất tặng topping miễn phí, mua 1 tặng 1 (điều cần tránh), việc làm không có giá/mốc."
+  },
+  {
+   "id": "D10_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu Sữa đậu nành (sót Nước cam) và coi là nguyên nhân chính; 'đẩy món' không nói cách làm."
+  },
+  {
+   "id": "D10_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyến mãi giảm giá Nước sâm làm mỏng lời, không nêu trà đá 3.000đ là lý do tiền thấp."
+  }
+ ]
+}

@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu 7h, 8h là giờ giảm nhiều nhất nên việc nhắm 7h–8h thiếu lý do; thiếu mốc giữ/bỏ 1.794.000đ/ngày."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc mời Món thêm không nêu món cụ thể (trứng, chả, thịt thêm) và bỏ qua Đồ uống giảm 23%."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu 7h, 8h là giờ giảm nhiều nhất nên việc làm thiếu lý do; thiếu mốc giữ/bỏ 1.794.000đ/ngày."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc mời Món thêm không nêu món cụ thể và không có việc cho giờ trưa 11h–12h giảm mạnh nhất."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới có 3/7 ngày, dễ hiểu nhầm so cả tuần; việc nhắm 7h–8h thiếu số giờ giảm và mốc giữ/bỏ."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới có 3/7 ngày; việc mời Món thêm không nêu món cụ thể (trứng, chả, thịt thêm)."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới có 3/7 ngày; việc nhắm 7h–8h không nêu số giờ đó giảm và mốc giữ/bỏ."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới có 3/7 ngày; việc mời Món thêm không nêu món cụ thể."
+  }
+ ]
+}

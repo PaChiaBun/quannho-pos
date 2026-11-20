@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import '../utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE REPOSITORY — Supabase app_settings là nguồn sự thật duy nhất
@@ -13,29 +14,111 @@ import '../services/store_auth_service.dart';
 // ─── Danh sách tất cả modules — ID phải khớp với kModuleConfigs ───────────
 const _kAllModules = [
   ModuleConfig(id: 'pos',           label: 'Bán hàng',          icon: '🛒', position: 0,  isActive: true),
-  ModuleConfig(id: 'table',         label: 'Quản lý Bàn',        icon: '🪑', position: 1,  isActive: false),
-  ModuleConfig(id: 'kitchen',       label: 'Bếp',                icon: '🔥', position: 2,  isActive: false),
-  ModuleConfig(id: 'bill_printer',  label: 'In Hoá Đơn',         icon: '🖨️', position: 3,  isActive: false),
-  ModuleConfig(id: 'kho',           label: 'Kho hàng',           icon: '📦', position: 4,  isActive: false),
-  ModuleConfig(id: 'kho_pro',       label: 'Kho Chuyên Nghiệp',  icon: '🍽️', position: 5,  isActive: false),
-  ModuleConfig(id: 'finance',       label: 'Thu Chi',            icon: '💰', position: 6,  isActive: false),
-  ModuleConfig(id: 'loyalty',       label: 'Khách hàng',         icon: '🏆', position: 7,  isActive: false),
-  ModuleConfig(id: 'staff',         label: 'Nhân viên',          icon: '👥', position: 8,  isActive: false),
-  ModuleConfig(id: 'report',        label: 'Báo cáo',            icon: '📊', position: 9,  isActive: false),
-  ModuleConfig(id: 'chamcong',      label: 'Chấm công',          icon: '🖐️', position: 10, isActive: true),
-  ModuleConfig(id: 'tinhluong',     label: 'Lương',              icon: '💵', position: 11, isActive: true),
+  ModuleConfig(id: 'report',        label: 'Báo cáo',            icon: '📊', position: 1,  isActive: true),
+  ModuleConfig(id: 'finance',       label: 'Thu Chi',            icon: '💰', position: 2,  isActive: true),
+  ModuleConfig(id: 'kho',           label: 'Kho hàng',           icon: '📦', position: 3,  isActive: true),
+  ModuleConfig(id: 'table',         label: 'Quản lý Bàn',        icon: '🪑', position: 4,  isActive: false),
+  ModuleConfig(id: 'kitchen',       label: 'Bếp',                icon: '🔥', position: 5,  isActive: false),
+  ModuleConfig(id: 'bill_printer',  label: 'In Hoá Đơn',         icon: '🖨️', position: 6,  isActive: false),
+  ModuleConfig(id: 'kho_pro',       label: 'Kho Chuyên Nghiệp',  icon: '🍽️', position: 7,  isActive: false),
+  ModuleConfig(id: 'loyalty',       label: 'Khách hàng',         icon: '🏆', position: 8,  isActive: false),
+  ModuleConfig(id: 'staff',         label: 'Nhân viên',          icon: '👥', position: 9,  isActive: false),
+  ModuleConfig(id: 'chamcong',      label: 'Chấm công',          icon: '🖐️', position: 10, isActive: false),
+  ModuleConfig(id: 'tinhluong',     label: 'Lương',              icon: '💵', position: 11, isActive: false),
   ModuleConfig(id: 'kay_ops',       label: 'Vận Hành',           icon: '📋', position: 12, isActive: false),
-  ModuleConfig(id: 'log_viewer',    label: 'Nhật Ký Log',        icon: '📝', position: 14, isActive: true),
-  ModuleConfig(id: 'qr_order',      label: 'QR Gọi Món',         icon: '📱', position: 15, isActive: true),
+  ModuleConfig(id: 'log_viewer',    label: 'Nhật Ký Log',        icon: '📝', position: 13, isActive: false),
+  ModuleConfig(id: 'qr_order',      label: 'QR Gọi Món',         icon: '📱', position: 14, isActive: false),
+  ModuleConfig(id: 'chain',         label: 'Báo cáo chuỗi',      icon: '🏬', position: 15, isActive: false),
 ];
 
 // Key mới — tránh xung đột với legacy SharedPrefs key cũ
 const _kSupabaseKey  = 'module_config_v2';
 const _kLegacyPrefsKey = 'module_configs_v1'; // key cũ để migrate
+const _kLastGoodPrefix = 'module_config_last_good_v1_';
+
+/// Chờ bao lâu trước lần đọc lại thứ [attempt] (từ 0) khi chưa đọc được cấu hình module.
+Duration moduleRetryDelay(int attempt) {
+  const seconds = [3, 5, 10, 20];
+  return Duration(seconds: attempt < seconds.length ? seconds[attempt] : 30);
+}
+
+/// Kết quả nạp danh sách module từ máy chủ: phân biệt "chưa có dòng" với "lỗi/không đọc được".
+class ActiveIdsFetch {
+  const ActiveIdsFetch({this.ids, required this.ok});
+  final List<String>? ids; // null = không có dòng cấu hình
+  final bool ok; // false = lỗi mạng/quyền khi đọc
+}
+
+/// Gộp thứ tự do màn hình gửi lên với danh sách đang có trên máy chủ.
+///
+/// Màn "Sửa → Xong" chỉ để SẮP XẾP; việc bật/tắt module đi qua activate/deactivate riêng.
+/// Trước đây `updatePositions` ghi thẳng danh sách trên màn hình lên máy chủ mà không đọc lại,
+/// nên một màn hình đang giữ danh sách thiếu (vd. sau lúc mạng lỗi chỉ còn 4 module mặc định)
+/// sẽ làm mất Bếp/Bàn/In hóa đơn của cả quán. Nay: không bao giờ làm mất module đang bật trên
+/// máy chủ; id lạ (không còn trên máy chủ) bị bỏ.
+List<String> mergeModuleOrder(List<String> serverIds, List<String> uiOrder) {
+  final serverSet = serverIds.toSet();
+  final merged = <String>[];
+  for (final id in uiOrder) {
+    if (serverSet.contains(id) && !merged.contains(id)) merged.add(id);
+  }
+  for (final id in serverIds) {
+    if (!merged.contains(id)) merged.add(id);
+  }
+  return merged;
+}
+
+/// Header `Authorization: Bearer <jwt>` có phải JWT role `authenticated` còn hạn không.
+bool jwtIsAuthenticated(String? authorizationHeader, {DateTime? now}) {
+  try {
+    if (authorizationHeader == null) return false;
+    final parts = authorizationHeader.replaceFirst('Bearer ', '').split('.');
+    if (parts.length != 3) return false;
+    final payload = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+    ) as Map<String, dynamic>;
+    if (payload['role'] != 'authenticated') return false;
+    final exp = payload['exp'];
+    if (exp is num) {
+      final expiry = DateTime.fromMillisecondsSinceEpoch((exp * 1000).toInt(), isUtc: true);
+      if (!expiry.isAfter((now ?? DateTime.now()).toUtc())) return false;
+    }
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
 class ModuleRepository {
+  /// Danh sách tốt gần nhất theo quán: dùng khi đọc lỗi/anon để không rơi về mặc định.
+  static final Map<String, List<String>> _lastGoodIds = {};
   static SupabaseClient get _sb => Supabase.instance.client;
+  /// Đọc lỗi liên tiếp chỉ ghi log một lần cho mỗi quán (app tự đọc lại mỗi vài giây).
+  static final Set<String> _warnedStores = {};
   final _uuid = const Uuid();
+
+  /// Lưu xuống máy: mở app lúc mất mạng vẫn có đúng module của quán, không rơi về mặc định
+  /// (KAY 06/11: mặc định tắt Bếp nên bàn C 4 không gửi bếp được).
+  @visibleForTesting
+  static Future<void> saveLastGoodIds(String storeId, List<String> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('$_kLastGoodPrefix$storeId', ids);
+    } catch (e) {
+      debugPrint('[ModuleRepo] saveLastGoodIds error: $e');
+    }
+  }
+
+  @visibleForTesting
+  static Future<List<String>?> readLastGoodIds(String storeId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getStringList('$_kLastGoodPrefix$storeId');
+    } catch (e) {
+      debugPrint('[ModuleRepo] readLastGoodIds error: $e');
+      return null;
+    }
+  }
 
   Future<String?> _storeId() async {
     final info = await StoreAuthService.getStoreInfo();
@@ -43,7 +126,7 @@ class ModuleRepository {
   }
 
   // ── Đọc danh sách module ID đang active (có thứ tự) từ Supabase ──────────
-  Future<List<String>?> _fetchActiveIds(String storeId) async {
+  Future<ActiveIdsFetch> _fetchActiveIdsResult(String storeId) async {
     try {
       final row = await _sb
           .from('app_settings')
@@ -52,13 +135,23 @@ class ModuleRepository {
           .eq('key', _kSupabaseKey)
           .maybeSingle();
       final raw = row?['value'] as String?;
-      if (raw == null) return null;
-      return (jsonDecode(raw) as List).cast<String>();
+      if (raw == null) return const ActiveIdsFetch(ids: null, ok: true);
+      final ids = (jsonDecode(raw) as List).cast<String>();
+      if (!listEquals(_lastGoodIds[storeId], ids)) {
+        _lastGoodIds[storeId] = List<String>.of(ids);
+        await saveLastGoodIds(storeId, ids);
+      }
+      _warnedStores.remove(storeId);
+      return ActiveIdsFetch(ids: ids, ok: true);
     } catch (e) {
       debugPrint('[ModuleRepo] _fetchActiveIds error: $e');
-      return null;
+      return const ActiveIdsFetch(ids: null, ok: false);
     }
   }
+
+  /// Giữ tên cũ cho các chỗ khác: null = không có dòng hoặc lỗi.
+  Future<List<String>?> _fetchActiveIds(String storeId) async =>
+      (await _fetchActiveIdsResult(storeId)).ids;
 
   // ── Ghi danh sách module ID vào Supabase ──────────────────────────────────
   Future<void> _saveActiveIds(String storeId, List<String> ids) async {
@@ -75,34 +168,31 @@ class ModuleRepository {
   }
 
   // ── Lấy toàn bộ modules (active state từ Supabase) ────────────────────────
-  Future<List<ModuleConfig>> getAll() async {
+  Future<List<ModuleConfig>> getAll() async => (await load()).modules;
+
+  /// Như [getAll], thêm `ok = false` khi không đọc được máy chủ: danh sách chỉ là tạm, cần đọc lại.
+  Future<({List<ModuleConfig> modules, bool ok})> load() async {
     final storeId = await _storeId();
-    if (storeId == null) return List.from(_kAllModules);
+    if (storeId == null) return (modules: List<ModuleConfig>.from(_kAllModules), ok: true);
 
-    var activeIds = await _fetchActiveIds(storeId);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    var activeIds = fetched.ids;
 
+    // KHÔNG BAO GIỜ ghi lên máy chủ từ đây. "Không thấy dòng" KHÁC "chưa có dòng": RLS lọc theo
+    // x-store-id/JWT của TỪNG lệnh nên một lệnh mang header lệch cũng ra rỗng dù đã đăng nhập
+    // (KAY 11/11 08:42: iPhone chủ quán đọc rỗng rồi ghi đè 15 module thành 4 mặc định).
+    // Quán mới đã được gieo cấu hình lúc tạo quán (StoreAuthService.seedDefaults).
+    final rowSeen = activeIds != null;
     if (activeIds == null) {
-      // ── Lần đầu: kiểm tra SharedPreferences cũ để migrate ──────────────
-      activeIds = await _migrateFromSharedPrefs();
-      // Lưu lên Supabase ngay
-      await _saveActiveIds(storeId, activeIds);
-      // Xóa key cũ
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_kLegacyPrefsKey);
-    }
-
-    // ‼️ FIX: Merge module mới có isActive=true mà DB chưa biết
-    // (tránh module bị ẩn khi dev thêm module mới với default isActive=true)
-    final activeSet = activeIds.toSet();
-    bool needsUpdate = false;
-    for (final m in _kAllModules) {
-      if (m.isActive && !activeSet.contains(m.id)) {
-        activeIds.add(m.id);
-        needsUpdate = true;
+      final lastGood = _lastGoodIds[storeId] ?? await readLastGoodIds(storeId);
+      activeIds = lastGood ?? await _migrateFromSharedPrefs();
+      if (_warnedStores.add(storeId)) {
+        AppLogger.warning(
+          'modules',
+          'Không đọc được cấu hình module (ok=${fetched.ok}, thấy dòng=false) -> dùng '
+          '${lastGood != null ? "bản gần nhất" : "mặc định"} tạm thời, KHÔNG ghi lên máy chủ',
+        );
       }
-    }
-    if (needsUpdate) {
-      await _saveActiveIds(storeId, activeIds);
     }
 
     // Build danh sách đầy đủ: active + thứ tự theo activeIds
@@ -124,7 +214,8 @@ class ModuleRepository {
       }
     }
 
-    return result;
+    // Không thấy dòng = danh sách tạm → provider tự đọc lại cho tới khi thấy.
+    return (modules: result, ok: fetched.ok && rowSeen);
   }
 
   // ── Migrate từ SharedPreferences ─────────────────────────────────────────
@@ -144,8 +235,8 @@ class ModuleRepository {
         }
       }
     } catch (_) {}
-    // Default: chỉ bật POS
-    return ['pos'];
+    // Default: chỉ bật các module mặc định ban đầu
+    return _kAllModules.where((m) => m.isActive).map((m) => m.id).toList();
   }
 
   Stream<List<ModuleConfig>> watchAll() async* {
@@ -167,21 +258,43 @@ class ModuleRepository {
   Future<void> activate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    final all = await getAll();
-    final activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
-    if (!activeIds.contains(moduleId)) activeIds.add(moduleId);
-    await _saveActiveIds(storeId, activeIds);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    if (!fetched.ok) {
+      // Không đọc được cấu hình hiện tại thì KHÔNG ghi: tránh ghi đè bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
+      return;
+    }
+    final activeIds = fetched.ids;
+    if (activeIds == null) {
+      // Không thấy dòng (RLS/header lệch) -> không ghi, tránh đè cấu hình thật bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không thấy cấu hình hiện tại');
+      return;
+    }
+    if (!activeIds.contains(moduleId)) {
+      activeIds.add(moduleId);
+      await _saveActiveIds(storeId, activeIds);
+    }
   }
 
   Future<void> deactivate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    final all = await getAll();
-    final activeIds = all
-        .where((m) => m.isActive && m.id != moduleId)
-        .map((m) => m.id)
-        .toList();
-    await _saveActiveIds(storeId, activeIds);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    if (!fetched.ok) {
+      // Không đọc được cấu hình hiện tại thì KHÔNG ghi: tránh ghi đè bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
+      return;
+    }
+    final activeIds = fetched.ids;
+    if (activeIds == null) {
+      // Không thấy dòng (RLS/header lệch) -> không ghi, tránh đè cấu hình thật bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không thấy cấu hình hiện tại');
+      return;
+    }
+    if (activeIds.contains(moduleId)) {
+      activeIds.remove(moduleId);
+      await _saveActiveIds(storeId, activeIds);
+    }
   }
 
   // ── Cập nhật thứ tự (drag & drop) ────────────────────────────────────────
@@ -189,20 +302,60 @@ class ModuleRepository {
     final storeId = await _storeId();
     if (storeId == null) return;
     // orderedIds = danh sách ID active theo thứ tự mới
-    await _saveActiveIds(storeId, orderedIds);
+    final current = await _fetchActiveIdsResult(storeId);
+    if (!current.ok) {
+      AppLogger.warning('modules', 'Bỏ qua lưu thứ tự module: không đọc được cấu hình hiện tại');
+      return;
+    }
+    final serverIds = current.ids;
+    if (serverIds == null) {
+      AppLogger.warning('modules', 'Bỏ qua lưu thứ tự module: không thấy cấu hình hiện tại');
+      return;
+    }
+    final merged = mergeModuleOrder(serverIds, orderedIds);
+    if (merged.length != orderedIds.length) {
+      AppLogger.warning(
+        'modules',
+        'Lưu thứ tự module: màn hình có ${orderedIds.length} module nhưng máy chủ có '
+        '${serverIds.length} -> giữ đủ ${merged.length}, không làm mất module',
+      );
+    }
+    await _saveActiveIds(storeId, merged);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // APP SETTINGS REPOSITORY — Supabase app_settings (key-value per store)
 // ─────────────────────────────────────────────────────────────────────────────
+/// Tên in trên hoá đơn: tên đã sửa ở Cài đặt → tên quán → mặc định.
+String chonTenQuan(String? tenCaiDat, String? tenQuan) {
+  final a = tenCaiDat?.trim() ?? '';
+  if (a.isNotEmpty) return a;
+  final b = tenQuan?.trim() ?? '';
+  return b.isNotEmpty ? b : 'Quán Nhỏ';
+}
+
 class AppSettingsRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   final _uuid = const Uuid();
+  final String? _storeIdOverride;
+
+  AppSettingsRepository([this._storeIdOverride]);
 
   Future<String?> _storeId() async {
+    if (_storeIdOverride != null && _storeIdOverride!.isNotEmpty) {
+      return _storeIdOverride;
+    }
     final info = await StoreAuthService.getStoreInfo();
-    return info['store_id'] as String?;
+    final sid = info['store_id'];
+    if (sid != null && sid.isNotEmpty) return sid;
+    try {
+      final headerStoreId = _sb.rest.headers['x-store-id'];
+      if (headerStoreId != null && headerStoreId.isNotEmpty) {
+        return headerStoreId;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<String?> get(String key) async {
@@ -228,6 +381,20 @@ class AppSettingsRepository {
     }, onConflict: 'store_id,key');
   }
 
+  /// Đổi tên quán: stores.name (Trang chủ, QR, báo cáo chuỗi, hoá đơn bàn) và shop_name (hoá đơn quầy).
+  Future<void> renameStore(String name) async {
+    final storeId = await _storeId();
+    if (storeId == null) throw StateError('Chưa có quán');
+    // RLS từ chối thì update không báo lỗi mà trả rỗng → phải kiểm có dòng được ghi.
+    final rows = await _sb
+        .from('stores')
+        .update({'name': name})
+        .eq('id', storeId)
+        .select('id');
+    if (rows.isEmpty) throw StateError('Không có quyền đổi tên quán');
+    await set('shop_name', name);
+  }
+
   Future<String>  getOrDefault(String key, String defaultValue) async =>
       (await get(key)) ?? defaultValue;
 
@@ -238,10 +405,15 @@ class AppSettingsRepository {
 
   Future<double>  getDouble(String key, {double defaultValue = 0}) async {
     final val = await get(key);
-    return double.tryParse(val ?? '') ?? defaultValue;
+    if (val == null) return defaultValue;
+    return double.tryParse(val.replaceAll(',', '.')) ?? defaultValue;
   }
 
-  Future<String>  get shopName       => getOrDefault('shop_name', 'Quán Nhỏ');
+  // Quán chưa từng sửa tên ở Cài đặt không có dòng shop_name → dùng tên lúc tạo quán, không in "Quán Nhỏ".
+  Future<String>  get shopName async => chonTenQuan(
+    await get('shop_name'),
+    (await StoreAuthService.getStoreInfo())['store_name'],
+  );
   Future<String>  get shopPhone      => getOrDefault('shop_phone', '');
   Future<String>  get shopAddress    => getOrDefault('shop_address', '');
   Future<String>  get billFooter     => getOrDefault('bill_footer', 'Cảm ơn quý khách!');
@@ -252,26 +424,155 @@ class AppSettingsRepository {
   // Cấu hình định vị chấm công
   Future<double?> get attendanceLat async {
     final val = await get('attendance_latitude');
-    return val != null ? double.tryParse(val) : null;
+    if (val == null) return null;
+    final d = double.tryParse(val.replaceAll(',', '.'));
+    return (d != null && d.isFinite && d >= -90 && d <= 90) ? d : null;
   }
   Future<double?> get attendanceLng async {
     final val = await get('attendance_longitude');
-    return val != null ? double.tryParse(val) : null;
+    if (val == null) return null;
+    final d = double.tryParse(val.replaceAll(',', '.'));
+    return (d != null && d.isFinite && d >= -180 && d <= 180) ? d : null;
   }
   Future<String?> get attendanceAddress => get('attendance_address');
-  Future<double>  get attendanceRadius  => getDouble('attendance_radius', defaultValue: 200.0);
+  Future<double>  get attendanceRadius async {
+    final r = await getDouble('attendance_radius', defaultValue: 200.0);
+    return (r.isFinite && r > 0) ? r : 200.0;
+  }
 
+  /// Lấy toàn bộ cấu hình định vị của quán trong 1 query tối ưu
+  Future<AttendanceConfig> getAttendanceConfig() async {
+    final storeId = await _storeId();
+    if (storeId == null || storeId.isEmpty) return const AttendanceConfig();
+    try {
+      final rows = await _sb
+          .from('app_settings')
+          .select('key, value')
+          .eq('store_id', storeId)
+          .inFilter('key', [
+            'attendance_latitude',
+            'attendance_longitude',
+            'attendance_address',
+            'attendance_radius',
+          ]);
+      double? lat;
+      double? lng;
+      String? address;
+      double radius = 200.0;
+      for (final r in rows as List) {
+        final k = r['key'] as String?;
+        final v = r['value'] as String?;
+        if (v == null) continue;
+        if (k == 'attendance_latitude') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed >= -90 && parsed <= 90) {
+            lat = parsed;
+          }
+        }
+        if (k == 'attendance_longitude') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed >= -180 && parsed <= 180) {
+            lng = parsed;
+          }
+        }
+        if (k == 'attendance_address') address = v;
+        if (k == 'attendance_radius') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed > 0) {
+            radius = parsed;
+          }
+        }
+      }
+      return AttendanceConfig(lat: lat, lng: lng, address: address, radius: radius);
+    } catch (e) {
+      debugPrint('[AppSettingsRepository] getAttendanceConfig error: $e');
+      try {
+        final lat = await attendanceLat;
+        final lng = await attendanceLng;
+        final address = await attendanceAddress;
+        final radius = await attendanceRadius;
+        return AttendanceConfig(lat: lat, lng: lng, address: address, radius: radius);
+      } catch (_) {
+        return const AttendanceConfig();
+      }
+    }
+  }
+
+  /// Lưu cấu hình định vị đồng bộ lên bảng `app_settings` theo `store_id`
   Future<void> saveAttendanceConfig({
     required double lat,
     required double lng,
     required String address,
     required double radius,
   }) async {
-    await set('attendance_latitude', lat.toString());
-    await set('attendance_longitude', lng.toString());
-    await set('attendance_address', address);
-    await set('attendance_radius', radius.toString());
+    final storeId = await _storeId();
+    if (storeId == null || storeId.isEmpty) {
+      throw Exception('Không xác định được mã cửa hàng (store_id) để lưu cấu hình.');
+    }
+    if (!lat.isFinite || lat < -90 || lat > 90) {
+      throw ArgumentError('Vĩ độ không hợp lệ (-90 đến 90): $lat');
+    }
+    if (!lng.isFinite || lng < -180 || lng > 180) {
+      throw ArgumentError('Kinh độ không hợp lệ (-180 đến 180): $lng');
+    }
+    if (!radius.isFinite || radius <= 0) {
+      throw ArgumentError('Bán kính cho phép phải là số lớn hơn 0 mét: $radius');
+    }
+    final items = [
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_latitude',
+        'value': lat.toString(),
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_longitude',
+        'value': lng.toString(),
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_address',
+        'value': address,
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_radius',
+        'value': radius.toString(),
+      },
+    ];
+    await _sb.from('app_settings').upsert(items, onConflict: 'store_id,key');
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA CLASS: ATTENDANCE CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+class AttendanceConfig {
+  final double? lat;
+  final double? lng;
+  final String? address;
+  final double radius;
+
+  const AttendanceConfig({
+    this.lat,
+    this.lng,
+    this.address,
+    this.radius = 200.0,
+  });
+
+  bool get hasLocation =>
+      lat != null && lat!.isFinite && lng != null && lng!.isFinite;
+
+  Map<String, dynamic> toMap() => {
+    'lat': lat,
+    'lng': lng,
+    'address': address,
+    'radius': radius,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

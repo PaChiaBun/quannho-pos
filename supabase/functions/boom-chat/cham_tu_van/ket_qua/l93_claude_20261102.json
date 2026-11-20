@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D03_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ sót tiền điện +82,2%; bịa combo trà sữa + bánh ngọt không có trong hồ sơ quán cà phê mang đi."
+  },
+  {
+   "id": "D40_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tính sai mức giảm thu − chi là 27% (đúng ~21,5%); không nhắc chênh lệch sổ quỹ không phải lãi."
+  },
+  {
+   "id": "D34_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu 'thu giảm do thu giảm' lặp vô nghĩa; tiền điện thiếu số tiền và không nêu tổng chi."
+  },
+  {
+   "id": "D03_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện +82,2%; lấy tổng thu kỳ trước so doanh thu bán hàng kỳ này và đoán số đơn giảm."
+  },
+  {
+   "id": "D40_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu số tiền thu − chi; so 60,5% tổng chi với mốc 25–35% trên doanh thu là sai gốc."
+  },
+  {
+   "id": "D03_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện; khuyên combo 'món ăn chính' trái hồ sơ ki-ốt cà phê mang đi."
+  },
+  {
+   "id": "D40_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Dòng đầu 'thu chi giảm' không có số tiền, không trả lời thẳng có lời hơn không; việc chung chung."
+  },
+  {
+   "id": "D09_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu tổng chi +15,6% và thu chỉ +2,1%; việc 'kiểm tra giá' chưa cụ thể."
+  },
+  {
+   "id": "D34_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'đo số khách để xem ảnh hưởng chi phí' không liên quan; thiếu tổng chi."
+  },
+  {
+   "id": "D09_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Viết dồn một khối; thiếu tổng chi +15,6% và mức +28%."
+  },
+  {
+   "id": "D09_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu tổng chi +15,6% và mức +28%; việc chung chung."
+  },
+  {
+   "id": "D34_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi 15.843.000đ là thu bán hàng giảm (thực là tổng thu); tiền điện thiếu số tiền."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D03_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện +82,2%; ghép thu kỳ trước với doanh thu bán hàng kỳ này ra 16.343.000đ sai và đoán số đơn giảm."
+  },
+  {
+   "id": "D40_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói thu chỉ +2,1% và không nhắc thu − chi không phải lãi ròng; việc 'tối ưu hóa đơn hàng' chung chung."
+  },
+  {
+   "id": "D34_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Dòng đầu nói thu trước, không nêu tổng chi 73.900.000đ và nguyên liệu giảm; việc chưa chỉ máy pha/tủ mát."
+  },
+  {
+   "id": "D03_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện; ra số 16.343.000đ sai do ghép tổng thu với doanh thu bán hàng."
+  },
+  {
+   "id": "D40_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói sai thu giảm 2,1% (thực tế tăng 2,1%) ngay dòng đầu."
+  },
+  {
+   "id": "D03_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện; số 16.343.000đ ghép sai và viết dồn một khối khó đọc."
+  },
+  {
+   "id": "D40_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc thu − chi là chênh lệch sổ quỹ, không phải lãi; việc làm chung chung."
+  },
+  {
+   "id": "D09_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên điều chỉnh giá bán và nói 'biên lợi nhuận' khi chưa có giá vốn; thiếu so thu +2,1%."
+  },
+  {
+   "id": "D34_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Dòng đầu nói thu, chưa nêu tổng chi 73.900.000đ và nguyên liệu giảm."
+  },
+  {
+   "id": "D09_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên điều chỉnh giá bán khi chưa rõ nguyên nhân; thiếu so thu +2,1%."
+  },
+  {
+   "id": "D09_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu tổng chi +15,6% và thu chỉ +2,1%; việc chưa có đối chiếu hoá đơn / hao hụt."
+  },
+  {
+   "id": "D34_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Dòng đầu nói thu, thiếu tổng chi 73.900.000đ và nguyên nhân máy móc."
+  }
+ ]
+}

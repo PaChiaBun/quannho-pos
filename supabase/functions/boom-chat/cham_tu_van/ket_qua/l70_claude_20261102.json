@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu nguyên nhân chính là số đơn giảm 14,8% (mất khách)."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu số đơn giảm 14,8% và việc làm thiếu mục tiêu số (~316 phần/tuần)."
+  },
+  {
+   "id": "D32_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm thiếu mục tiêu số (~316 phần/tuần) để biết đạt hay chưa."
+  },
+  {
+   "id": "D32_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu số đơn giảm 14,8% và việc làm thiếu mục tiêu số (~316 phần/tuần)."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chung chung, không có mục tiêu số và bán kèm Bánh mì thịt cũng là món đang giảm; dòng đầu nói tổng trước khi trả lời món."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chung chung, không có mục tiêu số và bán kèm Bánh mì thịt cũng là món đang giảm; dòng đầu nói tổng trước khi trả lời món."
+  },
+  {
+   "id": "D32_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên tăng giá Cà phê sữa đá là ngược hướng, khối số liệu ghi giữ giá vì tăng giá làm mất thêm khách."
+  },
+  {
+   "id": "D32_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên giảm giá Cà phê đen đá là làm mỏng lời và không nhắm món giảm nhiều nhất."
+  }
+ ]
+}

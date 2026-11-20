@@ -1,0 +1,3 @@
+[StaffSync] start error: 'package:supabase_flutter/src/supabase.dart': Failed assertion: line 44 pos 7: '_instance._isInitialized': You must initialize the supabase instance before calling Supabase.instance
+[INFO] [printer] [PrintServer] Load cloud settings failed: 'package:supabase_flutter/src/supabase.dart': Failed assertion: line 44 pos 7: '_instance._isInitialized': You must initialize the supabase instance before calling Supabase.instance
+01:29 +112: All tests passed!

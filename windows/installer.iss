@@ -2,7 +2,7 @@
 ; Xem hướng dẫn tại: https://jrsoftware.org/ishelp/
 
 #define MyAppName "Quán Nhỏ POS"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.0.6"
 #define MyAppPublisher "Quán Nhỏ"
 #define MyAppURL "https://quannho.lpm.vn"
 #define MyAppExeName "quannho_pos.exe"

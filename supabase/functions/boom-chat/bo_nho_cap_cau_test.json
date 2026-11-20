@@ -1,0 +1,1611 @@
+{
+ "ghi_chu": "QC độc lập 24/10 (2 vòng) — cặp [câu đã duyệt, câu người hỏi]",
+ "khac_nghia": [
+  [
+   "làm sao để in hoá đơn tạm tính cho khách",
+   "làm sao để in hoá đơn tạm tính cho bếp"
+  ],
+  [
+   "cách ẩn món hết hàng trên menu",
+   "cách hiện món hết hàng trên menu"
+  ],
+  [
+   "cách ẩn món hết hàng trên thực đơn bán hàng",
+   "cách hiện lại món hết hàng trên thực đơn bán hàng"
+  ],
+  [
+   "cách đặt giá bán cho món trong menu",
+   "cách đặt giá vốn cho món trong menu"
+  ],
+  [
+   "xem báo cáo doanh thu theo ngày ở đâu",
+   "xem báo cáo doanh thu theo tháng ở đâu"
+  ],
+  [
+   "xem doanh thu hôm nay ở đâu",
+   "xem doanh thu hôm qua ở đâu"
+  ],
+  [
+   "xem doanh thu hôm nay ở màn hình nào",
+   "xem doanh thu hôm qua ở màn hình nào"
+  ],
+  [
+   "cho phép nhân viên huỷ món",
+   "ko cho phép nhân viên huỷ món"
+  ],
+  [
+   "cho phép nhân viên huỷ món đã gửi bếp",
+   "k cho nhân viên huỷ món đã gửi bếp"
+  ],
+  [
+   "cho phép nhân viên xem báo cáo doanh thu",
+   "cấm nhân viên xem báo cáo doanh thu"
+  ],
+  [
+   "cho phép nhân viên xem báo cáo doanh thu của quán",
+   "chặn nhân viên xem báo cáo doanh thu của quán"
+  ],
+  [
+   "nhân viên có xem được báo cáo doanh thu không",
+   "chủ quán có xem được báo cáo doanh thu không"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "huỷ món chưa gửi bếp"
+  ],
+  [
+   "huy mon da gui bep",
+   "huy mon chua gui bep"
+  ],
+  [
+   "lam sao huy mon da gui bep cho khach",
+   "lam sao huy mon chua gui bep cho khach"
+  ],
+  [
+   "làm sao huỷ món đã gửi bếp",
+   "làm sao huỷ bàn đã gửi bếp"
+  ],
+  [
+   "huỷ món trong đơn đang mở",
+   "huỷ đơn đang mở"
+  ],
+  [
+   "làm sao xoá món khỏi đơn của bàn",
+   "làm sao xoá bàn khỏi sơ đồ"
+  ],
+  [
+   "thêm nhân viên mới vào quán",
+   "thêm món mới vào quán"
+  ],
+  [
+   "thêm nhân viên mới vào danh sách của quán",
+   "thêm khách hàng mới vào danh sách của quán"
+  ],
+  [
+   "thêm khách hàng mới vào danh sách khách quen",
+   "thêm nhân viên mới vào danh sách khách quen"
+  ],
+  [
+   "đăng nhập vào app",
+   "đăng xuất khỏi app"
+  ],
+  [
+   "cách đổi mật khẩu đăng nhập",
+   "cách lấy lại mật khẩu đăng nhập"
+  ],
+  [
+   "quên mật khẩu đăng nhập thì làm sao lấy lại",
+   "đổi mật khẩu đăng nhập thì làm sao"
+  ],
+  [
+   "in hoá đơn trước khi thanh toán",
+   "in hoá đơn sau khi thanh toán"
+  ],
+  [
+   "in hoá đơn trước khi khách thanh toán tiền",
+   "in hoá đơn sau khi khách thanh toán tiền"
+  ],
+  [
+   "thanh toán bằng tiền mặt cho đơn của bàn",
+   "thanh toán bằng thẻ cho đơn của bàn"
+  ],
+  [
+   "khách trả bằng tiền mặt thì ghi nhận thế nào",
+   "khách trả bằng ví momo thì ghi nhận thế nào"
+  ],
+  [
+   "gộp hai bàn lại thành một",
+   "gộp hai đơn lại thành một"
+  ],
+  [
+   "tách hoá đơn cho hai người",
+   "tách hoá đơn cho ba người"
+  ],
+  [
+   "chuyển món từ bàn 1 sang bàn 2",
+   "chuyển món từ bàn 2 sang bàn 1"
+  ],
+  [
+   "giá vốn 20k bán 35k thì lãi bao nhiêu phần trăm",
+   "giá vốn 35k bán 20k thì lãi bao nhiêu phần trăm"
+  ],
+  [
+   "tạo mã giảm 10% cho hoá đơn trên 200k",
+   "tạo mã giảm 10 nghìn cho hoá đơn trên 200k"
+  ],
+  [
+   "tạo chương trình giảm 10% cho hoá đơn trên 200k của khách",
+   "tạo chương trình giảm 10 nghìn cho hoá đơn trên 200k của khách"
+  ],
+  [
+   "làm sao để tăng khách buổi sáng",
+   "làm sao để tăng khách buổi tối"
+  ],
+  [
+   "quán cà phê nhỏ làm sao để tăng khách vào buổi sáng",
+   "quán cà phê nhỏ làm sao để tăng khách vào buổi tối"
+  ],
+  [
+   "quán cà phê nhỏ làm sao thu hút khách vào buổi sáng các ngày trong tuần",
+   "quán cà phê nhỏ làm sao thu hút khách vào buổi tối các ngày cuối tuần"
+  ],
+  [
+   "làm sao giữ chân khách quen của quán",
+   "làm sao thu hút khách mới cho quán"
+  ],
+  [
+   "làm sao giữ chân khách quen của quán trà sữa",
+   "làm sao giữ chân nhân viên của quán trà sữa"
+  ],
+  [
+   "tại sao quán bị lỗ dù đông khách",
+   "tại sao quán có lãi dù vắng khách"
+  ],
+  [
+   "tại sao quán đông khách mà vẫn bị lỗ",
+   "tại sao quán vắng khách mà vẫn bị lỗ"
+  ],
+  [
+   "món nào bán chạy nhất xem ở đâu",
+   "món nào bán chậm nhất xem ở đâu"
+  ],
+  [
+   "món nào bán chạy nhất trong tháng xem ở đâu",
+   "món nào bán ế nhất trong tháng xem ở đâu"
+  ],
+  [
+   "có in được hoá đơn không",
+   "không in được hoá đơn"
+  ],
+  [
+   "máy in có in được hoá đơn cho khách không",
+   "máy in không in được hoá đơn cho khách"
+  ],
+  [
+   "có tắt được âm báo đơn mới không",
+   "không tắt được âm báo đơn mới"
+  ],
+  [
+   "khôi phục đơn đã huỷ",
+   "huỷ đơn đã khôi phục"
+  ],
+  [
+   "khôi phục món đã xoá khỏi menu",
+   "xoá món đã khôi phục khỏi menu"
+  ],
+  [
+   "cách sao lưu dữ liệu quán",
+   "cách lưu dữ liệu quán"
+  ],
+  [
+   "cách sao chép món trong menu",
+   "cách chép món trong menu"
+  ],
+  [
+   "nút bên phải màn hình bán hàng dùng để làm gì",
+   "nút bên trái màn hình bán hàng dùng để làm gì"
+  ],
+  [
+   "nút ở góc trên bên phải màn hình bán hàng để làm gì",
+   "nút ở góc dưới bên phải màn hình bán hàng để làm gì"
+  ],
+  [
+   "thuế hộ kinh doanh quán nhỏ phải đóng những gì",
+   "thuế doanh nghiệp quán nhỏ phải đóng những gì"
+  ],
+  [
+   "nhân viên làm ca sáng chấm công thế nào",
+   "nhân viên làm ca tối chấm công thế nào"
+  ],
+  [
+   "nhân viên làm ca sáng chấm công trên app thế nào",
+   "nhân viên làm ca tối chấm công trên app thế nào"
+  ],
+  [
+   "cách nhập kho nguyên liệu",
+   "cách xuất kho nguyên liệu"
+  ],
+  [
+   "cách nhập kho nguyên liệu mới mua về",
+   "cách kiểm kho nguyên liệu mới mua về"
+  ],
+  [
+   "cách kiểm kê kho cuối ngày",
+   "cách kiểm kê két cuối ngày"
+  ],
+  [
+   "cách kiểm kê kho nguyên liệu vào cuối ngày",
+   "cách kiểm kê tiền két vào cuối ngày"
+  ],
+  [
+   "xem lịch sử đơn hàng của khách quen",
+   "xem lịch sử đơn hàng của nhân viên"
+  ],
+  [
+   "xem lịch sử đơn hàng của khách quen trong tháng",
+   "xem lịch sử đơn hàng của nhân viên trong tháng"
+  ],
+  [
+   "làm sao để món hiện lên đầu menu",
+   "làm sao để món hiện xuống cuối menu"
+  ],
+  [
+   "sắp xếp món theo giá từ thấp đến cao",
+   "sắp xếp món theo giá từ cao đến thấp"
+  ],
+  [
+   "sắp xếp món trong menu theo giá từ thấp đến cao",
+   "sắp xếp món trong menu theo tên từ thấp đến cao"
+  ],
+  [
+   "đặt bàn trước cho khách",
+   "đặt món trước cho khách"
+  ],
+  [
+   "đặt bàn trước cho khách đi nhóm đông người",
+   "đặt món trước cho khách đi nhóm đông người"
+  ],
+  [
+   "cài máy in bếp kết nối wifi",
+   "cài máy in hoá đơn kết nối wifi"
+  ],
+  [
+   "cài đặt máy in bếp kết nối qua wifi của quán",
+   "cài đặt máy in bếp kết nối qua bluetooth của quán"
+  ],
+  [
+   "cài đặt máy in bếp kết nối qua wifi của quán",
+   "cài đặt máy in hoá đơn kết nối qua wifi của quán"
+  ],
+  [
+   "kết nối máy in qua bluetooth",
+   "ngắt kết nối máy in qua bluetooth"
+  ],
+  [
+   "làm sao kết nối máy in với điện thoại qua bluetooth",
+   "làm sao ngắt kết nối máy in với điện thoại qua bluetooth"
+  ],
+  [
+   "bán hàng khi mất mạng có được không",
+   "bán hàng khi có mạng có được không"
+  ],
+  [
+   "đơn bán lúc mất mạng có tự đồng bộ lên không",
+   "đơn bán lúc có mạng có tự đồng bộ lên không"
+  ],
+  [
+   "vì sao đơn bán lúc mất mạng không đồng bộ lên máy chủ",
+   "vì sao đơn bán lúc có mạng không đồng bộ lên máy chủ"
+  ],
+  [
+   "tạo tài khoản cho nhân viên phục vụ",
+   "tạo tài khoản cho nhân viên thu ngân"
+  ],
+  [
+   "tạo tài khoản cho nhân viên phục vụ trong quán",
+   "tạo tài khoản cho nhân viên thu ngân trong quán"
+  ],
+  [
+   "phân quyền cho quản lý xem báo cáo",
+   "phân quyền cho nhân viên xem báo cáo"
+  ],
+  [
+   "phân quyền cho quản lý xem báo cáo lãi lỗ của quán",
+   "phân quyền cho nhân viên xem báo cáo lãi lỗ của quán"
+  ],
+  [
+   "khách gọi thêm món sau khi đã thanh toán",
+   "khách gọi thêm món trước khi thanh toán"
+  ],
+  [
+   "khách gọi thêm món sau khi đã thanh toán thì làm sao",
+   "khách gọi thêm món sau khi đã thanh toán thì không làm sao"
+  ],
+  [
+   "khách muốn đổi món sau khi đã gửi bếp",
+   "khách muốn đổi bàn sau khi đã gửi bếp"
+  ],
+  [
+   "khách muốn đổi món sau khi đã gửi bếp thì xử lý thế nào trên app",
+   "khách muốn đổi bàn sau khi đã gửi bếp thì xử lý thế nào trên app"
+  ],
+  [
+   "khách trả món vì món bị nguội thì xử lý thế nào trên app",
+   "khách chê món vì món bị nguội thì xử lý thế nào trên app"
+  ],
+  [
+   "khách để quên đồ trong quán xử lý thế nào",
+   "khách làm vỡ đồ trong quán xử lý thế nào"
+  ],
+  [
+   "làm sao giảm giá cho cả hoá đơn",
+   "làm sao giảm giá cho từng món"
+  ],
+  [
+   "làm sao giảm giá cho cả hoá đơn của bàn đang mở",
+   "làm sao giảm giá cho một món của bàn đang mở"
+  ],
+  [
+   "xem tồn kho nguyên liệu sắp hết",
+   "xem tồn kho nguyên liệu sắp hết hạn"
+  ],
+  [
+   "xem danh sách nguyên liệu sắp hết trong kho của quán",
+   "xem danh sách nguyên liệu sắp hết hạn trong kho của quán"
+  ],
+  [
+   "làm sao in lại hoá đơn đã thanh toán",
+   "làm sao in lại phiếu bếp đã gửi"
+  ],
+  [
+   "làm sao in lại hoá đơn của đơn đã thanh toán hôm qua",
+   "làm sao in lại phiếu bếp của đơn đã thanh toán hôm qua"
+  ],
+  [
+   "ghi một khoản chi tiền điện vào thu chi",
+   "ghi một khoản thu tiền điện vào thu chi"
+  ],
+  [
+   "ghi một khoản chi tiền điện tháng này vào sổ thu chi",
+   "ghi một khoản thu tiền thuê tháng này vào sổ thu chi"
+  ],
+  [
+   "làm sao ghi khoản chi tiền mua nguyên liệu vào sổ thu chi của quán",
+   "làm sao ghi khoản thu tiền bán ve chai vào sổ thu chi của quán"
+  ],
+  [
+   "làm sao ghi khoản chi tiền mua nguyên liệu vào sổ thu chi của quán",
+   "làm sao ghi khoản thu tiền mua nguyên liệu vào sổ thu chi của quán"
+  ],
+  [
+   "lợi nhuận gộp và lợi nhuận ròng khác nhau thế nào",
+   "doanh thu và lợi nhuận ròng khác nhau thế nào"
+  ],
+  [
+   "doanh thu thuần trong báo cáo là gì",
+   "doanh thu gộp trong báo cáo là gì"
+  ],
+  [
+   "doanh thu thuần trong báo cáo cuối ngày nghĩa là gì",
+   "doanh thu gộp trong báo cáo cuối ngày nghĩa là gì"
+  ],
+  [
+   "vì sao doanh thu trong báo cáo khác tiền trong két",
+   "vì sao doanh thu trong báo cáo khác tiền trong tài khoản"
+  ],
+  [
+   "vì sao doanh thu trong báo cáo cuối ngày lại khác số tiền thực tế trong két",
+   "vì sao doanh thu trong báo cáo cuối ngày lại khác số tiền thực tế trong ngân hàng"
+  ],
+  [
+   "nên mở thêm ca tối không",
+   "nên mở thêm ca sáng không"
+  ],
+  [
+   "quán trà sữa nhỏ có nên mở thêm ca tối không",
+   "quán trà sữa nhỏ có nên đóng ca tối không"
+  ],
+  [
+   "quán trà sữa nhỏ có nên bán thêm đồ ăn vặt không",
+   "quán trà sữa nhỏ có nên bỏ bán đồ ăn vặt không"
+  ],
+  [
+   "quán trà sữa nhỏ có nên bán thêm đồ ăn vặt không",
+   "quán trà sữa nhỏ có nên ngừng bán đồ ăn vặt không"
+  ],
+  [
+   "có nên chạy quảng cáo facebook cho quán nhỏ không",
+   "có nên chạy quảng cáo tiktok cho quán nhỏ không"
+  ],
+  [
+   "có nên chạy quảng cáo facebook cho quán cà phê nhỏ không",
+   "có nên dừng quảng cáo facebook cho quán cà phê nhỏ không"
+  ],
+  [
+   "làm sao để món hiện trên màn hình bếp",
+   "làm sao để món không hiện trên màn hình bếp"
+  ],
+  [
+   "làm sao để món mới hiện trên màn hình bếp",
+   "làm sao để món mới hết hiện trên màn hình bếp"
+  ],
+  [
+   "vì sao món mới thêm không hiện trên màn hình bán hàng",
+   "vì sao món mới thêm không hiện trên màn hình bếp"
+  ],
+  [
+   "vì sao món mới thêm vào menu không hiện trên màn hình bán hàng",
+   "vì sao món mới thêm vào menu không hiện trên màn hình nhà bếp"
+  ],
+  [
+   "làm sao đặt giờ mở cửa cho quán",
+   "làm sao đặt giờ đóng cửa cho quán"
+  ],
+  [
+   "làm sao cài đặt giờ mở cửa và nhận đơn cho quán",
+   "làm sao cài đặt giờ đóng cửa và nhận đơn cho quán"
+  ],
+  [
+   "cách tính lương nhân viên theo giờ",
+   "cách tính lương nhân viên theo tháng"
+  ],
+  [
+   "cách tính lương cho nhân viên làm bán thời gian theo giờ",
+   "cách tính lương cho nhân viên làm toàn thời gian theo giờ"
+  ],
+  [
+   "cách tính lương cho nhân viên làm bán thời gian theo giờ",
+   "cách tính thưởng cho nhân viên làm bán thời gian theo giờ"
+  ],
+  [
+   "món có size lớn thì đặt giá thế nào",
+   "món có size nhỏ thì đặt giá thế nào"
+  ],
+  [
+   "làm sao thêm size lớn cho món trà sữa trong menu",
+   "làm sao thêm topping cho món trà sữa trong menu"
+  ],
+  [
+   "làm sao đặt giá riêng cho size lớn của món trà sữa trong menu",
+   "làm sao đặt giá riêng cho size nhỏ của món trà sữa trong menu"
+  ],
+  [
+   "khách nợ tiền thì ghi sổ thế nào",
+   "quán nợ tiền nhà cung cấp thì ghi sổ thế nào"
+  ],
+  [
+   "khách nợ tiền thì ghi vào sổ công nợ trên app thế nào",
+   "quán nợ tiền nhà cung cấp thì ghi vào sổ công nợ trên app thế nào"
+  ],
+  [
+   "làm sao xem ai đã huỷ món trong ca",
+   "làm sao xem ai đã giảm giá món trong ca"
+  ],
+  [
+   "làm sao xem nhân viên nào đã huỷ món trong ca hôm nay",
+   "làm sao xem nhân viên nào đã huỷ đơn trong ca hôm nay"
+  ],
+  [
+   "quét mã qr để khách tự gọi món tại bàn",
+   "quét mã qr để khách tự thanh toán tại bàn"
+  ],
+  [
+   "cách tạo mã qr cho khách tự gọi món tại bàn",
+   "cách tạo mã qr cho khách chuyển khoản tại bàn"
+  ],
+  [
+   "cách tạo mã qr cho khách tự gọi món tại bàn trong quán",
+   "cách tạo mã qr cho khách tự thanh toán tại bàn trong quán"
+  ],
+  [
+   "làm sao để mỗi bàn có mã qr riêng cho khách gọi món",
+   "làm sao để mỗi món có mã qr riêng cho khách gọi món"
+  ],
+  [
+   "khuyến mãi mua 1 tặng 1 cài trên app thế nào",
+   "khuyến mãi mua 2 tặng 1 cài trên app thế nào"
+  ],
+  [
+   "khuyến mãi mua một tặng một cài trên app thế nào",
+   "khuyến mãi mua hai tặng một cài trên app thế nào"
+  ],
+  [
+   "giờ vàng giảm giá cài thế nào cho buổi chiều",
+   "giờ vàng giảm giá cài thế nào cho buổi sáng"
+  ],
+  [
+   "cài giờ vàng giảm giá đồ uống vào buổi chiều trên app thế nào",
+   "cài giờ vàng giảm giá đồ ăn vào buổi chiều trên app thế nào"
+  ],
+  [
+   "giảm giá cho đơn trên 200k",
+   "giảm giá 200k cho đơn"
+  ],
+  [
+   "cách giảm giá đơn trên 500 nghìn",
+   "cách giảm giá đơn 500 nghìn"
+  ],
+  [
+   "miễn phí ship cho đơn trên 300k",
+   "miễn phí ship cho đơn 300k"
+  ],
+  [
+   "tặng món cho khách gọi trên 5 món",
+   "tặng món cho khách gọi 5 món"
+  ],
+  [
+   "lọc đơn trên 1 triệu",
+   "lọc đơn 1 triệu"
+  ],
+  [
+   "tìm hoá đơn trên 100k",
+   "tìm hoá đơn 100k"
+  ],
+  [
+   "báo cáo món bán trên 50 phần",
+   "báo cáo món bán 50 phần"
+  ],
+  [
+   "khách ngồi trên 2 tiếng tính phí",
+   "khách ngồi 2 tiếng tính phí"
+  ],
+  [
+   "nhân viên làm trên 8 tiếng tính lương",
+   "nhân viên làm 8 tiếng tính lương"
+  ],
+  [
+   "cảnh báo hàng tồn trên 10 ngày",
+   "cảnh báo hàng tồn 10 ngày"
+  ],
+  [
+   "in hoá đơn trên máy tính",
+   "in hoá đơn máy tính"
+  ],
+  [
+   "dùng app trên máy tính",
+   "dùng máy tính"
+  ],
+  [
+   "cài app trên điện thoại",
+   "cài điện thoại"
+  ],
+  [
+   "đặt món trên bàn",
+   "đặt bàn"
+  ],
+  [
+   "nhân viên vào ca muộn",
+   "nhân viên ca muộn"
+  ],
+  [
+   "nhân viên vào ca sáng",
+   "nhân viên ca sáng"
+  ],
+  [
+   "sửa giờ vào ca",
+   "sửa giờ ca"
+  ],
+  [
+   "xem giờ vào ca của nhân viên",
+   "xem giờ ca của nhân viên"
+  ],
+  [
+   "cách vào ca làm",
+   "cách ca làm"
+  ],
+  [
+   "chấm công vào ca tối",
+   "chấm công ca tối"
+  ],
+  [
+   "quên vào ca thì sao",
+   "quên ca thì sao"
+  ],
+  [
+   "tiền vào hôm nay",
+   "tiền hôm nay"
+  ],
+  [
+   "ghi tiền vào két",
+   "ghi tiền két"
+  ],
+  [
+   "nhập hàng vào kho",
+   "nhập hàng kho"
+  ],
+  [
+   "đăng nhập vào máy khác",
+   "đăng nhập máy khác"
+  ],
+  [
+   "cộng tiền ship vào hoá đơn",
+   "cộng tiền ship hoá đơn"
+  ],
+  [
+   "giờ vào làm của nhân viên",
+   "giờ làm của nhân viên"
+  ],
+  [
+   "thêm khách vào nhóm khách quen",
+   "thêm khách nhóm khách quen"
+  ],
+  [
+   "nhân viên không cần đăng nhập",
+   "nhân viên không đăng nhập"
+  ],
+  [
+   "thanh toán không cần in hoá đơn",
+   "thanh toán không in hoá đơn"
+  ],
+  [
+   "làm sao để app không in hoá đơn",
+   "app không in hoá đơn"
+  ],
+  [
+   "làm sao để máy không in hoá đơn",
+   "máy không in hoá đơn"
+  ],
+  [
+   "làm sao để bếp không nhận món",
+   "bếp không nhận món"
+  ],
+  [
+   "làm sao để không hiện món hết hàng",
+   "không hiện món hết hàng"
+  ],
+  [
+   "tôi muốn không in phiếu bếp",
+   "không in phiếu bếp"
+  ],
+  [
+   "cách để món không hiện trên menu",
+   "món không hiện trên menu"
+  ],
+  [
+   "làm sao để đơn không bị trừ kho",
+   "đơn không bị trừ kho"
+  ],
+  [
+   "làm thế nào để nhân viên không thấy doanh thu",
+   "nhân viên không thấy doanh thu"
+  ],
+  [
+   "làm sao để không tự động in hoá đơn",
+   "không tự động in hoá đơn"
+  ],
+  [
+   "cách tự động in hoá đơn",
+   "app tự động in hoá đơn"
+  ],
+  [
+   "cách tự động đăng xuất",
+   "tự động đăng xuất"
+  ],
+  [
+   "cách để máy tự tắt màn hình",
+   "máy tự tắt màn hình"
+  ],
+  [
+   "làm sao để hoá đơn in 2 bản",
+   "hoá đơn in 2 bản"
+  ],
+  [
+   "làm sao để món tự trừ kho",
+   "món tự trừ kho"
+  ],
+  [
+   "làm sao để bàn tự trống sau thanh toán",
+   "bàn tự trống sau thanh toán"
+  ],
+  [
+   "cần đổi mật khẩu",
+   "đổi mật khẩu"
+  ],
+  [
+   "làm sao để mất kết nối máy in",
+   "mất kết nối máy in"
+  ],
+  [
+   "khách quen được không tính phí ship",
+   "khách quen tính phí ship thế nào"
+  ],
+  [
+   "làm sao để món tặng được không tính tiền",
+   "món tặng tính tiền như thế nào"
+  ],
+  [
+   "nhân viên mới được không chấm công",
+   "nhân viên mới chấm công thế nào"
+  ],
+  [
+   "món combo được không trừ kho",
+   "món combo trừ kho thế nào"
+  ],
+  [
+   "đơn mang về được không tính thuế",
+   "đơn mang về tính thuế như thế nào"
+  ],
+  [
+   "làm sao để nhân viên xoá đơn",
+   "nhân viên xoá đơn"
+  ],
+  [
+   "làm sao để nhân viên sửa giá",
+   "nhân viên sửa giá"
+  ],
+  [
+   "cách để khách tự gọi món",
+   "khách tự gọi món"
+  ],
+  [
+   "để nhân viên xem doanh thu",
+   "nhân viên xem doanh thu"
+  ],
+  [
+   "để bếp huỷ món",
+   "bếp huỷ món"
+  ],
+  [
+   "để trống giá món",
+   "trống giá món"
+  ],
+  [
+   "đổi tên quán",
+   "đổi tên mình"
+  ],
+  [
+   "đổi mật khẩu quán",
+   "đổi mật khẩu mình"
+  ],
+  [
+   "xoá tài khoản quán",
+   "xoá tài khoản mình"
+  ],
+  [
+   "đổi số điện thoại quán",
+   "đổi số điện thoại mình"
+  ],
+  [
+   "đổi địa chỉ quán",
+   "đổi địa chỉ"
+  ],
+  [
+   "đổi logo quán",
+   "đổi logo app"
+  ],
+  [
+   "cập nhật app",
+   "cập nhật quán"
+  ],
+  [
+   "tạo quán mới",
+   "tạo mới"
+  ],
+  [
+   "thông tin quán",
+   "thông tin của tôi"
+  ],
+  [
+   "mã quán ở đâu",
+   "mã của tôi ở đâu"
+  ],
+  [
+   "đăng nhập quán khác",
+   "đăng nhập khác"
+  ],
+  [
+   "chuyển quán",
+   "chuyển mình"
+  ],
+  [
+   "nhân viên quán",
+   "nhân viên của tôi"
+  ],
+  [
+   "email quán",
+   "email của mình"
+  ],
+  [
+   "tên quán in trên hoá đơn",
+   "tên mình in trên hoá đơn"
+  ],
+  [
+   "ảnh quán",
+   "ảnh của tôi"
+  ],
+  [
+   "khoá quán",
+   "khoá mình"
+  ],
+  [
+   "thuế hộ kinh doanh",
+   "thuế kinh doanh"
+  ],
+  [
+   "đăng ký hộ kinh doanh",
+   "đăng ký kinh doanh"
+  ],
+  [
+   "thu hộ tiền ship",
+   "thu tiền ship"
+  ],
+  [
+   "chi hộ tiền hàng",
+   "chi tiền hàng"
+  ],
+  [
+   "ghi khoản thu hộ",
+   "ghi khoản thu"
+  ],
+  [
+   "thanh toán hộ khách",
+   "thanh toán khách"
+  ],
+  [
+   "đặt hàng hộ khách",
+   "đặt hàng khách"
+  ],
+  [
+   "thêm bạn hàng",
+   "thêm hàng"
+  ],
+  [
+   "công nợ bạn hàng",
+   "công nợ hàng"
+  ],
+  [
+   "giới thiệu bạn bè dùng app",
+   "giới thiệu bè"
+  ],
+  [
+   "gộp bàn 1 với bàn 2",
+   "gộp bàn 1 bàn 2"
+  ],
+  [
+   "so sánh doanh thu tháng này với tháng trước",
+   "so sánh doanh thu tháng này tháng trước"
+  ],
+  [
+   "lương của quản lý",
+   "lương quản lý"
+  ],
+  [
+   "quyền của quản lý",
+   "quyền quản lý"
+  ],
+  [
+   "đơn của nhân viên",
+   "đơn nhân viên"
+  ],
+  [
+   "báo cáo của bếp",
+   "báo cáo bếp"
+  ],
+  [
+   "công nợ của khách",
+   "công nợ khách"
+  ],
+  [
+   "xem trước hoá đơn",
+   "trước hoá đơn"
+  ],
+  [
+   "xem lại hoá đơn",
+   "lại hoá đơn"
+  ],
+  [
+   "xem báo cáo lỗi",
+   "báo cáo lỗi"
+  ],
+  [
+   "xem trước khi in",
+   "trước khi in"
+  ],
+  [
+   "xem nhân viên nghỉ",
+   "nhân viên nghỉ"
+  ],
+  [
+   "xem khách nợ",
+   "khách nợ"
+  ],
+  [
+   "xem món hết hàng",
+   "món hết hàng"
+  ],
+  [
+   "xem đơn bị huỷ",
+   "đơn bị huỷ"
+  ],
+  [
+   "xem hàng sắp hết",
+   "hàng sắp hết"
+  ],
+  [
+   "xem tồn kho âm",
+   "tồn kho âm"
+  ],
+  [
+   "xem doanh thu giảm",
+   "doanh thu giảm"
+  ],
+  [
+   "món trong ngày",
+   "món ngày"
+  ],
+  [
+   "khách trong quán gọi thêm",
+   "khách gọi thêm"
+  ],
+  [
+   "hàng trong kho bị âm",
+   "hàng kho bị âm"
+  ],
+  [
+   "giảm giá trong giờ vàng",
+   "giảm giá giờ vàng"
+  ],
+  [
+   "nhân viên nghỉ trong ca",
+   "nhân viên nghỉ ca"
+  ],
+  [
+   "món trong combo hết hàng",
+   "món combo hết hàng"
+  ],
+  [
+   "tiền trong két",
+   "tiền két"
+  ],
+  [
+   "đổi giá trong ca",
+   "đổi giá ca"
+  ],
+  [
+   "giá vốn là gì",
+   "giá vốn gì"
+  ],
+  [
+   "ca là gì",
+   "ca gì"
+  ],
+  [
+   "nhân viên là chủ",
+   "nhân viên chủ"
+  ],
+  [
+   "nếu khách trả thiếu thì ghi nợ",
+   "nếu khách trả thiếu ghi nợ"
+  ],
+  [
+   "món nào là bán chạy",
+   "món nào bán chạy"
+  ],
+  [
+   "cần bao nhiêu nhân viên",
+   "bao nhiêu nhân viên"
+  ],
+  [
+   "khách muốn tách hoá đơn",
+   "khách tách hoá đơn"
+  ],
+  [
+   "nhân viên muốn nghỉ",
+   "nhân viên nghỉ"
+  ],
+  [
+   "khách cần xuất hoá đơn đỏ",
+   "khách xuất hoá đơn đỏ"
+  ],
+  [
+   "khách muốn đổi món",
+   "khách đổi món"
+  ],
+  [
+   "khách muốn huỷ đơn",
+   "khách huỷ đơn"
+  ],
+  [
+   "bếp cần thêm nguyên liệu",
+   "bếp thêm nguyên liệu"
+  ],
+  [
+   "khách ở xa giao hàng",
+   "khách xa giao hàng"
+  ],
+  [
+   "nhân viên ở lại sau ca",
+   "nhân viên lại sau ca"
+  ],
+  [
+   "món ở bàn 2 chuyển sang bàn 3",
+   "món bàn 2 chuyển sang bàn 3"
+  ],
+  [
+   "xoá cả đơn",
+   "xoá đơn"
+  ],
+  [
+   "huỷ cả bàn",
+   "huỷ bàn"
+  ],
+  [
+   "giảm giá cả đơn",
+   "giảm giá đơn"
+  ],
+  [
+   "in cả món đã huỷ",
+   "in món đã huỷ"
+  ],
+  [
+   "doanh thu cả chuỗi",
+   "doanh thu chuỗi"
+  ],
+  [
+   "xoá các món",
+   "xoá món"
+  ],
+  [
+   "xoá những đơn nháp",
+   "xoá đơn nháp"
+  ],
+  [
+   "in các hoá đơn",
+   "in hoá đơn"
+  ],
+  [
+   "đơn thanh toán rồi sửa được không",
+   "đơn thanh toán sửa được không"
+  ],
+  [
+   "in rồi mới thanh toán",
+   "in mới thanh toán"
+  ],
+  [
+   "món gửi bếp rồi huỷ",
+   "món gửi bếp huỷ"
+  ],
+  [
+   "thay thế nguyên liệu",
+   "thay nguyên liệu"
+  ],
+  [
+   "món thay thế",
+   "món thay"
+  ],
+  [
+   "đơn đâu có in được",
+   "đơn có in được"
+  ],
+  [
+   "máy in đâu có kết nối",
+   "máy in có kết nối"
+  ],
+  [
+   "nhân viên đâu thấy doanh thu",
+   "nhân viên thấy doanh thu"
+  ],
+  [
+   "in hoá đơn ở đâu",
+   "in hoá đơn ra sao"
+  ],
+  [
+   "bán hàng ra sao",
+   "bán hàng ở đâu"
+  ],
+  [
+   "quán mình bán ra sao",
+   "bán"
+  ],
+  [
+   "doanh thu tháng này ra sao",
+   "doanh thu tháng này ở đâu"
+  ],
+  [
+   "món mới bán ra sao",
+   "món mới bán ở đâu"
+  ],
+  [
+   "nhân viên làm việc ra sao",
+   "nhân viên làm việc ở đâu"
+  ],
+  [
+   "khách đánh giá quán thế nào",
+   "khách đánh giá quán ở đâu"
+  ],
+  [
+   "lãi tháng này thế nào",
+   "lãi tháng này ở đâu"
+  ],
+  [
+   "nhân viên xoá đơn được không",
+   "nhân viên xoá đơn như thế nào"
+  ],
+  [
+   "xoá đơn đã thanh toán có được không",
+   "xoá đơn đã thanh toán như thế nào"
+  ],
+  [
+   "bán âm kho được không",
+   "bán âm kho thế nào"
+  ],
+  [
+   "có nên giảm giá được không",
+   "có nên giảm giá"
+  ],
+  [
+   "tính phí ship theo khoảng cách",
+   "tính phí ship theo khoảng"
+  ],
+  [
+   "cách ly món chay",
+   "ly món chay"
+  ],
+  [
+   "xem báo cáo trên app",
+   "xem báo cáo"
+  ],
+  [
+   "đăng nhập app",
+   "đăng nhập web"
+  ],
+  [
+   "app bị lỗi",
+   "máy in bị lỗi"
+  ],
+  [
+   "app bị lỗi",
+   "bị lỗi"
+  ],
+  [
+   "app chạy chậm",
+   "chạy chậm"
+  ],
+  [
+   "app không in được",
+   "không in được"
+  ],
+  [
+   "tải app",
+   "tải"
+  ],
+  [
+   "xoá app",
+   "xoá cài lại"
+  ],
+  [
+   "em không xem được doanh thu",
+   "không xem được doanh thu"
+  ],
+  [
+   "tôi bị khoá tài khoản",
+   "bị khoá tài khoản"
+  ],
+  [
+   "nhân viên bị khoá tài khoản",
+   "bị khoá tài khoản"
+  ],
+  [
+   "làm sao in được hoá đơn",
+   "sao in được hoá đơn"
+  ],
+  [
+   "làm sao không in được hoá đơn",
+   "sao không in được hoá đơn"
+  ],
+  [
+   "tại sao không in được hoá đơn",
+   "làm sao không in được hoá đơn"
+  ],
+  [
+   "giúp việc theo giờ trả lương",
+   "việc theo giờ trả lương"
+  ],
+  [
+   "giờ vào",
+   "giờ ra"
+  ],
+  [
+   "nhân viên vào ca",
+   "nhân viên ra ca"
+  ],
+  [
+   "món trên 50k",
+   "món dưới 50k"
+  ],
+  [
+   "cho mình hỏi làm sao để quán mình không in hoá đơn",
+   "quán không in hoá đơn"
+  ],
+  [
+   "boom ơi xem doanh thu quán ở đâu",
+   "doanh thu"
+  ],
+  [
+   "nhập hàng cách ngày",
+   "nhập hàng ngày"
+  ],
+  [
+   "chấm công cách ngày",
+   "chấm công ngày"
+  ],
+  [
+   "báo cáo cách 2 ngày",
+   "báo cáo 2 ngày"
+  ],
+  [
+   "huỷ đơn thanh toán rồi",
+   "huỷ đơn thanh toán"
+  ],
+  [
+   "khách thanh toán rồi",
+   "khách thanh toán"
+  ],
+  [
+   "in hoá đơn rồi",
+   "in hoá đơn"
+  ],
+  [
+   "nhân viên đâu có xem được doanh thu",
+   "nhân viên có xem được doanh thu không"
+  ],
+  [
+   "máy in đâu có in được",
+   "máy in có in được không"
+  ],
+  [
+   "đổi tên quán",
+   "cách đổi tên của bạn"
+  ],
+  [
+   "xoá tài khoản quán",
+   "tôi muốn xoá tài khoản của tôi"
+  ],
+  [
+   "khách được không tính phí phục vụ",
+   "khách tính phí phục vụ thế nào"
+  ],
+  [
+   "làm sao để món được không in ra bếp",
+   "món in ra bếp như thế nào"
+  ],
+  [
+   "nhân viên vào ca rồi mà không thấy",
+   "nhân viên ca mà không thấy"
+  ],
+  [
+   "giảm giá cho khách vào thứ 2",
+   "giảm giá cho khách thứ 2"
+  ],
+  [
+   "khuyến mãi cho khách vào sinh nhật",
+   "khuyến mãi cho khách sinh nhật"
+  ],
+  [
+   "làm thế nào để kho bị âm",
+   "làm sao kho bị âm"
+  ],
+  [
+   "làm thế nào để khách vẫn thấy món đã ẩn",
+   "làm sao khách vẫn thấy món đã ẩn"
+  ],
+  [
+   "làm thế nào để nhân viên vẫn xem được báo cáo",
+   "làm sao nhân viên vẫn xem được báo cáo"
+  ],
+  [
+   "cách để nhân viên huỷ được món",
+   "làm sao nhân viên huỷ được món"
+  ],
+  [
+   "cách để đơn tự huỷ sau 30 phút",
+   "làm sao đơn tự huỷ sau 30 phút"
+  ],
+  [
+   "cách điện cho máy pos",
+   "điện cho máy pos thế nào"
+  ],
+  [
+   "cách âm cho phòng hát",
+   "âm cho phòng hát thế nào"
+  ],
+  [
+   "cách 30 phút đồng bộ một lần",
+   "30 phút đồng bộ một lần thế nào"
+  ],
+  [
+   "giảm giá 10% cho đơn",
+   "giảm giá 10 cho đơn"
+  ],
+  [
+   "đơn < 500k được giảm không",
+   "đơn > 500k được giảm không"
+  ],
+  [
+   "chia hoá đơn 1/2",
+   "chia hoá đơn 1 2"
+  ],
+  [
+   "cho hỏi tên khách khi tạo đơn",
+   "tên khách khi tạo đơn"
+  ],
+  [
+   "mở quán ở Nha Trang",
+   "mở quán ở Trang"
+  ],
+  [
+   "làm sao để kho bị âm",
+   "kho bị âm thế nào"
+  ],
+  [
+   "làm sao để doanh thu giảm",
+   "doanh thu giảm thế nào"
+  ],
+  [
+   "làm sao để nhân viên nghỉ việc",
+   "nhân viên nghỉ việc thế nào"
+  ],
+  [
+   "làm sao để mở thêm chi nhánh",
+   "mở thêm chi nhánh ra sao"
+  ],
+  [
+   "khách hàng nợ tớ tiền thì ghi thế nào",
+   "khách hàng tớ nợ tiền thì ghi thế nào"
+  ],
+  [
+   "nhà cung cấp trả tớ tiền hàng",
+   "nhà cung cấp tớ trả tiền hàng"
+  ],
+  [
+   "chủ quán giao tớ quản lý kho",
+   "chủ quán tớ giao quản lý kho"
+  ],
+  [
+   "xoá tài khoản của bạn",
+   "xoá tài khoản của tớ"
+  ],
+  [
+   "tồn kho −5 xử lý sao",
+   "tồn kho 5 xử lý sao"
+  ],
+  [
+   "tồn kho ＜ 5 thì báo",
+   "tồn kho 5 thì báo"
+  ],
+  [
+   "chọn 2–3 món tặng",
+   "chọn 2 3 món tặng"
+  ]
+ ],
+ "cung_nghia": [
+  [
+   "huỷ món đã gửi bếp",
+   "làm sao huỷ món đã gửi bếp"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "cho tớ hỏi cách hủy món đã gửi bếp với"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "boom ơi huỷ món đã gửi bếp thế nào ạ"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "huỷ món đã báo bếp"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "món đã gửi bếp rồi muốn huỷ thì sao"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "xoá món đã gửi bếp"
+  ],
+  [
+   "huỷ món đã gửi bếp",
+   "huy mon da gui bep"
+  ],
+  [
+   "in hoá đơn cho khách",
+   "in bill cho khách"
+  ],
+  [
+   "in hoá đơn cho khách",
+   "cách in hóa đơn cho khách"
+  ],
+  [
+   "in hoá đơn cho khách",
+   "làm thế nào để in hoá đơn cho khách"
+  ],
+  [
+   "in hoá đơn cho khách",
+   "khách xin hoá đơn thì in thế nào"
+  ],
+  [
+   "chuyển bàn cho khách",
+   "chuyển khách sang bàn khác"
+  ],
+  [
+   "chuyển bàn cho khách",
+   "đổi bàn cho khách"
+  ],
+  [
+   "gộp bàn",
+   "gộp 2 bàn"
+  ],
+  [
+   "gộp bàn",
+   "ghép bàn"
+  ],
+  [
+   "thêm món mới vào menu",
+   "tạo món mới trong menu"
+  ],
+  [
+   "thêm món mới vào menu",
+   "thêm món vào thực đơn"
+  ],
+  [
+   "thêm món mới vào menu",
+   "làm sao để thêm món mới vào menu"
+  ],
+  [
+   "thêm món mới vào menu",
+   "cho mình hỏi thêm món mới vào menu như thế nào"
+  ],
+  [
+   "thêm nhân viên mới",
+   "thêm nhân viên"
+  ],
+  [
+   "thêm nhân viên mới",
+   "tạo tài khoản nhân viên mới"
+  ],
+  [
+   "xem doanh thu hôm nay",
+   "xem doanh thu hôm nay ở đâu"
+  ],
+  [
+   "xem doanh thu hôm nay",
+   "doanh thu hôm nay xem ở đâu"
+  ],
+  [
+   "xem doanh thu hôm nay",
+   "muốn xem doanh thu ngày hôm nay"
+  ],
+  [
+   "xem doanh thu hôm nay",
+   "hôm nay bán được bao nhiêu xem ở đâu"
+  ],
+  [
+   "đổi mật khẩu",
+   "đổi mật khẩu đăng nhập"
+  ],
+  [
+   "đổi mật khẩu",
+   "thay mật khẩu"
+  ],
+  [
+   "đổi mật khẩu",
+   "làm sao đổi mật khẩu"
+  ],
+  [
+   "làm sao tăng khách buổi sáng",
+   "làm thế nào để tăng khách buổi sáng"
+  ],
+  [
+   "làm sao tăng khách buổi sáng",
+   "buổi sáng vắng khách làm sao tăng khách"
+  ],
+  [
+   "làm sao tăng khách buổi sáng",
+   "cách thu hút khách buổi sáng"
+  ],
+  [
+   "làm sao tăng khách buổi sáng",
+   "quán vắng buổi sáng thì nên làm gì"
+  ],
+  [
+   "kết nối máy in qua bluetooth",
+   "kết nối máy in bằng bluetooth"
+  ],
+  [
+   "kết nối máy in qua bluetooth",
+   "cách kết nối máy in bluetooth"
+  ],
+  [
+   "kết nối máy in qua bluetooth",
+   "máy in bluetooth kết nối thế nào"
+  ],
+  [
+   "kết nối máy in qua bluetooth",
+   "kết nối máy in qua blutooth"
+  ],
+  [
+   "tắt âm báo đơn mới",
+   "tắt tiếng báo đơn mới"
+  ],
+  [
+   "tắt âm báo đơn mới",
+   "tắt âm thanh khi có đơn mới"
+  ],
+  [
+   "tắt âm báo đơn mới",
+   "làm sao tắt âm báo đơn mới"
+  ],
+  [
+   "ghi khoản chi vào thu chi",
+   "ghi khoản chi vào sổ thu chi"
+  ],
+  [
+   "ghi khoản chi vào thu chi",
+   "nhập khoản chi vào thu chi"
+  ],
+  [
+   "ghi khoản chi vào thu chi",
+   "thêm khoản chi"
+  ],
+  [
+   "tách hoá đơn",
+   "tách bill"
+  ],
+  [
+   "tách hoá đơn",
+   "chia hoá đơn"
+  ],
+  [
+   "tách hoá đơn",
+   "tách hoá đơn cho khách"
+  ],
+  [
+   "giảm giá cho hoá đơn",
+   "giảm giá hoá đơn"
+  ],
+  [
+   "giảm giá cho hoá đơn",
+   "giảm giá cho cả hoá đơn"
+  ],
+  [
+   "giảm giá cho hoá đơn",
+   "làm sao giảm giá cho hóa đơn"
+  ],
+  [
+   "bán hàng khi mất mạng",
+   "mất mạng có bán hàng được không"
+  ],
+  [
+   "bán hàng khi mất mạng",
+   "bán hàng lúc mất mạng"
+  ],
+  [
+   "bán hàng khi mất mạng",
+   "mất wifi có bán được không"
+  ],
+  [
+   "món bán chạy nhất xem ở đâu",
+   "xem món bán chạy nhất"
+  ],
+  [
+   "món bán chạy nhất xem ở đâu",
+   "món nào bán chạy nhất"
+  ],
+  [
+   "món bán chạy nhất xem ở đâu",
+   "xem món bán chạy"
+  ],
+  [
+   "xem tồn kho nguyên liệu",
+   "xem tồn kho"
+  ],
+  [
+   "xem tồn kho nguyên liệu",
+   "kiểm tra tồn kho nguyên liệu"
+  ],
+  [
+   "xem tồn kho nguyên liệu",
+   "nguyên liệu còn bao nhiêu xem ở đâu"
+  ]
+ ]
+}

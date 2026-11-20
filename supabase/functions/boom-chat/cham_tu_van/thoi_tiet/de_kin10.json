@@ -1,0 +1,422 @@
+[
+ {
+  "id": "U01",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "doanh_thu",
+  "q": "thang nay doanh thu sao r, co dat ko"
+ },
+ {
+  "id": "U02",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "doanh_thu",
+  "q": "Doanh thu tháng này của quán đang thế nào em?"
+ },
+ {
+  "id": "U03",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "doanh_thu",
+  "q": "bn đơn 1 ngày trung bình vậy, tiền mỗi đơn cỡ nhiêu"
+ },
+ {
+  "id": "U04",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "doanh_thu",
+  "q": "thang nay ban dc nhiu roi, du tinh het thang dc bn"
+ },
+ {
+  "id": "U05",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "mon",
+  "q": "mon nao ban chay nhat, mon nao e coi bỏ dc"
+ },
+ {
+  "id": "U06",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "Topping nào ít người gọi quá thì có nên dẹp không?"
+ },
+ {
+  "id": "U07",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "món nào nên bỏ bớt cho đỡ cực bếp"
+ },
+ {
+  "id": "U08",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "mon",
+  "q": "cơm tấm sườn cây ko ai gọi hả, sao vậy"
+ },
+ {
+  "id": "U09",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "gia_loi",
+  "q": "bac xiu ban 29k lời bn 1 ly"
+ },
+ {
+  "id": "U10",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gia_loi",
+  "q": "Muốn tăng giá trà sữa thêm 3 nghìn có sợ mất khách không, lời thêm được bao nhiêu?"
+ },
+ {
+  "id": "U11",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "gia_loi",
+  "q": "com suon von nhiu, ban 40k co lo ko"
+ },
+ {
+  "id": "U12",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gia_loi",
+  "q": "món nào lời nhiều nhất trong mấy món cơm tấm, nên đẩy món nào"
+ },
+ {
+  "id": "U13",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "gio_ngay",
+  "q": "mấy h khách đông nhất, chiều có nên đóng sớm ko"
+ },
+ {
+  "id": "U14",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gio_ngay",
+  "q": "halloween t7 nay quán nên chuẩn bị j"
+ },
+ {
+  "id": "U15",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "gio_ngay",
+  "q": "Buổi chiều 16h-20h có đáng mở không hay chỉ bán sáng trưa thôi?"
+ },
+ {
+  "id": "U16",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "gio_ngay",
+  "q": "20/11 sắp tới hs nghỉ ko, quán có bị vắng ko e"
+ },
+ {
+  "id": "U17",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "nhan_su",
+  "q": "3 đứa nhân viên có cần ko hay 2 là đủ"
+ },
+ {
+  "id": "U18",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "nhan_su",
+  "q": "ai làm nhiều giờ nhất tháng này, ca nào đang dư người"
+ },
+ {
+  "id": "U19",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "nhan_su",
+  "q": "Cô Sáu làm nhiều quá, có nên thuê thêm người phụ không?"
+ },
+ {
+  "id": "U20",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "nhan_su",
+  "q": "2 dua ban thoi gian xep ca sao cho hop ly"
+ },
+ {
+  "id": "U21",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "kho",
+  "q": "sữa đặc với hạt cf còn đủ xài tới thứ mấy"
+ },
+ {
+  "id": "U22",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "kho",
+  "q": "ly 700 hết rồi hả, giờ nhập bn là vừa"
+ },
+ {
+  "id": "U23",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "kho",
+  "q": "tuan nay can nhap gi gap ko"
+ },
+ {
+  "id": "U24",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "kho",
+  "q": "Than hết rồi, tuần này cần mua bao nhiêu bao? Trứng cũng thấy ít"
+ },
+ {
+  "id": "U25",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khach",
+  "q": "khách quen còn quay lại đều ko hay rớt bớt rồi"
+ },
+ {
+  "id": "U26",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "Khách mới tháng này nhiều không, giữ chân kiểu gì?"
+ },
+ {
+  "id": "U27",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "khach toi chu yeu la ai, an sang hay trua"
+ },
+ {
+  "id": "U28",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "có khách nào lâu rồi ko ghé ko, nhắn họ dc ko"
+ },
+ {
+  "id": "U29",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "giảm giá thì giảm kiểu j cho đỡ lỗ"
+ },
+ {
+  "id": "U30",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Chương trình mua 2 tặng 1 tháng này có lời không hay lỗ?"
+ },
+ {
+  "id": "U31",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "co nen lam the tich diem ko"
+ },
+ {
+  "id": "U32",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "khuyen_mai",
+  "q": "giảm 10k cho hs thì phải bán thêm bn phần mới hòa"
+ },
+ {
+  "id": "U33",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "tiep_thi",
+  "q": "muốn kéo thêm khách văn phòng thì làm sao"
+ },
+ {
+  "id": "U34",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "tiep_thi",
+  "q": "Bỏ 2 triệu chạy quảng cáo Facebook thì phải bán thêm bao nhiêu ly mới hoà?"
+ },
+ {
+  "id": "U35",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "tiep_thi",
+  "q": "quán ít ai biết, làm sao cho đông khách chiều"
+ },
+ {
+  "id": "U36",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi",
+  "q": "in tờ rơi phát ở trường thcs có hiệu quả ko"
+ },
+ {
+  "id": "U37",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "san_giao",
+  "q": "Chiết khấu sàn tháng này cao quá, có nên tăng giá trên sàn không?"
+ },
+ {
+  "id": "U38",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "san_giao",
+  "q": "shopee voi grab ben nao loi hon"
+ },
+ {
+  "id": "U39",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "san_giao",
+  "q": "đơn sàn chiếm bao nhiêu % rồi, bỏ sàn có sao ko"
+ },
+ {
+  "id": "U40",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "san_giao",
+  "q": "quán t có nên lên grabfood ko, mất bn %"
+ },
+ {
+  "id": "U41",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "thu_chi",
+  "q": "thang nay lai hay lo vay e"
+ },
+ {
+  "id": "U42",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "thu_chi",
+  "q": "Tiền lương với nguyên liệu tăng quá, chi chỗ nào đang phình?"
+ },
+ {
+  "id": "U43",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "thu_chi",
+  "q": "đang tính vay 50tr mua tủ đông, mỗi tháng trả nổi ko"
+ },
+ {
+  "id": "U44",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "thu_chi",
+  "q": "con no lo thit 10tr, thang nay tra het dc ko hay tra tu tu"
+ },
+ {
+  "id": "U45",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "mai mưa ko, có cần mua thêm đá ko"
+ },
+ {
+  "id": "U46",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "Mấy hôm tới thời tiết vậy thì trà sữa bán có chạy không?"
+ },
+ {
+  "id": "U47",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "thoi_tiet",
+  "q": "troi vay nau bun bo bot lai ko"
+ },
+ {
+  "id": "U48",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "thoi_tiet",
+  "q": "cuối tuần trời sao, có nên nấu thêm ko"
+ },
+ {
+  "id": "U49",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "ngoai_du_lieu",
+  "q": "quán kế bên bán cf sữa 20k, mình có nên giảm theo"
+ },
+ {
+  "id": "U50",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "ngoai_du_lieu",
+  "q": "Giá trân châu ngoài chợ đang lên hay xuống vậy?"
+ },
+ {
+  "id": "U51",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "ngoai_du_lieu",
+  "q": "nghe nói sắp tăng giá điện, quán ảnh hưởng nhiu"
+ },
+ {
+  "id": "U52",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "ngoai_du_lieu",
+  "q": "quán cơm tấm đầu hẻm mới mở bán rẻ hơn, mình làm sao"
+ },
+ {
+  "id": "U53",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "noi_dung",
+  "q": "Viết giúp chị cái caption đăng FB giới thiệu cà phê muối"
+ },
+ {
+  "id": "U54",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "noi_dung",
+  "q": "viet tin nhan zalo moi khach quay lai, ngan thoi"
+ },
+ {
+  "id": "U55",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "noi_dung",
+  "q": "làm kịch bản clip tiktok 30 giây quay nồi bún bò"
+ },
+ {
+  "id": "U56",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "noi_dung",
+  "q": "viết bài đăng báo quán nghỉ cn nhưng t2 có món mới"
+ },
+ {
+  "id": "U57",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "so_sanh_ky",
+  "q": "sao thang nay tut so voi thang truoc vay"
+ },
+ {
+  "id": "U58",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "so_sanh_ky",
+  "q": "Tuần này so với tuần trước món nào tăng, món nào giảm?"
+ },
+ {
+  "id": "U59",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "so_sanh_ky",
+  "q": "chi tháng này tăng hơn tháng trước nhiều, tại sao"
+ },
+ {
+  "id": "U60",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "so_sanh_ky",
+  "q": "giờ nào tụt so với tháng trước, trưa hay tối"
+ }
+]

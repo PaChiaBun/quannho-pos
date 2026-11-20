@@ -234,7 +234,6 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
 
   // ── qrCode ──
   List<Widget> _qrCodeFields() {
-    final mode = _cfg['mode'] as String? ?? 'static';
     final currentBin = _cfg['bankBin'] as String? ?? '970422';
     final qrSource = _cfg['qrSource'] as String? ?? 'vietqr';
     return [
@@ -242,10 +241,7 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
       _chipGroup('qrSource', ['vietqr', 'custom_image'], ['VietQR Tự động', 'Tải ảnh QR lên']),
       const SizedBox(height: 16),
       if (qrSource == 'vietqr') ...[
-        _label('Chế độ QR'),
-        _chipGroup('mode', ['static', 'sepay'], ['VietQR Tĩnh (Miễn phí)', 'SePay API (Tự động confirm)']),
-        const SizedBox(height: 16),
-        if (mode == 'static') ...[
+        ...[
           _label('Thông tin tài khoản'),
           _label('Ngân hàng', sub: true),
           DropdownButtonFormField<String>(
@@ -288,14 +284,6 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
                 );
               }
             ),
-          ),
-        ] else ...[
-          _textField('SePay API Key', 'sepayApiKey', hint: 'Lấy tại sepay.vn'),
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
-            child: const Text('✅ Tự động xác nhận thanh toán khi khách quét. Cần đăng ký tại sepay.vn', style: TextStyle(fontSize: 11)),
           ),
         ],
       ] else ...[

@@ -1,0 +1,286 @@
+{
+ "moi": [
+  {
+   "id": "D17_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với chính lập luận 5 người ~50 giờ/tuần quá 48 giờ; bỏ sót ca quá 16 giờ chưa chấm ra. Nêu tên Ngọc ~58 giờ nhưng không đề xuất chia lại ca."
+  },
+  {
+   "id": "D17_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với chính lập luận 5 người ~50 giờ/tuần quá 48 giờ; bỏ sót ca quá 16 giờ chưa chấm ra."
+  },
+  {
+   "id": "D17_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với chính lập luận 5 người ~50 giờ/tuần quá 48 giờ; bỏ sót ca quá 16 giờ chưa chấm ra."
+  },
+  {
+   "id": "D17_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với chính lập luận 5 người ~50 giờ/tuần quá 48 giờ; bỏ sót ca quá 16 giờ chưa chấm ra."
+  },
+  {
+   "id": "D17_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với lập luận quá 48 giờ/tuần; không nhắc ca quá 16 giờ chưa chấm ra."
+  },
+  {
+   "id": "D17_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về cắt' mâu thuẫn với chính lập luận 5 người ~50 giờ/tuần quá 48 giờ; bỏ sót ca quá 16 giờ chưa chấm ra."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ qua hao hụt bún / rau; 'Vì sao' sáo, lặp lại số; lịch chỉ có gas, gạo."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chỉ nhắc 'theo dõi hao hụt' chung chung, không nêu bún 26 kg / rau 15 kg đặt theo ngày; 'Vì sao' sáo."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói 'nhập ngay' nhưng hẹn 30/10; 'theo dõi hao hụt gạo và gas' sai đối tượng (hao hụt thật là bún, rau, sườn)."
+  },
+  {
+   "id": "D29_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ qua hao hụt bún / rau; 'Vì sao' và 'Cần xem lại' sáo, không thêm thông tin."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D17_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý do 'thiếu hiệu suất' và việc 'theo dõi người trên 30 ca' chung chung, tự đặt ngưỡng; không dùng số giờ, không chỉ giờ vắng."
+  },
+  {
+   "id": "D17_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định sai 'không ai làm quá nhiều' (Ngọc 38 ca ~58 giờ/tuần) và tự đặt ngưỡng 30 ca mà Ngọc đã vượt."
+  },
+  {
+   "id": "D17_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Tự đặt ngưỡng 'dưới 20 ca thì xem xét lại' — gần như chỉ đích danh Khang (18 ca) để cắt; lý lẽ 'ảnh hưởng phục vụ' chung chung."
+  },
+  {
+   "id": "D17_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "'Làm việc hợp lý' trái số liệu (ca lệch 27–58 giờ/tuần); ngưỡng 30 ca tự đặt, không nhắc giờ vắng."
+  },
+  {
+   "id": "D17_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Tự đặt ngưỡng 'dưới 20 ca' hướng tới cắt người làm ít, bỏ sót ca quá 16 giờ; lý lẽ chung chung, câu cuối lặp."
+  },
+  {
+   "id": "D17_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "'168 giờ mỗi người' không ghi là cả tháng dễ hiểu sai; việc 'theo dõi ca quá 16 giờ để không thiếu hụt nhân lực' lẫn lộn, không có việc cụ thể."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không có ngày nhập cụ thể và bỏ qua hao hụt bún 26 kg / rau 15 kg — lịch nhập tuần chỉ có gas, gạo."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ qua hao hụt bún / rau; khuyên 'kiểm tra giá và nhà cung cấp' chung chung, không dùng số nhà cung cấp có sẵn."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nhắc 'theo dõi hao hụt' chung chung, không nêu bún 26 kg / rau 15 kg; lịch chỉ có gas, gạo."
+  },
+  {
+   "id": "D29_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "'Nhập ngay' nhưng lịch chỉ ghi 'dự kiến trong tuần này', không có ngày; bỏ qua hao hụt bún / rau."
+  }
+ ]
+}

@@ -1,0 +1,566 @@
+{
+ "moi": [
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý lẽ 'chỉ có 4 ngày bán' gây hiểu sai (thứ nào cũng 4 ngày), không nói số liệu không rõ lý do, việc làm chung chung."
+  },
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không chỉ ra 900 ly là trà đá 3.000đ nên đồ uống ít tiền, thiếu việc mời nước sâm / chanh kèm món."
+  },
+  {
+   "id": "D18_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Ghi 'khung 17h–20h đạt 18.000.000đ' sai (ca tối 16–20h là 21.873.000đ), việc làm chỉ là theo dõi."
+  },
+  {
+   "id": "D19_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ một việc, chưa kèm thêm giá trị (thêm sườn / canh) khi tăng giá."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Combo kèm trà đá 3.000đ ít tác dụng, không nêu đồ uống ~7% doanh thu, chưa dứt khoát ẩn món chưa bán."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Ghi sai 'mỗi đơn chỉ 1 món', việc làm chung chung (mạng xã hội), không giảm nhập hàng Thứ 4, kết sáo."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc cơm sườn giá vốn 48% và thiếu giá vốn bún bò nên chưa so được lời, không có việc làm."
+  },
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Ghi sai khung ca tối thành 17h–20h, câu so ca trưa lủng củng, lý do đoán chung chung, đẩy bún bò (món sáng) buổi tối."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đoán 'nhiều người nghỉ làm' không có số, combo đặt vào giờ cao điểm chứ không nhắm Thứ 4, không so ~55%."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Quảng bá trà đá 3.000đ ít tăng tiền, không chỉ ra phần lớn ly là trà đá rẻ, thiếu mời nước kèm món."
+  },
+  {
+   "id": "D18_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên đóng ca 16h/19h mà không nêu doanh thu ca tối, chi phí người/gas; việc làm chỉ là theo dõi."
+  },
+  {
+   "id": "D19_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu lãi gộp mỗi phần (~20.800đ) và không kèm thêm giá trị khi tăng giá."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Lý lẽ sai (trà đá 3.000đ chỉ ~2% doanh thu mà gọi 'doanh thu cao'); tặng trà đá không tăng tiền nước; combo không có giá."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'Cơm gà xối mỡ giá vốn hợp lý hơn' (không có giá vốn) và mời thêm món chính thứ hai là vô lý."
+  },
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu chỉ cơm sườn có giá vốn (48%) nên chưa so được lời, cũng không đề nghị nhập giá vốn bún bò."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 0,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không trả lời 'sao vậy', đổi khung thành 17–20h với 13,5% sai (đúng ~14,1%) và lạc sang cơm sườn."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên giảm giá món chính trong khi vấn đề là giá trị đơn giảm; không chỉ ra món thêm tụt còn ~4%."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dàn trải 4 việc chung, không nêu giá trị đơn 48.480đ và mục tiêu đo, quảng bá mạng xã hội chung chung."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm (tăng giá cơm sườn, ẩn cơm cá kho) không xử lý giá trị đơn giảm; không chỉ ra món thêm tụt."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dài, dàn trải; không nêu giá trị đơn 48.480đ hay mục tiêu đo cụ thể cho việc mời món thêm."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không so Thứ 4 với ~20,9 triệu các ngày khác, lý do đoán chung chung và combo 39.000đ giảm sâu so giá lẻ 48.000đ."
+  },
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đổ lỗi doanh thu thấp cho 2 món chưa bán và đoán giá / khẩu vị không có số, thiếu việc tăng bán đồ uống."
+  },
+  {
+   "id": "D18_1",
+   "diem": {
+    "thang": 0,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'số đơn giảm', khuyên đóng ca 'từ 20h' (giờ quán vốn đã đóng) — vô nghĩa và phán thay chủ."
+  },
+  {
+   "id": "D19_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ một việc, chưa kèm thêm giá trị (thêm sườn / canh) khi tăng giá."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Tặng trà đá miễn phí đi ngược mục tiêu tăng tiền đồ uống, thiếu mời nước sâm kèm cơm trưa có giá cụ thể."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất giảm giá khung 14h–17h trùng giờ quán nghỉ 14–16h, đẩy bún bò (món sáng) vào trưa, ghi sai 'mỗi đơn 1 món'."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc cơm sườn giá vốn 48% và thiếu giá vốn bún bò nên chưa so được lời, không có việc làm."
+  },
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nói số liệu không cho biết lý do, đẩy bún bò (món sáng) buổi tối và lạc đề sang giá vốn cơm sườn."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không so Thứ 4 với ~20,9 triệu các ngày khác, lý do đoán chung chung và combo 39.000đ giảm sâu."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đổ lỗi doanh thu thấp cho 2 món chưa bán và đoán giá / khẩu vị không có số, thiếu việc tăng bán đồ uống."
+  },
+  {
+   "id": "D18_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'số đơn tối giảm' và khuyên 'đóng ca tối từ 20h' (quán vốn đóng 20h), không nêu 21,9 triệu / 16,5%."
+  },
+  {
+   "id": "D19_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu lãi gộp mỗi phần (~20.800đ) và không kèm thêm giá trị khi tăng giá."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu đồ uống chỉ ~7% doanh thu; 'tặng trà đá' và 'quảng bá' chung chung, không con số."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất ưu đãi khung 14h–17h trong khi 14h–16h quán nghỉ; không so Thứ 4 với ngày khác (~55%)."
+  },
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu chỉ cơm sườn có giá vốn (48%) nên chưa so được lời, cũng không đề nghị nhập giá vốn bún bò."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nói rõ số liệu không cho biết lý do, lý giải vòng vo và đẩy bún bò (món sáng) cho ca tối."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy Thứ Tư làm khác biệt chính dù không có số theo thứ tuần trước; bỏ qua món thêm / đồ uống."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc bán kèm không có món/giá/mục tiêu cụ thể (về ~55.000đ/đơn), lạc sang ẩn món và cơm sườn."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy Thứ Tư làm khác biệt chính dù không có số theo thứ tuần trước; bỏ qua món thêm / đồ uống."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc bán kèm không có món/giá/mục tiêu cụ thể (về ~55.000đ/đơn), lạc sang ẩn món và cơm sườn."
+  }
+ ]
+}

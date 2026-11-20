@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chung chung, không dùng số liệu quán, nhầm kỳ hiện tại thành tháng 11."
+  },
+  {
+   "id": "D45_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi kỳ 1–28/10 là tháng 11 và tự ước tháng 12 cao hơn; việc làm chung chung."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Giống A: nhầm tháng 11, ước tăng không căn cứ, việc làm chung chung."
+  },
+  {
+   "id": "D45_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nêu 24–25/12 nhưng không nói rơi Thứ 5/Thứ 6, không nối với giờ tối đông; việc làm chung."
+  },
+  {
+   "id": "D45_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Có nhắc cuối tuần nhưng không chỉ ra 24/12 Thứ 5, 25/12 Thứ 6 và khung tối 18–21h để chuẩn bị người/nguyên liệu."
+  },
+  {
+   "id": "D45_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nêu 24–25/12 nhưng không nói thứ; bảo xem doanh thu tháng 11 (chưa có), không dùng số tối/cuối tuần."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu 24/12 Thứ 5, 25/12 Thứ 6 và giờ đông tối/cuối tuần; vẫn 'ước cao hơn tháng này' khi không có căn cứ."
+  },
+  {
+   "id": "D45_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu thứ của 24–25/12 hay tối/cuối tuần; lý lẽ chung chung (Tết Dương lịch không thuộc tháng 12)."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nhầm tháng này thành tháng 11, tự ước tháng 12 cao hơn; việc làm chung chung, không dùng giờ/thứ đông."
+  },
+  {
+   "id": "D45_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề xuất combo trà sữa + bánh ngọt trong khi quán không bán bánh ngọt; vẫn tự ước tháng 12 cao hơn."
+  },
+  {
+   "id": "D45_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không dùng số liệu quán, việc làm chung chung, nhầm kỳ hiện tại thành tháng 11."
+  },
+  {
+   "id": "D45_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chung chung hoàn toàn: không số liệu, không ngày lễ cụ thể, việc làm mơ hồ."
+  }
+ ]
+}

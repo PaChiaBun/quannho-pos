@@ -1,3 +1,4 @@
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/kitchen_ticket_template_provider.dart';
@@ -14,7 +15,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final widthFactor = tpl.paperSize == '58mm' ? 0.7 : 0.88;
+    final widthFactor = paperSpecOf(tpl.paperSize).kitchenPreview;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -41,7 +42,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                 Text(
                   tpl.headerText,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: tpl.headerFontSize.toDouble(),
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2,
@@ -56,7 +57,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                     if (tpl.showTableName)
                       Text(
                         'BÀN 5',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: tpl.tableFontSize.toDouble(),
                           fontWeight: FontWeight.w900,
                         ),
@@ -64,7 +65,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                     if (tpl.showOrderNumber)
                       Text(
                         '#QN-018',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: Colors.grey.shade500,
                         ),
@@ -74,7 +75,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                 if (tpl.showDateTime)
                   Text(
                     '14/05/2026  13:45',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       color: Colors.grey.shade500,
                     ),
@@ -82,9 +83,8 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                 if (tpl.showWaiterName)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      'NV Order: Thành Nghiệp',
-                      style: GoogleFonts.outfit(
+                    child: Text('NV gọi món: Thành Nghiệp',
+                                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
@@ -123,7 +123,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     item.$1,
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: tpl.itemFontSize.toDouble(),
                                       fontWeight: tpl.boldItemName ? FontWeight.w900 : FontWeight.w500,
                                     ),
@@ -132,7 +132,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Text(
                                   'x${item.$2}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                       fontSize: tpl.qtyFontSize.toDouble(),
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black,
@@ -152,7 +152,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                                     }
                                     return Text(
                                       '↳ $displayLine',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 10,
                                         color: Colors.blueGrey,
                                         fontStyle: FontStyle.italic,
@@ -180,7 +180,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                 Center(
                   child: Text(
                     'Quán Nhỏ POS',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 9,
                       color: Colors.grey.shade400,
                       fontWeight: FontWeight.w500,

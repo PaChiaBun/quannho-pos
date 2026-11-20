@@ -1,0 +1,3 @@
+# POS JWT Gateway Production Dependencies
+# Requires Python >= 3.10
+gunicorn==26.2.0

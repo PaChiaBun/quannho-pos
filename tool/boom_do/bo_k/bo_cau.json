@@ -1,0 +1,807 @@
+{
+ "note": "Bộ K — câu kiểm tra kín kiểu tin nhắn điện thoại: viết tắt, teencode, ~nửa không dấu, giọng Bắc/Nam",
+ "cases": [
+  {
+   "q": "ghi chu it duong ko da cho tung mon lm s v",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "khách quẹt ck r mà máy treo ko bít đơn có ghi nhận chưa, đối soát ở đâu z",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bam mon no bao het hang ma kho con hang ak",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-mon-da-het-hang-khi-cham-mon",
+    "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nhập sđt khách để tích điểm mà nó báo ko tìm thấy khách là s",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-khong-tim-thay-khach-hang",
+    "khach-hang#loi-khong-tim-thay-khach-hang-khi-thanh-toan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "khach tra mon roi mun hoan tien don da tinh tien thi lm ntn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-khach-muon-huy-hoan-tien-don-da-thanh-toan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "xem lai may don hnay ban ra o dau v ad",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-xem-don-gan-day"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "thanh toán nó báo giá món đã đổi là sao hok hiểu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-loi-gia-mon-da-doi-cap-nhat-gio-hang-truoc-khi-thanh-toan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "xem doanh thu theo tuần ở đâu z ạ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tim lai bill cu hqua o tab hoa don ko thay dau het",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-khong-tim-thay-bill-cu-o-tab-hoa-don",
+    "bao-cao#tung-tab-hoa-don"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "sao lợi nhuận bên báo cáo vs bên thu chi nó khác nhau v",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bao cao ghi chua co giao dich hnay ma minh ban r",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-chua-co-giao-dich-hom-nay-chua-co-doanh-thu-ky-nay"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "mk co 2 quan r lm s gop chung xem bao cao 1 cho",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang",
+    "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "cái chip xanh đỏ trong báo cáo chuỗi nghĩa là j",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-4-hieu-chip-tang-giam",
+    "bao-cao-chuoi#loi-quan-giam-manh-ma-chip-xam"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ko thay nut bao cao chuoi dau ca",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-khong-thay-nut-bao-cao-chuoi",
+    "bao-cao-chuoi#loi-ban-can-la-chu-cua-tu-2-cua-hang-tro-len-de-lap-chuoi-va-so"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bep ko nghe chuong bao phieu moi gi het",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-khong-nghe-chuong"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ban o quay may tinh ma ko len man hinh bep",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-don-ban-o-quay-pc-khong-len-man-bep"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "lọc phiếu theo trạm bếp nước vs bếp nóng sao z",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#cac-viec-thuong-lam-5-loc-theo-tram"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "phieu cu tu nhien mat tieu dau r",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-phieu-cu-bien-mat"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nv vao ca cham cong tren dt lm ntn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-2-vao-ca-nhan-vien"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "cham cong bao dinh vi lech pham vi ma dung trong quan",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-dinh-vi-lech-pham-vi"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nv quên ra ca hqua xử lý s đây",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tai sao ca cua e bi tru 50% z",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-ca-bi-tru-50"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "cai may in bill tren may win lan dau lm s",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "in tem dán ly trà sữa đc ko, chỉ mk vs",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "thanh toan xong in ra 2 bill giong nhau hoai",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#loi-in-ra-2-bill-giong-nhau"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bill bi cut mep chu to qua",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#loi-bill-bi-cut-mep-chu-qua-to"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nước uống in qua máy bếp nóng chứ hông qua bar",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#loi-do-uong-in-ra-may-bep-nong-thay-vi-bar",
+    "ban-hang#loi-do-uong-them-bang-nut-dau-lai-in-ra-may-bep-nong"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tao voucher giam 10% cho khach lm s",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nạp tiền vô ví cho khách quen chỗ nào ạ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "diem thuong tinh ntn, bn tien dc 1 diem",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cach-tinh-diem-hang-vi"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ma giam gia bao het han ma mk moi tao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#loi-ma-giam-gia-da-het-han-su-dung-chua-den-thoi-gian-ap-dung-da"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tao cong thuc cho ly ca phe sua de tru nguyen lieu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-2-tao-cong-thuc-mon"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ban mon r ma nguyen lieu ko giam j het",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#loi-ban-mon-ma-nguyen-lieu-khong-giam"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "giá vốn 1 ly sao cao vô lý gấp cả ngàn lần v",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#loi-gia-von-phan-cao-bat-thuong-gap-1-000-lan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nau nuoc dung pha cot thi ghi vo app sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-3-ban-thanh-pham-pha-cot-nau-nuoc-dung-l"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "them topping tran chau cho tra sua o dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-2-topping-tra-sua-com-them"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nhập hàng nhiều món có nhà cung cấp lm phiếu ntn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tam tat ban mon het hang sao a",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ton kho bi am la sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#loi-ton-am",
+    "kho-chuyen-nghiep#loi-ton-nguyen-lieu-am"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tạo kỳ lương tháng này lm s",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#cac-viec-thuong-lam-2-tao-ky-luong"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bam tra luong r ma phieu van cho xac nhan",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-da-bam-tra-luong-ma-phieu-van-o-cho-xac-nhan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nv xem phiếu lương của mình ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#cac-viec-thuong-lam-6-nhan-vien-xem-phieu-xac-nhan-khieu-nai",
+    "luong#loi-khong-vao-duoc-man-quan-ly-luong-chi-thay-luong-cua-toi"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "them nv moi vao quan sao ko thay nut them",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nv quen mk dang nhap ko dc, reset sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch",
+    "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tắt quyền r mà nv vẫn hủy món đc là s",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#loi-tat-quyen-roi-ma-nhan-vien-van-lam-duoc"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "gửi log cho bên hỗ trợ kiểu j",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tra lai ai xoa mon luc trua o nhat ky log dc ko",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "bat qr goi mon dan len ban sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "khách quét mã báo quán tạm ngưng nhận đơn qr",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#loi-khach-quan-tam-ngung-nhan-don-qua-qr-vui-long-goi-nhan-vien",
+    "qr-goi-mon#loi-khach-quan-tam-ngung-nhan-don-qua-ma-qr-nay-do-co-luot-quet"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "chua cau hinh vietqr la sao, cai o dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#loi-chua-cau-hinh-tai-khoan-vietqr-trong-muc-thiet-lap-cua-modul"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "chuyen ban 3 qua ban 5 lm ntn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "khách bỏ về hủy bàn sao ạ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "in tam tinh cho khach coi truoc dc hok",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "mon gui bep r ko thay nut tru de giam",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#loi-khong-thay-nut-o-mon-da-gui-bep",
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ghi tien dien thang nay vao dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "xoá khoản chi ghi nhầm ko đc",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#loi-khong-xoa-duoc-mot-khoan",
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "xuat so quy cho ke toan file excel",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "xem riêng tiền mặt vs tiền ck trong thu chi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-3-xem-rieng-tien-mat-hoac-tien-gui"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "tao checklist mo cua dong cua cho nv",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist",
+    "van-hanh#cac-viec-thuong-lam-2-quan-ly-nap-checklist-mau"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "nv ko thay viec da tao trong van hanh",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#loi-nhan-vien-khong-thay-viec-da-tao"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "ban giao ca cuoi ngay ghi o dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+   ],
+   "nhom": "K"
+  },
+  {
+   "q": "hnay ban dc bn tien r",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "doanh thu hqua bnhiu z",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "tuan nay bán đc bao nhiu đơn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "thang nay mon nao ban chay nhat",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "món nào ế nhất tuần rồi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "con bn hop sua dac trong kho",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "ai dang vao ca vay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "tháng trc trả lương nv hết bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "chi phí tháng này nhiu r",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "thang nay lai hay lo",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "hnay thu ck bn, tm bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "so ly tra sua ban dc hnay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "top 5 mon ban chay thang nay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "hqua co bn don huy",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "tuan nay khach moi bn ng",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "nguyên liệu nào sắp hết z",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "doanh thu 7 ngay qua tung ngay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "hôm qua nv nào bán nhiều nhất",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "thang 9 doanh thu bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "gio nao dong khach nhat tuan nay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "tien dien nuoc thang nay het bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "voucher thang nay xai bn lan",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "ton kho tran chau con nhieu ko",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "hnay ai di tre ko",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "so du quy tien mat hien gio bn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "doanh thu tuan nay giam so tuan trc la do dau",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "nhin so ban hang thi nen bo mon nao ra khoi menu",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "coi so lieu r goi y combo nao dc ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "chi phi thang nay cao qua cat giam cho nao dc",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "lai thang nay thap so thang trc, phân tích giúp",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "giá vốn món nào cao quá nên tăng giá ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "gio nao vang khach thi nen xep it nv ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "dua vao so ban thi nen nhap bn kg ca phe tuan toi",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "khach quay lai co nhieu ko, nen lm chuong trinh tich diem j",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "luong nv chiem bn % doanh thu, vay cao ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "món nào lời nhiều nhất nên đẩy bán",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "so voi thang trc thi quan minh dang tot len hay xau di",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "mo quan tra sua von 100tr nen lm j truoc",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "dinh gia ly ca phe sao cho co lai",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "giu chan nv part time lau dai kieu j",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "lam marketing tren tiktok cho quan nho sao",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "khách hay chê chờ lâu thì cải thiện ntn",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "có nên bán trên grab shopee food ko",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "mặt bằng nên thuê đường lớn hay hẻm",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "quan an nho nen tinh food cost bn % la hop ly",
+   "loai": "TU_VAN",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "hnay troi co mua ko",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "ke chuyen cuoi di boom",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "ty so tran mu hqua bn",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "bày e nấu bún bò huế vs",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "K"
+  },
+  {
+   "q": "boom co ny chua",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "K"
+  }
+ ]
+}

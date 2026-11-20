@@ -69,7 +69,7 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
               const Icon(Icons.history_rounded, color: _kIndigo, size: 22),
               const SizedBox(width: 8),
               Expanded(child: Text('Lịch Sử Thiết Kế',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 18, fontWeight: FontWeight.w800, color: _kIndigo))),
               IconButton(
                 icon: const Icon(Icons.close_rounded, color: Colors.grey),
@@ -80,7 +80,7 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text('Bấm vào bản để xem trước • Chọn "Khôi phục" để dùng lại',
-                style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade500)),
           ),
           const SizedBox(height: 8),
 
@@ -127,12 +127,12 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
         Icon(Icons.history_rounded, size: 56, color: Colors.grey.shade300),
         const SizedBox(height: 12),
         Text('Chưa có lịch sử',
-            style: GoogleFonts.outfit(fontSize: 16,
+            style: GoogleFonts.plusJakartaSans(fontSize: 16,
                 fontWeight: FontWeight.w600, color: Colors.grey.shade400)),
         const SizedBox(height: 4),
         Text('Bấm "Lưu" trong Thiết Kế Hoá Đơn để tạo bản lưu đầu tiên',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade400)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade400)),
       ]),
     ),
   );
@@ -143,15 +143,15 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Khôi phục bản lưu?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
         content: Text(
           'Thiết kế hiện tại sẽ bị thay thế bằng "${snap.label}".\nBản hiện tại sẽ tự lưu vào lịch sử trước.',
-          style: GoogleFonts.outfit(fontSize: 13),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Huỷ', style: GoogleFonts.outfit(color: Colors.grey)),
+            child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -160,7 +160,7 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Khôi phục',
-                style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -183,7 +183,7 @@ class _BillHistorySheetState extends State<_BillHistorySheet> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('✅ Đã khôi phục "${snap.label}"',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
         backgroundColor: _kIndigo,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -248,7 +248,7 @@ class _HistoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(snapshot.label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, fontWeight: FontWeight.w700,
                           color: _kIndigo)),
                   const SizedBox(height: 2),
@@ -283,7 +283,7 @@ class _HistoryCard extends StatelessWidget {
                 icon: const Icon(Icons.delete_outline_rounded,
                     size: 16, color: Colors.red),
                 label: Text('Xoá',
-                    style: GoogleFonts.outfit(fontSize: 12, color: Colors.red)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.red)),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.red.shade200),
                   shape: RoundedRectangleBorder(
@@ -297,7 +297,7 @@ class _HistoryCard extends StatelessWidget {
                 icon: const Icon(Icons.restore_rounded,
                     size: 16, color: Colors.white),
                 label: Text('Khôi phục mẫu này',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12, fontWeight: FontWeight.w700,
                         color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -323,7 +323,7 @@ class _HistoryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
     ),
     child: Text(text,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.plusJakartaSans(
             fontSize: 10, fontWeight: FontWeight.w600, color: color)),
   );
 }

@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D03_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nêu tiền điện nhưng không có việc kiểm máy/tủ mát; việc làm chung chung, hai mục cuối lặp ý."
+  },
+  {
+   "id": "D09_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu đối chiếu +28% với doanh thu +2%; việc làm chưa nói rõ đối chiếu hoá đơn/hao hụt."
+  },
+  {
+   "id": "D34_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Có số tiền điện nhưng việc làm 'tiết kiệm điện' chung, không chỉ máy pha/tủ mát/điều hoà."
+  },
+  {
+   "id": "D40_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không trả lời thẳng 'có lời hơn không', không nêu số tuyệt đối 37,2 triệu và không nhắc đây không phải lãi ròng."
+  },
+  {
+   "id": "D03_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "So 52,1% tổng chi với mốc 25–35% (mốc tính trên doanh thu, đúng ra là 40,1%) — dùng sai số."
+  },
+  {
+   "id": "D34_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu số tiền điện (1.180.000đ → 2.150.000đ) và việc kiểm thiết bị cụ thể."
+  },
+  {
+   "id": "D09_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu +28% hay doanh thu +2%, lý lẽ vòng ('chi nhiều hơn cho nguyên liệu')."
+  },
+  {
+   "id": "D40_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không trả lời thẳng 'có lời hơn không', thiếu số tuyệt đối và cảnh báo thu − chi không phải lãi."
+  },
+  {
+   "id": "D34_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'đo số khách xem ảnh hưởng chi phí' lạc đề, không chỉ kiểm máy pha/tủ mát/điều hoà."
+  },
+  {
+   "id": "D40_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không trả lời thẳng câu hỏi lời, nói 'giá vốn' và 'mặt hàng không bán chạy' trong khi khối không có số đó."
+  },
+  {
+   "id": "D03_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên đổi giá bán/combo chung chung (quyết định lớn, không có số), tiền điện chỉ nhắc mà không có việc kiểm cụ thể."
+  },
+  {
+   "id": "D09_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc làm 'theo dõi giá' chung chung, chưa đối chiếu doanh thu chỉ +2% và hao hụt/định lượng; hơi dài."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D03_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ sót hẳn tiền điện +82,2%, chỉ đoán số đơn giảm mà khối không có số đơn."
+  },
+  {
+   "id": "D09_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu +28% và doanh thu chỉ +2%; 'tìm nhà cung cấp khác' còn chung chung."
+  },
+  {
+   "id": "D34_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Mở đầu bằng thu thay vì chi, và gán 15.843.000đ là 'thu bán hàng giảm' trong khi đó là tổng thu."
+  },
+  {
+   "id": "D40_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không trả lời thẳng câu 'có lời hơn không', thiếu số 37,2 triệu và cảnh báo sổ quỹ ≠ lãi; việc 'tối ưu hoá đơn hàng' chung chung."
+  },
+  {
+   "id": "D03_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện +82,2%, chỉ đoán số đơn/giá trị đơn và lặp lại ý 'chưa có số đơn'."
+  },
+  {
+   "id": "D34_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu đầu nói về thu, lặp 'thu giảm chủ yếu do thu giảm', không trả lời thẳng chi."
+  },
+  {
+   "id": "D09_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý lẽ chỉ đoán 'giá tăng hoặc nhập nhiều hơn', chưa đối chiếu doanh thu chỉ +2%; việc làm chưa có hao hụt/định lượng."
+  },
+  {
+   "id": "D40_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Viết 'thu chi giảm 21,5%' gây hiểu nhầm, không trả lời thẳng có lời hơn không, không nhắc không phải lãi ròng."
+  },
+  {
+   "id": "D34_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Mở đầu bằng thu, gán 15.843.000đ là 'thu bán hàng giảm', lạc sang mốc nguyên liệu không được hỏi."
+  },
+  {
+   "id": "D40_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không trả lời thẳng 'có lời hơn không', thiếu số 37,2 triệu và cảnh báo không phải lãi ròng."
+  },
+  {
+   "id": "D03_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót tiền điện +82,2%, đoán số đơn/giá trị đơn mà khối không có số."
+  },
+  {
+   "id": "D09_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nêu +28% và doanh thu +2%; 'tìm nhà cung cấp khác' chung chung."
+  }
+ ]
+}

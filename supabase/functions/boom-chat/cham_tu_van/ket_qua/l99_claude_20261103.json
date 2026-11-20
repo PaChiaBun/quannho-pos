@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D36_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu chuẩn bị nguyên liệu cuối tuần, đặt mốc đo Thứ 2 mà không có việc nào cho Thứ 2; lý lẽ mỏng."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gần đủ ý; chỉ hơi dày chữ, con số 29.457.000đ (tổng tháng) đặt cạnh số trung bình ngày mà không ghi rõ là tổng."
+  },
+  {
+   "id": "D36_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Có xếp người, nguyên liệu cuối tuần nhưng mốc đo Thứ 2 không đi kèm việc làm cho Thứ 2."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chỉ có chuẩn bị nguyên liệu; 'đo T7, CN sau 2 tuần để đánh giá hiệu quả' không rõ đo hiệu quả của việc gì."
+  },
+  {
+   "id": "D36_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu chuẩn bị nguyên liệu; mốc đo Thứ 2 không kèm việc làm cho Thứ 2."
+  },
+  {
+   "id": "D36_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chỉ có chuẩn bị nguyên liệu; mốc đo 'đánh giá hiệu quả' mơ hồ."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D36_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi tổng cả tháng 27.616.000đ/29.457.000đ là 'trung bình ngày' (sai gấp 4) và khuyên khuyến mãi cuối tuần dù cuối tuần đã đông."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Quy chênh lệch cho 'lượng khách tăng' dù khối không có số đơn theo thứ, và khuyên khuyến mãi cuối tuần ngược số liệu."
+  },
+  {
+   "id": "D36_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Trộn số: lấy tổng Chủ nhật vs tổng Thứ 2 (gấp 2) mà ghi 'cuối tuần hơn ngày thường 73%'; lại khuyên tặng topping cuối tuần."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Số đúng nhưng khuyên khuyến mãi tặng topping cuối tuần — đúng lúc đã đông, bỏ qua ngày thường yếu."
+  },
+  {
+   "id": "D36_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa 'tối Chủ nhật đạt 29.457.000đ' (đó là tổng cả ngày Chủ nhật trong tháng, khối không có giờ theo thứ); thiếu việc xếp người cuối tuần."
+  },
+  {
+   "id": "D36_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán chênh lệch cuối tuần cho giờ 17h–21h và 'lượng khách' — khối không có giờ hay số đơn theo thứ; thiếu việc xếp người cuối tuần."
+  }
+ ]
+}

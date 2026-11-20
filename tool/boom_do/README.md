@@ -1,0 +1,37 @@
+# Bộ đo Boom (chọn đường, tìm bài, hội thoại)
+
+Các bộ câu dùng để kiểm Boom sau mỗi lần dạy. Đo bằng GPT giả, không gọi mạng.
+Kế hoạch dạy: `.docs/ke-hoach-day-boom-thong-minh.md`.
+Chấm chất lượng tư vấn bằng GPT thật nằm riêng ở `supabase/functions/boom-chat/cham_tu_van.ts` và thư mục `cham_tu_van/`.
+
+| Thư mục | Nội dung |
+|---|---|
+| `bo_c` … `bo_k`, `bo_moi`, `qc10` … `qc13` | Câu một lượt: tìm bài hướng dẫn + chọn đường (`do2.sh`, chấm `cham_f.py`) |
+| `bo_so`, `bo_so_d`, `bo_so_e`, `qc_so2` (100 câu ngược) | Câu hỏi số liệu một lượt (`hoi_quy.sh`) |
+| `bo_l` … `bo_p`, `qc14`, `qc15` | Hội thoại 2 lượt (`hoi_thoai.sh`, chấm `cham_l2.py`). **Bộ P là bộ kín**: không sửa theo câu sai của bộ này |
+
+Mỗi thư mục giữ `bo_cau.json` (đề) và kết quả mốc mới nhất (`duong_*.jsonl`, `tim_*.jsonl`, `kq_*.jsonl`).
+
+## Chạy (từ thư mục `quan_nho`)
+
+```bash
+bash tool/boom_do/do_tam/hoi_thoai.sh <nhãn> bo_o bo_n bo_m bo_l bo_p qc15
+bash tool/boom_do/do_tam/hoi_quy.sh <nhãn>
+bash tool/boom_do/do_tam/do2.sh bo_h <nhãn>
+python3 tool/boom_do/do_tam/cham_f.py bo_h <nhãn> x
+python3 tool/boom_do/do_tam/so_duong.py <nhãn> bo_so bo_h bo_j
+```
+
+- Các script tạm chép file `zz_*_tam_test.dart` vào `test/features/ai_assistant/`, chạy xong thì xoá. Không chạy hai script cùng lúc.
+- `so_duong.py` so đường đi từng câu của bản mới với kết quả gần nhất trước đó.
+
+## Soi khối số quán thật (không gọi mô hình, 18/11)
+
+```bash
+deno run -A tool/boom_do/soi_so/soi.ts <mã quán> [mã quán…] [--ma <thư mục boom-chat khác>] [--now <giờ ISO>] [--ra <thư mục NGOÀI repo>] [--in]
+deno test tool/boom_do/soi_so/kiem_test.ts
+```
+
+- Đọc số bán hàng của quán bằng psql chỉ đọc qua ssh, dựng đúng khối số Boom gửi cho mô hình cho ~15 câu hỏi mẫu, rồi chạy bộ kiểm bất biến `kiem.ts` (K1–K10). 0 đồng, không trừ hạn mức quán. Kế hoạch: `.docs/ke-hoach-tinh-chinh-boom-18-11.md`.
+- Dữ liệu quán thật không ghi vào repo: `--ra` phải nằm ngoài repo.
+- Đo câu trả lời của hai bản mã trên số quán thật (19/11, tốn tiền OpenAI, hỏi Chủ Quán trước): chạy `soi.ts … --ma <bản cũ> --now <mốc> --xuat <cũ.json>` rồi `soi.ts … --now <mốc> --xuat <mới.json>` (lần lượt, không song song: máy chủ từ chối bớt kết nối ssh), sau đó `deno run -A tool/boom_do/soi_so/sinh.ts <cũ.json> <mới.json> <ra.json>`. Không có `OPENAI_API_KEY` thì chỉ chọn câu và ước tiền. Kết quả đưa vào `do_09_11/tron.py` + `tong.py` như các lượt chấm mù khác.

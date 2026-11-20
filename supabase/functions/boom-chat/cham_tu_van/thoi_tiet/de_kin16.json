@@ -1,0 +1,632 @@
+[
+ {
+  "id": "Q01",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "doanh_thu",
+  "q": "Doanh thu tháng này sao tụt dữ vậy, khách ít đi hay khách mua ít hơn?"
+ },
+ {
+  "id": "Q02",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "doanh_thu",
+  "q": "thang nay ban duoc bao nhieu roi, so voi thang 9 thi sao"
+ },
+ {
+  "id": "Q03",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "doanh_thu",
+  "q": "Ngày nào trong tuần bán được nhiều tiền nhất, ngày nào tệ nhất?"
+ },
+ {
+  "id": "Q04",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "doanh_thu",
+  "q": "Từ giờ tới cuối tháng chắc được bao nhiêu? Có vượt tháng 9 nổi không"
+ },
+ {
+  "id": "Q05",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "doanh_thu",
+  "q": "Thứ 7 bán lèo tèo quá, có nên đóng luôn thứ 7 như chủ nhật không?"
+ },
+ {
+  "id": "Q06",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "doanh_thu",
+  "q": "TB moi don bao nhieu tien? muon nang len 60k thi lam sao"
+ },
+ {
+  "id": "Q07",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "Cold brew cam sả bán ế quá, bỏ luôn được không em?"
+ },
+ {
+  "id": "Q08",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "Món nào đang kéo doanh thu, món nào nằm chết trong menu?"
+ },
+ {
+  "id": "Q09",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "mon nao ban chay nhat thang nay, ke 5 mon giup chi"
+ },
+ {
+  "id": "Q10",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "mon",
+  "q": "Cơm tấm sườn cây chưa bán được phần nào, giữ hay gạch khỏi menu? Mà nếu giữ thì đẩy kiểu gì"
+ },
+ {
+  "id": "Q11",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "Có nên ra thêm vị trà sữa mới cho mùa lạnh không, hay tập trung mấy món đang bán?"
+ },
+ {
+  "id": "Q12",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "mon",
+  "q": "Nhóm nước uống bán được bao nhiêu so với cơm? Có đáng thêm món nước không"
+ },
+ {
+  "id": "Q13",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "gia_loi",
+  "q": "bac xiu ban 29k von 13k vay loi bao nhieu %? co nen tang len 32k"
+ },
+ {
+  "id": "Q14",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "gia_loi",
+  "q": "Trà dâu vốn 16k bán 35k có ổn không? Món nào lời nhất quán em"
+ },
+ {
+  "id": "Q15",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "gia_loi",
+  "q": "Thịt lên giá quá, có nên tăng cơm sườn thêm 5 ngàn không, sợ mất khách công trình"
+ },
+ {
+  "id": "Q16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gia_loi",
+  "q": "suon tam vốn gần 22k mà ban 40k, vay la an lai bao nhieu? co cao qua ko"
+ },
+ {
+  "id": "Q17",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gia_loi",
+  "q": "Giá vốn bún bò khoảng bao nhiêu thì mới ổn? Chị chưa nhập giá vốn mấy món"
+ },
+ {
+  "id": "Q18",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "gia_loi",
+  "q": "Muốn bán combo cà phê + bánh mì giá bao nhiêu cho vừa có lời vừa hấp dẫn?"
+ },
+ {
+  "id": "Q19",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "gio_ngay",
+  "q": "Khung 2-3h chiều vắng hoe, cho 1 bạn về sớm hay làm gì kéo khách?"
+ },
+ {
+  "id": "Q20",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gio_ngay",
+  "q": "may gio dong nhat? thu may dong nhat?"
+ },
+ {
+  "id": "Q21",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gio_ngay",
+  "q": "Thứ 4 sao bán tệ vậy? Có nên nghỉ thứ 4 không"
+ },
+ {
+  "id": "Q22",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "gio_ngay",
+  "q": "Ca tối 5h-9h có đáng mở không hay chỉ bán sáng trưa thôi"
+ },
+ {
+  "id": "Q23",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "gio_ngay",
+  "q": "Mở cửa 6h sáng có phí không, khung 6-7h bán được bao nhiêu?"
+ },
+ {
+  "id": "Q24",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gio_ngay",
+  "q": "Buổi sáng 9-11h quán vắng, có nên mở trễ lên 10h cho đỡ điện với lương?"
+ },
+ {
+  "id": "Q25",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "nhan_su",
+  "q": "Lan làm nhiều giờ nhất, có nên tăng lương cho Lan không?"
+ },
+ {
+  "id": "Q26",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "nhan_su",
+  "q": "6 đứa nhân viên có dư không, lương tăng mà doanh thu không tăng mấy"
+ },
+ {
+  "id": "Q27",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "nhan_su",
+  "q": "Cô Sáu làm 280 tiếng một tháng có quá sức không? xếp lại ca sao cho hợp lý"
+ },
+ {
+  "id": "Q28",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "nhan_su",
+  "q": "2 ban part time thang nay lam bao nhieu gio roi, tinh luong the nao"
+ },
+ {
+  "id": "Q29",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "nhan_su",
+  "q": "dang tinh tuyen them 1 nguoi ca sang, co nen khong"
+ },
+ {
+  "id": "Q30",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "nhan_su",
+  "q": "Tiền lương tháng này hết bao nhiêu, so với doanh thu có nặng không?"
+ },
+ {
+  "id": "Q31",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "kho",
+  "q": "Kho còn gì sắp hết không, mai cần nhập gì?"
+ },
+ {
+  "id": "Q32",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "kho",
+  "q": "ly 700 het roi ha? hom nay ban sao day"
+ },
+ {
+  "id": "Q33",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "kho",
+  "q": "Gas còn 1 bình, gạo còn 8 ký, đủ bán tới mai không hay phải gọi ngay"
+ },
+ {
+  "id": "Q34",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "kho",
+  "q": "Than hết sạch rồi, nướng sườn bằng gì giờ? Nên nhập bao nhiêu bao cho cả tuần"
+ },
+ {
+  "id": "Q35",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "kho",
+  "q": "Tháng này nhập hàng nhiều hơn tháng trước không? Mối nào lấy nhiều tiền nhất"
+ },
+ {
+  "id": "Q36",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "kho",
+  "q": "trung con 40 qua, ngay ban bao nhieu trung, nhap them bao nhieu la vua"
+ },
+ {
+  "id": "Q37",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khach",
+  "q": "Chị Hằng tháng này ghé bao nhiêu lần? Có nên tặng gì cho khách ruột không"
+ },
+ {
+  "id": "Q38",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "khach moi nhieu ma khach quay lai it, vay la sao? lam gi de giu chan"
+ },
+ {
+  "id": "Q39",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "Sao số khách trong app ít vậy, quán đông lắm mà? Có cần cho khách tích điểm không"
+ },
+ {
+  "id": "Q40",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "Khách quay lại ít vậy hả? Khách đặt giao có được tính vào không"
+ },
+ {
+  "id": "Q41",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khach",
+  "q": "Anh Tài bên công trình hay ăn ghi sổ, có nên cho ăn trước trả cuối tháng không"
+ },
+ {
+  "id": "Q42",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "khach",
+  "q": "tháng này mất khách hay sao? khach cu con quay lai ko"
+ },
+ {
+  "id": "Q43",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "Mã SANGVUI có đáng không, giảm mất bao nhiêu tiền rồi"
+ },
+ {
+  "id": "Q44",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "GIAM15 với HSSV10 cái nào hiệu quả hơn? có nên bỏ bớt 1 mã"
+ },
+ {
+  "id": "Q45",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "khuyen_mai",
+  "q": "Mã TRUAVUI giảm 5k cho đơn 80k, có kéo được khách đi nhóm không hay chỉ mất tiền"
+ },
+ {
+  "id": "Q46",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Mã GIAOHANG10 có làm đơn giao tăng không? Hay chỉ tốn thêm ngoài chiết khấu sàn"
+ },
+ {
+  "id": "Q47",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "khuyen_mai",
+  "q": "sap toi 20/11 muon lam km mua 2 tang 1 co lo khong"
+ },
+ {
+  "id": "Q48",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khuyen_mai",
+  "q": "Có nên làm thẻ tích điểm cho học sinh trường bên cạnh không, giảm bao nhiêu thì hợp"
+ },
+ {
+  "id": "Q49",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi",
+  "q": "Lam sao keo dan van phong toa ben canh qua mua, co 500k chay quang cao thi lam gi"
+ },
+ {
+  "id": "Q50",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "tiep_thi",
+  "q": "Có nên chạy quảng cáo facebook 2 triệu/tháng không, cần bán thêm bao nhiêu ly mới hoà vốn"
+ },
+ {
+  "id": "Q51",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi",
+  "q": "Quán bình dân thì quảng bá kiểu gì cho hiệu quả, in tờ rơi phát ở công trình được không"
+ },
+ {
+  "id": "Q52",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi",
+  "q": "muon tang don tai quan thay vi qua san thi lam gi"
+ },
+ {
+  "id": "Q53",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "tiep_thi",
+  "q": "Có nên thuê người review tiktok không, họ đòi 3 triệu"
+ },
+ {
+  "id": "Q54",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "tiep_thi",
+  "q": "Treo băng rôn trước cổng trường có hiệu quả không? hay lập nhóm zalo khách quen"
+ },
+ {
+  "id": "Q55",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "san_giao",
+  "q": "Có nên lên GrabFood bán không, sàn ăn 25-30% thì ly cà phê 25k còn lời không"
+ },
+ {
+  "id": "Q56",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "san_giao",
+  "q": "Nhiều khách hỏi giao hàng, nên tự giao hay lên shopeefood?"
+ },
+ {
+  "id": "Q57",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "san_giao",
+  "q": "Bún bò giao xa bị nở, có nên đăng sàn không hay thôi"
+ },
+ {
+  "id": "Q58",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "san_giao",
+  "q": "chiet khau san thang nay tang nhieu qua, don giao co con loi ko"
+ },
+ {
+  "id": "Q59",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "san_giao",
+  "q": "Có nên để giá trên sàn cao hơn tại quán 5k không? Khách có bỏ không"
+ },
+ {
+  "id": "Q60",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "san_giao",
+  "q": "Lên sàn thì tính hộp, đũa, chiết khấu thế nào cho khỏi lỗ, tính giùm chị dĩa cơm sườn"
+ },
+ {
+  "id": "Q61",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "thu_chi",
+  "q": "Tháng này lời hay lỗ? Trừ hết tiền mặt bằng lương rồi còn bao nhiêu"
+ },
+ {
+  "id": "Q62",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "thu_chi",
+  "q": "chi thang nay tang nhieu, tang o khoan nao vay"
+ },
+ {
+  "id": "Q63",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "thu_chi",
+  "q": "Tiền nguyên liệu tăng hơn chục triệu so với tháng trước, do giá chợ hay do hao hụt?"
+ },
+ {
+  "id": "Q64",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "thu_chi",
+  "q": "thang nay chi gan bang thu luon, cat khoan nao dc"
+ },
+ {
+  "id": "Q65",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "thu_chi",
+  "q": "Ly ống hút túi tốn bao nhiêu? Đổi sang ly giấy có tốn thêm nhiều không"
+ },
+ {
+  "id": "Q66",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "thu_chi",
+  "q": "Muốn vay 50 triệu sửa quán, lời như hiện giờ thì bao lâu trả xong"
+ },
+ {
+  "id": "Q67",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "Tuần này có mưa buổi sáng không? Mưa thì dân văn phòng có xuống mua không, pha sẵn bao nhiêu"
+ },
+ {
+  "id": "Q68",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "troi nong qua, nen day mon nao, nhap them da voi trai cay ko"
+ },
+ {
+  "id": "Q69",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "Mấy bữa nay chiều tối hay mưa, ca tối có nên đóng sớm không"
+ },
+ {
+  "id": "Q70",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "thoi_tiet",
+  "q": "Nếu mưa to thì đơn giao có tăng không, nên chuẩn bị gì"
+ },
+ {
+  "id": "Q71",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "thoi_tiet",
+  "q": "Nắng nóng vầy có nên nấu thêm nồi sâm, bán nước lạnh nhiều hơn không?"
+ },
+ {
+  "id": "Q72",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "thoi_tiet",
+  "q": "Mai trời có mưa không? Nướng than ngoài hiên sợ ướt, tính sao"
+ },
+ {
+  "id": "Q73",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "ngoai_du_lieu",
+  "q": "Kế bên mới mở Highlands, giá họ bao nhiêu, mình có nên giảm giá theo không"
+ },
+ {
+  "id": "Q74",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "ngoai_du_lieu",
+  "q": "Thuế hộ kinh doanh năm sau tính thế nào, doanh thu như mình phải đóng bao nhiêu"
+ },
+ {
+  "id": "Q75",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "ngoai_du_lieu",
+  "q": "Muốn mở thêm chỗ thứ hai bên quận 7, mặt bằng 15 triệu có nổi không"
+ },
+ {
+  "id": "Q76",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "ngoai_du_lieu",
+  "q": "Giấy chứng nhận an toàn thực phẩm làm ở đâu, mất bao lâu"
+ },
+ {
+  "id": "Q77",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "ngoai_du_lieu",
+  "q": "quan cafe khac quanh day ban ly bao nhieu? minh dat hay re"
+ },
+ {
+  "id": "Q78",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "ngoai_du_lieu",
+  "q": "Bị phường nhắc lấn chiếm vỉa hè, giờ phải làm sao"
+ },
+ {
+  "id": "Q79",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "noi_dung",
+  "q": "Viết giùm bài đăng fb giới thiệu cà phê muối, ngắn gọn kiểu dân văn phòng thích"
+ },
+ {
+  "id": "Q80",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "noi_dung",
+  "q": "Viết kịch bản clip tiktok 30 giây quay ly trà sữa trân châu đường đen"
+ },
+ {
+  "id": "Q81",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "noi_dung",
+  "q": "Soạn tin nhắn zalo báo khách quen tuần sau quán có món mới"
+ },
+ {
+  "id": "Q82",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "noi_dung",
+  "q": "viet caption dang shopeefood cho com tam suon bi cha, co hashtag"
+ },
+ {
+  "id": "Q83",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "noi_dung",
+  "q": "Viết bài đăng khoe topping trân châu trắng, mời khách học sinh dùng mã HSSV10"
+ },
+ {
+  "id": "Q84",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "noi_dung",
+  "q": "Soạn tin nhắn xin lỗi khách vì giao cơm trễ, kèm bù gì đó cho phải"
+ },
+ {
+  "id": "Q85",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "so_sanh_ky",
+  "q": "So tháng 10 với tháng 9 xem tụt chỗ nào nhiều nhất"
+ },
+ {
+  "id": "Q86",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "so_sanh_ky",
+  "q": "Tháng này so tháng trước: đơn tăng mà sao tiền không tăng mấy?"
+ },
+ {
+  "id": "Q87",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "so_sanh_ky",
+  "q": "chi phi thang nay so thang truoc tang bao nhieu %"
+ },
+ {
+  "id": "Q88",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "so_sanh_ky",
+  "q": "mon nao thang nay ban it di so voi thang 9?"
+ },
+ {
+  "id": "Q89",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "so_sanh_ky",
+  "q": "Nhóm nước uống tháng này so tháng 9 thế nào, có khá hơn chút nào không"
+ },
+ {
+  "id": "Q90",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "so_sanh_ky",
+  "q": "Ba tháng gần đây doanh thu đi lên hay đi xuống, nói thẳng giùm"
+ }
+]

@@ -332,13 +332,16 @@ API Key tạo tại: https://appstoreconnect.apple.com/access/api
 **Lần đầu**: Thường 2-5 ngày
 **Các lần sau**: Thường 24-48h
 
-**Lý do hay bị reject:**
+**Lý do hay bị reject & Kinh nghiệm thực tế (Cập nhật 2026):**
 - Thiếu Privacy Policy
-- Thiếu mô tả permission (camera, location...)
+- Thiếu mô tả permission (camera, location... - lỗi `ITMS-90683` cần có cả `NSLocationAlwaysAndWhenInUseUsageDescription` và `NSLocationWhenInUseUsageDescription`)
+- **Guideline 3.1.1 - In-App Purchase & Business Account Registration**: Apple cấm app chứa luồng đăng ký tài khoản cho tổ chức/doanh nghiệp hoặc tạo cửa hàng mới nếu không dùng IAP.
+  * *Cách giải quyết*: Trên iOS ẩn tab Đăng ký và nút Tạo quán mới. Ứng dụng hoạt động theo mô hình B2B / Multiplatform Services: Chỉ cho phép Đăng nhập và Kết nối quán bằng mã do quản lý cung cấp.
+  * *Chống Anti-Steering*: Tuyệt đối KHÔNG đặt link bấm được hoặc lời kêu gọi dẫn ra web để thanh toán/mua gói/đăng ký. Chỉ dùng câu thông báo trung tính: *"Ứng dụng dành cho nhân viên và quản lý có tài khoản Quán Nhỏ."*
 - App crash khi reviewer test
 - UI/UX quá đơn giản (Apple thích app polish)
 - Thiếu tính năng (app chỉ là web wrapper)
-- Login không hoạt động (phải cung cấp demo account)
+- Login không hoạt động (phải cung cấp demo account trong App Review Information)
 
 ### 3.8. TestFlight (Test trước khi lên Store)
 
@@ -652,3 +655,16 @@ quan_nho/
 
 > 📌 **File này nằm tại**: `.docs/deploy_ios_android.md`
 > Cập nhật lần cuối: 2026-05-20 23:00
+
+---
+
+## Lỗi ký iOS: "Provisioning profile … doesn't include signing certificate" (17/10/2026)
+- **Triệu chứng:** `flutter build ipa` báo profile `QuanNhoPOS_AppStore` không chứa chứng chỉ "Apple Distribution: LPM DIGITAL COMPANY LIMITED (V4HN95W2C7)", dù chứng chỉ đó có trong keychain.
+- **Nguyên nhân:** keychain có **hai chứng chỉ trùng tên**; project ký thủ công theo TÊN (`iPhone Distribution`) nên Xcode chọn nhầm cái không nằm trong profile.
+- **Chẩn đoán (chỉ đọc):** `security find-identity -v -p codesigning` (mã băm từng chứng chỉ) so với SHA-1 chứng chỉ trong profile (`security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/QuanNhoPOS_AppStore.mobileprovision`, giải `DeveloperCertificates`).
+- **Cách xử lý không sửa project:** `flutter build ios` để sinh cấu hình (số phiên bản trong `ios/Flutter/Generated.xcconfig`), rồi
+  `xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' -archivePath build/ios/archive/Runner-<ver>-<build>.xcarchive archive CODE_SIGN_IDENTITY=<SHA-1 cert có trong profile>`
+  rồi `xcodebuild -exportArchive -archivePath … -exportOptionsPlist <plist có signingCertificate = SHA-1> -exportPath build/ios/ipa-<ver>-<build>`.
+- **Triệt để:** xóa một trong hai chứng chỉ trùng tên khỏi keychain (giữ cái có trong profile).
+- **Android:** APK/AAB đối chiếu chữ ký bằng `apksigner verify --print-certs` trước khi đưa lên web; cùng versionCode thì máy đã cài không nâng cấp được, luôn tăng build.
+

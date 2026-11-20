@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Ghi doanh thu 17–20h là 3.125.000đ (đó là số của riêng 16h; đúng là 18.748.000đ), sai số chính."
+  },
+  {
+   "id": "D57_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán 3.125.000đ cho 17h (thực là của 16h; 17h là 6.249.000đ) và lý do chỉ đoán chung chung."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý do đoán vu vơ (khách chưa quen món, cạnh tranh) không nối với số liệu, không so ca tối với giờ trưa."
+  },
+  {
+   "id": "D57_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Ghi doanh thu 17–20h là 3.125.000đ (số của riêng 16h), sai số chính."
+  },
+  {
+   "id": "D57_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói rõ số liệu không cho biết lý do và không hỏi chủ quán về khách công trình buổi tối; không gợi ý rút giờ / người."
+  },
+  {
+   "id": "D57_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói ca tối 'lượng khách đông hơn' (trái số liệu) và khuyên giảm định lượng để thu hút khách, vô lý."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không trả lời 'vì sao' (chỉ nói 'chưa cao như kỳ vọng'), không nói số liệu không cho biết lý do, khuyên 'món giá vốn thấp' khi chỉ Cơm sườn có giá vốn."
+  },
+  {
+   "id": "D57_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa số ca tối 18.000.000đ / 13,5% (đúng là 18.748.000đ / 14,1%) và lạc sang tăng giá Cơm sườn không liên quan câu hỏi."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa 'thấp hơn ca trưa khoảng 3 triệu' (ca trưa 11–14h ≈ 59,4 triệu) và gọi Cơm gà xối mỡ là món chạy ca tối (sai)."
+  },
+  {
+   "id": "D57_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lấy 88 đơn/ngày (của cả ngày) làm số đơn ca tối và gắn 21,9 triệu cho 17–20h (thực là 16–20h)."
+  },
+  {
+   "id": "D57_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Câu 'thấp hơn ca trưa (12h) khoảng một giờ' tối nghĩa, việc làm chỉ là 'quảng bá' chung chung."
+  },
+  {
+   "id": "D57_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi 24.998.000đ là doanh thu trung bình ca trưa 11–14h (thực là riêng giờ 12h) và gắn 21,9 triệu cho 17–20h."
+  }
+ ]
+}

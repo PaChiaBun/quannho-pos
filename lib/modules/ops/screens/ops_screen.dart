@@ -35,8 +35,8 @@ class _OpsScreenInner extends ConsumerWidget {
           elevation: 0,
           centerTitle: false,
           title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Vận Hành', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-            Text('Nhiệm Vụ Của Tôi', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white.withValues(alpha: 0.65))),
+            Text('Vận Hành', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+            Text('Nhiệm Vụ Của Tôi', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withValues(alpha: 0.65))),
           ]),
         ),
         body: LayoutBuilder(
@@ -72,15 +72,15 @@ class _OpsScreenInner extends ConsumerWidget {
           elevation: 0,
           centerTitle: false,
           title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Vận Hành', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-            Text('Check List Công Việc', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white.withValues(alpha: 0.65))),
+            Text('Vận Hành', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+            Text('Check List Công Việc', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withValues(alpha: 0.65))),
           ]),
           bottom: TabBar(
             tabs: tabs,
             indicatorColor: const Color(0xFFFF6B35),
             indicatorWeight: 3,
-            labelStyle: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.outfit(fontSize: 11),
+            labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 11),
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white54,
           ),
@@ -142,7 +142,7 @@ class _OpsRightPanel extends StatelessWidget {
                 child: Row(children: [
                   const Icon(Icons.checklist_rounded, size: 16, color: _kNavy),
                   const SizedBox(width: 6),
-                  Text('Vận Hành', style: GoogleFonts.outfit(
+                  Text('Vận Hành', style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
                 ]),
               ),
@@ -176,8 +176,8 @@ class _ORow extends StatelessWidget {
     child: Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF1A1207)))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+      Expanded(child: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF1A1207)))),
+      Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
 }

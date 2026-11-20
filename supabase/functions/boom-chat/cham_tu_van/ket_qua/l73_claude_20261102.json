@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Trà tắc + Bạc xỉu 40.000đ (lẻ 47.000đ) giảm giá Bạc xỉu vốn lời mỏng 45% mà không nhắc, chỉ có một việc và lý do chỉ là phỏng đoán."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (món buổi sáng) cho khung 14h–17h, trái với món bán chạy buổi chiều là Trà tắc, Bạc xỉu."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (món buổi sáng) cho khung 14h–17h, trái với món bán chạy buổi chiều là Trà tắc, Bạc xỉu."
+  },
+  {
+   "id": "D02_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (món buổi sáng) cho khung 14h–17h, trái với món bán chạy buổi chiều là Trà tắc, Bạc xỉu."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (món buổi sáng) cho khung 14h–17h, trái với món bán chạy buổi chiều là Trà tắc, Bạc xỉu. Gán hai số của 14h và 15h cho cả khung 14h–17h, dễ hiểu nhầm."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Gán hai số của 14h và 15h cho cả khung 14h–17h, dễ hiểu nhầm. Combo 35.000đ giảm khoảng 25% so giá lẻ 47.000đ trên Bạc xỉu vốn lời mỏng."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (món buổi sáng) cho khung 14h–17h, trái với món bán chạy buổi chiều là Trà tắc, Bạc xỉu. Lý do 'cạnh tranh từ quán khác' không có trong số liệu."
+  },
+  {
+   "id": "D02_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gán hai số của 14h và 15h cho cả khung 14h–17h, dễ hiểu nhầm. Combo 40.000đ giảm giá Bạc xỉu lời mỏng mà không nhắc."
+  }
+ ]
+}

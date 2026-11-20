@@ -2,6 +2,8 @@
 // VietQR Static — generate URL ảnh QR từ thông tin TK ngân hàng
 // Không cần API key, miễn phí hoàn toàn
 
+import '../utils/string_utils.dart';
+
 class VietQrService {
   // ── Danh sách ngân hàng phổ biến VN ──────────────────────────────────────
   static const List<VietQrBank> banks = [
@@ -55,6 +57,22 @@ class VietQrService {
     if (params.isEmpty) return base;
     final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
     return '$base?$query';
+  }
+
+  /// Mã đơn đưa vào nội dung chuyển khoản để thu ngân đối chiếu với thông báo ngân hàng.
+  static String transferCode(String sessionId) {
+    final s = sessionId.replaceAll(RegExp(r'[^0-9A-Za-z]'), '').toUpperCase();
+    return s.length < 6 ? '' : 'QN${s.substring(0, 6)}';
+  }
+
+  /// Nội dung CK không dấu, tối đa 25 ký tự (nhiều ngân hàng cắt nội dung dài hơn).
+  static String transferContent(String code, String tableName) {
+    final table = removeDiacritics(tableName)
+        .replaceAll(RegExp(r'[^0-9A-Za-z ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final s = [code, table].where((e) => e.isNotEmpty).join(' ');
+    return s.length <= 25 ? s : s.substring(0, 25).trim();
   }
 
   // ── Tìm ngân hàng theo BIN ────────────────────────────────────────────────

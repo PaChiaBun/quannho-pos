@@ -57,7 +57,7 @@ class SupplierListScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text('Nhà Cung Cấp',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -68,7 +68,7 @@ class SupplierListScreen extends ConsumerWidget {
                           error: (_, __) => const SizedBox.shrink(),
                           data: (list) => Text(
                             '${list.length} nhà cung cấp đang hoạt động',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w500),
@@ -122,7 +122,7 @@ class SupplierListScreen extends ConsumerWidget {
         elevation: 2,
         icon: const Icon(Icons.add_rounded),
         label: Text('Thêm NCC',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700, fontSize: 14)),
       ),
     );
@@ -147,13 +147,13 @@ class SupplierListScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           Text('Chưa có nhà cung cấp',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 20, fontWeight: FontWeight.w800, color: _kInk)),
           const SizedBox(height: 8),
           Text(
             'Thêm nhà cung cấp để theo dõi\nlịch sử nhập hàng chính xác hơn',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, color: _kMuted, height: 1.5),
           ),
           const SizedBox(height: 28),
@@ -161,7 +161,7 @@ class SupplierListScreen extends ConsumerWidget {
             onPressed: () => _openForm(context, null, ref),
             icon: const Icon(Icons.add_rounded, size: 18),
             label: Text('Thêm nhà cung cấp đầu tiên',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kViolet,
               foregroundColor: Colors.white,
@@ -195,17 +195,17 @@ class SupplierListScreen extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         title: Text('Xoá nhà cung cấp?',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 17, fontWeight: FontWeight.w800, color: _kInk)),
         content: Text(
           'Bạn sẽ xoá "${s.name}".\nLịch sử phiếu nhập vẫn được giữ lại.',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               fontSize: 14, color: _kMuted, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Huỷ', style: GoogleFonts.outfit(color: _kMuted)),
+            child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: _kMuted)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -217,7 +217,7 @@ class SupplierListScreen extends ConsumerWidget {
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('Xoá',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -293,7 +293,7 @@ class _SupplierCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       s.name.isNotEmpty ? s.name[0].toUpperCase() : 'N',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: Colors.white),
@@ -307,7 +307,7 @@ class _SupplierCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(s.name,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: _kInk)),
@@ -326,7 +326,7 @@ class _SupplierCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Text(t,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w700,
                                       color: color)),
@@ -355,7 +355,7 @@ class _SupplierCard extends StatelessWidget {
                         Icon(Icons.edit_rounded, size: 16, color: _kViolet),
                         const SizedBox(width: 10),
                         Text('Sửa thông tin',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14, fontWeight: FontWeight.w600)),
                       ]),
                     ),
@@ -367,7 +367,7 @@ class _SupplierCard extends StatelessWidget {
                             size: 16, color: _kRed),
                         const SizedBox(width: 10),
                         Text('Xoá',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: _kRed)),
@@ -418,7 +418,7 @@ class _SupplierCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 color: const Color(0xFF374151),
                 fontWeight: FontWeight.w500),

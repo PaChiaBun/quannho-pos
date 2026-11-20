@@ -1,0 +1,286 @@
+{
+ "moi": [
+  {
+   "id": "D06_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ một việc chính, lý do nêu giả định mà không nối với 1.320 khách có điểm."
+  },
+  {
+   "id": "D25_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi cả 1.320 khách có điểm là 'lâu chưa ghé' — sai nghĩa số liệu."
+  },
+  {
+   "id": "D25_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi cả 1.320 khách có điểm là 'lâu chưa ghé' — sai nghĩa số liệu."
+  },
+  {
+   "id": "D06_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi 1.320 khách có điểm là 'lâu chưa ghé' và khẳng định nên hạ mốc đổi quà khi chưa biết mốc hiện tại."
+  },
+  {
+   "id": "D06_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ một việc chính, lý do giả định chưa nối với số khách có điểm."
+  },
+  {
+   "id": "D06_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi cả 1.320 khách có điểm là 'lâu chưa ghé' — sai nghĩa số liệu."
+  },
+  {
+   "id": "D25_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi 1.320 khách là 'lâu chưa ghé' và ngụ ý chắc chắn lên ≥15% sau chương trình."
+  },
+  {
+   "id": "D25_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý do 'mốc đổi quà xa/khách quên' chỉ là giả định, chưa dẫn 1.320 khách có điểm."
+  },
+  {
+   "id": "D25_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gọi cả 1.320 khách có điểm là 'lâu chưa ghé' — sai nghĩa số liệu."
+  },
+  {
+   "id": "D06_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nêu một lý do giả định như nguyên nhân chính và chỉ có một việc làm."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D06_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy số luỹ kế 210 so với 240 khách mới của kỳ (khác cơ sở), việc làm chung chung, không dùng 1.320 khách có điểm."
+  },
+  {
+   "id": "D25_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý lẽ sáo, đề xuất tạo tích điểm dù quán đã có, thêm sự kiện giao lưu chung chung."
+  },
+  {
+   "id": "D25_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý lẽ sáo, đề xuất tặng điểm/combo như thể chưa có tích điểm, việc chung chung."
+  },
+  {
+   "id": "D06_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy số luỹ kế 210 so với 240 khách mới của kỳ (khác cơ sở), việc làm chung chung, không dùng 1.320 khách có điểm."
+  },
+  {
+   "id": "D06_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy số luỹ kế 210 so với 240 khách mới của kỳ (khác cơ sở), việc làm chung chung, không dùng 1.320 khách có điểm."
+  },
+  {
+   "id": "D06_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy số luỹ kế 210 so với 240 khách mới của kỳ (khác cơ sở), việc làm chung chung, không dùng 1.320 khách có điểm. Gợi ý xem theo khung giờ lạc đề."
+  },
+  {
+   "id": "D25_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm 10%, nhân viên mời khách — việc chung chung, bỏ qua tích điểm sẵn có, lý lẽ sáo."
+  },
+  {
+   "id": "D25_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm 10% và sự kiện nhỏ chung chung, bỏ qua tích điểm sẵn có, lý lẽ sáo."
+  },
+  {
+   "id": "D25_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đề xuất 'tạo thẻ tích điểm mua 5 tặng 1' trong khi quán đã có tích điểm; lý lẽ sáo."
+  },
+  {
+   "id": "D06_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lấy số luỹ kế 210 so với 240 khách mới của kỳ (khác cơ sở), việc làm chung chung, không dùng 1.320 khách có điểm."
+  }
+ ]
+}

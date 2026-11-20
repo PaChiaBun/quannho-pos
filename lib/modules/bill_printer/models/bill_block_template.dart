@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../utils/template_cache_policy.dart';
 import 'bill_block.dart';
 
 const _kPrefsKey = 'bill_blocks_v2';
@@ -35,7 +36,11 @@ class BillBlockTemplate {
       'blocks': blocks.map((b) => b.toJson()).toList(),
     });
     final prefKey = '${_kPrefsKey}_$stationKey';
-    await prefs.setString(prefKey, json);
+    final localStoreId = storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+    await prefs.setString(
+      prefKey,
+      localStoreId == null ? json : stampTemplateJson(json, localStoreId),
+    );
     debugPrint('[BillTemplate] saved ${blocks.length} blocks for station $stationKey');
 
     try {
@@ -62,14 +67,18 @@ class BillBlockTemplate {
   static Future<BillBlockTemplate> load({String stationKey = 'cashier'}) async {
     String? raw;
     final prefKey = '${_kPrefsKey}_$stationKey';
+    String? localJson;
     try {
       final prefs = await SharedPreferences.getInstance();
-      raw = prefs.getString(prefKey);
+      localJson = prefs.getString(prefKey);
     } catch (_) {}
 
+    String? storeId;
+    String? cloudJson;
+    var cloudReachable = false;
     try {
       final info = await StoreAuthService.getStoreInfo();
-      final storeId = info['store_id'];
+      storeId = info['store_id'];
       if (storeId != null) {
         // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
         Supabase.instance.client.rest.headers['x-store-id'] = storeId;
@@ -80,18 +89,27 @@ class BillBlockTemplate {
             .eq('store_id', storeId)
             .eq('key', 'qn_bill_template_$stationKey')
             .maybeSingle();
+        cloudReachable = true;
         if (res != null && res['value'] != null) {
-          final cloudJson = res['value'] as String;
-          if (cloudJson != raw) {
-            raw = cloudJson;
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString(prefKey, cloudJson);
-          }
+          cloudJson = res['value'] as String;
+          // Cập nhật bản lưu trên máy, gắn nhãn quán.
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(prefKey, stampTemplateJson(cloudJson, storeId));
         }
       }
     } catch (e) {
       debugPrint('[BillTemplate] load Supabase error: $e');
     }
+
+    // Quán chưa xác định được: không dùng bản trên máy (tránh lộ mẫu quán khác).
+    raw = storeId == null
+        ? null
+        : resolveTemplateJson(
+            storeId: storeId,
+            cloudJson: cloudJson,
+            cloudReachable: cloudReachable,
+            localJson: localJson,
+          );
 
     if (raw != null) {
       try {
