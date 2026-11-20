@@ -1724,6 +1724,10 @@ class _TicketCard extends ConsumerWidget {
     // Phiếu xong không còn món chờ: đếm cả phiếu (trước tab "Xong" ghi "0 món" cho phiếu 2 món).
     final waiting = items.where((i) => !i.done).length;
     final itemCount = waiting > 0 ? waiting : items.where((i) => !i.cancelled).length;
+    // Tổng số phần của đúng các dòng vừa đếm: "4 món" mà 18 phần thì bếp phải thấy con số 18.
+    final portions = items
+        .where((i) => waiting > 0 ? !i.done : !i.cancelled)
+        .fold<double>(0, (s, i) => s + i.quantity);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1832,10 +1836,13 @@ class _TicketCard extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '$itemCount món',
+                                portions == itemCount
+                                    ? '$itemCount món'
+                                    : '$itemCount món · ${qtyText(portions)} phần',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  color: Colors.white38,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white60,
                                 ),
                               ),
                             ],
@@ -2004,21 +2011,28 @@ class _TicketCard extends ConsumerWidget {
                                           : null,
                                     ),
                                   ),
-                                  // Quantity badge
+                                  // Ô số lượng: rộng cố định để tên món thẳng cột; từ 2 phần trở lên tô đặc
+                                  // cho bếp khỏi làm thiếu (trước đây x1 và x12 trông như nhau).
                                   Container(
+                                    constraints: const BoxConstraints(minWidth: 50),
+                                    alignment: Alignment.center,
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 9, vertical: 3),
+                                        horizontal: 8, vertical: 4),
                                     margin: const EdgeInsets.only(right: 10),
                                     decoration: BoxDecoration(
-                                      color: accent.withValues(alpha: 0.18),
-                                      borderRadius: BorderRadius.circular(7),
+                                      color: item.quantity > 1 && !isItemDone && !isCancelled
+                                          ? accent
+                                          : accent.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      'x${item.quantity.toInt()}',
+                                      'x${qtyText(item.quantity)}',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 15,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.w900,
-                                        color: accent,
+                                        color: item.quantity > 1 && !isItemDone && !isCancelled
+                                            ? const Color(0xFF0F172A)
+                                            : accent,
                                         decoration: strike,
                                       ),
                                     ),
