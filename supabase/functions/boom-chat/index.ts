@@ -830,7 +830,7 @@ Deno.serve(async (req) => {
     ? soTayChoBoom(chonBai(r.question, (boNhoDs ?? []).filter((g) => g.loai === 'su_that' && g.trang_thai === 'xac_nhan').map((g) => g.noi_dung).join('. ')))
     : '';
   if (soTay) kind += '+so_tay';
-  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
+  const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, hdLai, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = REASONING) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',

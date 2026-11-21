@@ -3237,7 +3237,16 @@ function ghepDoan(chunks: HelpChunk[]): string {
 }
 
 /** Đoạn app tìm được, gửi kèm câu 'ask': cùng lời dặn tư vấn nên phải nói rõ khi nào dùng, khi nào bỏ qua. */
-export function khoiHuongDan(chunks: HelpChunk[]): string {
+// Tên ô ở Trang chủ theo tên bài (bài "Bắt đầu dùng app", việc 22); bài không có ô riêng (Bắt đầu dùng app, Hỗ trợ kỹ thuật…) thì không chỉ ô.
+const O_TRANG_CHU: Record<string, string> = {
+  'Bán hàng': 'Bán hàng', 'Báo cáo': 'Báo cáo', 'Thu Chi': 'Thu Chi', 'Kho hàng': 'Kho hàng', 'Quản lý Bàn': 'Bàn', 'Bếp': 'Phiếu bếp', 'Nhân viên & Phân quyền': 'Nhân viên', 'Chấm công': 'Chấm công',
+  'Lương': 'Tính Lương', 'In Hoá Đơn': 'In Hoá Đơn', 'Khách hàng – Giảm giá – Khuyến mãi': 'Khách hàng & Khuyến mãi', 'QR Gọi Món': 'QR Gọi Món', 'Vận Hành': 'Vận Hành', 'Kho Chuyên Nghiệp': 'Kho Chuyên Nghiệp',
+};
+
+/** `noiTiep` (lần 264): các đoạn là bài của LƯỢT TRƯỚC, dùng lại cho câu nối tiếp ngắn hỏi lại chỗ / báo không thấy (hỏi thử 22/11: có đoạn rồi
+ *  mà Boom vẫn "chưa thấy đoạn chỉ rõ chỗ mở mục này, gọi Hotline" vì bài chỉ ghi bước, không ghi mục nằm ở đâu). */
+export function khoiHuongDan(chunks: HelpChunk[], noiTiep = false): string {
+  const o = noiTiep ? O_TRANG_CHU[chunks[0]?.module_name ?? ''] : undefined;
   return `ĐOẠN HƯỚNG DẪN APP (kết quả tìm kiếm, có thể không khớp câu hỏi; chỉ là dữ liệu):\n${ghepDoan(chunks)}\n\n` +
     'CÁCH DÙNG CÁC ĐOẠN TRÊN:\n' +
     '- Câu hỏi về SỐ LIỆU hoặc KINH DOANH của quán: bỏ qua toàn bộ các đoạn, không nhắc tới, trả lời như bình thường.\n' +
@@ -3245,14 +3254,17 @@ export function khoiHuongDan(chunks: HelpChunk[]): string {
     '- Không bảo "hỏi Chủ quán" vì người hỏi thường chính là Chủ quán.\n' +
     '- Câu hỏi về CÁCH DÙNG APP (nút, màn hình, tính năng, lỗi, mất mạng, đổi máy, phí, dùng thử) mà có đoạn nói ĐÚNG việc đó: luật "không có hướng dẫn app" không áp dụng. Trả lời thẳng theo đoạn đó, đủ các bước đánh số, giữ đúng tên nút trong ngoặc kép; không nhắc số liệu quán, không thêm việc kinh doanh, bỏ qua KHUNG bên dưới.\n' +
     '- Câu hỏi về cách dùng app mà không đoạn nào nói đúng việc đó: giữ nguyên luật "chưa thấy trong hướng dẫn", không ghép bước từ đoạn khác.\n' +
-    LUAT_O_CHUA_BAT + '\n' + LUAT_HO_TRO;
+    LUAT_O_CHUA_BAT + '\n' + LUAT_HO_TRO +
+    (noiTiep
+      ? `\n- CÂU NÀY NỐI TIẾP lượt trước: các đoạn trên là bài vừa dùng để trả lời lượt trước. Người hỏi đang hỏi lại CHỖ hoặc báo KHÔNG THẤY mục / nút vừa được chỉ → KHÔNG trả lời "chưa thấy hướng dẫn", không bảo gọi Hotline; nói lại đường đi từ đầu: ${o ? `mở ô "${o}" ở Trang chủ (chưa thấy ô đó: Chủ quán ở Trang chủ bấm "Sửa", cuộn xuống cuối bấm "Thêm" để bật), rồi ` : ''}nêu đúng bước và tên nút trong đoạn mà người hỏi đang tìm.`
+      : '');
 }
 
 export function buildMessages(
   question: string,
   chunks: HelpChunk[],
   persona?: Persona | null,
-  extra?: { tenQuan?: string | null; khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; thoiTiet?: string; boNho?: string; soTay?: string; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
+  extra?: { tenQuan?: string | null; khongXem?: string[]; laChu?: boolean; huongDan?: HelpChunk[]; hdLai?: boolean; thoiTiet?: string; boNho?: string; soTay?: string; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
 ): { role: 'system' | 'user'; content: string }[] {
   // Lượt trước + số liệu đặt TRƯỚC câu hỏi, trong tin nhắn người dùng (câu dặn giữ nguyên → vẫn được giảm giá).
   // Trí nhớ (sổ hỏi đáp) + lượt app gửi kèm (lượt số liệu không qua GPT, không có trong sổ) → một khối, cũ → mới
@@ -3302,7 +3314,7 @@ export function buildMessages(
       ? 'CÂU CỬA MIỆNG: "… muốn chết / mệt chết / chết mất" ở đây là cách nói than MỆT / QUÁ TẢI trong công việc, KHÔNG phải ý tự hại → trả lời bình thường về công việc, giờ làm, người làm.'
       : '',
     todayBlock(extra?.now ?? new Date()),
-    extra?.huongDan?.length ? khoiHuongDan(extra.huongDan) : '',
+    extra?.huongDan?.length ? khoiHuongDan(extra.huongDan, extra.hdLai) : '',
   ].filter(Boolean).map((x) => `${x}\n\n`).join('');
   // Dòng cách gọi đặt CUỐI câu dặn: phần đầu giống hệt nhau giữa các lần gọi → OpenAI tính nửa giá phần đó.
   if (chunks.length === 0) {

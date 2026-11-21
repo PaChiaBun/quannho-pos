@@ -1579,6 +1579,15 @@ Deno.test('loaiCau: doanh số không phải so sánh', () => {
 Deno.test('Lần 263: câu nối tiếp ngắn dùng lại bài hướng dẫn lượt trước; câu chỉ hỏi thời tiết không gắn dòng kỳ', () => {
   for (const q of ['chỗ nào vậy', 'cho nao z', 'ở đâu ạ', 'nút nào', 'k thấy', 'không thấy đâu hết', 'em tìm hoài hem thấy', 'xoá chỗ nào mình ko thấy', 'số 4', 'bước 3 làm sao']) assert(L.noiTiepHuongDan(q), q);
   for (const q of ['doanh thu hôm nay ở đâu ra mà cao vậy', 'không thấy doanh thu hôm nay đâu cả', 'chấm công ở đâu', 'món nào bán chạy', 'số 4 bàn trong cùng hôm nay bán được bao nhiêu tiền', 'hôm nay bán được bao nhiêu', 'cài máy in']) assert(!L.noiTiepHuongDan(q), q);
+  // lần 264: dùng lại bài lượt trước thì dặn chỉ đường từ ô ở Trang chủ (bài có ô riêng) và không bảo "chưa thấy hướng dẫn"
+  const doan = (module_name: string) => [{ id: 'x#1', module_name, section: 'Các việc thường làm', title: '2. Vào ca', text: '1. Bấm "VÀO CA".' }];
+  const nt = L.khoiHuongDan(doan('Chấm công'), true);
+  assert(nt.includes('CÂU NÀY NỐI TIẾP lượt trước') && nt.includes('mở ô "Chấm công" ở Trang chủ') && nt.includes('KHÔNG trả lời "chưa thấy hướng dẫn"'), nt);
+  assertStringIncludes(L.khoiHuongDan(doan('Bếp'), true), 'mở ô "Phiếu bếp" ở Trang chủ');
+  const kd = L.khoiHuongDan(doan('Bắt đầu dùng app'), true);
+  assert(kd.includes('CÂU NÀY NỐI TIẾP lượt trước') && !kd.includes('mở ô "'), kd);
+  assert(!L.khoiHuongDan(doan('Chấm công')).includes('NỐI TIẾP'));
+  assertStringIncludes(buildMessages('ở chỗ nào vậy', [], null, { huongDan: doan('Chấm công'), hdLai: true })[1].content, 'mở ô "Chấm công" ở Trang chủ');
   const tt = 'Dạ Anh, dự báo ngày mai trời quang, khoảng 19–27°C; khả năng mưa cả ngày 0%, giờ buôn bán ít khả năng mưa ạ.', ky = '30 ngày qua (15/10/2026–13/11/2026)', luc = new Date('2026-11-13T15:46:00+07:00');
   assertEquals(L.ghiKy(tt, ky, 'thời tiết ngày mai ra sao', luc), tt);
   // câu có số của quán thì vẫn ghi kỳ như cũ
