@@ -36,8 +36,7 @@ nguon:
 
 ### Chấm công ở đâu, mở Chấm công, thiết lập chấm công lần đầu
 1. Mở ô **Chấm công** ở Trang chủ. Chưa thấy ô: Chủ quán ở Trang chủ bấm "Sửa", cuộn xuống cuối, bấm ô "Thêm", chọn Chấm công rồi bấm "Xong". Nhân viên không thấy ô là vai trò chưa có module Chấm công.
-2. Thiết lập lần đầu (Chủ quán / Quản lý): làm việc 1 "Cài vị trí quán".
-3. Nhân viên chấm công: việc 2 "Vào ca", hết ca làm việc 3 "Ra ca".
+2. Thiết lập chấm công lần đầu (Chủ quán / Quản lý): làm việc 1 "Cài vị trí quán". Thiết lập xong thì nhân viên chấm công được.
 
 ### 1. Cài vị trí quán (Chủ quán / Quản lý, làm một lần)
 1. Đứng tại quán, bấm **"Cài đặt định vị quán"** → **"Định vị của quán"**.

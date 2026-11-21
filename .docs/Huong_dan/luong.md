@@ -80,9 +80,9 @@ nguon:
 - **"Báo cáo lương"**: tab **"Tổng Quan Kỳ"** (Tổng Nhân Viên Làm Việc, Tổng Số Giờ Tích Lũy, Chi Phí Lương Ca Tạm Tính) và **"Theo Nhân Viên"**. Duyệt OT / xác nhận ca quên chốt ngay tại đây (cần quyền).
 - Trong kỳ: **"Báo cáo KPI"**.
 
-### 8. Hoa hồng, lương theo phần trăm doanh thu cho nhân viên, thợ
-App chưa có tính hoa hồng hay chia phần trăm theo doanh thu, theo từng dịch vụ. Cách tính thu nhập chính hiện có: Theo giờ, Cố định, Cố định + OT, Theo ngày, Tùy chỉnh (việc 1).
-Muốn trả thêm theo doanh số: tự tính số tiền rồi nhập vào "Thưởng cố định mỗi kỳ (đ)" trong cấu hình lương của người đó (việc 1), kỳ sau số tiền khác thì sửa lại.
+### 8. Hoa hồng, chia phần trăm doanh thu cho nhân viên, thợ
+App chưa có tính hoa hồng hay chia phần trăm theo doanh thu, theo từng dịch vụ.
+Muốn trả thêm theo doanh số: tự tính số tiền rồi nhập vào "Thưởng cố định mỗi kỳ (đ)" của người đó (việc 1), kỳ sau số tiền khác thì sửa lại.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
