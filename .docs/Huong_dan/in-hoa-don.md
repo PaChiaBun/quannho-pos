@@ -40,10 +40,11 @@ Mở module **In Hoá Đơn** từ Trang chủ:
 
 ## Các việc thường làm
 
-### Kết nối, cài máy in mới mua với app: chọn theo máy đang dùng
+### Kết nối, cài máy in mới mua với app: chọn theo máy đang dùng (điện thoại, iPhone, máy tính, Sunmi)
 - Máy cầm tay Sunmi có sẵn máy in: việc 4 "Thiết lập nhanh cho máy cầm tay".
 - Máy tính Windows nối máy in USB hoặc mạng: tải Công cụ Cài máy in ở `quannho.lpm.vn/cai-may-in.html`, chạy rồi bấm "CÀI MÁY IN" (việc 1).
 - Máy in mạng LAN / Wi-Fi dùng từ thiết bị khác: việc 2 "Thêm máy in", chọn "Máy in mạng LAN / Wi-Fi (IP)", rồi việc 3 "Tạo luật in".
+- Điện thoại iPhone / Android, máy tính bảng: thêm máy in trên điện thoại cũng làm việc 2, chọn "Máy in mạng LAN / Wi-Fi (IP)". App chưa hỗ trợ máy in Bluetooth; máy in USB dùng qua máy tính Windows.
 
 ### 1. Cài máy in trên máy Windows (lần đầu)
 1. Cài Quán Nhỏ POS cho Windows trước.

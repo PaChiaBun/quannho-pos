@@ -148,6 +148,15 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 ### Tặng món cho khách
 Tặng món ghi sao: app chưa có nút tặng món và chưa có ô giảm giá tay. Muốn bớt tiền thì Chủ quán / Quản lý tạo mã giảm giá rồi áp lúc thanh toán; khách có điểm thì trừ tiền ở ô "Điểm thưởng" lúc thanh toán.
 
+### Xoá bill, xoá hoá đơn, huỷ đơn đã thanh toán (Chủ quán có xoá được không)
+Đơn đã thanh toán hiện **không xoá, không huỷ, không hoàn tiền được** ở bất kỳ đâu trong app, Chủ quán cũng chưa làm được; đơn vẫn tính vào báo cáo.
+- Thu nhầm: xem lại đúng bill và số tiền ở **Báo cáo → tab "Hóa đơn"** để đối chiếu.
+- Đơn chưa thanh toán: xoá trong giỏ (việc "Xoá giỏ hàng"); giỏ đã gửi bếp thì huỷ phiếu bếp trước.
+
+### Mã QR chuyển khoản, QR thanh toán cho khách quét
+- Khách quét mã QR ngân hàng của quán để chuyển khoản. App không tự biết tiền đã về: xem tài khoản thấy tiền rồi mới bấm "Xác nhận" (việc "Khách chuyển khoản hoặc trả thẻ thì bấm gì").
+- In mã QR chuyển khoản của quán lên bill: In Hoá Đơn → "Thiết Kế Mẫu In" → tab Hoá Đơn → khối "QR Code" → "Nguồn mã QR" chọn "VietQR Tự động" (khai tài khoản ngân hàng của quán) hoặc "Tải ảnh QR lên", rồi "Lưu".
+
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|

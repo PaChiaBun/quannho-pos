@@ -373,3 +373,33 @@ Chủ Quán bảo kiểm các câu khách hỏi Boom, chấm điểm, xem có c�
 
 Đã sửa rồi, không cần làm: "món chưa bán" kể cả nguyên liệu (lượt bị chê, lần 250); kỳ so sánh, bỏ món, chữ "e" (lần 253–262). Kiểm 0 đồng trên bản hiện tại: máy chủ đọc đúng kỳ "thứ 6 tuần rồi" và có số món được hỏi (lỗi ở #6 nằm phía app); dòng kỳ thừa ở câu thời tiết vẫn còn.
 
+### 22/11 — Lô 1 theo câu hỏi thật của khách: lần 263 (mã máy chủ) + 8 mục hướng dẫn mới (ĐÃ SỬA, CHƯA ÁP, CHƯA ĐĂNG)
+
+Chủ Quán bảo "Làm lô 1". Điều tìm ra trước khi sửa: bài hướng dẫn do APP tự tìm (chấm điểm theo chữ, tên mục nặng điểm nhất) rồi gửi mã bài lên máy chủ; máy chủ không tự tìm. Vì vậy nhóm "có bài mà Boom nói chưa thấy" là do app chọn nhầm bài, chữa bằng tên mục và nội dung bài; nhóm "câu nối tiếp ngắn" là do câu ngắn không tìm ra bài nào, chữa ở máy chủ.
+
+**Phần 1, bài hướng dẫn (7 bài, thêm 8 mục, sửa tên 4 mục; chỉ ghi điều đã có trong bài cũ hoặc đã kiểm trong mã app):**
+
+| Bài | Bổ sung |
+|---|---|
+| Bắt đầu dùng app | mục "đổi quán" thêm cách hỏi vào 2–3 quán, nhiều chi nhánh, nhân viên làm ở cửa hàng khác; mục "dữ liệu của quán" thêm lưu ở đâu, có an toàn, có bị lộ không; mục "app chưa có" thêm tính hoa hồng |
+| Nhân viên | xem mã quán ở đâu (không phải mã giảm giá); cho cổ đông, kế toán, người nhà cùng xem quán; đổi cách Bé Boom xưng hô và tên hiển thị |
+| Chấm công | chấm công ở đâu, mở ô Chấm công, thiết lập lần đầu |
+| Bán hàng | xoá bill / hoá đơn đã thanh toán (Chủ quán cũng chưa xoá được); mã QR chuyển khoản |
+| In Hoá Đơn | thêm máy in từ điện thoại iPhone / Android (máy in mạng; chưa có Bluetooth) |
+| Kho hàng | thêm nhiều món một lúc, nhập từ Excel: chưa có |
+| Tính Lương | hoa hồng, lương theo % doanh thu: chưa có, cách làm thay |
+
+Thử 0 đồng bằng chính bộ tìm bài của app, trên 18 câu khách đã hỏi mà Boom không trả lời được: trước khi sửa bài đúng đứng đầu ở 1 / 18 câu, sau khi sửa 18 / 18. Soát chữ của bài: 0 lỗi. Bộ test của app 131 qua (gồm bộ câu hỏi kiểm tra tìm bài).
+
+**Phần 2, lần 263 (mã máy chủ):**
+
+- `logic.ts noiTiepHuongDan` + `index.ts`: câu nối tiếp ngắn kiểu "ở chỗ nào", "không thấy", "bước 4" mà app không gửi bài nào → máy chủ dùng lại các bài của lượt ngay trước (≤ 10 phút, đọc `boom_qa_log.chunk_ids`); nhãn loại câu thêm `+lai`. Để làm được, lượt hỏi "ask" có bài hướng dẫn nay ghi mã bài vào sổ (trước để trống; hàm giữ chỗ chỉ lưu, không tính hạn mức theo mã bài).
+- `logic.ts ghiKy`: câu chỉ hỏi thời tiết không gắn "Số trên là của …".
+- Test hàm 238 qua. Phần dùng lại bài chưa thử được trước khi áp (cần máy chủ thật) → sau áp phải hỏi thử hai lượt liên tiếp.
+
+**Nhóm trong bảng 21/11 đã có lời giải:** #2 (mã), #3, #5, #7, #8 (bài), #9 (mã); #1 mới làm phần tìm đúng bài, nội dung về an toàn dữ liệu vẫn chờ Chủ Quán (lô 2); #4, #6, #10 ở app (lô 3).
+
+**Lưu ý khi đăng bài:** `dang_huong_dan_boom.sh` đăng mọi bài đang có trong máy, gồm cả 3 bài một phiên khác đang sửa dở chưa lưu (màn Phiếu bếp mới, đã lên web, chưa có trong app cài máy). So với bản đang đăng (442 đoạn): thêm đúng 8 đoạn của lô này, không bớt đoạn nào.
+
+Kịch bản áp mã: `db-fix/boom_l263_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp và trước khi đăng bài).
+

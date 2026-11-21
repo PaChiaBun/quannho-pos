@@ -1576,6 +1576,15 @@ Deno.test('loaiCau: doanh số không phải so sánh', () => {
   for (const q of ['so tháng trước', 'so với tháng trước', 'món nào lời nhất']) assertEquals(loaiCau(q), 'so_sanh', q);
 });
 
+Deno.test('Lần 263: câu nối tiếp ngắn dùng lại bài hướng dẫn lượt trước; câu chỉ hỏi thời tiết không gắn dòng kỳ', () => {
+  for (const q of ['chỗ nào vậy', 'cho nao z', 'ở đâu ạ', 'nút nào', 'k thấy', 'không thấy đâu hết', 'em tìm hoài hem thấy', 'xoá chỗ nào mình ko thấy', 'số 4', 'bước 3 làm sao']) assert(L.noiTiepHuongDan(q), q);
+  for (const q of ['doanh thu hôm nay ở đâu ra mà cao vậy', 'không thấy doanh thu hôm nay đâu cả', 'chấm công ở đâu', 'món nào bán chạy', 'số 4 bàn trong cùng hôm nay bán được bao nhiêu tiền', 'hôm nay bán được bao nhiêu', 'cài máy in']) assert(!L.noiTiepHuongDan(q), q);
+  const tt = 'Dạ Anh, dự báo ngày mai trời quang, khoảng 19–27°C; khả năng mưa cả ngày 0%, giờ buôn bán ít khả năng mưa ạ.', ky = '30 ngày qua (15/10/2026–13/11/2026)', luc = new Date('2026-11-13T15:46:00+07:00');
+  assertEquals(L.ghiKy(tt, ky, 'thời tiết ngày mai ra sao', luc), tt);
+  // câu có số của quán thì vẫn ghi kỳ như cũ
+  assertStringIncludes(L.ghiKy('Dạ Anh, quán bán được 120 đơn, doanh thu 9.500.000đ ạ.', ky, 'quán bán được nhiêu rồi', luc), 'Số trên là của 30 ngày qua');
+});
+
 Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {
   assertStringIncludes(goTat('tn ban dc bn'), 'tn = tháng này');
   assertStringIncludes(goTat('tt ck bn'), 'ck = chuyển khoản');

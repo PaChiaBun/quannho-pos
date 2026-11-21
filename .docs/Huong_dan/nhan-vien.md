@@ -126,6 +126,19 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 - **Cài đặt → "Mã PIN duyệt nhanh (6 số)"** → nhập **"Mã PIN mới (6 chữ số)"** và xác nhận → **"Lưu mã PIN 6 số"**.
 - Dùng khi nhân viên huỷ món đã gửi bếp hoặc huỷ bàn: Quản lý nhập PIN ngay trên máy nhân viên. PIN **chỉ để duyệt**, không dùng đăng nhập.
 
+### 9. Xem, coi mã quán (mã kết nối nhân viên) ở đâu
+Chủ quán mở **Cài đặt → "Mã kết nối nhân viên"**: mã quán dạng `QN-…`, bấm sao chép để gửi nhân viên. Đây là mã để nhân viên vào quán, không phải mã giảm giá.
+
+### 10. Cho người khác cùng xem quán: cổ đông, người góp vốn, kế toán, người nhà
+App không có nút mời riêng. Cho họ vào quán như một nhân viên rồi gán vai trò:
+1. Gửi mã quán (việc 9); họ đăng nhập app rồi **"Nhập mã quán"** → **"Kết nối vào quán"**.
+2. Chủ quán mở ô **Nhân viên** → **"Cấp quyền"** → chọn vai trò.
+3. Muốn họ chỉ xem báo cáo: **"Quản lý vai trò"** → **"Tạo vai trò"**, ở **"Quyền truy cập module"** chỉ bật Báo cáo, rồi gán vai trò đó.
+
+### 11. Đổi cách Bé Boom gọi mình, gọi tôi là anh, chị, đổi xưng hô, đổi tên hiển thị
+- Đổi xưng hô: nhắn Bé Boom "gọi tôi là anh". Chọn được: anh, chị, em, cô, chú, bác, chế, ông, bà, dì, thầy; Bé Boom không gọi bằng tên tự đặt ngoài các cách này.
+- Tên đi kèm lấy từ tiếng cuối của **"Tên hiển thị"**. Muốn đổi tên: **Cài đặt → "Tên hiển thị"** → gõ tên mới → lưu.
+
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|

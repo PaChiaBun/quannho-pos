@@ -49,6 +49,7 @@ import {
   type HelpChunk,
   type Persona,
   modelRefused,
+  noiTiepHuongDan,
   isUuid,
   LIMITS,
   openaiBase,
@@ -403,6 +404,20 @@ async function cauVuaHoi(storeId: string, userId: string, memoryAgeS: number | n
   }
 }
 
+/** Lần 263: mã các bài hướng dẫn của lượt ngay trước (≤ 10 phút), cho câu nối tiếp ngắn dùng lại. Lỗi đọc → coi như không có. */
+async function doanVuaDung(storeId: string, userId: string): Promise<string[]> {
+  try {
+    const rows = await rest(
+      `boom_qa_log?select=chunk_ids&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&created_at=gte.${encodeURIComponent(new Date(Date.now() - 600_000).toISOString())}&order=created_at.desc&limit=1`,
+      { signal: AbortSignal.timeout(1000) },
+    );
+    const ids = Array.isArray(rows) ? rows[0]?.chunk_ids : null;
+    return Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string').slice(0, 8) : [];
+  } catch {
+    return [];
+  }
+}
+
 async function recall(storeId: string, userId: string, since: Date): Promise<{ turns: MemoryTurn[]; hasData: boolean }> {
   try {
     const rows = await rest(
@@ -626,7 +641,7 @@ Deno.serve(async (req) => {
 
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
   let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false, tenQuan: string | null = null;
-  let huongDan: HelpChunk[] = [];
+  let huongDan: HelpChunk[] = [], hdLai = false;
   let jwtHoi = ''; // lô C: đọc doanh thu từng ngày bằng vé của chính người hỏi
   // 08/11: app (không phải web) đi đường ask; tắt riêng bằng BOOM_ASK_TAT_APP=1 → 503, app tự quay về đường cũ
   if (r.mode === 'ask' && ASK_TAT_APP && (body as Record<string, unknown>).nen_tang !== 'web') return json(503, { error: 'ASK_OFF' });
@@ -635,6 +650,11 @@ Deno.serve(async (req) => {
       // lệch bản hướng dẫn hoặc lỗi đọc: vẫn trả lời được, chỉ thiếu đoạn
       huongDan = await helpPack(r.pack_version).then((p) => pickChunks(p, r.chunk_ids) ?? []).catch(() => []);
       r.chunk_ids = []; // sổ và hạn mức tính như câu tư vấn
+    } else if (noiTiepHuongDan(r.question)) {
+      // lần 263: câu nối tiếp ngắn ("ở chỗ nào", "không thấy") app không tìm ra bài nào → dùng lại bài của lượt ngay trước
+      const cu = await doanVuaDung(r.store_id, user);
+      if (cu.length) huongDan = await helpPack(r.pack_version).then((p) => pickChunks(p, cu) ?? []).catch(() => []);
+      hdLai = huongDan.length > 0;
     }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     jwtHoi = jwt;
@@ -651,7 +671,7 @@ Deno.serve(async (req) => {
           .then((x) => (Array.isArray(x) && typeof x[0]?.name === 'string' ? x[0].name : null)).catch(() => null);
       }
       laChu = so.laChu;
-      askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
+      askTag = `+ask${huongDan.length ? '+hd' : ''}${hdLai ? '+lai' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
     } catch {
       return json(503, { error: 'SERVER_BUSY' });
     }
@@ -736,7 +756,8 @@ Deno.serve(async (req) => {
 
   let res;
   try {
-    res = await reserve(r, user);
+    // lần 263: lượt "ask" ghi mã bài hướng dẫn đã dùng vào sổ (hàm giữ chỗ chỉ lưu, không tính hạn mức theo mã bài) để câu nối tiếp dùng lại
+    res = await reserve(huongDan.length ? { ...r, chunk_ids: huongDan.map((c) => c.id) } : r, user);
   } catch {
     return json(503, { error: 'QUOTA_UNAVAILABLE' });
   }

@@ -136,13 +136,14 @@ App chưa có màn chốt tiền riêng. Cách đối chiếu:
 2. Từng người thu bao nhiêu: Báo cáo → tab Doanh thu → "Doanh thu theo thu ngân".
 3. Nhân viên ra ca: bài Chấm công, việc "Ra ca".
 
-### 13. App chưa có: đặt bàn trước, đổi ca, nhập món từ Excel, mua 10 tặng 1, giờ vàng tự giảm, xem ai sửa giá
+### 13. App chưa có: đặt bàn trước, đổi ca, nhập món từ Excel, mua 10 tặng 1, giờ vàng tự giảm, xem ai sửa giá, tính hoa hồng
 App hiện chưa có các việc sau, trả lời thẳng là chưa có:
 - Ghi khách đặt bàn trước: chưa có.
 - Nhân viên xin đổi ca, xin nghỉ phép trên app: chưa có.
 - Nhập món hàng loạt từ Excel: chưa có, thêm từng món ở Kho hàng.
 - Mua 10 tặng 1, giờ vàng tự động giảm giá: chưa có. Giảm giá dùng mã giảm giá; khách quen dùng tích điểm.
 - Xem ai đã sửa giá món: chưa có. Lịch sử huỷ món, huỷ bàn thì xem ở Báo cáo, tab Huỷ/Duyệt.
+- Tính hoa hồng, chia phần trăm doanh thu cho nhân viên, thợ: chưa có. Lương tính theo giờ, cố định, theo ngày; xem bài Tính Lương.
 
 ### 14. Sao lưu, tải dữ liệu về máy; báo cáo thuế hộ kinh doanh
 1. Dữ liệu nằm trên máy chủ nên không cần tự sao lưu. Muốn lấy tệp về: Thu Chi có nút xuất CSV, mở được bằng Excel; app chưa có nút tải toàn bộ dữ liệu.
@@ -182,7 +183,8 @@ Món và đơn nằm trên máy chủ, đổi máy hay cài lại không mất.
 ### 20. Có bản mới thì cập nhật app sao
 App tự báo khi có bản mới. Bấm "Cập nhật ngay"; iPhone bấm "Mở App Store".
 
-### 21. Dữ liệu của quán có bị người khác xem không
+### 21. Dữ liệu của quán có bị người khác xem không, dữ liệu lưu ở đâu, có an toàn không, có bị lộ không
+Dữ liệu của quán (món, đơn, báo cáo, nhân viên) lưu trên máy chủ, không nằm trong điện thoại.
 1. Chỉ tài khoản đã vào quán mới xem được, nhân viên thấy theo vai trò.
 2. Không đưa mật khẩu cho người khác.
 3. Bé Boom đọc số của đúng quán đang đăng nhập để trả lời.
@@ -194,8 +196,11 @@ Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. C
 3. Bấm "Xong".
 Nhân viên không thấy ô: vai trò của họ chưa có module đó, nhờ Chủ quán gán (bài Nhân viên & Phân quyền).
 
-### 23. Đổi quán, chuyển sang quán khác khi có nhiều quán
+### 23. Đổi quán, chuyển sang quán khác khi có nhiều quán, vào được 2 quán, 3 quán, nhiều chi nhánh, nhân viên làm ở cửa hàng khác
 Cài đặt → thẻ quán → "Đổi quán" → chọn quán → nhập mật khẩu đăng nhập.
+- Một tài khoản vào được nhiều quán, muốn làm việc ở quán nào thì chọn quán đó ở "Đổi quán".
+- Nhân viên làm thêm ở quán khác, chuyển sang cửa hàng khác: đưa mã quán của quán đó (Cài đặt → "Mã kết nối nhân viên") để họ kết nối vào. Một nhân viên làm được ở nhiều quán; vai trò, chấm công, lương tính riêng từng quán.
+- Mở thêm quán, chi nhánh mới: chỉ tạo được trên web, xem bài Báo cáo chuỗi.
 
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |

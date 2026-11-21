@@ -2173,12 +2173,22 @@ export function ghiApTay(answer: string): string {
 /** Câu xin VIẾT nội dung (bài đăng, tin nhắn, caption…) — không phải hỏi số liệu. */
 export const xinViet = (question: string) => /\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question));
 
+/** Lần 263 (câu khách 13–14/11: hỏi cách làm xong hỏi tiếp "chỗ nào z", "k thấy", "số 4" → app không tìm ra bài nào, Boom bảo gọi Hotline,
+ *  trái với câu vừa trả lời): câu nối tiếp ngắn hỏi lại chỗ / báo không thấy / chỉ số bước — phải đọc cùng bài hướng dẫn của lượt trước. */
+export const noiTiepHuongDan = (question: string): boolean => {
+  const q = boDau(question);
+  return q.length <= 40 &&
+    /^(?:(?:o |no |the |vay |ma )?(?:cho nao|o dau|dau|nut nao|muc nao|man nao)\b.{0,14}|.{0,28}\b(?:k|ko|khong|hem|hong|hok|chua|chang|cha) (?:tim )?thay\b.{0,16}|(?:so|buoc) \d{1,2}\b.{0,16})$/.test(q);
+};
+
 export function ghiKy(answer: string, nhan: string | undefined, question: string, now: Date = new Date()): string {
   if (!nhan || coNeuKy(question, now)) return answer;
   // hỏi tồn kho là số hiện tại; hỏi cách dùng thì số trong câu trả lời không phải số của quán
   if (/\b(?:kho|ton|con lai|con bao nhieu|sap het|hien tai|bay gio|lam sao|o dau|the nao|cach)\b/.test(boDau(question))) return answer;
   // 09/11 web Demo: bài đăng Facebook bị gắn "Số trên là của tháng này…" ở cuối, chủ quán chép nguyên lên mạng
   if (xinViet(question)) return answer;
+  // lần 263 (câu khách 13/11: "thời tiết ngày mai ra sao" bị gắn "Số trên là của 30 ngày qua"): câu chỉ hỏi thời tiết thì % mưa, nhiệt độ không phải số của kỳ
+  if (chiHoiThoiTiet(question)) return answer;
   // \b không dùng được sau "đ" (JS coi đ không phải chữ)
   if (!/\d[\d.,]*\s*(?:đ(?!\p{L})|đồng|đơn|phần|ly(?!\p{L})|khách|triệu|%)/iu.test(answer)) return answer;
   const dau = nhan.split('(')[0].trim().toLowerCase();

@@ -76,6 +76,9 @@ Bán giá khác theo giờ, giá giờ vắng, happy hour: app chưa có giá t�
 ### 1b. Tạo combo
 Thêm combo, tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
 
+### 1e. Thêm nhiều món một lúc, thêm sản phẩm hàng loạt, nhập món từ Excel
+Chưa có. Thêm từng món theo việc 1 "Thêm món / nguyên liệu".
+
 ### 2. Topping (trà sữa, cơm thêm…)
 1. Tạo topping như một sản phẩm: chọn chip **"Topping"**, đặt giá và **"Đơn vị topping"** (viên, phần, ml, g, muỗng, thìa).
 2. Gắn topping vào món: ở món chính chọn **"Cấu hình Topping"** (mỗi topping ghi giá cộng thêm, vd "+5.000 đ / phần") → chạm topping để **"Đã gắn"**; hoặc ở topping dùng mục **"🍜 Gắn vào món"**. Gắn hay bỏ xong, máy nào đang gọi món ở bàn cũng thấy ngay lần mở "Tùy chọn" kế tiếp (không phải tắt app).
