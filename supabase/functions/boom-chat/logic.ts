@@ -2173,6 +2173,16 @@ export function ghiApTay(answer: string): string {
 /** Câu xin VIẾT nội dung (bài đăng, tin nhắn, caption…) — không phải hỏi số liệu. */
 export const xinViet = (question: string) => /\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question));
 
+/** Lần 265 (hỏi thử 22/11: câu "chấm công thế nào" đi đường ask tốn ~0,03 USD vì chạy mô hình tư vấn đắt; một nửa câu khách hỏi là cách dùng app):
+ *  câu CHỈ hỏi cách dùng app, không hỏi số, không xin tư vấn. Nơi gọi chỉ dùng khi app có gửi kèm bài hướng dẫn, để chọn mô hình rẻ.
+ *  Nhận nhầm một câu tư vấn chỉ làm câu đó chạy mô hình rẻ như trước 15/11 (số liệu vẫn gửi đủ); nhận sót thì câu đó vẫn chạy mô hình đắt. */
+export function chiHoiCachDung(question: string, now: Date = new Date()): boolean {
+  // loaiCau coi "làm sao…", "… được không" là chẩn đoán / quyết định (đúng với câu kinh doanh, sai với câu thao tác) → chỉ loại so sánh, kế hoạch, dự báo
+  if (['so_sanh', 'ke_hoach', 'du_bao'].includes(loaiCau(question) ?? '') || coNeuKy(question, now) || chiHoiThoiTiet(question) || xinViet(question)) return false;
+  // có chữ hỏi số / hỏi vì sao / xin lời khuyên → không phải câu chỉ hỏi thao tác
+  return !/ (?:doanh thu|doanh so|ban (?:duoc|chay|e|cham|it|nhieu)|bao nhieu|may (?:don|ly|phan|khach|mon)|loi nhuan|lai gop|loi lo|lai lo|gia von|hoa von|ton kho|sap het|het hang|khach (?:quen|moi|vang|dong|it)|vang khach|dong khach|keo khach|tang doanh|khuyen mai gi|vi sao|tai sao|nen|tu van|goi y|de xuat|danh gia|loi khuyen|kinh nghiem|chien luoc|ke hoach|du bao|mua|thoi tiet|tang|giam (?!gia|mon)|vang|dong|co loi|mat khach|khach (?:khong|ko|k) bo|bo di|lam gi (?:cho|de)|co cach nao|goi them|cat ca|xep (?:lai )?ca|rut con|chi tiet hon|sao vay|la sao|bao lau|con (?:nhieu|bao)|duoi muc|dang trong ca|luc may gio|con no|hap dan|that thoat|tuyen|chu y) /.test(` ${boDau(question)} `);
+}
+
 /** Lần 263 (câu khách 13–14/11: hỏi cách làm xong hỏi tiếp "chỗ nào z", "k thấy", "số 4" → app không tìm ra bài nào, Boom bảo gọi Hotline,
  *  trái với câu vừa trả lời): câu nối tiếp ngắn hỏi lại chỗ / báo không thấy / chỉ số bước — phải đọc cùng bài hướng dẫn của lượt trước. */
 export const noiTiepHuongDan = (question: string): boolean => {

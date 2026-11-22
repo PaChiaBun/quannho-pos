@@ -48,6 +48,7 @@ import {
   DANH_XUNG,
   type HelpChunk,
   type Persona,
+  chiHoiCachDung,
   modelRefused,
   noiTiepHuongDan,
   isUuid,
@@ -831,13 +832,16 @@ Deno.serve(async (req) => {
     : '';
   if (soTay) kind += '+so_tay';
   const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, hdLai, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
+  // lần 265 (hỏi thử 22/11: "chấm công thế nào" tốn ~0,03 USD): câu CHỈ hỏi cách dùng app đi đường ask, app có gửi kèm bài hướng dẫn → mô hình
+  // thường, không dùng mô hình tư vấn (đắt ~17 lần). Số liệu vẫn gửi đủ, nên nhận nhầm một câu tư vấn chỉ làm câu đó trả lời bằng mô hình thường.
+  const dungTV = r.mode === 'advice' && !(askTag !== '' && huongDan.length > 0 && chiHoiCachDung(r.question));
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = REASONING) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
       signal,
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: r.mode === 'advice' ? MODEL_TV : MODEL,
+        model: dungTV ? MODEL_TV : MODEL,
         // hướng dẫn 450 → 650: chép đủ bước (26/10)
         ...((n: number) => DOI_MOI ? { max_completion_tokens: n * 2, reasoning_effort: nghi } : { temperature: 0.2, max_tokens: n })(
           r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650,
@@ -848,7 +852,7 @@ Deno.serve(async (req) => {
   try {
     // lần 214: câu tư vấn chạy kèm một lượt 'low', chỉ chờ tới LOW_CHO_MS kể từ lúc gửi; lượt none vẫn chạy như cũ
     const songSong = r.mode === 'advice' && DOI_MOI && LOW_CHO_MS > 0 && REASONING !== 'low' && MODEL_TV === MODEL; // có mô hình tư vấn riêng thì không gọi song song
-    if (r.mode === 'advice' && MODEL_TV !== MODEL) kind += '+t2';
+    if (r.mode === 'advice' && MODEL_TV !== MODEL) kind += dungTV ? '+t2' : '+cd';
     const acLow = new AbortController();
     const hetLow = setTimeout(() => acLow.abort(), LOW_CHO_MS);
     const pLow = songSong
@@ -944,7 +948,7 @@ Deno.serve(async (req) => {
       answer = `Dạ ${goiNguoiHoi(who)} ơi, Bé Boom chưa thấy hướng dẫn cho việc này trong app ạ. ${goiNguoiHoi(who)} xem thử các mục hướng dẫn gần nhất hoặc gọi Hotline 0927 55 8888 nhé.`;
       kind += '+doan_nut';
     }
-    const cost = costUsd(inTok, outTok, r.mode === 'advice' ? PRICES_TV : PRICES);
+    const cost = costUsd(inTok, outTok, dungTV ? PRICES_TV : PRICES);
     if (!answer) {
       await finish(logId, { model: kind, status: 'error', latency_ms: latency, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, answer: 'EMPTY' });
       return json(502, { error: 'AI_EMPTY_ANSWER' });

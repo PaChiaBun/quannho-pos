@@ -423,3 +423,24 @@ Sửa chỗ hỏng thấy ở lượt hỏi thử trên. `logic.ts khoiHuongDan(
 
 **Thấy khi hỏi thử, CHƯA xem mã:** câu hỏi cách dùng app đi đường "ask" tốn khoảng 0,03 USD mỗi câu (nhãn `+so_lieu+module+ask+hd+t2`, ~13.600 token vào: mang cả khối số bán hàng và dùng mô hình đắt), trong khi câu cách dùng đi đường "answer" chỉ ~0,0007 USD. Một nửa câu khách hỏi là cách dùng app, hạn mức mỗi quán 3 USD / tháng.
 
+### 22/11 — Lần 265: câu chỉ hỏi cách dùng app chạy mô hình thường (ĐÃ SỬA MÃ, CHƯA ÁP)
+
+Chủ Quán bảo "Làm đi" sau khi thấy câu "chấm công thế nào" tốn ~0,03 USD.
+
+**Nguyên nhân:** ở đường "ask", máy chủ luôn đổi câu hỏi thành chế độ tư vấn (`mode: 'advice'`) và từ lần 249 (15/11) chế độ đó chạy mô hình tư vấn riêng (`BOOM_MODEL_TU_VAN`, đắt ~17 lần), kèm đủ khối số bán hàng (~13.600 token). Câu chỉ hỏi cách dùng app cũng đi đúng đường đó. App gắn bài hướng dẫn cho phần lớn câu hỏi (78 / 99 lượt ask có `+hd`), kể cả câu số liệu, nên "có bài kèm" chưa đủ để biết câu nào là câu cách dùng.
+
+**Sửa:** `logic.ts chiHoiCachDung(question)`: câu không nêu kỳ, không hỏi thời tiết, không xin viết, không thuộc loại so sánh / kế hoạch / dự báo và không có chữ hỏi số, hỏi vì sao, xin lời khuyên. `index.ts`: đường ask + có bài kèm + `chiHoiCachDung` → dùng mô hình thường, tính tiền theo giá thường, nhãn `+cd` thay `+t2`. Khối số vẫn gửi đủ (không bỏ): nhận nhầm một câu tư vấn chỉ làm câu đó trả lời bằng mô hình thường như trước 15/11; nhận sót thì câu vẫn chạy mô hình đắt như hiện nay.
+
+**Đo 0 đồng trên các bộ câu có sẵn:**
+
+| Bộ | Nhận là "chỉ hỏi cách dùng" |
+|---|---|
+| Câu cách dùng app (3 bộ kiểm tra tìm bài, 284 câu) | 88%, 69%, 73% |
+| Câu số liệu (50) | 0 |
+| Câu tư vấn trên số (25) | 0 |
+| Câu tư vấn (20 + 60 + 20 + 40) | 1, 0, 0, 2 |
+
+Lưu ý: các chữ loại trừ được chỉnh trên chính các bộ này, nên tỷ lệ nhận nhầm thật có thể cao hơn. Trên sổ thật từ 15/11 (bỏ Demo, gồm cả lượt Claude hỏi thử): 48 lượt ask có bài kèm chạy mô hình đắt, tổng 1,78 USD, trung bình 0,037 USD; 20 lượt sẽ chuyển sang mô hình thường, từ 0,59 USD còn khoảng 0,04 USD.
+
+Test hàm 239 qua (thêm 1 test). Chưa hỏi mô hình trên bản này. Kịch bản áp: `db-fix/boom_l265_ap_dung.sh` (chạy `KHO=1` trước; phải hỏi Chủ Quán trước khi áp).
+

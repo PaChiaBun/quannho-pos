@@ -1594,6 +1594,12 @@ Deno.test('Lần 263: câu nối tiếp ngắn dùng lại bài hướng dẫn l
   assertStringIncludes(L.ghiKy('Dạ Anh, quán bán được 120 đơn, doanh thu 9.500.000đ ạ.', ky, 'quán bán được nhiêu rồi', luc), 'Số trên là của 30 ngày qua');
 });
 
+Deno.test('Lần 265: câu chỉ hỏi cách dùng app (để chọn mô hình rẻ) — không nhận câu hỏi số, câu tư vấn', () => {
+  const luc = new Date('2026-11-22T10:00:00+07:00');
+  for (const q of ['chấm công thế nào', 'ở chỗ nào vậy', 'làm sao huỷ món đã gửi bếp', 'thêm máy in trên điện thoại ntn', 'chủ quán có xoá bill được không', 'cài đặt máy in', 'xem mã quán ở đâu', 'k thấy chỗ sửa tên món', 'tạo tài khoản cho nhân viên', 'thanh toán cả bàn', 'giảm giá cho đơn này bấm ở đâu']) assert(L.chiHoiCachDung(q, luc), q);
+  for (const q of ['hôm nay bán được bao nhiêu', 'doanh thu tháng này', 'món nào bán chạy xem ở đâu', 'vì sao doanh thu giảm', 'có nên tăng giá trà sữa không', 'làm sao tăng doanh thu', 'buổi chiều vắng quá làm sao kéo khách', 'tuần này so với tuần trước thế nào', 'trời mưa quán nên chuẩn bị gì', 'viết bài đăng facebook khai trương', 'gợi ý combo cho quán', 'chi tiết hơn đi', 'giá vốn ly trà đào là bao nhiêu', 'in lại hoá đơn hôm qua']) assert(!L.chiHoiCachDung(q, luc), q);
+});
+
 Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {
   assertStringIncludes(goTat('tn ban dc bn'), 'tn = tháng này');
   assertStringIncludes(goTat('tt ck bn'), 'ck = chuyển khoản');
