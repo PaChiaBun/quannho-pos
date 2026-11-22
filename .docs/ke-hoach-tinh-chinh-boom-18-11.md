@@ -419,5 +419,7 @@ Sửa chỗ hỏng thấy ở lượt hỏi thử trên. `logic.ts khoiHuongDan(
 
 **ĐÃ ÁP máy chủ 22/11 16:22** (Chủ Quán bảo "Áp và hỏi lại"), mốc hoàn tác `20261122_162207` (`ROLLBACK=1 bash db-fix/boom_l264_ap_dung.sh 20261122_162207`, trả `index.ts` và `logic.ts` về bản 263). Kiểm sau áp: có dấu bản 264; container chạy, không tự khởi động lại, healthy; log không có dòng lỗi; `boom_changelog` có dòng "lần 264"; hàm trả 401 khi không có vé.
 
-**Hỏi lại sau áp, 22/11 16:24–16:26** (quán T, bản web, 2 câu liên tiếp): câu "chấm công thế nào" trả lời các bước như trước; câu nối tiếp "ở chỗ nào vậy" nay được trả lời: mở ô "Chấm công" ở Trang chủ, chưa thấy ô thì bấm "Sửa", cuộn xuống cuối bấm "Thêm", rồi nhắc lại bước vào ca. Không còn "chưa thấy hướng dẫn, gọi Hotline". Mới thử một bài (Chấm công); các bài khác dùng cùng cơ chế nhưng chưa hỏi thật.
+**Hỏi lại sau áp, 22/11 16:23–16:24** (quán T, bản web, 2 câu liên tiếp, 0,059 USD): câu "chấm công thế nào" trả lời các bước như trước; câu nối tiếp "ở chỗ nào vậy" nay được trả lời: mở ô "Chấm công" ở Trang chủ, chưa thấy ô thì bấm "Sửa", cuộn xuống cuối bấm "Thêm", rồi nhắc lại bước vào ca. Không còn "chưa thấy hướng dẫn, gọi Hotline". Mới thử một bài (Chấm công); các bài khác dùng cùng cơ chế nhưng chưa hỏi thật.
+
+**Thấy khi hỏi thử, CHƯA xem mã:** câu hỏi cách dùng app đi đường "ask" tốn khoảng 0,03 USD mỗi câu (nhãn `+so_lieu+module+ask+hd+t2`, ~13.600 token vào: mang cả khối số bán hàng và dùng mô hình đắt), trong khi câu cách dùng đi đường "answer" chỉ ~0,0007 USD. Một nửa câu khách hỏi là cách dùng app, hạn mức mỗi quán 3 USD / tháng.
 
