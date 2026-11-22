@@ -1597,7 +1597,10 @@ Deno.test('Lần 263: câu nối tiếp ngắn dùng lại bài hướng dẫn l
 Deno.test('Lần 265: câu chỉ hỏi cách dùng app (để chọn mô hình rẻ) — không nhận câu hỏi số, câu tư vấn', () => {
   const luc = new Date('2026-11-22T10:00:00+07:00');
   for (const q of ['chấm công thế nào', 'ở chỗ nào vậy', 'làm sao huỷ món đã gửi bếp', 'thêm máy in trên điện thoại ntn', 'chủ quán có xoá bill được không', 'cài đặt máy in', 'xem mã quán ở đâu', 'k thấy chỗ sửa tên món', 'tạo tài khoản cho nhân viên', 'thanh toán cả bàn', 'giảm giá cho đơn này bấm ở đâu']) assert(L.chiHoiCachDung(q, luc), q);
-  for (const q of ['hôm nay bán được bao nhiêu', 'doanh thu tháng này', 'món nào bán chạy xem ở đâu', 'vì sao doanh thu giảm', 'có nên tăng giá trà sữa không', 'làm sao tăng doanh thu', 'buổi chiều vắng quá làm sao kéo khách', 'tuần này so với tuần trước thế nào', 'trời mưa quán nên chuẩn bị gì', 'viết bài đăng facebook khai trương', 'gợi ý combo cho quán', 'chi tiết hơn đi', 'giá vốn ly trà đào là bao nhiêu', 'in lại hoá đơn hôm qua']) assert(!L.chiHoiCachDung(q, luc), q);
+  for (const q of ['hôm nay bán được bao nhiêu', 'doanh thu tháng này', 'món nào bán chạy xem ở đâu', 'vì sao doanh thu giảm', 'có nên tăng giá trà sữa không', 'làm sao tăng doanh thu', 'buổi chiều vắng quá làm sao kéo khách', 'tuần này so với tuần trước thế nào', 'trời mưa quán nên chuẩn bị gì', 'viết bài đăng facebook khai trương', 'gợi ý combo cho quán', 'chi tiết hơn đi', 'giá vốn ly trà đào là bao nhiêu', 'in lại hoá đơn hôm qua',
+    // lần 266: câu được nhận không kèm số liệu quán → mọi câu hỏi con số, hỏi ai / món nào / lúc nào đều phải bị loại
+    'còn mấy hộp sữa', 'trân châu còn nhiêu', 'ai đang trong ca', 'nhân viên nào hay đi trễ', 'khách nào còn nợ quán', 'ca nào đông nhất']) assert(!L.chiHoiCachDung(q, luc), q);
+  assert(L.chiHoiCachDung('máy in không in được', luc)); // "máy" bỏ dấu trùng "mấy": không được loại nhầm
 });
 
 Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {

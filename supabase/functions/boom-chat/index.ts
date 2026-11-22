@@ -642,7 +642,7 @@ Deno.serve(async (req) => {
 
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
   let kyHoi: string | undefined, askTag = '', khongXem: string[] = [], laChu = false, tenQuan: string | null = null;
-  let huongDan: HelpChunk[] = [], hdLai = false;
+  let huongDan: HelpChunk[] = [], hdLai = false, cachDung = false;
   let jwtHoi = ''; // lô C: đọc doanh thu từng ngày bằng vé của chính người hỏi
   // 08/11: app (không phải web) đi đường ask; tắt riêng bằng BOOM_ASK_TAT_APP=1 → 503, app tự quay về đường cũ
   if (r.mode === 'ask' && ASK_TAT_APP && (body as Record<string, unknown>).nen_tang !== 'web') return json(503, { error: 'ASK_OFF' });
@@ -657,22 +657,26 @@ Deno.serve(async (req) => {
       if (cu.length) huongDan = await helpPack(r.pack_version).then((p) => pickChunks(p, cu) ?? []).catch(() => []);
       hdLai = huongDan.length > 0;
     }
+    // lần 265: câu CHỈ hỏi cách dùng app (app có gửi kèm bài hướng dẫn) → mô hình thường thay cho mô hình tư vấn đắt (~17 lần).
+    // lần 266 (hỏi thử lần 265: câu "chấm công thế nào" chen dữ liệu ca làm của một nhân viên vào câu hướng dẫn): câu như vậy
+    // KHÔNG lấy và không gửi số liệu quán, bộ nhớ quán, sổ tay — chỉ bài hướng dẫn.
+    cachDung = huongDan.length > 0 && chiHoiCachDung(r.question);
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     jwtHoi = jwt;
     try {
       const hq = r.history?.q ?? null;
-      const cauTruoc = !canGiuKy(r.question) ? hq : cauGiuKy(hq ? [hq] : []) ?? cauGiuKy(await cauVuaHoi(r.store_id, user, r.memory_age_s));
-      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), cauTruoc);
-      Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
-      kyHoi = so.ky.nhan;
-      khongXem = so.khongXem;
+      const so = cachDung ? null : await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(),
+        !canGiuKy(r.question) ? hq : cauGiuKy(hq ? [hq] : []) ?? cauGiuKy(await cauVuaHoi(r.store_id, user, r.memory_age_s)));
+      Object.assign(r, { mode: 'advice', facts: so?.facts ?? null, modules: so?.modules ?? null });
+      kyHoi = so?.ky.nhan;
+      khongXem = so?.khongXem ?? [];
       // 06/11: bài đăng để sót [Tên quán]; chỉ đọc khi cần viết, và người hỏi đã có quyền ở quán
-      if ((so.facts || so.modules) && /vi[eế]t|b[aà]i đ[aă]ng|đ[aă]ng g[iì]|facebook|zalo|tiktok|caption|t[oờ] r[oơ]i|tin nh[aắ]n/i.test(r.question)) {
+      if (so && (so.facts || so.modules) && /vi[eế]t|b[aà]i đ[aă]ng|đ[aă]ng g[iì]|facebook|zalo|tiktok|caption|t[oờ] r[oơ]i|tin nh[aắ]n/i.test(r.question)) {
         tenQuan = await rest(`stores?select=name&id=eq.${r.store_id}&limit=1`, { signal: AbortSignal.timeout(1000) })
           .then((x) => (Array.isArray(x) && typeof x[0]?.name === 'string' ? x[0].name : null)).catch(() => null);
       }
-      laChu = so.laChu;
-      askTag = `+ask${huongDan.length ? '+hd' : ''}${hdLai ? '+lai' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
+      laChu = so?.laChu ?? false;
+      askTag = `+ask${huongDan.length ? '+hd' : ''}${hdLai ? '+lai' : ''}${cachDung ? '+cd' : ''}${so?.dem ? '+dem' : ''}${so?.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
     } catch {
       return json(503, { error: 'SERVER_BUSY' });
     }
@@ -813,7 +817,7 @@ Deno.serve(async (req) => {
     if (thoiTiet) kind += '+thoi_tiet';
   }
   // Bộ nhớ quán chỉ cho câu tư vấn; nhân viên chỉ thấy điều "cả quán"
-  const boNhoDs = r.mode === 'advice' ? await docBoNho(r.store_id) : null;
+  const boNhoDs = r.mode === 'advice' && !cachDung ? await docBoNho(r.store_id) : null;
   const laChuBN = boNhoDs ? (askTag ? laChu : await laChuQuan(r.store_id, user)) : false;
   // Lời khuyên tới ngày đo: chỉ chủ quán nhận báo kết quả (nhân viên thường không xem được số bán hàng)
   const ketQua = boNhoDs && laChuBN ? await doLoiKhuyen(r.store_id, user, (req.headers.get('authorization') ?? '').slice(7).trim()) : '';
@@ -827,14 +831,12 @@ Deno.serve(async (req) => {
   const boNho = [boNhoDs ? boNhoChoBoom(boNhoDs, laChuBN, r.question) : khongBoNho, ketQua].filter(Boolean).join('\n\n');
   if (boNho) kind += '+bo_nho';
   // hồ sơ để chọn bài theo vị trí / khách chính: điều chủ quán đã nói trong bộ nhớ (bộ nhớ tắt thì chỉ chọn theo câu hỏi)
-  const soTay = SO_TAY && r.mode === 'advice'
+  const soTay = SO_TAY && r.mode === 'advice' && !cachDung
     ? soTayChoBoom(chonBai(r.question, (boNhoDs ?? []).filter((g) => g.loai === 'su_that' && g.trang_thai === 'xac_nhan').map((g) => g.noi_dung).join('. ')))
     : '';
   if (soTay) kind += '+so_tay';
   const messages = buildMessages(r.question, chunks, who, { tenQuan, khongXem, laChu, huongDan, hdLai, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu, thoiTiet, boNho, soTay });
-  // lần 265 (hỏi thử 22/11: "chấm công thế nào" tốn ~0,03 USD): câu CHỈ hỏi cách dùng app đi đường ask, app có gửi kèm bài hướng dẫn → mô hình
-  // thường, không dùng mô hình tư vấn (đắt ~17 lần). Số liệu vẫn gửi đủ, nên nhận nhầm một câu tư vấn chỉ làm câu đó trả lời bằng mô hình thường.
-  const dungTV = r.mode === 'advice' && !(askTag !== '' && huongDan.length > 0 && chiHoiCachDung(r.question));
+  const dungTV = r.mode === 'advice' && !cachDung;
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal, nghi = REASONING) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -852,7 +854,7 @@ Deno.serve(async (req) => {
   try {
     // lần 214: câu tư vấn chạy kèm một lượt 'low', chỉ chờ tới LOW_CHO_MS kể từ lúc gửi; lượt none vẫn chạy như cũ
     const songSong = r.mode === 'advice' && DOI_MOI && LOW_CHO_MS > 0 && REASONING !== 'low' && MODEL_TV === MODEL; // có mô hình tư vấn riêng thì không gọi song song
-    if (r.mode === 'advice' && MODEL_TV !== MODEL) kind += dungTV ? '+t2' : '+cd';
+    if (dungTV && MODEL_TV !== MODEL) kind += '+t2';
     const acLow = new AbortController();
     const hetLow = setTimeout(() => acLow.abort(), LOW_CHO_MS);
     const pLow = songSong

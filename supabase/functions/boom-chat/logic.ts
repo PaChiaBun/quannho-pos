@@ -2174,13 +2174,16 @@ export function ghiApTay(answer: string): string {
 export const xinViet = (question: string) => /\b(?:viet|soan|bai dang|dang (?:bai|gi|facebook|fb|zalo|tiktok)|caption|to roi|tin nhan|nhan zalo|content)\b/.test(boDau(question));
 
 /** Lần 265 (hỏi thử 22/11: câu "chấm công thế nào" đi đường ask tốn ~0,03 USD vì chạy mô hình tư vấn đắt; một nửa câu khách hỏi là cách dùng app):
- *  câu CHỈ hỏi cách dùng app, không hỏi số, không xin tư vấn. Nơi gọi chỉ dùng khi app có gửi kèm bài hướng dẫn, để chọn mô hình rẻ.
- *  Nhận nhầm một câu tư vấn chỉ làm câu đó chạy mô hình rẻ như trước 15/11 (số liệu vẫn gửi đủ); nhận sót thì câu đó vẫn chạy mô hình đắt. */
+ *  câu CHỈ hỏi cách dùng app, không hỏi số, không xin tư vấn. Nơi gọi chỉ dùng khi app có gửi kèm bài hướng dẫn: câu được nhận chạy mô hình rẻ
+ *  và (từ lần 266) KHÔNG kèm số liệu quán. Nhận nhầm thì câu đó được trả lời không có số của quán → điều kiện loại phải rộng; nhận sót thì câu
+ *  vẫn đi đường tư vấn đầy đủ như cũ (chỉ tốn tiền hơn). */
 export function chiHoiCachDung(question: string, now: Date = new Date()): boolean {
   // loaiCau coi "làm sao…", "… được không" là chẩn đoán / quyết định (đúng với câu kinh doanh, sai với câu thao tác) → chỉ loại so sánh, kế hoạch, dự báo
   if (['so_sanh', 'ke_hoach', 'du_bao'].includes(loaiCau(question) ?? '') || coNeuKy(question, now) || chiHoiThoiTiet(question) || xinViet(question)) return false;
+  // lần 266: câu được nhận sẽ KHÔNG kèm số liệu quán → loại rộng tay mọi câu hỏi con số / hỏi "ai, món nào, lúc nào" ("máy" bỏ dấu trùng "mấy" nên xét trên chữ có dấu)
+  if (/(?:^|[\s,])(?:mấy|nhiêu)(?=[\s?,.!]|$)/i.test(question.normalize('NFC'))) return false;
   // có chữ hỏi số / hỏi vì sao / xin lời khuyên → không phải câu chỉ hỏi thao tác
-  return !/ (?:doanh thu|doanh so|ban (?:duoc|chay|e|cham|it|nhieu)|bao nhieu|may (?:don|ly|phan|khach|mon)|loi nhuan|lai gop|loi lo|lai lo|gia von|hoa von|ton kho|sap het|het hang|khach (?:quen|moi|vang|dong|it)|vang khach|dong khach|keo khach|tang doanh|khuyen mai gi|vi sao|tai sao|nen|tu van|goi y|de xuat|danh gia|loi khuyen|kinh nghiem|chien luoc|ke hoach|du bao|mua|thoi tiet|tang|giam (?!gia|mon)|vang|dong|co loi|mat khach|khach (?:khong|ko|k) bo|bo di|lam gi (?:cho|de)|co cach nao|goi them|cat ca|xep (?:lai )?ca|rut con|chi tiet hon|sao vay|la sao|bao lau|con (?:nhieu|bao)|duoi muc|dang trong ca|luc may gio|con no|hap dan|that thoat|tuyen|chu y) /.test(` ${boDau(question)} `);
+  return !/ (?:doanh thu|doanh so|ban (?:duoc|chay|e|cham|it|nhieu)|bao nhieu|may (?:don|ly|phan|khach|mon)|loi nhuan|lai gop|loi lo|lai lo|gia von|hoa von|ton kho|sap het|het hang|khach (?:quen|moi|vang|dong|it)|vang khach|dong khach|keo khach|tang doanh|khuyen mai gi|vi sao|tai sao|nen|tu van|goi y|de xuat|danh gia|loi khuyen|kinh nghiem|chien luoc|ke hoach|du bao|mua|thoi tiet|tang|giam (?!gia|mon)|vang|dong|co loi|mat khach|khach (?:khong|ko|k) bo|bo di|lam gi (?:cho|de)|co cach nao|goi them|cat ca|xep (?:lai )?ca|rut con|chi tiet hon|sao vay|la sao|bao lau|con (?:nhieu|bao)|duoi muc|dang trong ca|luc may gio|con no|hap dan|that thoat|tuyen|chu y|con may|duoc may|co may|may gio|may ngay|het chua|con khong|ai (?:dang|da|chua|ban|lam)|(?:mon|khach|nhan vien|ngay|gio|thu|ca|nhom|quan|chi nhanh) nao|luc nao|khi nao) /.test(` ${boDau(question)} `);
 }
 
 /** Lần 263 (câu khách 13–14/11: hỏi cách làm xong hỏi tiếp "chỗ nào z", "k thấy", "số 4" → app không tìm ra bài nào, Boom bảo gọi Hotline,
