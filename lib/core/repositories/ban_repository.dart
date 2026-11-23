@@ -82,6 +82,8 @@ class BanTableModel {
   final bool isActive;
   final double? posX;
   final double? posY;
+  /// Bàn tính giờ: món giá giờ (giá bán của món = giá một giờ). null = bàn thường.
+  final String? giaGioProductId;
 
   const BanTableModel({
     required this.id,
@@ -93,7 +95,10 @@ class BanTableModel {
     required this.isActive,
     this.posX,
     this.posY,
+    this.giaGioProductId,
   });
+
+  bool get tinhGio => giaGioProductId != null;
 
   factory BanTableModel.fromMap(Map<String, dynamic> m) => BanTableModel(
     id: m['id'] as String,
@@ -107,6 +112,7 @@ class BanTableModel {
     isActive: m['is_active'] as bool? ?? true,
     posX: (m['pos_x'] as num?)?.toDouble(),
     posY: (m['pos_y'] as num?)?.toDouble(),
+    giaGioProductId: m['gia_gio_product_id'] as String?,
   );
 }
 
@@ -120,6 +126,8 @@ class BanSessionModel {
   final double totalAmount;
   final int guestCount;
   final String? waiterId;
+  /// Bàn tính giờ: mốc bắt đầu đoạn đang tính (ms), máy chủ đặt. null = phiên không tính giờ.
+  final int? gioBatDau;
 
   const BanSessionModel({
     required this.id,
@@ -131,6 +139,7 @@ class BanSessionModel {
     required this.totalAmount,
     required this.guestCount,
     this.waiterId,
+    this.gioBatDau,
   });
 
   factory BanSessionModel.fromMap(Map<String, dynamic> m) => BanSessionModel(
@@ -143,6 +152,7 @@ class BanSessionModel {
     totalAmount: (m['total_amount'] as num?)?.toDouble() ?? 0,
     guestCount: m['guest_count'] as int? ?? 1,
     waiterId: m['waiter_id'] as String?,
+    gioBatDau: m['gio_bat_dau'] != null ? _toMs(m['gio_bat_dau']) : null,
   );
 }
 
@@ -216,6 +226,9 @@ class BanSessionItemModel {
   final int addedAt;
   final String kitchenStatus; // 'pending' | 'dang_lam' | 'xong'
   final String? addedBy;
+  /// Khác null = dòng tiền giờ do máy chủ ghi (giờ vào / giờ ra, ms); app không sửa, không gửi bếp.
+  final int? gioTu;
+  final int? gioDen;
 
   const BanSessionItemModel({
     required this.id,
@@ -229,7 +242,11 @@ class BanSessionItemModel {
     required this.addedAt,
     this.kitchenStatus = 'pending',
     this.addedBy,
+    this.gioTu,
+    this.gioDen,
   });
+
+  bool get laTienGio => gioTu != null;
 
   BanSessionItemModel copyWith({
     String? id,
@@ -256,6 +273,8 @@ class BanSessionItemModel {
     addedAt: addedAt ?? this.addedAt,
     kitchenStatus: kitchenStatus ?? this.kitchenStatus,
     addedBy: addedBy ?? this.addedBy,
+    gioTu: gioTu,
+    gioDen: gioDen,
   );
 
   double get subtotal => price * quantity;
@@ -280,6 +299,8 @@ class BanSessionItemModel {
             ? 'chua_gui'
             : m['kitchen_status'] as String,
         addedBy: m['added_by'] as String?,
+        gioTu: m['gio_tu'] != null ? _toMs(m['gio_tu']) : null,
+        gioDen: m['gio_den'] != null ? _toMs(m['gio_den']) : null,
       );
 }
 
@@ -581,7 +602,7 @@ class BanRepository {
     final existing = await _sb
         .from('ban_sessions')
         .select(
-          'id, table_id, store_id, status, opened_at, closed_at, total_amount, guest_count, waiter_id',
+          'id, table_id, store_id, status, opened_at, closed_at, total_amount, guest_count, waiter_id, gio_bat_dau',
         )
         .eq('store_id', storeId)
         .eq('table_id', tableId)
@@ -1038,6 +1059,68 @@ class BanRepository {
       .update({'total_amount': total})
       .eq('id', sessionId);
 
+  // ── Bàn tính giờ (migration 20261123_ban_tinh_gio_v1.sql) ───────────────────────
+  /// Gọi hàm máy chủ trả `{success, data | error_code, message}`; lỗi văng ra thành `success: false`.
+  Future<Map<String, dynamic>> _tinhGioRpc(String fn, Map<String, dynamic> params) async {
+    final storeId = await _storeId();
+    if (storeId == null) {
+      return {'success': false, 'error_code': 'NO_STORE', 'message': 'Chưa chọn quán'};
+    }
+    try {
+      final res = await _sb
+          .rpc(fn, params: {...params, 'p_store_id': storeId})
+          .timeout(const Duration(seconds: 15));
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return {'success': false, 'error_code': 'RPC_ERROR', 'message': 'Máy chủ trả kết quả lạ'};
+    } catch (e) {
+      AppLogger.warning('tinh_gio', '$fn lỗi: $e');
+      return {'success': false, 'error_code': 'RPC_ERROR', 'message': '$e'};
+    }
+  }
+
+  /// Chốt giờ: máy chủ ghi (hoặc ghi đè) đúng một dòng tiền giờ cho đoạn đang chạy của phiên.
+  /// Phiên không tính giờ: `data.tinh_gio = false`, không ghi gì.
+  Future<Map<String, dynamic>> chotGio(String sessionId) =>
+      _tinhGioRpc('ban_chot_gio_v1', {'p_session_id': sessionId});
+
+  /// Chuyển bàn (bàn đích trống) hoặc gộp bàn (bàn đích đang có khách) khi phiên nguồn đang tính giờ
+  /// hoặc bàn đích là bàn tính giờ. Giờ ở bàn cũ được chốt theo giá bàn cũ trước khi dời.
+  Future<Map<String, dynamic>> chuyenBanTinhGio(String sessionId, String tableDichId) async {
+    final r = await _tinhGioRpc('ban_chuyen_ban_tinh_gio_v1', {
+      'p_session_id': sessionId,
+      'p_table_dich': tableDichId,
+    });
+    if (r['success'] == true) {
+      AppLogger.logUserAction(
+        tag: 'order',
+        action: 'Chuyển / gộp bàn tính giờ [Session $sessionId sang bàn $tableDichId]',
+        details: {'session_id': sessionId, 'new_table_id': tableDichId, 'kieu': (r['data'] as Map?)?['kieu']},
+      );
+    }
+    return r;
+  }
+
+  /// Gắn (hoặc gỡ, [productId] = null) món giá giờ cho các bàn. Máy chủ chỉ cho Chủ quán / Quản lý,
+  /// và từ chối bàn đang có khách tính giờ → trả về câu lỗi để hiện cho người dùng, null = xong.
+  Future<String?> datGiaGio(List<String> tableIds, String? productId) async {
+    if (tableIds.isEmpty) return null;
+    try {
+      final rows = await _sb
+          .from('ban_dining_tables')
+          .update({'gia_gio_product_id': productId})
+          .inFilter('id', tableIds)
+          .select('id');
+      if (rows.length != tableIds.length) return 'Không có quyền đổi giá giờ của bàn';
+      return null;
+    } catch (e) {
+      final s = '$e';
+      if (s.contains('TINH_GIO_CHI_QUAN_LY')) return 'Chỉ Chủ quán / Quản lý đặt được giá giờ';
+      if (s.contains('TINH_GIO_BAN_DANG_CHAY')) return 'Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được';
+      if (s.contains('TINH_GIO_MON_SAI')) return 'Món giá giờ không hợp lệ';
+      return 'Chưa lưu được giá giờ: $s';
+    }
+  }
+
   // ── Chuyển bàn ────────────────────────────────────────────────────────────
   /// Chuyển toàn bộ session (và tất cả items) sang bàn khác.
   /// Items không cần di chuyển vì chúng link qua session_id, không phải table_id.
@@ -1266,6 +1349,19 @@ class BanRepository {
         'message': 'Quyết toán phiên bàn thất bại',
       };
     } catch (e, st) {
+      // Bàn tính giờ: máy chủ TỪ CHỐI hẳn (chưa ghi gì) khi chưa chốt giờ hoặc chốt đã quá 15 phút.
+      // Không phải lỗi mạng mơ hồ → không đối soát, không giữ khoá; thu ngân mở lại để tính lại giờ.
+      final loi = '$e';
+      if (loi.contains('CHUA_CHOT_GIO') || loi.contains('CHOT_GIO_QUA_CU')) {
+        AppLogger.warning('checkout', 'Thanh toán bàn tính giờ bị từ chối, cần chốt giờ lại: $loi');
+        return {
+          'success': false,
+          'error_code': 'CAN_CHOT_GIO',
+          'message':
+              'Giờ chơi cần tính lại (chưa chốt hoặc đã chốt quá 15 phút). '
+              'Đóng màn thanh toán rồi bấm Thanh toán lại.',
+        };
+      }
       AppLogger.error(
         'checkout',
         'settle_ban_session_v5 failed before a confirmed response',

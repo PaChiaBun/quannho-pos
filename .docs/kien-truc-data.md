@@ -5,6 +5,15 @@
 - Migration `20261107_chi_muc_mon_ban_thu_chi.sql` (CONCURRENTLY, rollback ở cuối file): `ban_session_items(session_id)`, `finance_records(store_id, recorded_at DESC)`, `product_modifiers(store_id)`. Món của bàn 10,7ms → 0,1ms.
 - App: ghi chú nhanh tải 1 lần cho cả quán (`storeModifiersProvider`, `productModifiersProvider` chỉ cắt theo món); `kitchenReadyStreamProvider` dùng `expand` để rời màn Bàn là dừng vòng tải phiếu bếp; realtime `kitchen_ticket_items` lọc theo `store_id`. Test `test/screens/ban_polling_leak_test.dart`.
 
+## Bàn tính giờ (migration `20261123_ban_tinh_gio_v1.sql`, ĐÃ ÁP production 23/11/2026 14:34; phần app đã viết, chưa phát hành)
+
+Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`. Bi da, karaoke, sân: tiền giờ là MỘT dòng món của phiên bàn, gắn một món thật trong Menu (`sell_price` = giá một giờ). `settle_ban_session_v5` và các hàm báo cáo không đổi.
+
+- Cột mới (để trống được): `ban_dining_tables.gia_gio_product_id` (trống = bàn thường), `ban_sessions.gio_bat_dau` (mốc đoạn đang tính, máy chủ đặt), `ban_session_items.gio_tu` / `gio_den` (khác NULL = dòng tiền giờ).
+- App gọi: `ban_chot_gio_v1(phiên, quán)` ghi / ghi đè dòng tiền giờ của đoạn đang chạy; `ban_chuyen_ban_tinh_gio_v1(phiên, quán, bàn đích)` chuyển hoặc gộp bàn có tính giờ. Cả hai kiểm quyền bằng `verify_staff_qr_membership_v4(…, p_require_checkout => true)`.
+- Trigger `qn_tinh_gio_ban_v1` / `qn_tinh_gio_phien_v1` / `qn_tinh_gio_mon_v1`: app không ghi được dòng tiền giờ, không sửa mốc, không tự đổi bàn của phiên tính giờ; phiên tính giờ chưa chốt (hoặc chốt quá 15 phút) không đóng được với MỌI vai, kể cả hàm thanh toán; huỷ bàn tính giờ mở quá 5 phút phải chốt trước; chỉ Chủ quán / Quản lý gắn giá giờ.
+- Tính: theo phút làm tròn lên, tiền làm tròn lên 1.000đ. Test `supabase/tests/ban_tinh_gio_v1_test.sql`; áp / hoàn tác `db-fix/ban_tinh_gio_ap_dung.sh`.
+
 ## Vòng đời phiên bàn — chặn client tự đóng (ĐÃ áp production 22/10/2026 20:27)
 
 - `ban_sessions.status`: `open` → `closed` (thanh toán qua `settle_ban_session_v5`, bán quầy qua `complete_pos_sale_v1`, hoặc phiên nguồn rỗng khi gộp bàn) | `cancelled` (huỷ bàn có lý do + duyệt + `void_audit_logs`).

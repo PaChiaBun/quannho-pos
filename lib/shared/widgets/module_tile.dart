@@ -167,6 +167,15 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     route: '/chain',
     titleLines: 2,
   ),
+  // Bi da, karaoke, sân: ô này mở màn Bàn; bật module thì bàn mới gắn được giá giờ.
+  'tinh_gio': ModuleTileData(
+    id: 'tinh_gio',
+    title: 'Tính giờ',
+    subtitle: 'Bi da, karaoke, sân',
+    icon: Icons.timer_rounded,
+    baseColor: Color(0xFF0D9488), // teal-600 — khác Bàn, Bếp, Kho
+    route: '/tinh_gio',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

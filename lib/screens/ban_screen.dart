@@ -60,6 +60,8 @@ import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
     show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
+import '../modules/tinh_gio/tinh_gio.dart';
+import '../modules/tinh_gio/tinh_gio_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
@@ -653,6 +655,41 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       builder: (_) => _TableOptionsSheet(
         table: table,
         session: session,
+        onGiaGio: !ref.read(tinhGioModuleActiveProvider)
+            ? null
+            : () async {
+                Navigator.pop(context);
+                final perms = await ref.read(userActionPermsProvider.future);
+                if (!mounted) return;
+                if (!perms.contains('ban.manage_structure')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Bạn không có quyền "Sửa/Xóa bàn".',
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                      ),
+                      backgroundColor: _kRed,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+                final tatCa = ref.read(allBanTablesProvider).value ?? const <BanTableModel>[];
+                final daLuu = await showModalBottomSheet<bool>(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (_) => TinhGioGiaGioSheet(
+                    table: table,
+                    tenKhu: zone.name,
+                    banCuaKhu: tatCa.where((b) => b.zoneId == table.zoneId).toList(),
+                  ),
+                );
+                if (daLuu == true) {
+                  ref.invalidate(allBanTablesProvider);
+                  ref.invalidate(banTablesForZoneProvider);
+                }
+              },
         onEdit: () async {
           Navigator.pop(context);
           final perms = await ref.read(userActionPermsProvider.future);
@@ -2064,9 +2101,24 @@ class _TableCard extends ConsumerWidget {
       (sum, item) => sum + item.subtotal,
     );
     final totalQty = activeItems
+        .where((i) => !i.laTienGio)
         .fold<double>(0, (sum, item) => sum + item.quantity)
         .toInt();
+    // Bàn tính giờ: đồng hồ + tiền giờ tạm tính tới lúc này. Số thật do máy chủ chốt lúc tính tiền.
+    final giaGioMon = table.tinhGio
+        ? ref.watch(tinhGioGiaTheoMonProvider)[table.giaGioProductId]
+        : null;
+    final tamTinh = isOccupied && session!.gioBatDau != null
+        ? tinhGioTamTinhBan(
+            gioBatDauMs: session!.gioBatDau!,
+            giaMotGio: giaGioMon?.sellPrice,
+            mon: sessionItems ?? const <BanSessionItemModel>[],
+            luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+          )
+        : null;
+    final tongHien = tamTinh?.tong ?? totalAmount;
     final waiters = activeItems
+        .where((i) => !i.laTienGio)
         .map((i) => i.addedBy)
         .where((name) => name != null && name.isNotEmpty)
         .toSet()
@@ -2272,19 +2324,45 @@ class _TableCard extends ConsumerWidget {
                               ),
                             ),
                           ],
+                          if (tamTinh != null) ...[
+                            const SizedBox(height: 1),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer_rounded,
+                                  size: infoFontSize + 1,
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  tamTinh.daHuy
+                                      ? '${tinhGioThoiLuong(tamTinh.soPhut)} • đã bỏ tiền giờ'
+                                      : '${tinhGioThoiLuong(tamTinh.soPhut)} • giờ ${fmtVnd(tamTinh.tienGio)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: infoFontSize,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ] else
                           Text(
-                            '${table.seats} chỗ',
+                            giaGioMon != null
+                                ? '${table.seats} chỗ • ${fmtVnd(giaGioMon.sellPrice)}/giờ'
+                                : '${table.seats} chỗ',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: infoFontSize,
                               fontWeight: FontWeight.w500,
                               color: _kNavy.withValues(alpha: 0.55),
                             ),
                           ),
-                        if (isOccupied && totalAmount > 0) ...[
+                        if (isOccupied && tongHien > 0) ...[
                           SizedBox(height: cardSize == 'nho' ? 2 : 6),
                           Text(
-                            fmtVnd(totalAmount),
+                            fmtVnd(tongHien),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: amountFontSize,
                               fontWeight: FontWeight.w900,
@@ -3266,6 +3344,23 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     debugPrint(
       '[BAN-TEST] _updateItemQty: ${item.productName} newQty=$newQty status=${item.kitchenStatus}',
     );
+    // Dòng tiền giờ do máy chủ tính, không sửa số lượng. Muốn bỏ tiền giờ: Quản lý huỷ cả dòng.
+    if (item.laTienGio && newQty > 0) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Dòng tiền giờ'),
+          content: const Text(
+            'Tiền giờ do hệ thống tính theo đồng hồ, không sửa số lượng được. '
+            'Muốn bỏ tiền giờ thì Quản lý huỷ dòng này.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đã hiểu')),
+          ],
+        ),
+      );
+      return;
+    }
     // Món có topping ghi số tổng cả dòng ("2 ly + 1 trân châu"): đổi số ly thì tiền nhân theo đơn giá chia
     // đều còn số topping giữ nguyên (3 ly ra 112.500 thay vì 110.000) → không cho đổi, xoá rồi gọi lại.
     if (newQty > 0 && hasLineTotalToppings(item.modifiersJson)) {
@@ -4439,6 +4534,52 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   // Khóa tự mở sau 45 giây: một lệnh gửi bếp treo không được làm nút chết vĩnh viễn.
   final StaleLock _sendKitchenLock = StaleLock(maxHold: const Duration(seconds: 45));
 
+  /// Dải "Đang tính giờ …" của bàn tính giờ (rỗng với bàn thường). [items] = mọi dòng của phiên.
+  Widget _daiDangTinhGio(List<BanSessionItemModel> items) {
+    if (!widget.table.tinhGio && widget.session.gioBatDau == null) return const SizedBox.shrink();
+    return Consumer(
+      builder: (context, ref, _) {
+        final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
+            widget.session.gioBatDau;
+        if (moc == null) return const SizedBox.shrink();
+        final t = tinhGioTamTinhBan(
+          gioBatDauMs: moc,
+          giaMotGio: ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice,
+          mon: items,
+          luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+        );
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: _kNavy.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.timer_rounded, size: 18, color: _kNavy),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  t.daHuy
+                      ? 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • Quản lý đã bỏ tiền giờ'
+                      : 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • tiền giờ tạm tính '
+                            '${fmtVnd(t.tienGio)} • chốt khi bấm Thanh toán',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: _kNavy,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _openCheckout(
     double total,
     List<BanSessionItemModel> items,
@@ -4489,6 +4630,41 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         lines: items.length,
         total: total,
       );
+      // Bàn tính giờ: máy chủ chốt giờ thành MỘT dòng món rồi mới tính tiền (tiền giờ do máy chủ tính).
+      // Phiên vừa mở trên máy này chưa có mốc giờ trong bộ nhớ → dựa thêm vào bàn; phiên không tính giờ
+      // thì máy chủ trả tinh_gio=false và không ghi gì.
+      if (widget.table.tinhGio || widget.session.gioBatDau != null) {
+        final repo = ref.read(banRepositoryProvider);
+        final chot = await repo.chotGio(widget.session.id);
+        if (!mounted) return;
+        if (chot['success'] != true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Chưa chốt được giờ: ${chot['message'] ?? 'lỗi mạng'}. Thử bấm Thanh toán lại.'),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        if ((chot['data'] as Map?)?['tinh_gio'] == true) {
+          final moi = await repo.fetchActiveSessionItems(widget.session.id);
+          if (!mounted) return;
+          if (moi == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Đã chốt giờ nhưng chưa tải lại được danh sách món. Bấm Thanh toán lại.'),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            return;
+          }
+          items = moi;
+          total = items.fold<double>(0, (s, i) => s + i.subtotal);
+          ref.invalidate(sessionItemsProvider(widget.session.id));
+        }
+      }
       final syncedItems = await reconcileSessionItems(
         repo: ref.read(banRepositoryProvider),
         where: 'mở thanh toán',
@@ -5287,7 +5463,30 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   Future<void> _cancelSession() async {
     if (!await _awaitPendingAdds()) return;
-    final items = ref.read(sessionItemsProvider(widget.session.id)).value ?? [];
+    var items = ref.read(sessionItemsProvider(widget.session.id)).value ?? [];
+    // Bàn tính giờ mở quá 5 phút: chốt giờ trước. Dòng tiền giờ ("xong") kéo theo luật duyệt huỷ bàn
+    // sẵn có bên dưới (PIN Quản lý + lý do). Máy chủ cũng chặn huỷ khi chưa chốt (TINH_GIO_HUY_CAN_CHOT).
+    final mocMs = ref.read(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
+        widget.session.gioBatDau ??
+        (widget.table.tinhGio ? widget.session.openedAt : null);
+    if (mocMs != null &&
+        huyBanCanChotTruoc(
+          gioBatDau: DateTime.fromMillisecondsSinceEpoch(mocMs),
+          daCoDongGioCuaDoan: items.any((i) => i.gioTu == mocMs),
+          luc: DateTime.now(),
+        )) {
+      final chot = await _banRepo.chotGio(widget.session.id);
+      if (!mounted) return;
+      if (chot['success'] != true) {
+        _baoLoiChuyenBan('Chưa chốt được giờ để huỷ bàn: ${chot['message'] ?? 'lỗi mạng'}');
+        return;
+      }
+      ref.invalidate(sessionItemsProvider(widget.session.id));
+      try {
+        items = await ref.read(sessionItemsProvider(widget.session.id).future);
+      } catch (_) {}
+      if (!mounted) return;
+    }
     final activeItems = items.where((i) => i.kitchenStatus != 'huy').toList();
     final hasCookingOrDone = activeItems.any(
       (i) => i.kitchenStatus == 'dang_lam' || i.kitchenStatus == 'xong',
@@ -5545,6 +5744,52 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
+  /// Chuyển bàn ([gop] = false) hoặc gộp bàn. Có tính giờ (phiên nguồn đang chạy giờ, hoặc bàn đích là
+  /// bàn tính giờ) thì máy chủ làm trọn: chốt giờ bàn cũ theo giá bàn cũ rồi mới dời. Trả câu lỗi, null = xong.
+  Future<String?> _chuyenHoacGop(String banDichId, {String? phienDichId, required bool gop}) async {
+    Future<String?> quaMayChu() async {
+      final r = await _banRepo.chuyenBanTinhGio(widget.session.id, banDichId);
+      return r['success'] == true ? null : (r['message'] as String? ?? 'Chưa chuyển được bàn');
+    }
+
+    final banDich = (ref.read(allBanTablesProvider).value ?? const <BanTableModel>[])
+        .firstWhereOrNull((b) => b.id == banDichId);
+    final phienNguon = ref.read(activeSessionsProvider).value?[widget.table.id] ?? widget.session;
+    if (canChuyenBangMayChu(
+      phienDangTinhGio: phienNguon.gioBatDau != null || widget.table.tinhGio,
+      banDichTinhGio: banDich?.tinhGio ?? false,
+    )) {
+      return quaMayChu();
+    }
+    try {
+      if (gop) {
+        await _banRepo.mergeSession(
+          sourceSessionId: widget.session.id,
+          targetTableId: banDichId,
+          targetSessionId: phienDichId,
+        );
+      } else {
+        await _banRepo.transferSession(widget.session.id, banDichId);
+      }
+      return null;
+    } catch (e) {
+      // Máy này chưa biết bàn có tính giờ (danh sách bàn cũ) → máy chủ chặn → đi đường máy chủ.
+      if ('$e'.contains('TINH_GIO_')) return quaMayChu();
+      rethrow;
+    }
+  }
+
+  void _baoLoiChuyenBan(String loi) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(loi, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+        backgroundColor: _kRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _transferTable() async {
     await showModalBottomSheet(
       context: context,
@@ -5555,7 +5800,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         currentTableLabel: widget.table.label,
         activeSessions: ref.read(activeSessionsProvider).value ?? {},
         onConfirm: (newTableId) async {
-          await _banRepo.transferSession(widget.session.id, newTableId);
+          final loi = await _chuyenHoacGop(newTableId, gop: false);
+          if (loi != null) return _baoLoiChuyenBan(loi);
           ref.invalidate(activeSessionsProvider);
           if (mounted) {
             Navigator.pop(context); // đóng session sheet
@@ -5603,11 +5849,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         onConfirm: (targetTableId) async {
           if (!await _awaitPendingAdds()) return;
           final targetSession = activeSessions[targetTableId];
-          await _banRepo.mergeSession(
-            sourceSessionId: widget.session.id,
-            targetTableId: targetTableId,
-            targetSessionId: targetSession?.id,
-          );
+          final loi = await _chuyenHoacGop(targetTableId, phienDichId: targetSession?.id, gop: true);
+          if (loi != null) return _baoLoiChuyenBan(loi);
           ref.invalidate(activeSessionsProvider);
           if (mounted) {
             Navigator.pop(context); // đóng session sheet
@@ -5941,6 +6184,33 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         ),
                                       ),
                                     ),
+                                    // Bàn tính giờ: khách chỉ chơi, không gọi đồ vẫn phải tính tiền giờ được.
+                                    if (widget.table.tinhGio || widget.session.gioBatDau != null) ...[
+                                      const SizedBox(height: 18),
+                                      _daiDangTinhGio(const []),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 52,
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _openCheckout(0, const []),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: _kNavy,
+                                            side: const BorderSide(color: _kNavy, width: 1.5),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          icon: const Icon(Icons.payments_rounded, size: 20),
+                                          label: Text(
+                                            'Tính tiền giờ',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -6098,7 +6368,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         const SizedBox(height: 8),
                                         Row(
                                           children: [
-                                            _KitchenStatusDot(status: item.kitchenStatus),
+                                            // dòng tiền giờ do máy chủ ghi ở trạng thái 'xong' → không gọi là "Bếp xong"
+                                            _KitchenStatusDot(
+                                              status: item.laTienGio && item.kitchenStatus != 'huy'
+                                                  ? 'tien_gio'
+                                                  : item.kitchenStatus,
+                                            ),
                                             const Spacer(),
                                             if (!_isItemSent) ...[
                                               Container(
@@ -6634,6 +6909,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         );
                                       },
                                     ),
+                                    _daiDangTinhGio(items),
                                     // Action buttons — Thêm món + Gửi bếp
                                     Row(
                                       children: [
@@ -11871,6 +12147,12 @@ class _KitchenStatusDot extends StatelessWidget {
         label = 'Đã huỷ';
         icon = Icons.cancel_rounded;
         break;
+      case 'tien_gio':
+        color = _kNavy;
+        bg = _kNavy.withValues(alpha: 0.08);
+        label = 'Tiền giờ';
+        icon = Icons.timer_rounded;
+        break;
       default:
         color = const Color(0xFF64748B);
         bg = const Color(0xFF64748B).withValues(alpha: 0.08);
@@ -12171,12 +12453,15 @@ class _TableOptionsSheet extends StatelessWidget {
   final BanSessionModel? session;
   final VoidCallback onEdit;
   final VoidCallback? onTransfer;
+  /// Khác null khi quán bật module Tính giờ: mở hộp chọn món giá giờ cho bàn.
+  final VoidCallback? onGiaGio;
 
   const _TableOptionsSheet({
     required this.table,
     required this.session,
     required this.onEdit,
     this.onTransfer,
+    this.onGiaGio,
   });
 
   @override
@@ -12219,6 +12504,15 @@ class _TableOptionsSheet extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(color: _kNavy),
               ),
               onTap: onEdit,
+            ),
+          if (session == null && onGiaGio != null)
+            ListTile(
+              leading: const Icon(Icons.timer_rounded, color: _kNavy),
+              title: Text(
+                table.tinhGio ? 'Tính tiền giờ (đang bật)' : 'Tính tiền giờ',
+                style: GoogleFonts.plusJakartaSans(color: _kNavy),
+              ),
+              onTap: onGiaGio,
             ),
           if (session != null)
             ListTile(

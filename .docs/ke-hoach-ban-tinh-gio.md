@@ -235,3 +235,76 @@ Chưa kiểm được trong một giao dịch test: hai máy bấm chốt đúng
 
 **Áp production 23/11 14:34** (Chủ Quán bảo "Áp lên máy chủ"): `bash db-fix/ban_tinh_gio_ap_dung.sh`, mất 11 giây kể cả sao lưu. Mốc hoàn tác: `/root/quannho-backups/quannho_before_ban_tinh_gio_20261123_143355.dump`; nhật ký `db-fix/ban_tinh_gio_log_20261123_143355.txt`. Test chạy lại ngay trên máy chủ thật: 50/50, tự ROLLBACK. Kiểm sau khi áp: 9 hàm, 3 trigger, 4 cột; không sót dữ liệu test; chưa bàn nào gắn giá giờ nên chưa quán nào đổi hành vi.
 
+Sau khi áp 5 phút: 2 hoá đơn bán quầy mới, 0 dòng lỗi trong `app_logs`. Không quán nào mở bàn trong 5 phút đó (và 30 phút trước khi áp), nên luồng bàn của khách thật chưa chạy qua trigger mới; cần xem lại sau giờ đông. Commit `a125c2d` (đã đẩy).
+
+### 23/11 — Giai đoạn 2 (app): phần nền (xem tiếp mục dưới cho phần giao diện)
+
+- `lib/modules/tinh_gio/tinh_gio.dart`: phép tính tạm tính ở app (số phút, tiền, thời lượng, đồng hồ), nhận ra lỗi `CHUA_CHOT_GIO` / `CHOT_GIO_QUA_CU`, luật "khi nào phải chuyển bàn bằng hàm máy chủ", luật "huỷ bàn phải chốt trước".
+- `lib/core/repositories/ban_repository.dart`: ba lớp dữ liệu đọc cột mới (`giaGioProductId`, `gioBatDau`, `gioTu` / `gioDen`); `chotGio`, `chuyenBanTinhGio`, `datGiaGio`.
+- `test/modules/tinh_gio/tinh_gio_test.dart`: 10 test, các số trùng với test máy chủ (T5, T7, T9, T12, T14).
+- `flutter analyze` không thêm cảnh báo. `test/core test/screens test/docs`: 851 qua, 1 hỏng là `huong_dan_dong_bo_test` (bài `quan-ly-ban.md` phải rà lại vì `ban_repository.dart` đổi; bài `bat-dau.md` đã đỏ từ trước do thay đổi khác đang dở). Rà và đóng dấu bài Bàn khi làm xong giao diện.
+
+Đã đọc và chốt cách đăng ký module (chưa viết):
+
+- Ô module không cần chỉ số tab riêng: `_navigateTo('/tinh_gio')` mở tab Bàn (chỉ số 7), như `qr_order`, `chain` đang tự mở màn riêng. Vậy không phải đụng `main.dart`.
+- Chỗ phải thêm mã: `_kAllModules` (`module_repository.dart`), `kModuleConfigs` (`module_tile.dart`), `permMap` và `_navigateTo` (`dashboard_screen.dart`). Quyền: ai có quyền Bàn (`ban`) thì thấy ô Tính giờ, không thêm ô chọn quyền riêng.
+- Bộ biểu tượng Material của app **không có** bi da, cầu lông, bóng bàn, pickleball (`pool` là hồ bơi); chỉ có `sports_tennis` và `mic_external_on`. Ô module chỉ nhận `IconData`. Chờ Chủ Quán chọn: vẽ thêm hình riêng hay dùng emoji.
+
+Điểm móc vào `lib/screens/ban_screen.dart` (13.458 dòng) cho phần giao diện: `_TableFormSheet` (ô chọn giá giờ), `_ZoneFormSheet` (áp cả khu), `_TableCard` (đồng hồ, tạm tính), `_TableSessionSheet` (dòng tiền giờ, nút Tính tiền gọi chốt trước), `_CheckoutSheet` (bắt lỗi cần chốt, nút Tính lại giờ), `_TransferTableSheet` (chuyển / gộp qua máy chủ), `runCancelSteps` (chốt trước khi huỷ).
+
+### 23/11 — Giai đoạn 2 (app): đã viết giao diện chính (kết quả chạy thử ở mục dưới), CHƯA commit
+
+Đã viết (tất cả theo dữ liệu: bàn có `gia_gio_product_id`, phiên có `gio_bat_dau`; cờ module chỉ gác phần cấu hình và ô ở Trang chủ):
+
+| Việc | Ở đâu |
+|---|---|
+| Module `tinh_gio` "Tính giờ", mặc định tắt, biểu tượng tạm là đồng hồ; ô mở tab Bàn; bật thì bật kèm module Bàn nếu chưa bật; ai có quyền Bàn thì thấy | `module_repository.dart`, `module_tile.dart`, `dashboard_screen.dart`, `module_picker_screen.dart` |
+| Giữ lâu vào bàn trống → "Tính tiền giờ" → hộp chọn món giá giờ, có "Áp cho cả khu", có gỡ | `ban_screen.dart` (`_TableOptionsSheet`), `lib/modules/tinh_gio/tinh_gio_widgets.dart` |
+| Thẻ bàn: bàn trống ghi giá/giờ; bàn có khách ghi thời lượng + tiền giờ tạm tính, tổng đã gồm tiền giờ tới lúc xem; một nhịp 20 giây chung cho mọi thẻ | `ban_screen.dart` (`_TableCard`) |
+| Màn chi tiết bàn: dải "Đang tính giờ … tạm tính … chốt khi bấm Thanh toán"; không sửa số lượng dòng tiền giờ | `ban_screen.dart` (`_TableSessionSheet`, `_updateItemQty`) |
+| Bấm Thanh toán: gọi `ban_chot_gio_v1`, tải lại món rồi mới mở màn thanh toán; chốt lỗi thì không mở | `ban_screen.dart` (`_openCheckout`) |
+| Máy chủ từ chối vì chưa chốt / chốt quá 15 phút: báo rõ "đóng màn thanh toán rồi bấm lại", không coi là lỗi mạng mơ hồ | `ban_repository.dart` (`_settleBanSessionV5`) |
+| Chuyển bàn, gộp bàn: có tính giờ thì gọi `ban_chuyen_ban_tinh_gio_v1`; máy chưa biết bàn có tính giờ mà bị máy chủ chặn thì tự đi đường máy chủ | `ban_screen.dart` (`_chuyenHoacGop`) |
+| Huỷ bàn tính giờ mở quá 5 phút: chốt giờ trước, rồi đi luồng huỷ có PIN Quản lý sẵn có | `ban_screen.dart` (`_cancelSession`) |
+
+Kiểm đã làm: `flutter analyze lib` 0 lỗi, không thêm cảnh báo ở các tệp đã sửa; `flutter test` 1280 qua, 1 hỏng; test riêng `test/modules/tinh_gio` 15/15. Mục hỏng là `huong_dan_dong_bo_test`, đã đỏ từ trước vì nhiều tệp khác đang sửa dở; phần tôi thêm vào danh sách của nó: `quan-ly-ban.md`, `kho-hang.md`, `ho-tro-ky-thuat.md` (do `ban_screen.dart`, `ban_repository.dart`).
+
+**Chưa làm / chưa kiểm:**
+
+- Chưa chạy thử một vòng trong app thật trên quán Demo (cần đăng nhập). Mọi phần giao diện ở trên mới qua biên dịch và kiểm lỗi tĩnh.
+- Chọn loại hình + biểu tượng theo ngành: chờ Chủ Quán chọn cách làm biểu tượng.
+- Chưa chặn tắt module khi còn bàn đang tính giờ. Bỏ: tắt module không làm hỏng thanh toán vì phần chốt giờ đi theo dữ liệu.
+- Ba mục "phải kiểm khi làm" ở giai đoạn 2 (bill 58mm, màn Bếp, thực đơn QR) chưa kiểm.
+- Cột bên phải ("đang phục vụ") vẫn hiện tổng món, chưa cộng tiền giờ tạm tính.
+- Lời trong hộp huỷ bàn vẫn nói "món đã nấu" khi dòng duy nhất là tiền giờ.
+
+### 23/11 chiều — Chạy thử thật trên quán Demo (bản web chạy tại máy, số liệu đối chiếu trên máy chủ)
+
+Đã chạy và khớp trên máy chủ (4 phiên bàn, 3 hoá đơn QN-20261123-001…003, 0 dòng lỗi trong `app_logs`):
+
+| Việc thử | Kết quả |
+|---|---|
+| Bật module Tính giờ từ "Thêm Modules" | Ô hiện ở Trang chủ; bấm ô mở màn Bàn; cấu hình module của quán có thêm `tinh_gio` |
+| Giữ lâu bàn A1 → "Tính tiền giờ" → chọn món | Hộp chọn hiện đủ (áp cả khu, tìm món, gỡ); thẻ bàn trống ghi "25.000 đ/giờ"; máy chủ lưu đúng |
+| Mở bàn A1 | Máy chủ đặt mốc giờ (lệch 1 giây so với giờ máy) |
+| Gọi 1 món rồi Thanh toán | Dải "Đang tính giờ 2p • tạm tính 1.000 đ"; màn Thu tiền 57.000 = món 55.000 + giờ 2.000; hoá đơn có dòng "Cà phê sữa đá · A 1 · 16:42–16:44 (3p)"; báo cáo món bán chạy thấy đúng |
+| Bàn không gọi món → "Tính tiền giờ" | Ra màn Thu tiền 1.000đ, thanh toán được. Bấm Huỷ bỏ rồi vào lại: vẫn một dòng tiền giờ, chốt lại không sinh dòng thứ hai |
+| Chuyển A1 (tính giờ) → A2 (bàn thường) | Dòng tiền giờ của đoạn ở A1 đi theo sang A2; A2 không chạy đồng hồ; thanh toán A2 được |
+| Huỷ bàn A1 trong 5 phút đầu | Hộp huỷ bàn thường (chọn lý do), không đòi chốt giờ, không đòi PIN |
+| Thẻ bàn đang chạy giờ trên sơ đồ | "1 khách • 0 món", "2p • giờ 1.000 đ", tổng 1.000đ |
+
+Lỗi tìm ra khi thử và đã sửa:
+
+- **Bàn tính giờ chưa gọi món không tính tiền được**: màn chi tiết chỉ hiện "Chưa có món nào", không có dải đồng hồ, không có nút thanh toán. Đã thêm dải và nút "Tính tiền giờ" (đã thử lại, chạy đúng).
+- Dòng tiền giờ mang nhãn "Bếp xong". Đã đổi thành "Tiền giờ" (sửa sau lượt thử, chưa nhìn lại trên app).
+
+Chưa thử: gộp bàn; chuyển bàn thường → bàn tính giờ và tính giờ → tính giờ; huỷ bàn sau 5 phút (cần PIN Quản lý, Claude không gõ PIN); chốt quá 15 phút; in bill; màn Bếp; app Android thật (mới thử trên web).
+
+Còn lại sau lượt thử:
+
+- Tên dòng do máy chủ ghi lấy giờ ra thật ("16:59–16:59 (1p)") nên lệch với số phút tính tiền. Nên in giờ ra = giờ vào + số phút tính tiền. Đây là sửa hàm máy chủ, cần áp lại.
+- Ô ghi chú "cho nhà bếp" vẫn hiện trên dòng tiền giờ.
+- Quán Demo đang để: module Tính giờ BẬT, bàn A1 gắn giá giờ "Cà phê sữa đá" 25.000/giờ, 3 hoá đơn thử. Chưa hoàn nguyên.
+
+Về cách thử: bản web debug tại máy không lấy được vé vào quán vì `PosJwtAuthService.isConfigured` chỉ nhận `https` (cấu hình `pos-web` + lớp chuyển tiếp `http://localhost:8091` trong `.claude/launch.json` có từ trước khi có điều kiện này). Lượt này sửa tạm tại máy cho nhận `http://localhost` ở bản web debug, **đã gỡ, không commit**. Muốn thử web tại máy lần sau phải làm lại bước đó hoặc dựng lớp chuyển tiếp `https`.
+

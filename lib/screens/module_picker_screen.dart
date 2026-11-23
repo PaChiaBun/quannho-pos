@@ -156,6 +156,10 @@ class ModulePickerScreen extends ConsumerWidget {
                           // Pass raw DB activate + pop as async callback
                           onTap: () async {
                             final repo = ref.read(moduleRepositoryProvider);
+                            // Tính giờ chạy trên màn Bàn → bật kèm module Bàn nếu quán chưa bật.
+                            if (d.id == 'tinh_gio' && !activeModuleIds.contains('table')) {
+                              await repo.activate('table');
+                            }
                             await repo.activate(d.id);
                             if (navContext.mounted && Navigator.of(navContext).canPop()) {
                               Navigator.of(navContext).pop(d.id);

@@ -332,6 +332,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             'log_viewer': 'log_viewer', // ⭐ Nhật Ký Log
             'bill_printer': 'bill_printer', // ⭐ In Hoá Đơn
             'qr_order': 'qr_order', // ⭐ QR Gọi Món
+            'tinh_gio': 'ban', // Tính giờ chạy trên màn Bàn: ai có quyền Bàn thì thấy
           };
 
           // Quyền thực tế từ Supabase, fallback kDefaultPerms
@@ -2413,6 +2414,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       '/loyalty': 4,
       '/report': 5,
       '/table': 7, // Module Quản lý Bàn — BanScreen tại index 7
+      '/tinh_gio': 7, // Module Tính giờ — cũng là BanScreen (bàn có gắn giá giờ)
       '/kitchen': 8, // Module Phiếu bếp — KitchenScreen tại index 8
       '/staff': 9, // Module Nhân viên — NhanVienScreen tại index 9
       '/chamcong': 10, // Module Chấm công — ChamCongScreen tại index 10
