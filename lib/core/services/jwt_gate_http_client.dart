@@ -14,6 +14,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'net_status.dart';
 import 'pos_jwt_auth_service.dart';
 
 class JwtGateHttpClient extends http.BaseClient {
@@ -22,9 +23,21 @@ class JwtGateHttpClient extends http.BaseClient {
     http.Client? inner,
     this.maxWait = const Duration(seconds: 15),
     Future<String?> Function(String rejectedToken)? recover,
+    Uri? probeUrl,
   }) : _inner = inner ?? http.Client(),
        _recover = recover ??
-           ((t) => PosJwtAuthService().recoverRejectedJwt(t));
+           ((t) => PosJwtAuthService().recoverRejectedJwt(t)) {
+    // Máy chủ trả lời gì cũng được (kể cả 401): có trả lời nghĩa là còn mạng.
+    if (probeUrl != null) {
+      NetStatus.probe = () async {
+        final res = await _inner
+            .send(http.Request('HEAD', probeUrl)..headers['apikey'] = anonKey)
+            .timeout(const Duration(seconds: 8));
+        await res.stream.drain<void>();
+        return true;
+      };
+    }
+  }
 
   final String anonKey;
   final Duration maxWait;
@@ -36,6 +49,7 @@ class JwtGateHttpClient extends http.BaseClient {
     if (PosJwtAuthService.waitingForRefresh) {
       final ready = await PosJwtAuthService.waitForJwt(maxWait);
       if (!ready) {
+        NetStatus.requestFailed();
         throw http.ClientException(
           'Đang chờ khôi phục phiên đăng nhập (mất mạng)',
           request.url,
@@ -57,7 +71,14 @@ class JwtGateHttpClient extends http.BaseClient {
         ? _copy(request)
         : null;
 
-    final res = await _inner.send(request);
+    final http.StreamedResponse res;
+    try {
+      res = await _inner.send(request);
+    } catch (_) {
+      NetStatus.requestFailed();
+      rethrow;
+    }
+    NetStatus.requestOk();
     if (retry == null || res.statusCode != 401) return res;
 
     final bytes = await res.stream.toBytes();

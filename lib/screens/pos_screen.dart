@@ -19,6 +19,7 @@ import '../modules/pos/screens/checkout_sheet.dart';
 import '../core/utils/responsive.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart' show StaffService;
+import '../core/services/net_status.dart';
 import '../core/utils/quantity_formatter.dart' show fmtQty;
 import 'ban_screen.dart' show ManagerPinInputDialog;
 import '../core/repositories/core_product_repository.dart';
@@ -1040,6 +1041,45 @@ class _PosScreenState extends ConsumerState<PosScreen>
   }
 
   Widget _buildEmptyProducts() {
+    // Mất mạng mà chưa tải được thực đơn: KHÔNG mời "thêm sản phẩm đầu tiên" (nhân viên tưởng
+    // quán mất thực đơn rồi tạo món trùng). Có mạng lại luồng thực đơn tự tải sau tối đa 10 giây.
+    return ValueListenableBuilder<bool>(
+      valueListenable: NetStatus.offline,
+      child: _buildEmptyProductsOnline(), // dựng ở đây vì bên trong dùng ref.watch
+      builder: (context, offline, online) =>
+          offline && _searchQuery.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.wifi_off_rounded, size: 40, color: _kMuted),
+                        SizedBox(height: 16),
+                        Text(
+                          'Chưa tải được thực đơn',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: _kMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Đang mất mạng. Có mạng lại thực đơn sẽ tự hiện.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: _kMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : online!,
+    );
+  }
+
+  Widget _buildEmptyProductsOnline() {
     final hasSearch = _searchQuery.isNotEmpty;
     final s = ref.watch(sessionProvider);
     final role = StaffService.canonicalRole(s?.role ?? '');

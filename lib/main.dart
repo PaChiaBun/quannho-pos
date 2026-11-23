@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/net_status_banner.dart';
 import 'core/services/event_bridge_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/services/app_update_manager.dart';
@@ -199,6 +200,8 @@ class QuanNhoPOSApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       scrollBehavior: const _SmoothScrollBehavior(),
+      builder: (context, child) =>
+          NetStatusBanner(child: child ?? const SizedBox.shrink()),
       // ── Tiếng Việt cho date picker & các widget hệ thống ──
       locale: const Locale('vi', 'VN'),
       localizationsDelegates: const [

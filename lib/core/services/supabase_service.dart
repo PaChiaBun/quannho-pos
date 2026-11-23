@@ -26,7 +26,10 @@ class SupabaseService {
         url:    _supabaseUrl,
         anonKey: _supabaseAnonKey,
         // Chưa có JWT (mở app lúc mất mạng) thì giữ yêu cầu lại, không gửi bằng anon
-        httpClient: JwtGateHttpClient(anonKey: _supabaseAnonKey),
+        httpClient: JwtGateHttpClient(
+          anonKey: _supabaseAnonKey,
+          probeUrl: Uri.parse('$_supabaseUrl/rest/v1/'), // hỏi lại khi nghi mất mạng
+        ),
       );
       _initialized = true;
     } catch (_) {
