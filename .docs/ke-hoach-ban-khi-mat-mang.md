@@ -154,13 +154,14 @@ Chỉ xem màn hình, không bấm Thanh toán, Mở bàn, Gửi bếp vì là q
 
 **Bật lại wifi lúc 12:51, không khởi động lại app:** mở Bán hàng có lại thực đơn, Quản lý bàn có lại khu vực và bàn, Báo cáo tháng 11 hiện lại số thật, không còn lỗi trong nhật ký máy. Không phải đăng nhập lại. Chưa tách được màn tự nạp lại hay nạp vì vừa được mở.
 
-### Dải báo "Đang mất mạng" (Chủ Quán duyệt làm 23/11; ĐÃ SỬA MÃ, CHƯA COMMIT, CHƯA PHÁT HÀNH)
+### Dải báo "Đang mất mạng" (Chủ Quán duyệt làm 23/11; commit `7675653`, ĐÃ CÀI SUNMI BÒ ĐEN 23/11 13:04, CHƯA PHÁT HÀNH)
 - `lib/core/services/net_status.dart`: nhận biết mất mạng từ chính các yêu cầu app gửi lên máy chủ, không thêm thư viện. Một yêu cầu hỏng thì 2 giây sau hỏi thử máy chủ, hỏng tiếp mới bật dải, rồi hỏi lại mỗi 10 giây. Có yêu cầu nào thành công là tắt dải ngay.
 - `JwtGateHttpClient` (nơi mọi yêu cầu Supabase đi qua) báo hỏng / thông vào đó.
 - `lib/core/widgets/net_status_banner.dart`: dải đỏ "Đang mất mạng. Số liệu có thể thiếu." trên mọi màn, gắn ở `MaterialApp.builder`.
 - Màn Bán hàng lúc mất mạng mà chưa có thực đơn: ghi "Chưa tải được thực đơn", bỏ nút "Thêm sản phẩm mới".
 - Test `test/core/net_status_test.dart` (6 test). Ảnh xem thử `scratch/mat_mang_bat.png`.
-- Chưa làm: chip "Sẵn sàng" ở Trang chủ, số 0 ở Báo cáo, câu "Bếp đang yên tĩnh", vòng quay ở Quản lý bàn vẫn như cũ (đã có dải đỏ phía trên nói rõ). Chưa chạy trên máy thật.
+- Chưa làm: chip "Sẵn sàng" ở Trang chủ, số 0 ở Báo cáo, câu "Bếp đang yên tĩnh", vòng quay ở Quản lý bàn vẫn như cũ (đã có dải đỏ phía trên nói rõ).
+- Thử thật trên Sunmi 23/11 13:04–13:09: có mạng không hiện dải nhầm; tắt wifi hiện dải đỏ một dòng; mở lại app lúc mất mạng thì Bán hàng ghi "Chưa tải được thực đơn"; bật wifi lại, không bấm gì, dải tự tắt và thực đơn tự hiện trong dưới 1 phút.
 
 ## 8. Chưa kiểm
 - Chưa bấm Thanh toán lúc mất mạng trên máy thật (quán thật, cần Chủ Quán cho phép).
