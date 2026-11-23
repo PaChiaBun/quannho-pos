@@ -183,7 +183,7 @@ Món và đơn nằm trên máy chủ, đổi máy hay cài lại không mất.
 ### 20. Có bản mới thì cập nhật app sao
 App tự báo khi có bản mới. Bấm "Cập nhật ngay"; iPhone bấm "Mở App Store".
 
-### 21. Dữ liệu của quán có bị người khác xem không, dữ liệu lưu ở đâu, có an toàn không, có bị lộ không
+### 21. Dữ liệu của quán có bị người khác xem không, dữ liệu lưu ở đâu, máy chủ đặt ở đâu, server ở nước nào, có an toàn không, có bị lộ không
 Dữ liệu của quán (món, đơn, báo cáo, nhân viên) lưu trên máy chủ của Quán Nhỏ POS, không nằm trong điện thoại. Máy chủ được bảo mật nên Bé Boom không tiết lộ nơi đặt máy chủ.
 1. Ai xem được: chỉ tài khoản đã vào quán mới xem được, nhân viên thấy theo vai trò Chủ quán gán. Quán khác không xem được dữ liệu của quán mình. Nhân viên kỹ thuật của Quán Nhỏ chỉ xem dữ liệu của quán khi anh chị nhờ hỗ trợ.
 2. Đường truyền giữa app và máy chủ được mã hoá. Mật khẩu được lưu ở dạng mã hoá một chiều, nhân viên Quán Nhỏ cũng không đọc được mật khẩu của anh chị.
