@@ -184,10 +184,16 @@ Món và đơn nằm trên máy chủ, đổi máy hay cài lại không mất.
 App tự báo khi có bản mới. Bấm "Cập nhật ngay"; iPhone bấm "Mở App Store".
 
 ### 21. Dữ liệu của quán có bị người khác xem không, dữ liệu lưu ở đâu, có an toàn không, có bị lộ không
-Dữ liệu của quán (món, đơn, báo cáo, nhân viên) lưu trên máy chủ, không nằm trong điện thoại.
-1. Chỉ tài khoản đã vào quán mới xem được, nhân viên thấy theo vai trò.
-2. Không đưa mật khẩu cho người khác.
-3. Bé Boom đọc số của đúng quán đang đăng nhập để trả lời.
+Dữ liệu của quán (món, đơn, báo cáo, nhân viên) lưu trên máy chủ của Quán Nhỏ POS, không nằm trong điện thoại. Máy chủ được bảo mật nên Bé Boom không tiết lộ nơi đặt máy chủ.
+1. Ai xem được: chỉ tài khoản đã vào quán mới xem được, nhân viên thấy theo vai trò Chủ quán gán. Quán khác không xem được dữ liệu của quán mình. Nhân viên kỹ thuật của Quán Nhỏ chỉ xem dữ liệu của quán khi anh chị nhờ hỗ trợ.
+2. Đường truyền giữa app và máy chủ được mã hoá. Mật khẩu được lưu ở dạng mã hoá một chiều, nhân viên Quán Nhỏ cũng không đọc được mật khẩu của anh chị.
+3. Máy chủ tự sao lưu dữ liệu mỗi ngày. Đổi máy, mất máy hay cài lại app đều không mất dữ liệu.
+4. Quán Nhỏ POS không bán dữ liệu doanh thu hay thông tin khách hàng của quán cho bên nào khác.
+5. Việc anh chị cần làm: không đưa mật khẩu cho người khác, mỗi nhân viên dùng một tài khoản riêng, nhân viên nghỉ thì xoá khỏi quán (bài Nhân viên & Phân quyền), mất máy thì đổi mật khẩu ngay (việc 15).
+6. Bé Boom chỉ đọc số của đúng quán đang đăng nhập. Để soạn câu trả lời, câu hỏi và số liệu của quán liên quan tới câu hỏi được gửi tới dịch vụ AI bên ngoài (OpenAI); không gửi mật khẩu. Nội dung hỏi đáp với Bé Boom được lưu tối đa 180 ngày để kiểm tra chất lượng. Bé Boom không có và không đưa ra mật khẩu hay tài khoản máy chủ.
+7. Muốn xoá tài khoản và dữ liệu: gọi Hotline 0927 55 8888 (việc 10).
+
+Xem thêm Chính sách bảo mật tại quannho.lpm.vn/privacy.
 
 ### 22. Không thấy, không có ô, mục Bàn, Nhân viên, In Hoá Đơn, Khách hàng, Chấm công, Vận Hành trên Trang chủ
 Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. Các ô khác phải bật thêm:

@@ -459,3 +459,13 @@ Sửa chỗ hỏng thấy ở lượt hỏi thử trên. `index.ts`: câu đư�
 
 **Hỏi lại sau áp, 22/11 17:04–17:06** (quán T, bản web, 2 câu liên tiếp): "chấm công thế nào" trả lời đúng các bước, KHÔNG còn dữ liệu của quán, có lại câu "chưa thấy ô đó ở Trang chủ…"; câu nối tiếp "ở chỗ nào vậy" vẫn chỉ đúng ô "Chấm công" ở Trang chủ và cách bật ô (lần 264 còn chạy trên đường mới). Sổ máy chủ: nhãn `+ask+hd+cd` và `+ask+hd+lai+cd`, khoảng 9.400 token vào (trước 13.800), **0,0010 USD mỗi lượt** (trước lần 265: 0,029–0,030 USD), 2,4–3,1 giây. Mới thử trên bài Chấm công.
 
+### 23/11 — Lô 2: mục "dữ liệu của quán có an toàn không" (ĐÃ ĐĂNG) và sửa trang chính sách bảo mật (ĐÃ LÊN WEB)
+
+Chủ Quán duyệt nháp và chốt ba ý: không tiết lộ nơi đặt máy chủ; ghi "nhân viên kỹ thuật chỉ xem khi được nhờ hỗ trợ"; được nói Bé Boom dùng dịch vụ AI bên ngoài. Rồi bảo sửa luôn 4 chỗ lệch trên trang chính sách bảo mật.
+
+**Bài hướng dẫn** (Bắt đầu dùng app, việc 21), mọi ý đã kiểm trên mã / máy chủ hoặc lấy từ chính sách của công ty: ai xem được (thành viên quán, theo vai trò; quán khác không xem được), đường truyền mã hoá, mật khẩu băm một chiều, máy chủ tự sao lưu mỗi ngày, không bán dữ liệu, việc chủ quán cần làm, Bé Boom gửi câu hỏi + số liệu liên quan tới dịch vụ AI bên ngoài và hỏi đáp lưu tối đa 180 ngày, xoá tài khoản thì gọi Hotline. Bộ câu hỏi kiểm tra tìm bài cho kết quả y hệt trước và sau khi thêm. Đăng bản `202611230540`, rồi `202611230542` để sửa thời hạn lưu: nháp ghi 90 ngày theo tài liệu cũ, kiểm hàm trên máy chủ thì bản nguyên văn giữ 90 ngày còn sổ hỏi đáp giữ 180 ngày.
+
+**Trang web** (`lpm-web`, trang chính sách bảo mật và trang xoá tài khoản), 4 chỗ sửa: nơi lưu dữ liệu ghi là máy chủ riêng do công ty quản lý, không công bố vị trí (trước ghi tên hai nhà cung cấp đám mây không còn đúng); "mã hoá đầu cuối" thành mã hoá đường truyền; bỏ lối "xoá tài khoản ngay trong ứng dụng" (app chưa từng có nút này, đã tìm ở cả ba bản mã và lịch sử kho mã), giữ Email và Hotline; thêm đoạn về Bé Boom và dịch vụ AI bên ngoài. Đã dựng lại và khởi động lại web 23/11 12:4x, hai trang trả 200 với nội dung mới; bản cũ của hai tệp nằm ở `/root/lpm-web_chinh_sach_20261123_124326.tar` trên máy chủ.
+
+**Còn lại, cần Chủ Quán quyết:** (1) app chưa có lối xoá tài khoản trong app, trong khi hai kho ứng dụng đều đòi; (2) bản sao lưu hằng ngày giữ 5 ngày trên chính máy chủ đó, chưa thấy bản sao ở nơi khác; (3) chưa hỏi thật Boom câu về an toàn dữ liệu sau khi đăng.
+
