@@ -467,5 +467,7 @@ Chủ Quán duyệt nháp và chốt ba ý: không tiết lộ nơi đặt máy 
 
 **Trang web** (`lpm-web`, trang chính sách bảo mật và trang xoá tài khoản), 4 chỗ sửa: nơi lưu dữ liệu ghi là máy chủ riêng do công ty quản lý, không công bố vị trí (trước ghi tên hai nhà cung cấp đám mây không còn đúng); "mã hoá đầu cuối" thành mã hoá đường truyền; bỏ lối "xoá tài khoản ngay trong ứng dụng" (app chưa từng có nút này, đã tìm ở cả ba bản mã và lịch sử kho mã), giữ Email và Hotline; thêm đoạn về Bé Boom và dịch vụ AI bên ngoài. Đã dựng lại và khởi động lại web 23/11 12:4x, hai trang trả 200 với nội dung mới; bản cũ của hai tệp nằm ở `/root/lpm-web_chinh_sach_20261123_124326.tar` trên máy chủ.
 
-**Còn lại, cần Chủ Quán quyết:** (1) app chưa có lối xoá tài khoản trong app, trong khi hai kho ứng dụng đều đòi; (2) bản sao lưu hằng ngày giữ 5 ngày trên chính máy chủ đó, chưa thấy bản sao ở nơi khác; (3) chưa hỏi thật Boom câu về an toàn dữ liệu sau khi đăng.
+**Còn lại, cần Chủ Quán quyết:** (1) app chưa có lối xoá tài khoản trong app, trong khi hai kho ứng dụng đều đòi; (2) bản sao lưu hằng ngày giữ 5 ngày trên chính máy chủ đó, chưa thấy bản sao ở nơi khác.
+
+**Hỏi thật sau khi đăng (23/11 13:02, quán T, Chủ Quán cho hỏi một câu):** câu hỏi dữ liệu quán có an toàn không → app kèm đúng bài việc 21 đứng đầu, nhãn `+ask+hd+cd`, 0,0010 USD, 3 giây. Boom trả lời đúng bài: lưu trên máy chủ của Quán Nhỏ POS, đường truyền mã hoá, sao lưu mỗi ngày, quán khác không xem được, nhân viên xem theo quyền, kèm ba việc chủ quán nên làm; không nói nơi đặt máy chủ, không chen số liệu quán. Câu trả lời ngắn nên không nhắc dịch vụ AI bên ngoài và thời hạn lưu hỏi đáp (hai ý này có trong bài, khách hỏi tiếp mới ra). Chưa hỏi thẳng "máy chủ đặt ở đâu".
 
