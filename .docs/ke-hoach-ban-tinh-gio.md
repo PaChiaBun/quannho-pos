@@ -380,3 +380,12 @@ Chưa thử: sửa lượt đặt, huỷ, "khách không đến", báo trùng gi
 
 Quán Demo sau lượt thử: 2 lượt đặt "Đã nhận", 2 hoá đơn thử hôm 24/11 (cộng 3 hoá đơn hôm 23/11), module Tính giờ vẫn bật, bàn A1 vẫn gắn giá giờ.
 
+### 24/11 — Rà bài hướng dẫn cho Boom
+
+- Bài mới `.docs/Huong_dan/tinh-gio.md` (module `tinh_gio`): 19 việc thường làm + 12 dòng lỗi thường gặp, thành 31 đoạn cho Boom. Tên nút và câu báo lỗi chép từ mã. Thêm vào `MUC-LUC.md`; bài Bắt đầu và bài Bàn có thêm dòng trỏ sang.
+- Trong lúc rà thấy app và bài cùng ghi "vào Menu tạo món" trong khi app không có mục tên Menu: món tạo ở **Kho hàng → "Thêm sản phẩm"**. Đã sửa cả chữ trong hộp chọn giá giờ lẫn bài.
+- Đã xuất lại `assets/boom_help/huong_dan.json` (481 đoạn, bản 202611240617) và đóng dấu `tinh-gio.md`, `quan-ly-ban.md`, `kho-hang.md`. Test đồng bộ không còn báo ba bài này. `flutter test test/features/ai_assistant` 131/131.
+- **CHƯA đăng cho Boom đang chạy** (`db-fix/dang_huong_dan_boom.sh`): tính năng chưa phát hành, đăng bây giờ Boom sẽ chỉ khách dùng thứ họ chưa có. Bài mới đi kèm trong bản app kế tiếp qua tệp `huong_dan.json`; đăng riêng khi bản đó tới tay quán.
+- Chưa commit hai tệp sinh ra (`assets/boom_help/huong_dan.json`, `.docs/Huong_dan/nguon_hash.json`): chúng đang chứa cả ba chỗ sửa bài dở của việc trước (bài Bếp, Hỗ trợ kỹ thuật, Bàn, về nút Gửi bếp mờ) chưa được commit. Commit riêng phần của Tính giờ sẽ làm kho mã lệch với bài gốc.
+- Test đồng bộ vẫn báo các bài sau, đều có tệp của việc khác chưa rà: `bao-cao`, `bat-dau`, `ho-tro-ky-thuat`, `in-hoa-don`, `khach-hang`, `luong`, `nhan-vien`, `nhat-ky-log`, `thu-chi`, `van-hanh`. Trong đó việc này có góp: `ban_screen.dart` (bài Hỗ trợ kỹ thuật), `main.dart` (bài Lương), `dashboard_screen.dart` và `MUC-LUC.md` (bài Bắt đầu). Ba bài này đã lệch từ trước nên chưa đóng dấu.
+

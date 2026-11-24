@@ -137,6 +137,7 @@ nguon:
 - **QR Gọi Món**: đơn khách tự gọi tại bàn.
 - **Khách hàng**: tích điểm, voucher.
 - **Thu Chi / Kho**: ghi thu, trừ kho khi thanh toán; hao hụt khi huỷ món.
+- **Tính giờ**: bàn gắn giá giờ (bi da, phòng hát, sân), đồng hồ trên thẻ bàn, dòng tiền giờ lúc thanh toán, Lịch đặt và hộp nhắc trước giờ đặt: xem bài Tính giờ.
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 

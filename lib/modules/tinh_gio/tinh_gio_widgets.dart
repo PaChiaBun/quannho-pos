@@ -256,7 +256,7 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
               child: Text(
-                'Chọn món giá giờ. Giá bán của món là giá MỘT GIỜ. Chưa có thì vào Menu tạo món, '
+                'Chọn món giá giờ. Giá bán của món là giá MỘT GIỜ. Chưa có thì vào Kho hàng bấm "Thêm sản phẩm", '
                 'ví dụ "Giờ bàn lỗ" 60.000đ, danh mục "Tiền giờ".',
                 textAlign: TextAlign.center,
                 style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
@@ -338,7 +338,7 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                     Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Chưa có món nào. Vào Menu tạo món giá giờ trước.',
+                        'Chưa có món nào. Vào Kho hàng bấm "Thêm sản phẩm" để tạo món giá giờ trước.',
                         textAlign: TextAlign.center,
                         style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.6)),
                       ),

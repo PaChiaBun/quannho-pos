@@ -11,6 +11,7 @@ Kế hoạch: [ke-hoach-trien-khai-boom.md](ke-hoach-trien-khai-boom.md) · Khu�
 | Kho hàng | `kho` | [kho-hang.md](kho-hang.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Kho Chuyên Nghiệp | `kho_pro` | [kho-chuyen-nghiep.md](kho-chuyen-nghiep.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Quản lý Bàn | `table` | [quan-ly-ban.md](quan-ly-ban.md) | Bản nháp — chờ Chủ Quán duyệt |
+| Tính giờ (bi da, karaoke, sân) + đặt trước | `tinh_gio` | [tinh-gio.md](tinh-gio.md) | Bản nháp 24/11 — viết theo mã chưa phát hành, CHƯA đăng cho Boom |
 | Bếp | `kitchen` | [bep.md](bep.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Khách hàng | `loyalty` | [khach-hang.md](khach-hang.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Nhân viên | `staff` | [nhan-vien.md](nhan-vien.md) | Bản nháp — chờ Chủ Quán duyệt |
