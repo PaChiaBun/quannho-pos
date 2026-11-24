@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quannho_pos/core/repositories/ban_repository.dart';
+import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
+import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio_widgets.dart';
 
@@ -147,4 +150,47 @@ void main() {
     expect(find.text('Pickleball'), findsOneWidget);
     await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/chon_loai_hinh_360.png'));
   });
+
+  // Màn Lịch đặt với dữ liệu mẫu, ngày cố định để ảnh không đổi theo ngày chạy test.
+  for (final (ten, co) in const [('360', Size(360, 800)), ('1024', Size(1024, 700))]) {
+    testWidgets('màn Lịch đặt $ten', (tester) async {
+      await _napPhong();
+      tester.view.physicalSize = co;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final ngay = DateTime(2026, 11, 28);
+      BanTableModel ban(String id, String ten) =>
+          BanTableModel(id: id, zoneId: 'z', storeId: 's', label: ten, seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
+      DatTruoc dat(String id, String ban, int gio, int phut, String ten, {String tt = 'da_dat', String? sdt, bool nhac = false}) => DatTruoc(
+            id: id,
+            tableId: ban,
+            tenKhach: ten,
+            sdt: sdt,
+            gioTu: DateTime(2026, 11, 28, gio),
+            gioDen: DateTime(2026, 11, 28, gio).add(Duration(minutes: phut)),
+            trangThai: tt,
+            nhacLuc: nhac ? DateTime(2026, 11, 28, gio - 1, 32) : null,
+            createdAt: DateTime(2026, 11, 27),
+          );
+      await runZonedGuarded(() async {
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            banDeDatProvider.overrideWith((ref) async => [ban('s1', 'Sân 1'), ban('s2', 'Sân 2'), ban('s3', 'Sân 3')]),
+            datTruocTheoNgayProvider.overrideWith((ref, n) => Stream.value([
+                  dat('a', 's1', 17, 60, 'Anh Nam', sdt: '0901234567', tt: 'da_nhan'),
+                  dat('b', 's1', 18, 90, 'Chị Lan', sdt: '0912345678', nhac: true),
+                  dat('c', 's1', 20, 60, 'Nhóm anh Tú', tt: 'huy'),
+                  dat('d', 's2', 19, 120, 'CLB Cầu lông Q7', sdt: '0987654321'),
+                ])),
+          ],
+          child: MaterialApp(debugShowCheckedModeBanner: false, home: LichDatScreen(ngay: ngay)),
+        ));
+        await tester.pumpAndSettle();
+      }, (_, __) {});
+      expect(find.text('Lịch đặt'), findsOneWidget);
+      expect(find.textContaining('Chị Lan'), findsOneWidget);
+      expect(find.text('Chưa có lượt đặt'), findsOneWidget, reason: 'Sân 3 trống');
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/lich_dat_$ten.png'));
+    });
+  }
 }

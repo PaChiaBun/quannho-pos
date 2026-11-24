@@ -321,3 +321,35 @@ Chủ Quán chọn 23/11: vẽ hình riêng (không dùng emoji).
 
 Chưa làm: cách gọi "bàn / phòng / sân" mới lưu trong loại hình, chưa thay vào chữ trên màn Bàn. Chưa chạy trong app thật (mới qua test và ảnh chụp).
 
+### 24/11 — Giai đoạn 3 (đặt trước + nhắc 30 phút): máy chủ ĐÃ ÁP production 12:48, app đã viết, chưa chạy trong app thật
+
+**Máy chủ** — `supabase/migrations/20261124_ban_dat_truoc_v1.sql` (+ `_ROLLBACK`), test `supabase/tests/ban_dat_truoc_v1_test.sql` (40 mục), tệp áp `../db-fix/ban_dat_truoc_ap_dung.sh`.
+
+- Bảng `ban_dat_truoc`. App chỉ đọc (vai `authenticated`, đúng quán); vai `anon` không đọc được vì có số điện thoại khách.
+- `ban_dat_truoc_luu_v1`, `ban_dat_truoc_doi_trang_thai_v1`, `ban_dat_truoc_nhan_v1`, `ban_dat_truoc_da_nhac_v1`.
+- Chống đặt trùng: khoá theo bàn (`pg_advisory_xact_lock`) rồi kiểm trong hàm lưu. **Không dùng ràng buộc loại trừ** như kế hoạch ban đầu vì máy chủ chưa có extension `btree_gist`; app không ghi thẳng được vào bảng nên kiểm trong hàm là đủ.
+- Tính tiền lượt đặt theo khung: lúc nhận, mốc giờ của phiên lùi về giờ đặt nếu khách đến trễ; lúc chốt để thanh toán, tính tới hết khung nếu khách về sớm. Chuyển bàn giữa chừng thì đoạn bàn cũ chỉ tính tới lúc chuyển.
+- Kèm sửa tên dòng tiền giờ: giờ ra in = giờ vào + số phút tính tiền (hết cảnh "16:59–16:59 (1p)").
+- Chạy thử trên bản sao: test đặt trước 40/40; test tính giờ 23/11 vẫn 50/50; chặn đóng phiên 16/16; bàn giao ca 16/16; áp lại lần hai không lỗi; hoàn tác trả đúng hàm cũ (test 23/11 qua sau hoàn tác), áp lại sau hoàn tác qua.
+
+**App**
+
+| Việc | Ở đâu |
+|---|---|
+| Dữ liệu, luật thuần (nhắc 30 phút, lượt kế tiếp, báo trùng), kho đọc ghi | `lib/modules/tinh_gio/dat_truoc.dart` |
+| Màn "Lịch đặt" (mỗi bàn một thẻ, điện thoại 1 cột / máy tính bảng 2 / màn rộng 3), hộp đặt / sửa, hộp việc của lượt đặt (gọi, nhận, sửa, không đến, huỷ) | `lib/modules/tinh_gio/dat_truoc_ui.dart` |
+| Nút "Lịch đặt" ở đầu màn Bàn; thẻ bàn hiện "Đặt 18:00 • tên khách" (trong 12 giờ tới); mở bàn có lượt đặt trong 60 phút tới thì hỏi "khách đặt đã đến" hay "khách khác" | `lib/screens/ban_screen.dart` |
+| Hộp nhắc trước 30 phút: chuông, "Gọi khách", "Đã nhắc", "Đóng"; người khác bấm "Đã nhắc" thì hộp trên máy này tự đóng | `TinhGioNhacDatSan` trong `dat_truoc_ui.dart`, gắn ở khung chính `lib/main.dart` |
+
+Lệch so với kế hoạch:
+
+- Màn Lịch đặt là **danh sách theo bàn**, chưa phải lưới giờ × sân. Lưới giờ để sau nếu quán cần nhìn khoảng trống theo giờ.
+- Bộ canh giờ nhắc gắn ở **khung chính** (`main.dart`), không phải Trang chủ: Trang chủ không còn được giữ mở khi sang màn khác (`ActiveModuleHost` chỉ dựng màn đang chọn).
+- Nhắc mỗi 30 giây so giờ một lần (kế hoạch ghi mỗi phút).
+
+Kiểm đã làm: `flutter analyze lib` 0 lỗi, không thêm cảnh báo; `flutter test` 1295 qua, 1 hỏng (test nhắc rà bài hướng dẫn, đỏ từ trước); test riêng `test/modules/tinh_gio` gồm 8 test luật đặt trước. Ảnh chụp: `goldens/lich_dat_360.png`, `lich_dat_1024.png`.
+
+**Chưa kiểm:** chưa chạy trong app thật (bảng chưa có trên máy chủ thật). Hộp nhắc, hộp đặt, nhận sân mới qua biên dịch và test luật, chưa bấm thử. Chuông khi app đang ở màn khác và trên web chưa thử.
+
+**Áp production 24/11 12:48** (Chủ Quán bảo "Áp lên máy chủ"): `bash db-fix/ban_dat_truoc_ap_dung.sh`, 13 giây kể cả sao lưu. Mốc hoàn tác `/root/quannho-backups/quannho_before_ban_dat_truoc_20261124_124822.dump`; nhật ký `db-fix/ban_dat_truoc_log_20261124_124822.txt`. Chạy lại ngay trên máy chủ thật: test đặt trước 40/40, test tính giờ 23/11 qua hết, đều tự ROLLBACK. Kiểm sau khi áp: 1 bảng, 4 hàm, hàm ghi dòng tiền giờ đã là bản 3 tham số, bảng có trong kênh realtime, vai `anon` không có quyền đọc, 0 dòng dữ liệu, không sót quán test.
+

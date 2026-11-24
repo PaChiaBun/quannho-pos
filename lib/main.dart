@@ -1,3 +1,4 @@
+import 'modules/tinh_gio/dat_truoc_ui.dart' show TinhGioNhacDatSan;
 import 'core/utils/app_logger.dart';
 import 'core/services/app_heartbeat_service.dart';
 import 'dart:io';
@@ -733,7 +734,7 @@ class _MainShellState extends ConsumerState<MainShell>
     return Scaffold(
       // Màn Bếp nền tối: 2 góc bo của thanh dưới lộ nền kem của khung → dùng cùng màu nền Bếp.
       backgroundColor: idx == NavTab.kitchen ? const Color(0xFF0D1117) : null,
-      body: _buildBody(idx),
+      body: Stack(children: [_buildBody(idx), const TinhGioNhacDatSan()]),
       // Bàn phím mở thì ẩn voi — không thì voi nổi lên che kết quả tìm / ô nhập.
       floatingActionButton: Builder(
         builder: (context) => MediaQuery.viewInsetsOf(context).bottom > 0
@@ -993,7 +994,7 @@ class _MainShellState extends ConsumerState<MainShell>
               color: Color(0xFFEEEBE6),
             ),
             // ── Nội dung chính ──────────────────────────────────
-            Expanded(child: _buildBody(idx)),
+            Expanded(child: Stack(children: [_buildBody(idx), const TinhGioNhacDatSan()])),
           ],
         ),
       ),

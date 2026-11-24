@@ -60,6 +60,8 @@ import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
     show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
+import '../modules/tinh_gio/dat_truoc.dart';
+import '../modules/tinh_gio/dat_truoc_ui.dart';
 import '../modules/tinh_gio/loai_hinh.dart';
 import '../modules/tinh_gio/tinh_gio.dart';
 import '../modules/tinh_gio/tinh_gio_widgets.dart';
@@ -608,6 +610,31 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     if (_isOpeningTable) return;
     _isOpeningTable = true;
     try {
+      // Bàn có lượt đặt trước trong 60 phút tới (hoặc đang trong khung đặt): hỏi ai đang nhận bàn.
+      String? nhanLuotDat;
+      final datKe = ref.read(tinhGioModuleActiveProvider)
+          ? luotDatKeTiep(
+              ref.read(datTruocGanDayProvider).value ?? const <DatTruoc>[],
+              table.id,
+              DateTime.now(),
+            )
+          : null;
+      if (datKe != null && datKe.gioTu.difference(DateTime.now()) <= const Duration(minutes: 60)) {
+        final chon = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('${table.label} có khách đặt ${gioPhut(datKe.gioTu)}–${gioPhut(datKe.gioDen)}'),
+            content: Text('Lượt đặt của ${datKe.tenKhach}. Ai đang nhận bàn này?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Thôi')),
+              TextButton(onPressed: () => Navigator.pop(ctx, 'khac'), child: const Text('Khách khác')),
+              TextButton(onPressed: () => Navigator.pop(ctx, 'dat'), child: Text('${datKe.tenKhach} đã đến')),
+            ],
+          ),
+        );
+        if (chon == null || !mounted) return;
+        if (chon == 'dat') nhanLuotDat = datKe.id;
+      }
       final session = await showModalBottomSheet<BanSessionModel>(
         context: context,
         backgroundColor: Colors.transparent,
@@ -618,6 +645,18 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       );
       if (session == null) return;
+      if (nhanLuotDat != null) {
+        final r = await ref.read(datTruocRepositoryProvider).nhan(nhanLuotDat, session.id);
+        if (r['success'] != true && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bàn đã mở nhưng chưa gắn được lượt đặt: ${r['message'] ?? 'lỗi mạng'}'),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
       AppLogger.action(
         'open_table',
         'Mở bàn',
@@ -886,6 +925,14 @@ class _BanScreenState extends ConsumerState<BanScreen> {
               );
             },
           ),
+          if (ref.watch(tinhGioModuleActiveProvider))
+            IconButton(
+              icon: const Icon(Icons.event_note_rounded, color: _kNavy),
+              tooltip: 'Lịch đặt',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LichDatScreen()),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.add_location_alt_rounded, color: _kNavy),
             tooltip: 'Thêm khu vực',
@@ -2134,6 +2181,15 @@ class _TableCard extends ConsumerWidget {
           )
         : null;
     final tongHien = tamTinh?.tong ?? totalAmount;
+    // Lượt đặt trước kế tiếp của bàn (chỉ khi quán bật module Tính giờ; trong 12 giờ tới).
+    final datKe = ref.watch(tinhGioModuleActiveProvider)
+        ? luotDatKeTiep(
+            ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[],
+            table.id,
+            DateTime.now(),
+          )
+        : null;
+    final hienDatKe = datKe != null && datKe.gioTu.difference(DateTime.now()) < const Duration(hours: 12);
     final waiters = activeItems
         .where((i) => !i.laTienGio)
         .map((i) => i.addedBy)
@@ -2374,6 +2430,17 @@ zone.iconCode,
                               fontSize: infoFontSize,
                               fontWeight: FontWeight.w500,
                               color: _kNavy.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        if (hienDatKe)
+                          Text(
+                            'Đặt ${gioPhut(datKe.gioTu)} • ${datKe.tenKhach}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: infoFontSize,
+                              fontWeight: FontWeight.w700,
+                              color: isOccupied ? Colors.white : _kOrange,
                             ),
                           ),
                         if (isOccupied && tongHien > 0) ...[

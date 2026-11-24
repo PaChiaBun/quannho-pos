@@ -14,6 +14,10 @@ Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`. Bi da, karaoke, s
 - Trigger `qn_tinh_gio_ban_v1` / `qn_tinh_gio_phien_v1` / `qn_tinh_gio_mon_v1`: app không ghi được dòng tiền giờ, không sửa mốc, không tự đổi bàn của phiên tính giờ; phiên tính giờ chưa chốt (hoặc chốt quá 15 phút) không đóng được với MỌI vai, kể cả hàm thanh toán; huỷ bàn tính giờ mở quá 5 phút phải chốt trước; chỉ Chủ quán / Quản lý gắn giá giờ.
 - Tính: theo phút làm tròn lên, tiền làm tròn lên 1.000đ. Test `supabase/tests/ban_tinh_gio_v1_test.sql`; áp / hoàn tác `db-fix/ban_tinh_gio_ap_dung.sh`.
 
+## Đặt trước (migration `20261124_ban_dat_truoc_v1.sql`, ĐÃ ÁP production 24/11/2026 12:48; phần app đã viết, chưa phát hành)
+
+Giai đoạn 3 của `.docs/ke-hoach-ban-tinh-gio.md`. Bảng `ban_dat_truoc` (quán, bàn, tên khách, số điện thoại, giờ từ – đến, trạng thái `da_dat` / `da_nhan` / `huy` / `khong_den`, phiên bàn đã gắn, đã nhắc lúc nào / ai nhắc). App chỉ đọc (vai `authenticated`); ghi qua `ban_dat_truoc_luu_v1`, `ban_dat_truoc_doi_trang_thai_v1`, `ban_dat_truoc_nhan_v1`, `ban_dat_truoc_da_nhac_v1`. Không cho hai lượt còn hiệu lực trùng giờ trên một bàn (khoá theo bàn trong hàm lưu). Lượt đã nhận: chốt giờ tính tới hết khung đã đặt (`qn_tinh_gio_ghi_dong_v1` có thêm tham số `p_du_khung`). Đặt trước không tạo doanh thu; tiền vào báo cáo khi phiên bàn thanh toán như thường. Test `supabase/tests/ban_dat_truoc_v1_test.sql`; áp / hoàn tác `db-fix/ban_dat_truoc_ap_dung.sh`.
+
 ## Vòng đời phiên bàn — chặn client tự đóng (ĐÃ áp production 22/10/2026 20:27)
 
 - `ban_sessions.status`: `open` → `closed` (thanh toán qua `settle_ban_session_v5`, bán quầy qua `complete_pos_sale_v1`, hoặc phiên nguồn rỗng khi gộp bàn) | `cancelled` (huỷ bàn có lý do + duyệt + `void_audit_logs`).
