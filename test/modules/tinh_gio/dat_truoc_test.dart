@@ -93,4 +93,16 @@ void main() {
     expect((d.choKhach, d.conHieuLuc, d.tienCoc, d.nhacLuc), (true, true, 50000.0, null));
     expect(gioPhut(DateTime(2026, 1, 1, 7, 5)), '07:05');
   });
+
+  test('khung đã đặt của phiên: chỉ lượt đã nhận, đúng phiên và đúng bàn', () {
+    DatTruoc nhan(String id, String ban, String phien, {String tt = 'da_nhan', int phut = 60}) => DatTruoc(
+          id: id, tableId: ban, tenKhach: id, gioTu: t, gioDen: t.add(Duration(minutes: phut)),
+          trangThai: tt, sessionId: phien, createdAt: t,
+        );
+    final ds = [nhan('a', 'b1', 'p1'), nhan('b', 'b2', 'p2'), nhan('c', 'b1', 'p3', tt: 'da_dat')];
+    expect(khungDatCuaPhien(ds, 'p1', 'b1'), t.add(const Duration(minutes: 60)));
+    expect(khungDatCuaPhien(ds, 'p1', 'b9'), isNull, reason: 'phiên đã chuyển sang bàn khác: không kéo tới hết khung');
+    expect(khungDatCuaPhien(ds, 'p3', 'b1'), isNull, reason: 'lượt chưa nhận');
+    expect(khungDatCuaPhien(ds, 'px', 'b1'), isNull);
+  });
 }

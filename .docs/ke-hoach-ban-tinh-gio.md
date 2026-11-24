@@ -353,3 +353,30 @@ Kiểm đã làm: `flutter analyze lib` 0 lỗi, không thêm cảnh báo; `flut
 
 **Áp production 24/11 12:48** (Chủ Quán bảo "Áp lên máy chủ"): `bash db-fix/ban_dat_truoc_ap_dung.sh`, 13 giây kể cả sao lưu. Mốc hoàn tác `/root/quannho-backups/quannho_before_ban_dat_truoc_20261124_124822.dump`; nhật ký `db-fix/ban_dat_truoc_log_20261124_124822.txt`. Chạy lại ngay trên máy chủ thật: test đặt trước 40/40, test tính giờ 23/11 qua hết, đều tự ROLLBACK. Kiểm sau khi áp: 1 bảng, 4 hàm, hàm ghi dòng tiền giờ đã là bản 3 tham số, bảng có trong kênh realtime, vai `anon` không có quyền đọc, 0 dòng dữ liệu, không sót quán test.
 
+### 24/11 chiều — Chạy thử đặt trước trên app Android thật (máy ảo, quán Demo), đối chiếu máy chủ
+
+Bản release cài lên máy ảo Android, Chủ Quán tự đăng nhập quán Demo, Claude điều khiển qua adb.
+
+| Việc thử | Kết quả |
+|---|---|
+| Mở Lịch đặt từ nút ở đầu màn Bàn | Hiện bàn A1 (bàn có giá giờ), đọc được bảng trên máy chủ |
+| Đặt 13:30–14:00, tên + số điện thoại | Máy chủ ghi đúng, danh sách cập nhật ngay |
+| Hộp nhắc trước 30 phút | Tự bật lúc 13:00 (đúng mốc), đủ bàn / giờ / tên / số điện thoại, 3 nút |
+| Bấm "Đã nhắc" | Máy chủ ghi giờ và tên người nhắc; lịch hiện "đã nhắc 13:01" |
+| "Khách đã đến: nhận A 1" (đến sớm 29 phút) | Lượt đặt "Đã nhận", bàn mở, mốc giờ = lúc đến |
+| Thanh toán | 25.000đ: tính từ 13:01 tới hết khung 14:00; dòng "… · 13:01–14:00 (59p)"; hoá đơn QN-20261124-001 |
+| Lượt thứ hai 14:00–14:30, nhận lúc 13:08 | Thẻ bàn "khung đặt 1g22 • giờ 35.000 đ"; thanh toán đúng 35.000đ, hoá đơn QN-20261124-002 |
+
+Lỗi tìm ra khi thử, đã sửa và thử lại:
+
+- Tiền tạm tính trên thẻ bàn và dải trong màn chi tiết tính theo giờ thực (1.000đ) trong khi máy chủ sẽ thu theo khung (25.000đ). Nay app tạm tính tới hết khung đã đặt, khớp máy chủ.
+- Hộp chọn giờ ở kiểu gõ số không nhận "13" (đòi kiểu 12 giờ). Đã ép kiểu 24 giờ.
+- Danh sách lượt đặt xếp ngược: `order('gio_tu')` của thư viện mặc định giảm dần. Đã ghi rõ tăng dần và xếp lại ở app.
+- Nhãn ô tiền cọc bị cắt trên màn hẹp. Đã rút gọn.
+
+Chưa thử: sửa lượt đặt, huỷ, "khách không đến", báo trùng giờ trên app (máy chủ đã có test); mở bàn từ sơ đồ khi có lượt đặt sắp tới; nút "Gọi khách"; hai máy cùng mở để xem hộp nhắc tự đóng; chuông (máy ảo không nghe được); in bill.
+
+Điều cần biết: lượt "Đã nhận" vẫn giữ khung giờ của nó tới hết khung dù khách đã thanh toán và về sớm, nên chưa đặt người khác vào phần còn lại của khung đó được.
+
+Quán Demo sau lượt thử: 2 lượt đặt "Đã nhận", 2 hoá đơn thử hôm 24/11 (cộng 3 hoá đơn hôm 23/11), module Tính giờ vẫn bật, bàn A1 vẫn gắn giá giờ.
+

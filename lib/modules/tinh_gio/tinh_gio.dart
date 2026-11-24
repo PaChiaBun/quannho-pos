@@ -67,16 +67,26 @@ class TinhGioTamTinh {
   /// Tổng bàn: các món chưa huỷ + [tienGio] (dòng đã chốt của đoạn đang chạy được thay bằng số tạm tính).
   final double tong;
   final bool daHuy;
-  const TinhGioTamTinh({required this.soPhut, required this.tienGio, required this.tong, required this.daHuy});
+  /// Đang tính tới hết khung đã đặt trước (khách về sớm vẫn trả đủ khung), không phải tới lúc xem.
+  final bool theoKhungDat;
+  const TinhGioTamTinh({
+    required this.soPhut,
+    required this.tienGio,
+    required this.tong,
+    required this.daHuy,
+    this.theoKhungDat = false,
+  });
 }
 
 /// [mon] = MỌI dòng của phiên (kể cả đã huỷ). [giaMotGio] null (chưa tải được món giá giờ) thì giữ
-/// số đã chốt gần nhất nếu có.
+/// số đã chốt gần nhất nếu có. [khungDatDen] = giờ hết khung của lượt đặt trước mà phiên đã nhận (còn ở
+/// đúng bàn đã đặt): chưa hết khung thì tính tới hết khung, như máy chủ làm lúc chốt.
 TinhGioTamTinh tinhGioTamTinhBan({
   required int gioBatDauMs,
   required double? giaMotGio,
   required Iterable<BanSessionItemModel> mon,
   required DateTime luc,
+  DateTime? khungDatDen,
 }) {
   BanSessionItemModel? dongDoan;
   var tongMon = 0.0;
@@ -88,12 +98,19 @@ TinhGioTamTinh tinhGioTamTinhBan({
     }
   }
   final daHuy = dongDoan?.kitchenStatus == 'huy';
-  final soPhut = tinhGioSoPhut(DateTime.fromMillisecondsSinceEpoch(gioBatDauMs), luc);
+  final theoKhung = khungDatDen != null && khungDatDen.isAfter(luc);
+  final soPhut = tinhGioSoPhut(DateTime.fromMillisecondsSinceEpoch(gioBatDauMs), theoKhung ? khungDatDen : luc);
   final tienGio = daHuy
       ? 0.0
       : giaMotGio == null
           ? (dongDoan?.subtotal ?? 0.0)
           : tinhGioThanhTien(soPhut, giaMotGio);
-  return TinhGioTamTinh(soPhut: soPhut, tienGio: tienGio, tong: tongMon + tienGio, daHuy: daHuy);
+  return TinhGioTamTinh(
+    soPhut: soPhut,
+    tienGio: tienGio,
+    tong: tongMon + tienGio,
+    daHuy: daHuy,
+    theoKhungDat: theoKhung && !daHuy,
+  );
 }
 

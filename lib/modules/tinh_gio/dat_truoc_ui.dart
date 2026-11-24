@@ -511,7 +511,15 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   DateTime get _den => _tu.add(Duration(minutes: _phut));
 
   Future<void> _chonGio() async {
-    final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_tu));
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_tu),
+      // Giờ kiểu 24: không ép thì ô gõ số báo "13" là giờ không hợp lệ (thử trên Android 24/11).
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
     if (t != null) setState(() => _tu = DateTime(_tu.year, _tu.month, _tu.day, t.hour, t.minute));
   }
 
@@ -647,7 +655,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                 controller: _coc,
                 keyboardType: TextInputType.number,
                 style: _chu(14, FontWeight.w500),
-                decoration: _o('Tiền đã cọc (chỉ để ghi nhớ, không vào Thu Chi)', goiY: '0'),
+                decoration: _o('Tiền đã cọc (chỉ ghi nhớ)', goiY: '0'),
               ),
               if (_loi != null)
                 Padding(

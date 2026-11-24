@@ -2172,23 +2172,22 @@ class _TableCard extends ConsumerWidget {
     final giaGioMon = table.tinhGio
         ? ref.watch(tinhGioGiaTheoMonProvider)[table.giaGioProductId]
         : null;
+    // Lượt đặt trước của quán (chỉ đọc khi quán bật module Tính giờ).
+    final dsDat = ref.watch(tinhGioModuleActiveProvider)
+        ? (ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[])
+        : const <DatTruoc>[];
     final tamTinh = isOccupied && session!.gioBatDau != null
         ? tinhGioTamTinhBan(
             gioBatDauMs: session!.gioBatDau!,
             giaMotGio: giaGioMon?.sellPrice,
             mon: sessionItems ?? const <BanSessionItemModel>[],
             luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+            khungDatDen: khungDatCuaPhien(dsDat, session!.id, table.id),
           )
         : null;
     final tongHien = tamTinh?.tong ?? totalAmount;
-    // Lượt đặt trước kế tiếp của bàn (chỉ khi quán bật module Tính giờ; trong 12 giờ tới).
-    final datKe = ref.watch(tinhGioModuleActiveProvider)
-        ? luotDatKeTiep(
-            ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[],
-            table.id,
-            DateTime.now(),
-          )
-        : null;
+    // Lượt đặt trước kế tiếp của bàn (trong 12 giờ tới).
+    final datKe = luotDatKeTiep(dsDat, table.id, DateTime.now());
     final hienDatKe = datKe != null && datKe.gioTu.difference(DateTime.now()) < const Duration(hours: 12);
     final waiters = activeItems
         .where((i) => !i.laTienGio)
@@ -2411,6 +2410,8 @@ zone.iconCode,
                                 Text(
                                   tamTinh.daHuy
                                       ? '${tinhGioThoiLuong(tamTinh.soPhut)} • đã bỏ tiền giờ'
+                                      : tamTinh.theoKhungDat
+                                      ? 'khung đặt ${tinhGioThoiLuong(tamTinh.soPhut)} • giờ ${fmtVnd(tamTinh.tienGio)}'
                                       : '${tinhGioThoiLuong(tamTinh.soPhut)} • giờ ${fmtVnd(tamTinh.tienGio)}',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: infoFontSize,
@@ -4626,11 +4627,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
             widget.session.gioBatDau;
         if (moc == null) return const SizedBox.shrink();
+        final khung = ref.watch(tinhGioModuleActiveProvider)
+            ? khungDatCuaPhien(
+                ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[],
+                widget.session.id,
+                widget.table.id,
+              )
+            : null;
         final t = tinhGioTamTinhBan(
           gioBatDauMs: moc,
           giaMotGio: ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice,
           mon: items,
           luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+          khungDatDen: khung,
         );
         return Container(
           width: double.infinity,
@@ -4648,6 +4657,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 child: Text(
                   t.daHuy
                       ? 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • Quản lý đã bỏ tiền giờ'
+                      : t.theoKhungDat
+                      ? 'Khách đặt trước: tính đủ khung tới ${gioPhut(khung!)} '
+                            '(${tinhGioThoiLuong(t.soPhut)}) • tiền giờ ${fmtVnd(t.tienGio)} • chốt khi bấm Thanh toán'
                       : 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • tiền giờ tạm tính '
                             '${fmtVnd(t.tienGio)} • chốt khi bấm Thanh toán',
                   style: GoogleFonts.plusJakartaSans(

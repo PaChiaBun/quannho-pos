@@ -108,6 +108,19 @@ void main() {
           mon: [mon('nuoc', 10000), mon('gio', 90000, tt: 'huy', gioTu: moc)]);
       expect((r.tienGio, r.tong, r.daHuy), (0.0, 10000.0, true));
     });
+    test('khách đặt trước về sớm: tạm tính tới hết khung, như máy chủ (59 phút × 25.000 = 25.000)', () {
+      final vao = DateTime(2026, 11, 24, 13, 1, 38);
+      final r = tinhGioTamTinhBan(
+          gioBatDauMs: vao.millisecondsSinceEpoch, giaMotGio: 25000, mon: const [],
+          luc: vao.add(const Duration(minutes: 1)), khungDatDen: DateTime(2026, 11, 24, 14));
+      expect((r.soPhut, r.tienGio, r.theoKhungDat), (59, 25000.0, true));
+    });
+    test('khách đặt trước chơi lố: hết khung thì tính theo giờ thực', () {
+      final r = tinhGioTamTinhBan(
+          gioBatDauMs: moc, giaMotGio: 60000, mon: const [], luc: luc,
+          khungDatDen: t0.add(const Duration(minutes: 60)));
+      expect((r.soPhut, r.tienGio, r.theoKhungDat), (90, 90000.0, false));
+    });
     test('chưa tải được giá: giữ số đã chốt gần nhất', () {
       final r = tinhGioTamTinhBan(
           gioBatDauMs: moc, giaMotGio: null, luc: luc,

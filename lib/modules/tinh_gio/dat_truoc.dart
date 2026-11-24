@@ -94,6 +94,18 @@ DatTruoc? luotDatKeTiep(Iterable<DatTruoc> ds, String tableId, DateTime luc) {
   return ra;
 }
 
+/// Giờ hết khung của lượt đặt mà phiên [sessionId] đã nhận, khi phiên còn ở đúng bàn đã đặt [tableId].
+/// Máy chủ tính tiền giờ tới mốc này nếu khách về sớm; app dùng để tạm tính cho khớp.
+DateTime? khungDatCuaPhien(Iterable<DatTruoc> ds, String sessionId, String tableId) {
+  DateTime? ra;
+  for (final d in ds) {
+    if (d.trangThai == 'da_nhan' && d.sessionId == sessionId && d.tableId == tableId) {
+      if (ra == null || d.gioDen.isAfter(ra)) ra = d.gioDen;
+    }
+  }
+  return ra;
+}
+
 /// Lượt còn hiệu lực của [tableId] trùng với khung [tu]–[den] (bỏ qua chính [boQuaId]).
 /// Chỉ để báo sớm trên màn hình; máy chủ mới là nơi chặn thật.
 DatTruoc? luotDatTrung(Iterable<DatTruoc> ds, String tableId, DateTime tu, DateTime den, {String? boQuaId}) {
@@ -117,8 +129,8 @@ class DatTruocRepository {
         .eq('store_id', storeId)
         .lt('gio_tu', den.toUtc().toIso8601String())
         .gt('gio_den', tu.toUtc().toIso8601String())
-        .order('gio_tu');
-    return rows.map(DatTruoc.fromMap).toList();
+        .order('gio_tu', ascending: true); // thư viện mặc định GIẢM dần → phải ghi rõ
+    return rows.map(DatTruoc.fromMap).toList()..sort((a, b) => a.gioTu.compareTo(b.gioTu));
   }
 
   /// Các lượt có khung giờ chạm vào khoảng thời gian do [khoang] trả về (gọi lại mỗi lần tải).
