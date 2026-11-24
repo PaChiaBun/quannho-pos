@@ -124,7 +124,7 @@ Máy này vừa thêm, vừa thanh toán mà máy kia chưa thấy:
 1. Các máy tự cập nhật sau vài giây, chậm nhất khoảng 15 giây. Đợi rồi xem lại.
 2. Máy kia kiểm tra mạng: mất mạng thì danh sách giữ dữ liệu cũ, đa số màn không báo.
 3. Vẫn cũ: thoát app máy đó rồi mở lại.
-4. Vừa bật, tắt module: máy khác phải thu nhỏ rồi mở lại app mới đổi.
+4. Vừa bật, tắt module: máy khác thu nhỏ rồi mở lại app, hoặc kéo Trang chủ xuống để làm mới. Riêng nút Gửi bếp mờ: bấm vào, app tự đọc lại và gửi nếu Bếp đã bật.
 
 ### Thanh toán quay vòng, báo mạng chậm, không biết tiền đã ghi chưa
 Đừng thanh toán lại ngay và đừng sửa món; app giữ đúng giao dịch cũ nên không thu hai lần.

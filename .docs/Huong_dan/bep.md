@@ -33,7 +33,7 @@ Bếp coi món trên màn hình: mở ô **"Phiếu bếp"** ở Trang chủ.
 - **Lọc trạm**: **"Tất cả"**, **"Bếp nóng"**, **"Bếp nước"**.
 - **Máy tính bảng nằm ngang / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.
 - **Điện thoại, máy tính bảng dựng dọc (iPad dọc)**: ba tab **"Chờ"**, **"Đang làm"**, **"Xong"** — màn hẹp chia ba cột sẽ quá nhỏ.
-- **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại (phiếu đã xong ghi số món của cả phiếu), đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping (ghi tổng của dòng, vd "x2 Trà đào" + "Trân châu x1" = cả 2 ly chỉ 1 phần trân châu; đơn QR cũng ghi đủ số), ghi chú (📌), và nút **"In phiếu"**.
+- **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại (phiếu đã xong ghi số món của cả phiếu) kèm tổng số phần khi có món gọi nhiều phần (vd "4 món · 18 phần"), đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng (ô số lượng nền đen chữ trắng khi món từ 2 phần trở lên), topping (ghi tổng của dòng, vd "x2 Trà đào" + "Trân châu x1" = cả 2 ly chỉ 1 phần trân châu; đơn QR cũng ghi đủ số), ghi chú của khách (nhãn nền vàng có hình ghim), và nút **"In phiếu"**. Thẻ nền trắng chữ đen; dải màu ở đầu thẻ báo mức gấp theo thời gian chờ: xanh, vàng (từ 5 phút), cam (từ 10 phút), đỏ (từ 20 phút); phiếu đang làm màu vàng, phiếu đã xong màu xanh nhạt.
 
 ## Các việc thường làm
 
@@ -46,7 +46,7 @@ Bếp coi món trên màn hình: mở ô **"Phiếu bếp"** ở Trang chủ.
 
 ### 2. Mở lại, dọn phiếu
 - Phiếu Hoàn thành làm thiếu/sai: **"Mở lại"** → về Đang làm ("↩ Đã mở lại phiếu …").
-- **"Dọn phiếu"**: ẩn phiếu Hoàn thành khỏi màn hình ("🧹 Đã dọn phiếu …"). Không dọn thì phiếu Hoàn thành tự ẩn sau **15 phút**, hoặc khi bàn đã thanh toán.
+- **"Dọn phiếu"**: ẩn phiếu Hoàn thành khỏi màn hình ("🧹 Đã dọn phiếu …"). Nút **"Dọn Phiếu Đã Xong"** ở đầu cột Hoàn thành (điện thoại: đầu tab "Xong") dọn mọi phiếu đã xong một lượt, có hỏi lại "Dọn N phiếu đã xong?". Không dọn thì phiếu Hoàn thành tự ẩn sau **15 phút**; bàn thanh toán rồi phiếu vẫn ở lại cho tới lúc đó.
 
 ### 3. Ghi chú nội bộ cho món
 - Chạm vào món → **"Ghi chú nội bộ bếp (không hiển thị cho khách)"** → nhập (vd "làm chín kỹ, không cay") → **"Lưu ghi chú"**.

@@ -2,24 +2,26 @@
   "_ghi_chu": "Mã băm file nguồn lúc bài được rà lại lần cuối. Ghi bằng tool/dong_dau_huong_dan.dart.",
   "bai": {
     "ban-hang.md": {
-      "lib/core/providers/app_providers.dart": "a8d1c42acdc06aaf",
+      "lib/core/providers/app_providers.dart": "c4c05630a1e75079",
       "lib/core/widgets/order_detail_dialog.dart": "64516eb78d08e0de",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
       "lib/modules/pos/repository/pos_repository.dart": "3b092c1a3f94f53a",
       "lib/modules/pos/screens/checkout_sheet.dart": "81fe7673c84958e2",
       "lib/screens/finance_screen.dart": "6217534a4480b8a3",
-      "lib/screens/pos_screen.dart": "862c5b44d14d2eb4",
+      "lib/screens/pos_screen.dart": "da4a26b585e59514",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
       ".docs/Ai_Boom/cac-module/chuoi-cua-hang.md": "506e653eb997e678",
-      ".docs/tinh-nang.md": "741d0bd68cbdaa1a",
+      ".docs/tinh-nang.md": "df31474c8787d616",
       "lib/core/repositories/chain_repository.dart": "884179d3c4d9034a",
       "lib/core/utils/chain_compare.dart": "eaa3c172728e61d3",
       "lib/core/utils/chain_insights.dart": "643ba4133c8c144d",
+      "lib/core/widgets/create_store_sheet.dart": "d05f9cad0fca5d5a",
       "lib/screens/chain_manage_sheet.dart": "b90ccf8ba7b5c102",
       "lib/screens/chain_module_offer.dart": "9289dd61e83826ef",
-      "lib/screens/chain_report_screen.dart": "ca45468ac16e8e2d"
+      "lib/screens/chain_report_screen.dart": "ca45468ac16e8e2d",
+      "lib/screens/settings_screen.dart": "5aaae5ff95f6334b"
     },
     "bao-cao.md": {
       "lib/core/repositories/dashboard_repository.dart": "cfc27d53ecb1ed97",
@@ -29,8 +31,8 @@
       "supabase/migrations/20261104_topping_bao_cao_v1.sql": "90417bacd6051a33"
     },
     "bep.md": {
-      "lib/core/repositories/kitchen_repository.dart": "e9fe06d4a1b37367",
-      "lib/screens/kitchen_screen.dart": "2836851a6f7a98ea",
+      "lib/core/repositories/kitchen_repository.dart": "c96b674dcfdc483e",
+      "lib/screens/kitchen_screen.dart": "aaeeb68a510913bc",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -81,7 +83,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "d6d85a72df8d34b5",
+      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -132,8 +134,8 @@
       "supabase/migrations/20261014_qr_chong_pha_v4.sql": "51c552567bbb2691"
     },
     "quan-ly-ban.md": {
-      "lib/core/repositories/ban_repository.dart": "6a9346e29e6ac9e0",
-      "lib/screens/ban_screen.dart": "d6d85a72df8d34b5",
+      "lib/core/repositories/ban_repository.dart": "dcda581ac0384ca9",
+      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"
@@ -198,9 +200,19 @@
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "aec1e69fd2d84a4e",
       "lib/modules/bill_printer/screens/bill_preview_screen.dart": "0592e9405d40aee9",
       "lib/modules/qr_order/providers/qr_order_providers.dart": "59f84e785d6dadef",
-      "lib/screens/ban_screen.dart": "8bf0d3b177d7c36e",
+      "lib/screens/ban_screen.dart": "3101d66aa85e5c8d",
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b",
       "lib/screens/kitchen_screen.dart": "d788ded3865f290d"
+    },
+    "tinh-gio.md": {
+      "lib/modules/tinh_gio/dat_truoc.dart": "5905c43fef80126d",
+      "lib/modules/tinh_gio/dat_truoc_ui.dart": "cc774b3705aa80ca",
+      "lib/modules/tinh_gio/loai_hinh.dart": "bd79dcaf13aaf2da",
+      "lib/modules/tinh_gio/tinh_gio.dart": "6404adfb5ee98db1",
+      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "46b80e8d3a9bae2a",
+      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
+      "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
+      "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }
   }
 }

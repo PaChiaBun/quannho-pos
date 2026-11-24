@@ -59,7 +59,7 @@ nguon:
 3. Món chưa gửi quá 3 phút: cảnh báo "⚠ N món CHƯA gửi bếp quá 3 phút — bấm "Gửi bếp" để bếp làm."
 4. Bếp báo xong: app hiện "<bàn>: Món ăn đã sẵn sàng!".
 
-> Cần bật module **Bếp**. Nếu tắt: "KHÔNG gửi bếp được: module Bếp đang tắt trên quán này…". Phiếu bếp tự in nếu đã cài máy in (xem In Hoá Đơn).
+> Cần bật module **Bếp**. Nút mờ mà bấm vẫn được: app đọc lại máy chủ, thấy Bếp đã bật thì gửi luôn. Bếp tắt thật: "KHÔNG gửi bếp được: module Bếp đang tắt trên quán này…". Phiếu bếp tự in nếu đã cài máy in (xem In Hoá Đơn).
 
 ### 5. Sửa, giảm, huỷ món
 - **Món chưa gửi bếp**: dùng nút **− / +** để sửa số lượng, hoặc nút thùng rác để xoá — không cần duyệt. Món có topping thì − / + không đổi số ly (app báo **"Món có topping"** → **"Đã hiểu"**): xoá dòng rồi gọi lại đúng số ly và topping.
