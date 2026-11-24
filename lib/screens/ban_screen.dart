@@ -60,6 +60,7 @@ import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
     show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
+import '../modules/tinh_gio/loai_hinh.dart';
 import '../modules/tinh_gio/tinh_gio.dart';
 import '../modules/tinh_gio/tinh_gio_widgets.dart';
 
@@ -120,7 +121,23 @@ const _kZoneIconCodes = <int>[
   0xe0da, // flag_outlined
   0xe01a, // weekend (sofa)
   0xe206, // local_fire_department
+  // Hình ngành của module Tính giờ (mã riêng, xem LoaiHinh.maKhuVuc)
+  0xF1A01, // bi da
+  0xF1A02, // karaoke
+  0xF1A03, // cầu lông
+  0xF1A04, // tennis
+  0xF1A05, // pickleball
+  0xF1A06, // bóng bàn
 ];
+
+/// Biểu tượng khu vực: mã ngành vẽ bằng hình riêng, còn lại là MaterialIcons.
+Widget _zoneIconWidget(int code, {double? size, Color? color}) {
+  final nganh = loaiHinhTheoMaKhuVuc(code);
+  if (nganh != null) {
+    return nganh.bieuTuong(size: size ?? 24, color: color ?? _kNavy);
+  }
+  return Icon(_zoneIconForCode(code), size: size, color: color);
+}
 
 /// Dùng các IconData hằng để Flutter web có thể tree-shake font icon.
 IconData _zoneIconForCode(int code) {
@@ -1289,8 +1306,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(
-                                                _zoneIconForCode(zone.iconCode),
+                                              _zoneIconWidget(
+zone.iconCode,
                                                 color: Colors.white,
                                                 size: 14,
                                               ),
@@ -1979,8 +1996,8 @@ class _ZoneChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                _zoneIconForCode(iconCode),
+              _zoneIconWidget(
+iconCode,
                 size: 16,
                 color: isSelected ? Colors.white : color,
               ),
@@ -2207,8 +2224,8 @@ class _TableCard extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      _zoneIconForCode(zone.iconCode),
+                    _zoneIconWidget(
+zone.iconCode,
                       size: iconSizeVal,
                       color: isOccupied
                           ? Colors.white.withValues(alpha: 0.8)
@@ -2531,8 +2548,8 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _zoneIconForCode(widget.zone.iconCode),
+                      _zoneIconWidget(
+widget.zone.iconCode,
                         size: 20,
                         color: zoneColor,
                       ),
@@ -11564,8 +11581,8 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                             ),
                           ),
                           child: Center(
-                            child: Icon(
-                              _zoneIconForCode(iconCp),
+                            child: _zoneIconWidget(
+iconCp,
                               size: 22,
                               color: isSel ? _selectedColor : _kNavy,
                             ),
@@ -11842,8 +11859,8 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                _zoneIconForCode(zone.iconCode),
+                              _zoneIconWidget(
+zone.iconCode,
                                 size: 14,
                                 color: isSel ? Colors.white : zoneColor,
                               ),

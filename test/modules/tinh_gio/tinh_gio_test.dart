@@ -1,6 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/core/repositories/ban_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
+import 'package:quannho_pos/modules/tinh_gio/nganh_icon.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio.dart';
+import 'package:quannho_pos/modules/tinh_gio/tinh_gio_widgets.dart';
+import 'package:quannho_pos/shared/widgets/module_tile.dart';
 
 // Các số dưới đây trùng với supabase/tests/ban_tinh_gio_v1_test.sql (T5, T7, T9, T12):
 // app tạm tính phải ra đúng số máy chủ chốt.
@@ -143,6 +148,33 @@ void main() {
       expect(BanTableModel.fromMap({'id': 'b', 'name': 'Bàn 1'}).tinhGio, isFalse);
       expect(BanSessionModel.fromMap({'id': 'p', 'opened_at': 0}).gioBatDau, isNull);
       expect(BanSessionItemModel.fromMap({'id': 'i', 'added_at': 0}).laTienGio, isFalse);
+    });
+  });
+
+  group('loại hình', () {
+    test('mã không trùng nhau, mã khu vực nằm ngoài vùng MaterialIcons', () {
+      expect(kLoaiHinh.map((l) => l.id).toSet().length, kLoaiHinh.length);
+      expect(kLoaiHinh.map((l) => l.maKhuVuc).toSet().length, kLoaiHinh.length);
+      for (final l in kLoaiHinh) {
+        expect(l.maKhuVuc > 0xF8FF, isTrue, reason: '${l.id} trùng vùng mã MaterialIcons');
+        expect((l.icon == null) != (l.hinh == null), isTrue, reason: '${l.id} phải có đúng một nguồn hình');
+        expect(loaiHinhTheoMaKhuVuc(l.maKhuVuc), same(l));
+      }
+    });
+    test('mã lạ hoặc chưa chọn → "Tính giờ"', () {
+      expect(loaiHinhTheoId(null).id, 'khac');
+      expect(loaiHinhTheoId('golf').id, 'khac');
+      expect(loaiHinhTheoId('bi_da').ten, 'Bi da');
+      expect(loaiHinhTheoMaKhuVuc(0xe318), isNull, reason: 'mã MaterialIcons cũ không phải hình ngành');
+    });
+    test('ô module theo loại hình: đổi tên + hình, giữ màu và đường dẫn', () {
+      final goc = kModuleConfigs[kTinhGioModuleId]!;
+      final biDa = tinhGioTileData(goc, loaiHinhTheoId('bi_da'));
+      expect((biDa.id, biDa.title, biDa.route, biDa.baseColor), (goc.id, 'Bi da', goc.route, goc.baseColor));
+      expect(biDa.bieuTuong(size: 24, color: Colors.white), isA<NganhIcon>());
+      final karaoke = tinhGioTileData(goc, loaiHinhTheoId('karaoke'));
+      expect(karaoke.bieuTuong(size: 24, color: Colors.white), isA<Icon>());
+      expect(goc.bieuTuong(size: 24, color: Colors.white), isA<Icon>(), reason: 'ô cũ vẫn vẽ bằng Icon');
     });
   });
 }

@@ -308,3 +308,16 @@ Còn lại sau lượt thử:
 
 Về cách thử: bản web debug tại máy không lấy được vé vào quán vì `PosJwtAuthService.isConfigured` chỉ nhận `https` (cấu hình `pos-web` + lớp chuyển tiếp `http://localhost:8091` trong `.claude/launch.json` có từ trước khi có điều kiện này). Lượt này sửa tạm tại máy cho nhận `http://localhost` ở bản web debug, **đã gỡ, không commit**. Muốn thử web tại máy lần sau phải làm lại bước đó hoặc dựng lớp chuyển tiếp `https`.
 
+### 24/11 — Loại hình và biểu tượng theo ngành: đã viết, chờ Chủ Quán duyệt hình, CHƯA commit
+
+Chủ Quán chọn 23/11: vẽ hình riêng (không dùng emoji).
+
+- `lib/modules/tinh_gio/nganh_icon.dart`: bốn hình bộ Material không có (bi da, cầu lông, bóng bàn, pickleball), vẽ bằng `CustomPainter` trên lưới 24×24, một màu. Không thêm thư viện, không thêm tệp phông. Karaoke, Tennis, "Tính giờ" dùng biểu tượng Material có sẵn.
+- `lib/modules/tinh_gio/loai_hinh.dart`: 7 loại hình (Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Tính giờ), mỗi loại có tên ô, dòng phụ, cách gọi (bàn / phòng / sân), mã biểu tượng khu vực. Lưu ở `app_settings`, khoá `tinh_gio_loai_hinh`.
+- Ô module nhận hình tự vẽ (`ModuleTileData.iconBuilder`); Trang chủ đổi tên + biểu tượng ô Tính giờ theo loại hình.
+- Hộp "Quán thuộc loại hình nào?" hiện ngay sau khi bật module, và mở lại được từ dòng "Loại hình: … • Đổi" trong hộp chọn giá giờ.
+- Ô chọn biểu tượng khu vực có thêm 6 hình ngành (mã `0xF1A01`–`0xF1A06`, ngoài vùng mã MaterialIcons). App bản cũ gặp mã này sẽ hiện hình bàn mặc định.
+- Ảnh để duyệt: `test/modules/tinh_gio/goldens/nganh_icon.png`, `chon_loai_hinh_360.png` (chụp lại: `flutter test test/modules/tinh_gio/nganh_icon_golden_test.dart --update-goldens`).
+
+Chưa làm: cách gọi "bàn / phòng / sân" mới lưu trong loại hình, chưa thay vào chữ trên màn Bàn. Chưa chạy trong app thật (mới qua test và ảnh chụp).
+

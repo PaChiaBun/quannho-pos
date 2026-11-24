@@ -1,3 +1,5 @@
+import '../modules/tinh_gio/tinh_gio.dart' show kTinhGioModuleId;
+import '../modules/tinh_gio/tinh_gio_widgets.dart';
 import 'package:flutter/material.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/foundation.dart';
@@ -1357,9 +1359,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ..._moduleOrder,
     ];
 
+    final loaiHinh = ref.watch(tinhGioLoaiHinhProvider).value;
     final tiles = displayOrder.map((id) {
-      final config = kModuleConfigs[id];
-      if (config == null) return const SizedBox.shrink();
+      final goc = kModuleConfigs[id];
+      if (goc == null) return const SizedBox.shrink();
+      // Ô Tính giờ mang tên + biểu tượng của loại hình quán đã chọn (Bi da, Karaoke, Cầu lông…).
+      final config = id == kTinhGioModuleId && loaiHinh != null ? tinhGioTileData(goc, loaiHinh) : goc;
       final idx = _moduleOrder.indexOf(id);
       final isRemoving = _removingIds.contains(id);
       final isNew = id == _newlyAddedModuleId;
@@ -2170,7 +2175,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 color: config.baseColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Icon(config.icon, color: config.baseColor, size: 30),
+              child: config.bieuTuong(size: 30, color: config.baseColor),
             ),
             const SizedBox(height: 16),
 

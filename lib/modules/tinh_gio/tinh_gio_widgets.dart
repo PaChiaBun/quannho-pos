@@ -6,8 +6,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/models/product_model.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/providers/session_provider.dart';
 import '../../core/repositories/ban_repository.dart';
 import '../../core/utils/money_formatter.dart';
+import '../../shared/widgets/module_tile.dart';
+import 'loai_hinh.dart';
+import 'nganh_icon.dart';
 import 'tinh_gio.dart';
 
 const _kNavy = Color(0xFF1C2151);
@@ -35,6 +39,130 @@ final tinhGioGiaTheoMonProvider = Provider.autoDispose<Map<String, ProductModel>
   final ds = ref.watch(allProductsProvider).value ?? const <ProductModel>[];
   return {for (final p in ds) p.id: p};
 });
+
+/// Loại hình quán đã chọn cho module Tính giờ (mặc định "Tính giờ" khi chưa chọn hoặc chưa đọc được).
+final tinhGioLoaiHinhProvider = FutureProvider<LoaiHinh>((ref) async {
+  ref.watch(sessionProvider); // đổi quán thì đọc lại
+  return loaiHinhTheoId(await ref.watch(settingsRepositoryProvider).get(kLoaiHinhSettingKey));
+});
+
+/// Ô module Tính giờ ở Trang chủ theo loại hình: giữ màu và đường dẫn, đổi tên + biểu tượng.
+ModuleTileData tinhGioTileData(ModuleTileData goc, LoaiHinh l) => ModuleTileData(
+      id: goc.id,
+      title: l.ten,
+      subtitle: l.moTa,
+      icon: l.icon ?? goc.icon,
+      iconBuilder: l.hinh == null ? null : (size, color) => NganhIcon(l.hinh!, size: size, color: color),
+      baseColor: goc.baseColor,
+      route: goc.route,
+    );
+
+/// Hộp chọn loại hình. Chọn xong lưu vào cài đặt của quán và đóng.
+class TinhGioLoaiHinhSheet extends ConsumerStatefulWidget {
+  const TinhGioLoaiHinhSheet({super.key});
+
+  @override
+  ConsumerState<TinhGioLoaiHinhSheet> createState() => _TinhGioLoaiHinhSheetState();
+}
+
+class _TinhGioLoaiHinhSheetState extends ConsumerState<TinhGioLoaiHinhSheet> {
+  String? _dangLuu;
+  String? _loi;
+
+  Future<void> _chon(LoaiHinh l) async {
+    if (_dangLuu != null) return;
+    setState(() {
+      _dangLuu = l.id;
+      _loi = null;
+    });
+    try {
+      await ref.read(settingsRepositoryProvider).set(kLoaiHinhSettingKey, l.id);
+      ref.invalidate(tinhGioLoaiHinhProvider);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _dangLuu = null;
+          _loi = 'Chưa lưu được loại hình. Kiểm tra mạng rồi thử lại.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dangChon = ref.watch(tinhGioLoaiHinhProvider).value?.id;
+    TextStyle chu(double size, FontWeight w, [Color? c]) =>
+        GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: w, color: c ?? _kNavy);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: _kNavy.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text('Quán thuộc loại hình nào?', style: chu(18, FontWeight.w800)),
+          const SizedBox(height: 6),
+          Text(
+            'Ô module ở Trang chủ sẽ mang tên và biểu tượng của loại hình này. Đổi lại lúc nào cũng được.',
+            textAlign: TextAlign.center,
+            style: chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+          ),
+          if (_loi != null) ...[
+            const SizedBox(height: 8),
+            Text(_loi!, textAlign: TextAlign.center, style: chu(13, FontWeight.w700, _kRed)),
+          ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final l in kLoaiHinh)
+                Material(
+                  color: l.id == dangChon ? _kNavy : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: _dangLuu != null ? null : () => _chon(l),
+                    child: SizedBox(
+                      width: 104,
+                      height: 92,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _dangLuu == l.id
+                              ? const SizedBox.square(
+                                  dimension: 30,
+                                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                                )
+                              : l.bieuTuong(size: 30, color: l.id == dangChon ? Colors.white : _kNavy),
+                          const SizedBox(height: 8),
+                          Text(
+                            l.ten,
+                            style: chu(13.5, FontWeight.w700, l.id == dangChon ? Colors.white : _kNavy),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Hộp chọn món giá giờ cho một bàn (hoặc cả khu). Trả về true khi đã lưu.
 class TinhGioGiaGioSheet extends ConsumerStatefulWidget {
@@ -132,6 +260,22 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                 'ví dụ "Giờ bàn lỗ" 60.000đ, danh mục "Tiền giờ".',
                 textAlign: TextAlign.center,
                 style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _dangLuu
+                  ? null
+                  : () => showModalBottomSheet<void>(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (_) => const TinhGioLoaiHinhSheet(),
+                      ),
+              icon: (ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last)
+                  .bieuTuong(size: 18, color: _kNavy),
+              label: Text(
+                'Loại hình: ${(ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last).ten} • Đổi',
+                style: _chu(13, FontWeight.w700),
               ),
             ),
             if (widget.banCuaKhu.length > 1)

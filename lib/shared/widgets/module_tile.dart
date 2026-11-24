@@ -16,6 +16,8 @@ class ModuleTileData {
   final String? route;
   /// Số dòng tối đa của tiêu đề (mặc định 1, các ô cũ giữ nguyên).
   final int titleLines;
+  /// Hình tự vẽ thay cho [icon] (biểu tượng ngành mà bộ Material không có).
+  final Widget Function(double size, Color color)? iconBuilder;
 
   const ModuleTileData({
     required this.id,
@@ -26,7 +28,11 @@ class ModuleTileData {
     this.badge,
     this.route,
     this.titleLines = 1,
+    this.iconBuilder,
   });
+
+  Widget bieuTuong({required double size, required Color color}) =>
+      iconBuilder?.call(size, color) ?? Icon(icon, color: color, size: size);
 }
 
 // ── Palette: vibrant, clearly distinct from each other ──────────────────────
@@ -434,7 +440,7 @@ class _ModuleTileState extends State<ModuleTile>
                                     width: 1.5,
                                   ),
                                 ),
-                                child: Icon(d.icon, color: Colors.white, size: iconSize),
+                                child: d.bieuTuong(size: iconSize, color: Colors.white),
                               ),
 
                               const Spacer(),
