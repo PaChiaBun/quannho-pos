@@ -6,6 +6,9 @@ import 'nganh_icon.dart';
 /// Lưu ở app_settings, khoá [kLoaiHinhSettingKey], giá trị là [LoaiHinh.id].
 const kLoaiHinhSettingKey = 'tinh_gio_loai_hinh';
 
+/// Tên module ở Trang chủ, trong danh sách thêm module và trong bài hướng dẫn.
+const kTenModuleTinhGio = 'Các hoạt động tính giờ';
+
 class LoaiHinh {
   final String id;
 
@@ -22,6 +25,9 @@ class LoaiHinh {
   final IconData? icon;
   final NganhHinh? hinh;
 
+  /// Nhãn trong hộp chọn loại hình khi khác tên ô (mục "Nhiều loại").
+  final String? nhanChon;
+
   /// Mã lưu trong ban_zones.icon_code khi dùng làm biểu tượng khu vực. Nằm ngoài vùng mã của
   /// MaterialIcons (0xE000–0xF8FF) nên không trùng biểu tượng nào đang có.
   final int maKhuVuc;
@@ -34,11 +40,19 @@ class LoaiHinh {
     required this.maKhuVuc,
     this.icon,
     this.hinh,
+    this.nhanChon,
   });
+
+  /// Quán có nhiều loại hình (hoặc chưa chọn): ô mang tên chung và cụm bốn hình.
+  bool get nhieuLoai => icon == null && hinh == null;
+
+  String get nhan => nhanChon ?? ten;
 
   Widget bieuTuong({double size = 24, Color color = Colors.black}) => hinh != null
       ? NganhIcon(hinh!, size: size, color: color)
-      : Icon(icon, size: size, color: color);
+      : icon != null
+          ? Icon(icon, size: size, color: color)
+          : NganhCumIcon(size: size / 1.5, color: color);
 }
 
 const kLoaiHinh = <LoaiHinh>[
@@ -48,8 +62,16 @@ const kLoaiHinh = <LoaiHinh>[
   LoaiHinh(id: 'tennis', ten: 'Tennis', moTa: 'Sân tennis tính giờ', danhXung: 'sân', maKhuVuc: 0xF1A04, icon: Icons.sports_tennis_rounded),
   LoaiHinh(id: 'pickleball', ten: 'Pickleball', moTa: 'Sân pickleball tính giờ', danhXung: 'sân', maKhuVuc: 0xF1A05, hinh: NganhHinh.pickleball),
   LoaiHinh(id: 'bong_ban', ten: 'Bóng bàn', moTa: 'Bàn bóng bàn tính giờ', danhXung: 'bàn', maKhuVuc: 0xF1A06, hinh: NganhHinh.bongBan),
-  // luôn để cuối: mặc định khi quán chưa chọn hoặc mã lạ
-  LoaiHinh(id: 'khac', ten: 'Tính giờ', moTa: 'Bi da, karaoke, sân', danhXung: 'bàn', maKhuVuc: 0xF1A00, icon: Icons.timer_rounded),
+  LoaiHinh(id: 'bong_da', ten: 'Sân bóng', moTa: 'Sân bóng đá tính giờ', danhXung: 'sân', maKhuVuc: 0xF1A07, icon: Icons.sports_soccer_rounded),
+  // luôn để cuối: mặc định khi quán chưa chọn hoặc mã lạ. Không có hình riêng → vẽ cụm bốn hình.
+  LoaiHinh(
+    id: 'khac',
+    ten: kTenModuleTinhGio,
+    moTa: 'Bi da, cầu lông, sân bóng, karaoke',
+    danhXung: 'bàn',
+    maKhuVuc: 0xF1A00,
+    nhanChon: 'Nhiều loại',
+  ),
 ];
 
 LoaiHinh loaiHinhTheoId(String? id) =>

@@ -198,7 +198,7 @@ Xem thêm Chính sách bảo mật tại quannho.lpm.vn/privacy.
 ### 22. Không thấy, không có ô, mục Bàn, Nhân viên, In Hoá Đơn, Khách hàng, Chấm công, Vận Hành trên Trang chủ
 Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. Các ô khác phải bật thêm:
 1. Chủ quán ở Trang chủ bấm "Sửa", cuộn xuống cuối, bấm ô "Thêm".
-2. Chọn ô cần dùng: Bàn (Quản lý Bàn), Phiếu bếp (Bếp), Nhân viên, Chấm công, Tính Lương, In Hoá Đơn, Khách hàng & Khuyến mãi, QR Gọi Món, Vận Hành, Kho Chuyên Nghiệp, Tính giờ (bi da, karaoke, sân).
+2. Chọn ô cần dùng: Bàn (Quản lý Bàn), Phiếu bếp (Bếp), Nhân viên, Chấm công, Tính Lương, In Hoá Đơn, Khách hàng & Khuyến mãi, QR Gọi Món, Vận Hành, Kho Chuyên Nghiệp, Các hoạt động tính giờ (bi da, karaoke, sân).
 3. Bấm "Xong".
 Nhân viên không thấy ô: vai trò của họ chưa có module đó, nhờ Chủ quán gán (bài Nhân viên & Phân quyền).
 
@@ -214,7 +214,7 @@ Cài đặt → thẻ quán → "Đổi quán" → chọn quán → nhập mật
 | "Module Kho đang tắt" ở Báo cáo | Module Kho hàng đã bị tắt | Chủ quán bật lại bằng "Sửa" → "+ Thêm module" |
 
 ## Liên quan module khác
-- Kho hàng, In Hoá Đơn, Nhân viên & Phân quyền, Quản lý Bàn, QR Gọi Món, Chấm công, Lương, Vận Hành, Kho Chuyên Nghiệp, Khách hàng – Giảm giá – Khuyến mãi, Thu Chi, Tính giờ.
+- Kho hàng, In Hoá Đơn, Nhân viên & Phân quyền, Quản lý Bàn, QR Gọi Món, Chấm công, Lương, Vận Hành, Kho Chuyên Nghiệp, Khách hàng – Giảm giá – Khuyến mãi, Thu Chi, Các hoạt động tính giờ.
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 - Bài này phần lớn chỉ dẫn sang bài module; khi đổi tên việc trong bài module thì sửa tên ở đây theo.

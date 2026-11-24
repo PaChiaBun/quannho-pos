@@ -1,6 +1,6 @@
 {
- "version": 202611240617,
- "hash": "c9c53f68273b62a7d4642964e9d10940c6161cc4ed8215c341ac387e3a3e950e",
+ "version": 202611240645,
+ "hash": "d0b42a2efa5b5e39c2c73922275ee61749d4ca7a09b725961d3d9fb6c10452ba",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -840,7 +840,7 @@
    "module_name": "Bắt đầu dùng app",
    "section": "Các việc thường làm",
    "title": "22. Không thấy, không có ô, mục Bàn, Nhân viên, In Hoá Đơn, Khách hàng, Chấm công, Vận Hành trên Trang chủ",
-   "text": "Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. Các ô khác phải bật thêm:\n1. Chủ quán ở Trang chủ bấm \"Sửa\", cuộn xuống cuối, bấm ô \"Thêm\".\n2. Chọn ô cần dùng: Bàn (Quản lý Bàn), Phiếu bếp (Bếp), Nhân viên, Chấm công, Tính Lương, In Hoá Đơn, Khách hàng & Khuyến mãi, QR Gọi Món, Vận Hành, Kho Chuyên Nghiệp, Tính giờ (bi da, karaoke, sân).\n3. Bấm \"Xong\".\nNhân viên không thấy ô: vai trò của họ chưa có module đó, nhờ Chủ quán gán (bài Nhân viên & Phân quyền)."
+   "text": "Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. Các ô khác phải bật thêm:\n1. Chủ quán ở Trang chủ bấm \"Sửa\", cuộn xuống cuối, bấm ô \"Thêm\".\n2. Chọn ô cần dùng: Bàn (Quản lý Bàn), Phiếu bếp (Bếp), Nhân viên, Chấm công, Tính Lương, In Hoá Đơn, Khách hàng & Khuyến mãi, QR Gọi Món, Vận Hành, Kho Chuyên Nghiệp, Các hoạt động tính giờ (bi da, karaoke, sân).\n3. Bấm \"Xong\".\nNhân viên không thấy ô: vai trò của họ chưa có module đó, nhờ Chủ quán gán (bài Nhân viên & Phân quyền)."
   },
   {
    "id": "bat-dau#cac-viec-thuong-lam-23-doi-quan-chuyen-sang-quan-khac-khi-co",
@@ -3475,41 +3475,41 @@
    "text": "Vì sao: Đúng thiết kế: bán bằng ví không phải tiền vào quán\nLàm gì: Xem ở Báo cáo → Hóa đơn"
   },
   {
-   "id": "tinh-gio#tinh-gio-la-gi",
+   "id": "tinh-gio#cac-hoat-dong-tinh-gio-la-gi",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "",
-   "title": "Tính giờ là gì",
-   "text": "Dành cho quán bi da, karaoke, sân cầu lông, tennis, pickleball, bóng bàn: mở bàn (phòng, sân) là đồng hồ chạy, lúc thanh toán hoá đơn có thêm một dòng tiền giờ. Có đặt trước và nhắc gọi khách trước giờ đặt 30 phút."
+   "title": "Các hoạt động tính giờ là gì",
+   "text": "Dành cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn: mở bàn (phòng, sân) là đồng hồ chạy, lúc thanh toán hoá đơn có thêm một dòng tiền giờ. Có đặt trước và nhắc gọi khách trước giờ đặt 30 phút."
   },
   {
    "id": "tinh-gio#ai-dung-duoc",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "",
    "title": "Ai dùng được",
-   "text": "• Module Tính giờ mặc định tắt. Chủ quán bật ở Trang chủ: \"Sửa\" → \"Thêm\" → \"Tính giờ\". Bật Tính giờ thì app bật kèm Quản lý Bàn nếu quán chưa bật.\n• Ai có module Quản lý Bàn thì thấy ô Tính giờ và dùng được Lịch đặt.\n• Đặt giá giờ cho bàn: chỉ Chủ quán và Quản lý.\n• Tính tiền, đặt trước, nhận sân, đánh dấu đã nhắc: người có quyền \"Thanh toán hoá đơn\".\n• Bỏ tiền giờ của một bàn, huỷ bàn đã chạy giờ quá 5 phút: Chủ quán / Quản lý tự làm; nhân viên khác cần Quản lý nhập mã PIN.\n• Mọi máy của quán phải cập nhật app. Máy nào chưa cập nhật sẽ không thanh toán được bàn tính giờ."
+   "text": "• Module Các hoạt động tính giờ (hay gọi tắt là tính giờ) mặc định tắt. Chủ quán bật ở Trang chủ: \"Sửa\" → \"Thêm\" → \"Các hoạt động tính giờ\". Bật module này thì app bật kèm Quản lý Bàn nếu quán chưa bật.\n• Ai có module Quản lý Bàn thì thấy ô Các hoạt động tính giờ và dùng được Lịch đặt.\n• Đặt giá giờ cho bàn: chỉ Chủ quán và Quản lý.\n• Tính tiền, đặt trước, nhận sân, đánh dấu đã nhắc: người có quyền \"Thanh toán hoá đơn\".\n• Bỏ tiền giờ của một bàn, huỷ bàn đã chạy giờ quá 5 phút: Chủ quán / Quản lý tự làm; nhân viên khác cần Quản lý nhập mã PIN.\n• Mọi máy của quán phải cập nhật app. Máy nào chưa cập nhật sẽ không thanh toán được bàn tính giờ."
   },
   {
    "id": "tinh-gio#man-hinh-gom-nhung-gi",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Ô Tính giờ ở Trang chủ mở màn Quản lý Bàn. Sau khi chọn loại hình, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\".\n• Nút \"Lịch đặt\" (hình tờ lịch) ở góc trên màn Quản lý Bàn mở lịch đặt trước."
+   "text": "• Ô Các hoạt động tính giờ ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn Quản lý Bàn. Quán chỉ có một loại hình thì chọn loại hình đó, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\".\n• Nút \"Lịch đặt\" (hình tờ lịch) ở góc trên màn Quản lý Bàn mở lịch đặt trước."
   },
   {
-   "id": "tinh-gio#cac-viec-thuong-lam-bat-module-tinh-gio-va-chon-loai-hinh",
+   "id": "tinh-gio#cac-viec-thuong-lam-bat-module-cac-hoat-dong-tinh-gio-va-cho",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
-   "title": "Bật module Tính giờ và chọn loại hình",
-   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, hoặc Tính giờ nếu không thuộc loại nào.\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Tính tiền giờ\", bấm dòng \"Loại hình: … • Đổi\"."
+   "title": "Bật module Các hoạt động tính giờ và chọn loại hình",
+   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Các hoạt động tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn \"Nhiều loại\".\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn \"Nhiều loại\" thì ô giữ tên Các hoạt động tính giờ.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Tính tiền giờ\", bấm dòng \"Loại hình: … • Đổi\"."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-gia-gio-cho-ban-phong-san",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt giá giờ cho bàn, phòng, sân",
    "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Vào Kho hàng, bấm \"Thêm sản phẩm\" → \"Thêm sản phẩm mới\", tạo một món làm giá giờ, ví dụ \"Giờ bàn lỗ\", giá bán 60.000đ, danh mục \"Tiền giờ\". Giá bán của món là giá một giờ.\n2. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Tính tiền giờ\".\n3. Chọn món giá giờ trong danh sách (có ô \"Tìm món\"). Bật \"Áp cho cả khu …\" nếu muốn đặt cùng giá cho mọi bàn của khu.\n\nMỗi loại giá tạo một món riêng, ví dụ \"Giờ bàn lỗ\" và \"Giờ phòng VIP\".\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
@@ -3517,7 +3517,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tinh-gio-cho-mot-ban",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bỏ tính giờ cho một bàn",
    "text": "Giữ lâu vào bàn trống, chọn \"Tính tiền giờ (đang bật)\", bấm \"Không tính giờ (bàn thường)\"."
@@ -3525,7 +3525,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-doi-gia-moi-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đổi giá mỗi giờ",
    "text": "Sửa giá bán của món giá giờ trong Kho hàng. Bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán."
@@ -3533,7 +3533,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-mo-ban-va-xem-dong-ho",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Mở bàn và xem đồng hồ",
    "text": "Mở bàn như bàn thường. Đồng hồ chạy từ lúc mở bàn, theo giờ của máy chủ nên máy sai giờ cũng không làm sai tiền. Thẻ bàn và màn chi tiết bàn hiện thời lượng và tiền giờ tạm tính. Khách vẫn gọi đồ ăn uống, gửi bếp như thường."
@@ -3541,7 +3541,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-tinh-tien-ban-tinh-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Tính tiền bàn tính giờ",
    "text": "1. Trong màn chi tiết bàn bấm \"Thanh toán\". Bàn chưa gọi món nào thì bấm \"Tính tiền giờ\".\n2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ \"Giờ bàn lỗ · Bàn 3 · 14:05–15:35 (1g30)\".\n3. Màn \"Thu tiền\" hiện tổng đã gồm tiền giờ. Thu tiền như bàn thường; mã giảm giá và điểm áp trên cả tiền giờ.\n\nKhách chơi tiếp sau khi đã mở màn Thu tiền: bấm \"Hủy bỏ\", lúc sau bấm Thanh toán lại. Dòng tiền giờ được tính lại, không sinh dòng thứ hai."
@@ -3549,7 +3549,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-tien-gio-tinh-the-nao",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Tiền giờ tính thế nào",
    "text": "Tính theo phút, làm tròn lên từng phút, rồi làm tròn tiền lên 1.000đ. Ví dụ giá 60.000đ một giờ: 90 phút là 90.000đ; 61 phút giá 70.000đ là 72.000đ. Chưa có giá theo khung giờ (ngày, tối, cuối tuần): mỗi bàn một giá."
@@ -3557,7 +3557,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-chuyen-ban-gop-ban-khi-dang-tinh-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Chuyển bàn, gộp bàn khi đang tính giờ",
    "text": "Bấm \"Chuyển\" hoặc \"Gộp bàn\" như thường. Giờ ở bàn cũ được chốt thành một dòng theo giá bàn cũ và đi theo sang bàn mới. Bàn mới có giá giờ thì đồng hồ chạy tiếp theo giá bàn mới; bàn mới là bàn thường thì hết tính giờ."
@@ -3565,7 +3565,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tien-gio-cho-khach",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bỏ tiền giờ cho khách",
    "text": "Trong màn chi tiết bàn, huỷ dòng tiền giờ như huỷ món bếp đã làm xong: chọn lý do, Quản lý duyệt (nhân viên cần mã PIN Quản lý). Sau khi huỷ, bàn đó không bị tính tiền giờ nữa."
@@ -3573,7 +3573,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-huy-ban-tinh-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Huỷ bàn tính giờ",
    "text": "Mở nhầm bàn: huỷ trong 5 phút đầu thì chỉ cần chọn lý do. Bàn đã chạy giờ quá 5 phút: app chốt giờ trước rồi mới huỷ, và phải có Quản lý duyệt."
@@ -3581,7 +3581,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-xem-tien-gio-trong-bao-cao",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Xem tiền giờ trong báo cáo",
    "text": "Tiền giờ nằm trong doanh thu như mọi món. Muốn tách tiền giờ với đồ ăn uống: Báo cáo, tab Sản phẩm, lọc danh mục của món giá giờ (ví dụ \"Tiền giờ\")."
@@ -3589,7 +3589,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-truoc-san-ban-phong",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt trước sân, bàn, phòng",
    "text": "Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:\n1. Ở Quản lý Bàn bấm nút \"Lịch đặt\" ở góc trên.\n2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.\n3. Bấm \"Đặt\" ở bàn cần đặt. Nhập tên khách, số điện thoại, bấm vào dòng giờ để chọn giờ bắt đầu, chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm \"Đặt\".\n\nHai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn."
@@ -3597,7 +3597,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-khach-dat-truoc-da-den",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Khách đặt trước đã đến",
    "text": "Cách 1: trong Lịch đặt bấm vào lượt đặt, chọn \"Khách đã đến: nhận …\". App mở bàn và đồng hồ chạy.\nCách 2: ở sơ đồ bàn bấm vào bàn có dòng \"Đặt 18:00 • tên khách\". App hỏi ai đang nhận bàn: chọn tên khách đặt nếu khách đặt đã đến, hoặc \"Khách khác\"."
@@ -3605,7 +3605,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-tien-gio-cua-khach-dat-truoc",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Tiền giờ của khách đặt trước",
    "text": "Tính theo khung đã đặt. Đến trễ vẫn tính từ giờ đặt. Về sớm vẫn tính tới hết khung. Chơi quá khung thì tính thêm theo phút tới lúc thanh toán. Đến sớm thì tính từ lúc đến. Thẻ bàn ghi \"khung đặt … • giờ …\" khi đang tính theo khung."
@@ -3613,7 +3613,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-sua-huy-luot-dat-khach-khong-den",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Sửa, huỷ lượt đặt, khách không đến",
    "text": "Trong Lịch đặt bấm vào lượt đặt, chọn \"Sửa lượt đặt\", \"Huỷ lượt đặt\" hoặc \"Khách không đến\". Huỷ hoặc ghi không đến thì khung giờ đó trống lại. Lượt đã nhận (khách đã đến) thì không sửa, không huỷ được nữa."
@@ -3621,7 +3621,7 @@
   {
    "id": "tinh-gio#cac-viec-thuong-lam-nhac-goi-khach-truoc-gio-dat",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Nhắc gọi khách trước giờ đặt",
    "text": "Còn 30 phút tới giờ đặt, app bật hộp \"Sắp tới giờ đặt\" kèm chuông, ghi bàn, giờ, tên và số điện thoại khách. Bấm \"Gọi khách\" để gọi, rồi bấm \"Đã nhắc\". Một người bấm \"Đã nhắc\" thì máy khác không nhắc nữa, và lịch ghi giờ đã nhắc. Hộp nhắc chỉ hiện khi app đang mở; app đang tắt thì không có thông báo. Lượt đặt khi còn dưới 30 phút tới giờ thì không nhắc."
@@ -3629,15 +3629,15 @@
   {
    "id": "tinh-gio#loi-giu-lau-vao-ban-khong-thay-tinh-tien-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Giữ lâu vào bàn không thấy \"Tính tiền giờ\"",
-   "text": "Vì sao: Quán chưa bật module Tính giờ, hoặc bàn đang có khách\nLàm gì: Bật module Tính giờ; đợi bàn trống rồi giữ lâu lại"
+   "text": "Vì sao: Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách\nLàm gì: Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại"
   },
   {
    "id": "tinh-gio#loi-chi-chu-quan-quan-ly-dat-duoc-gia-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "\"Chỉ Chủ quán / Quản lý đặt được giá giờ\"",
    "text": "Vì sao: Tài khoản không phải Chủ quán hay Quản lý\nLàm gì: Nhờ Chủ quán hoặc Quản lý đặt giá giờ"
@@ -3645,7 +3645,7 @@
   {
    "id": "tinh-gio#loi-ban-dang-co-khach-tinh-gio-tinh-tien-xong-moi-doi-gia-gio-du",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "\"Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được\"",
    "text": "Vì sao: Bàn đang chạy giờ\nLàm gì: Tính tiền bàn đó rồi đổi"
@@ -3653,7 +3653,7 @@
   {
    "id": "tinh-gio#loi-danh-sach-chon-gia-gio-ghi-chua-co-mon-nao-vao-kho-hang-bam",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Danh sách chọn giá giờ ghi \"Chưa có món nào. Vào Kho hàng bấm \"Thêm sản phẩm\" để tạo món giá giờ trước.\"",
    "text": "Vì sao: Chưa có món nào để làm giá giờ\nLàm gì: Vào Kho hàng tạo món giá giờ rồi quay lại"
@@ -3661,7 +3661,7 @@
   {
    "id": "tinh-gio#loi-gio-choi-can-tinh-lai-chua-chot-hoac-da-chot-qua-15-phut-don",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "\"Giờ chơi cần tính lại (chưa chốt hoặc đã chốt quá 15 phút). Đóng màn thanh toán rồi bấm Thanh toán lại.\"",
    "text": "Vì sao: Màn Thu tiền để mở quá 15 phút, hoặc máy đó chưa cập nhật app\nLàm gì: Đóng màn Thu tiền, bấm Thanh toán lại; máy chưa cập nhật thì cập nhật app"
@@ -3669,7 +3669,7 @@
   {
    "id": "tinh-gio#loi-chua-chot-duoc-gio-khi-bam-thanh-toan",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "\"Chưa chốt được giờ: …\" khi bấm Thanh toán",
    "text": "Vì sao: Mất mạng lúc chốt giờ\nLàm gì: Kiểm tra mạng rồi bấm Thanh toán lại"
@@ -3677,7 +3677,7 @@
   {
    "id": "tinh-gio#loi-bam-sua-so-luong-dong-tien-gio-app-bao-dong-tien-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Bấm sửa số lượng dòng tiền giờ, app báo \"Dòng tiền giờ\"",
    "text": "Vì sao: Tiền giờ do hệ thống tính theo đồng hồ\nLàm gì: Muốn bỏ tiền giờ thì Quản lý huỷ dòng đó"
@@ -3685,7 +3685,7 @@
   {
    "id": "tinh-gio#loi-the-ban-khong-hien-dong-ho-du-ban-co-gia-gio",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Thẻ bàn không hiện đồng hồ dù bàn có giá giờ",
    "text": "Vì sao: Bàn được mở trước khi đặt giá giờ\nLàm gì: Lượt khách đó không tính giờ; lượt mở bàn sau sẽ tính"
@@ -3693,7 +3693,7 @@
   {
    "id": "tinh-gio#loi-dat-truoc-bao-trung-gio-voi-luot-dat-cua",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Đặt trước báo \"Trùng giờ với lượt đặt của …\"",
    "text": "Vì sao: Khung giờ đã có người đặt trên bàn đó\nLàm gì: Chọn giờ khác hoặc bàn khác"
@@ -3701,7 +3701,7 @@
   {
    "id": "tinh-gio#loi-dat-truoc-bao-khung-gio-nay-da-qua",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Đặt trước báo \"Khung giờ này đã qua\"",
    "text": "Vì sao: Giờ kết thúc đã qua\nLàm gì: Chọn lại giờ"
@@ -3709,7 +3709,7 @@
   {
    "id": "tinh-gio#loi-khong-thay-hop-nhac-truoc-gio-dat",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Không thấy hộp nhắc trước giờ đặt",
    "text": "Vì sao: App đang tắt, lượt vừa đặt khi còn dưới 30 phút, hoặc đã có người bấm \"Đã nhắc\"\nLàm gì: Mở app ở máy quầy trong giờ bán; xem dòng \"đã nhắc\" trong Lịch đặt"
@@ -3717,7 +3717,7 @@
   {
    "id": "tinh-gio#loi-luot-dat-ghi-da-nhan-van-giu-khung-gio-du-khach-da-ve",
    "module": "tinh_gio",
-   "module_name": "Tính giờ",
+   "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
    "title": "Lượt đặt ghi \"Đã nhận\" vẫn giữ khung giờ dù khách đã về",
    "text": "Vì sao: Khung đã đặt được giữ tới hết giờ\nLàm gì: Đặt khách khác vào sau giờ kết thúc của khung đó"

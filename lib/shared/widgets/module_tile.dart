@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../modules/tinh_gio/nganh_icon.dart' show cumIconTinhGio;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE CONFIG DATA
@@ -176,11 +177,13 @@ const Map<String, ModuleTileData> kModuleConfigs = {
   // Bi da, karaoke, sân: ô này mở màn Bàn; bật module thì bàn mới gắn được giá giờ.
   'tinh_gio': ModuleTileData(
     id: 'tinh_gio',
-    title: 'Tính giờ',
-    subtitle: 'Bi da, karaoke, sân',
+    title: 'Các hoạt động tính giờ',
+    subtitle: 'Bi da, sân, karaoke', // một dòng, ô 2 cột trên máy 360 chỉ rộng ~130
     icon: Icons.timer_rounded,
+    iconBuilder: cumIconTinhGio, // cụm bốn hình: bi da, cầu lông, bóng đá, micro
     baseColor: Color(0xFF0D9488), // teal-600 — khác Bàn, Bếp, Kho
     route: '/tinh_gio',
+    titleLines: 2,
   ),
 };
 

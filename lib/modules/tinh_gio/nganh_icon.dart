@@ -13,12 +13,62 @@ class NganhIcon extends StatelessWidget {
 
   const NganhIcon(this.hinh, {super.key, this.size = 24, this.color = Colors.black});
 
+  // Center: khung biểu tượng của ô module ép con kín khung, không canh giữa thì hình bị kéo to bằng cả khung.
   @override
-  Widget build(BuildContext context) => SizedBox.square(
-        dimension: size,
-        child: CustomPaint(painter: _NganhPainter(hinh, color)),
+  Widget build(BuildContext context) => Center(
+        widthFactor: 1,
+        heightFactor: 1,
+        child: SizedBox.square(
+          dimension: size,
+          child: CustomPaint(painter: _NganhPainter(hinh, color)),
+        ),
       );
 }
+
+/// Cụm bốn hình cho ô "Các hoạt động tính giờ": bi da, cầu lông, bóng đá, micro karaoke xếp 2×2.
+/// [size] là cỡ biểu tượng thường của ô; cụm vẽ rộng gấp rưỡi để bốn hình con vẫn đọc được.
+class NganhCumIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const NganhCumIcon({super.key, this.size = 24, this.color = Colors.black});
+
+  @override
+  Widget build(BuildContext context) {
+    final canh = size * 1.5;
+    final con = canh * 0.46;
+    Widget o(Widget w) => SizedBox.square(dimension: con, child: Center(child: w));
+    return Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: SizedBox.square(
+        dimension: canh,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                o(NganhIcon(NganhHinh.biDa, size: con, color: color)),
+                o(NganhIcon(NganhHinh.cauLong, size: con, color: color)),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                o(Icon(Icons.sports_soccer_rounded, size: con, color: color)),
+                o(Icon(Icons.mic_external_on_rounded, size: con, color: color)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dùng làm `iconBuilder` hằng cho ô module.
+Widget cumIconTinhGio(double size, Color color) => NganhCumIcon(size: size, color: color);
 
 class _NganhPainter extends CustomPainter {
   final NganhHinh hinh;

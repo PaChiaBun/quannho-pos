@@ -83,7 +83,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
+      "lib/screens/ban_screen.dart": "17c3f9f02774c2dd",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -135,7 +135,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "dcda581ac0384ca9",
-      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
+      "lib/screens/ban_screen.dart": "17c3f9f02774c2dd",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"
@@ -207,10 +207,10 @@
     "tinh-gio.md": {
       "lib/modules/tinh_gio/dat_truoc.dart": "5905c43fef80126d",
       "lib/modules/tinh_gio/dat_truoc_ui.dart": "cc774b3705aa80ca",
-      "lib/modules/tinh_gio/loai_hinh.dart": "bd79dcaf13aaf2da",
+      "lib/modules/tinh_gio/loai_hinh.dart": "56930ad9a0fab9ba",
       "lib/modules/tinh_gio/tinh_gio.dart": "6404adfb5ee98db1",
-      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "46b80e8d3a9bae2a",
-      "lib/screens/ban_screen.dart": "10df639f6d5a6343",
+      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "0fb10aa94b289e8e",
+      "lib/screens/ban_screen.dart": "17c3f9f02774c2dd",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }

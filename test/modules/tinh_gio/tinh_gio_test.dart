@@ -170,11 +170,12 @@ void main() {
       expect(kLoaiHinh.map((l) => l.maKhuVuc).toSet().length, kLoaiHinh.length);
       for (final l in kLoaiHinh) {
         expect(l.maKhuVuc > 0xF8FF, isTrue, reason: '${l.id} trùng vùng mã MaterialIcons');
-        expect((l.icon == null) != (l.hinh == null), isTrue, reason: '${l.id} phải có đúng một nguồn hình');
+        expect(l.icon != null && l.hinh != null, isFalse, reason: '${l.id} không được có hai nguồn hình');
+        expect(l.nhieuLoai, l.id == 'khac', reason: 'chỉ mục mặc định dùng cụm bốn hình');
         expect(loaiHinhTheoMaKhuVuc(l.maKhuVuc), same(l));
       }
     });
-    test('mã lạ hoặc chưa chọn → "Tính giờ"', () {
+    test('mã lạ hoặc chưa chọn → mục chung "Nhiều loại"', () {
       expect(loaiHinhTheoId(null).id, 'khac');
       expect(loaiHinhTheoId('golf').id, 'khac');
       expect(loaiHinhTheoId('bi_da').ten, 'Bi da');
@@ -187,7 +188,12 @@ void main() {
       expect(biDa.bieuTuong(size: 24, color: Colors.white), isA<NganhIcon>());
       final karaoke = tinhGioTileData(goc, loaiHinhTheoId('karaoke'));
       expect(karaoke.bieuTuong(size: 24, color: Colors.white), isA<Icon>());
-      expect(goc.bieuTuong(size: 24, color: Colors.white), isA<Icon>(), reason: 'ô cũ vẫn vẽ bằng Icon');
+      expect(goc.title, kTenModuleTinhGio);
+      expect(goc.bieuTuong(size: 24, color: Colors.white), isA<NganhCumIcon>(), reason: 'ô mặc định là cụm bốn hình');
+      final nhieu = tinhGioTileData(goc, loaiHinhTheoId('khac'));
+      expect(identical(nhieu, goc), isTrue, reason: 'quán nhiều loại hình giữ nguyên ô gốc');
+      expect(loaiHinhTheoId(null).nhan, 'Nhiều loại');
+      expect(kModuleConfigs['pos']!.bieuTuong(size: 24, color: Colors.white), isA<Icon>(), reason: 'ô khác vẫn vẽ bằng Icon');
     });
   });
 }

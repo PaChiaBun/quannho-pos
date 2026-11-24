@@ -130,6 +130,7 @@ const _kZoneIconCodes = <int>[
   0xF1A04, // tennis
   0xF1A05, // pickleball
   0xF1A06, // bóng bàn
+  0xF1A07, // sân bóng đá
 ];
 
 /// Biểu tượng khu vực: mã ngành vẽ bằng hình riêng, còn lại là MaterialIcons.

@@ -1,6 +1,6 @@
 ---
 module: tinh_gio
-ten: Tính giờ
+ten: Các hoạt động tính giờ
 phien_ban: 1.0.8+38
 cap_nhat: 2026-11-24
 nguon:
@@ -14,20 +14,20 @@ nguon:
   - supabase/migrations/20261124_ban_dat_truoc_v1.sql
 ---
 
-# Tính giờ
+# Các hoạt động tính giờ
 
-> Dành cho quán bi da, karaoke, sân cầu lông, tennis, pickleball, bóng bàn: mở bàn (phòng, sân) là đồng hồ chạy, lúc thanh toán hoá đơn có thêm một dòng tiền giờ. Có đặt trước và nhắc gọi khách trước giờ đặt 30 phút.
+> Dành cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn: mở bàn (phòng, sân) là đồng hồ chạy, lúc thanh toán hoá đơn có thêm một dòng tiền giờ. Có đặt trước và nhắc gọi khách trước giờ đặt 30 phút.
 
 ## Ai dùng được
-- Module **Tính giờ** mặc định **tắt**. Chủ quán bật ở Trang chủ: **"Sửa"** → **"Thêm"** → **"Tính giờ"**. Bật Tính giờ thì app bật kèm **Quản lý Bàn** nếu quán chưa bật.
-- Ai có module **Quản lý Bàn** thì thấy ô Tính giờ và dùng được Lịch đặt.
+- Module **Các hoạt động tính giờ** (hay gọi tắt là tính giờ) mặc định **tắt**. Chủ quán bật ở Trang chủ: **"Sửa"** → **"Thêm"** → **"Các hoạt động tính giờ"**. Bật module này thì app bật kèm **Quản lý Bàn** nếu quán chưa bật.
+- Ai có module **Quản lý Bàn** thì thấy ô Các hoạt động tính giờ và dùng được Lịch đặt.
 - **Đặt giá giờ cho bàn**: chỉ Chủ quán và Quản lý.
 - **Tính tiền, đặt trước, nhận sân, đánh dấu đã nhắc**: người có quyền **"Thanh toán hoá đơn"**.
 - **Bỏ tiền giờ của một bàn, huỷ bàn đã chạy giờ quá 5 phút**: Chủ quán / Quản lý tự làm; nhân viên khác cần Quản lý nhập mã PIN.
 - Mọi máy của quán phải cập nhật app. Máy nào chưa cập nhật sẽ không thanh toán được bàn tính giờ.
 
 ## Màn hình gồm những gì
-- Ô **Tính giờ** ở Trang chủ mở màn **Quản lý Bàn**. Sau khi chọn loại hình, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn.
+- Ô **Các hoạt động tính giờ** ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn **Quản lý Bàn**. Quán chỉ có một loại hình thì chọn loại hình đó, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.
 - Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ "4 chỗ • 60.000 đ/giờ".
 - Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ "1g05 • giờ 65.000 đ"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.
 - Trong màn chi tiết bàn có dải **"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán"**.
@@ -35,11 +35,11 @@ nguon:
 
 ## Các việc thường làm
 
-### Bật module Tính giờ và chọn loại hình
-Bật tính giờ cho quán bi da, karaoke, sân cầu lông, tennis, pickleball, bóng bàn ở đâu:
-1. Trang chủ, bấm **"Sửa"**, bấm ô **"Thêm"**, chọn **"Tính giờ"**.
-2. App hỏi **"Quán thuộc loại hình nào?"**: chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, hoặc Tính giờ nếu không thuộc loại nào.
-3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn.
+### Bật module Các hoạt động tính giờ và chọn loại hình
+Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:
+1. Trang chủ, bấm **"Sửa"**, bấm ô **"Thêm"**, chọn **"Các hoạt động tính giờ"**.
+2. App hỏi **"Quán thuộc loại hình nào?"**: chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn **"Nhiều loại"**.
+3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn "Nhiều loại" thì ô giữ tên Các hoạt động tính giờ.
 
 Đổi loại hình sau này: giữ lâu vào một bàn trống, chọn **"Tính tiền giờ"**, bấm dòng **"Loại hình: … • Đổi"**.
 
@@ -108,7 +108,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
-| Giữ lâu vào bàn không thấy "Tính tiền giờ" | Quán chưa bật module Tính giờ, hoặc bàn đang có khách | Bật module Tính giờ; đợi bàn trống rồi giữ lâu lại |
+| Giữ lâu vào bàn không thấy "Tính tiền giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
 | "Chỉ Chủ quán / Quản lý đặt được giá giờ" | Tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đặt giá giờ |
 | "Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được" | Bàn đang chạy giờ | Tính tiền bàn đó rồi đổi |
 | Danh sách chọn giá giờ ghi "Chưa có món nào. Vào Kho hàng bấm "Thêm sản phẩm" để tạo món giá giờ trước." | Chưa có món nào để làm giá giờ | Vào Kho hàng tạo món giá giờ rồi quay lại |
@@ -122,13 +122,13 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | Lượt đặt ghi "Đã nhận" vẫn giữ khung giờ dù khách đã về | Khung đã đặt được giữ tới hết giờ | Đặt khách khác vào sau giờ kết thúc của khung đó |
 
 ## Liên quan module khác
-- **Quản lý Bàn**: Tính giờ chạy ngay trên sơ đồ bàn, gọi món, gửi bếp, chuyển, gộp, thanh toán như bàn thường.
+- **Quản lý Bàn**: tính giờ chạy ngay trên sơ đồ bàn, gọi món, gửi bếp, chuyển, gộp, thanh toán như bàn thường.
 - **Kho hàng**: món giá giờ là một món bình thường tạo ở Kho hàng; giá bán là giá một giờ.
 - **Báo cáo**: tiền giờ là một dòng trong hoá đơn, vào doanh thu và tab Sản phẩm.
 - **Bếp**: dòng tiền giờ không lên phiếu bếp.
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
-1. Bài viết theo mã ở nhánh `feature/ai-bum-ui` ngày 24/11/2026, **chưa phát hành**. Chỉ đăng bài này cho Boom khi bản app có Tính giờ đã tới tay quán, nếu không Boom sẽ chỉ khách dùng thứ họ chưa có.
+1. Bài viết theo mã ở nhánh `feature/ai-bum-ui` ngày 24/11/2026, **chưa phát hành**. Chỉ đăng bài này cho Boom khi bản app có module này đã tới tay quán, nếu không Boom sẽ chỉ khách dùng thứ họ chưa có.
 2. Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`.
 3. Chưa có: giá theo khung giờ, lịch cố định lặp hàng tuần, khách tự đặt qua mạng, thông báo đẩy khi app tắt, tiền cọc vào Thu Chi, lưới giờ × sân trong Lịch đặt.
 4. Cách gọi "bàn / phòng / sân" theo loại hình mới lưu trong `loai_hinh.dart`, chữ trên màn Bàn vẫn ghi "bàn".

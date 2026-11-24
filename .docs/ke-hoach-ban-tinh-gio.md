@@ -389,3 +389,16 @@ Quán Demo sau lượt thử: 2 lượt đặt "Đã nhận", 2 hoá đơn thử
 - Chưa commit hai tệp sinh ra (`assets/boom_help/huong_dan.json`, `.docs/Huong_dan/nguon_hash.json`): chúng đang chứa cả ba chỗ sửa bài dở của việc trước (bài Bếp, Hỗ trợ kỹ thuật, Bàn, về nút Gửi bếp mờ) chưa được commit. Commit riêng phần của Tính giờ sẽ làm kho mã lệch với bài gốc.
 - Test đồng bộ vẫn báo các bài sau, đều có tệp của việc khác chưa rà: `bao-cao`, `bat-dau`, `ho-tro-ky-thuat`, `in-hoa-don`, `khach-hang`, `luong`, `nhan-vien`, `nhat-ky-log`, `thu-chi`, `van-hanh`. Trong đó việc này có góp: `ban_screen.dart` (bài Hỗ trợ kỹ thuật), `main.dart` (bài Lương), `dashboard_screen.dart` và `MUC-LUC.md` (bài Bắt đầu). Ba bài này đã lệch từ trước nên chưa đóng dấu.
 
+
+### 24/11 — Đổi tên module thành "Các hoạt động tính giờ", ô có cụm bốn hình
+
+Chủ Quán yêu cầu: đổi tên module, và ô vuông ở Trang chủ có nhiều biểu tượng (bi da, cầu lông, sân banh…).
+
+- Tên mới ở ô Trang chủ, danh sách thêm module và bài hướng dẫn: **Các hoạt động tính giờ** (hằng `kTenModuleTinhGio`). Mã module `tinh_gio` giữ nguyên, không đổi gì ở máy chủ.
+- Ô mặc định vẽ cụm 2×2: bi số 8, quả cầu lông, quả bóng đá, micro karaoke (`NganhCumIcon`), tên hai dòng, dòng phụ "Bi da, sân, karaoke".
+- Hộp chọn loại hình: thêm **Sân bóng**; mục cuối đổi thành **"Nhiều loại"** (hình cụm bốn). Quán chọn một loại hình thì ô vẫn đổi tên + hình theo ngành như trước; chọn "Nhiều loại" hoặc chưa chọn thì giữ ô chung.
+- Sửa kèm: hình tự vẽ trong ô module thật bị kéo to kín khung biểu tượng (ảnh thử trước đây đặt trong khung canh giữa nên không lộ). Nay tự canh giữa.
+- Biểu tượng khu vực thêm mã `0xF1A07` (sân bóng).
+- Ảnh duyệt: `test/modules/tinh_gio/goldens/o_module_360.png`, `o_module_1024.png` (ô thật, lưới như Trang chủ), `chon_loai_hinh_360.png`, `nganh_icon.png`.
+- Bài hướng dẫn đổi tên theo; xuất lại `huong_dan.json` (bản 202611240645), đóng dấu `tinh-gio.md`, `quan-ly-ban.md`, `kho-hang.md`. Lúc đầu câu tả hình "quả bóng" làm Boom trả lời câu lạc đề "kết quả bóng đá tối qua" → bỏ câu tả hình, test Boom xanh lại (133 đạt; chỉ còn test đồng bộ đỏ vì các bài của việc khác).
+- Chưa xem trên máy thật / máy ảo, mới xem qua ảnh chụp từ test. Chưa commit, chờ Chủ Quán duyệt hình.

@@ -10,7 +10,9 @@ import 'package:quannho_pos/core/repositories/ban_repository.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
+import 'package:quannho_pos/modules/tinh_gio/tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio_widgets.dart';
+import 'package:quannho_pos/shared/widgets/module_tile.dart';
 
 // Chụp bảng biểu tượng theo ngành để duyệt bằng mắt:
 //   flutter test test/modules/tinh_gio/nganh_icon_golden_test.dart --update-goldens
@@ -43,7 +45,7 @@ Future<void> _napPhong() async {
 void main() {
   testWidgets('bảng biểu tượng theo ngành', (tester) async {
     await _napPhong();
-    tester.view.physicalSize = const Size(1180, 620);
+    tester.view.physicalSize = const Size(1360, 620);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -80,7 +82,7 @@ void main() {
                       child: l.bieuTuong(size: 28, color: Colors.white),
                     ),
                     const Spacer(),
-                    Text(l.ten,
+                    Text(l.nhan,
                         style: const TextStyle(
                             fontFamily: 'NotoSans', color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
                   ],
@@ -126,6 +128,53 @@ void main() {
     ));
     await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/nganh_icon.png'));
   });
+
+  // Ô module thật như ở Trang chủ: lưới 2 cột tỉ lệ 1,15 trên máy 360; 4 cột cao 176 trên máy 1024.
+  for (final (ten, co, cot) in const [('360', Size(360, 470), 2), ('1024', Size(1024, 420), 4)]) {
+    testWidgets('ô module Các hoạt động tính giờ $ten', (tester) async {
+      await _napPhong();
+      tester.view.physicalSize = co;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final goc = kModuleConfigs[kTinhGioModuleId]!;
+      final o = [
+        kModuleConfigs['pos']!,
+        goc,
+        kModuleConfigs['table']!,
+        tinhGioTileData(goc, loaiHinhTheoId('bi_da')),
+        tinhGioTileData(goc, loaiHinhTheoId('bong_da')),
+        tinhGioTileData(goc, loaiHinhTheoId('cau_long')),
+        if (cot > 2) tinhGioTileData(goc, loaiHinhTheoId('karaoke')),
+        if (cot > 2) kModuleConfigs['kho']!,
+      ];
+      await runZonedGuarded(() async {
+        await tester.pumpWidget(MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(fontFamily: 'NotoSans'),
+          home: Scaffold(
+            backgroundColor: const Color(0xFFFAF7F2),
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: GridView(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: cot,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: cot >= 3 ? 176 : null,
+                  childAspectRatio: 1.15,
+                ),
+                children: [for (final d in o) ModuleTile(data: d)],
+              ),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+      }, (_, __) {});
+      expect(find.text(kTenModuleTinhGio), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'tên 2 dòng không được tràn ô');
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/o_module_$ten.png'));
+    });
+  }
 
   testWidgets('hộp chọn loại hình trên màn 360×800 (Sunmi V3)', (tester) async {
     await _napPhong();

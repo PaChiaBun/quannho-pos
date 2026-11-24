@@ -40,22 +40,25 @@ final tinhGioGiaTheoMonProvider = Provider.autoDispose<Map<String, ProductModel>
   return {for (final p in ds) p.id: p};
 });
 
-/// Loại hình quán đã chọn cho module Tính giờ (mặc định "Tính giờ" khi chưa chọn hoặc chưa đọc được).
+/// Loại hình quán đã chọn cho module Tính giờ (mặc định mục chung "Nhiều loại" khi chưa chọn hoặc chưa đọc được).
 final tinhGioLoaiHinhProvider = FutureProvider<LoaiHinh>((ref) async {
   ref.watch(sessionProvider); // đổi quán thì đọc lại
   return loaiHinhTheoId(await ref.watch(settingsRepositoryProvider).get(kLoaiHinhSettingKey));
 });
 
 /// Ô module Tính giờ ở Trang chủ theo loại hình: giữ màu và đường dẫn, đổi tên + biểu tượng.
-ModuleTileData tinhGioTileData(ModuleTileData goc, LoaiHinh l) => ModuleTileData(
-      id: goc.id,
-      title: l.ten,
-      subtitle: l.moTa,
-      icon: l.icon ?? goc.icon,
-      iconBuilder: l.hinh == null ? null : (size, color) => NganhIcon(l.hinh!, size: size, color: color),
-      baseColor: goc.baseColor,
-      route: goc.route,
-    );
+/// Quán nhiều loại hình (hoặc chưa chọn) giữ ô gốc: tên "Các hoạt động tính giờ" và cụm bốn hình.
+ModuleTileData tinhGioTileData(ModuleTileData goc, LoaiHinh l) => l.nhieuLoai
+    ? goc
+    : ModuleTileData(
+        id: goc.id,
+        title: l.ten,
+        subtitle: l.moTa,
+        icon: l.icon ?? goc.icon,
+        iconBuilder: l.hinh == null ? null : (size, color) => NganhIcon(l.hinh!, size: size, color: color),
+        baseColor: goc.baseColor,
+        route: goc.route,
+      );
 
 /// Hộp chọn loại hình. Chọn xong lưu vào cài đặt của quán và đóng.
 class TinhGioLoaiHinhSheet extends ConsumerStatefulWidget {
@@ -148,7 +151,7 @@ class _TinhGioLoaiHinhSheetState extends ConsumerState<TinhGioLoaiHinhSheet> {
                               : l.bieuTuong(size: 30, color: l.id == dangChon ? Colors.white : _kNavy),
                           const SizedBox(height: 8),
                           Text(
-                            l.ten,
+                            l.nhan,
                             style: chu(13.5, FontWeight.w700, l.id == dangChon ? Colors.white : _kNavy),
                           ),
                         ],
@@ -274,7 +277,7 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
               icon: (ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last)
                   .bieuTuong(size: 18, color: _kNavy),
               label: Text(
-                'Loại hình: ${(ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last).ten} • Đổi',
+                'Loại hình: ${(ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last).nhan} • Đổi',
                 style: _chu(13, FontWeight.w700),
               ),
             ),
