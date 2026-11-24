@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../modules/tinh_gio/loai_hinh.dart' show kTenModuleTinhGio;
 import '../../modules/tinh_gio/nganh_icon.dart' show cumIconTinhGio;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ const Map<String, ModuleTileData> kModuleConfigs = {
   // Bi da, karaoke, sân: ô này mở màn Bàn; bật module thì bàn mới gắn được giá giờ.
   'tinh_gio': ModuleTileData(
     id: 'tinh_gio',
-    title: 'Các hoạt động tính giờ',
+    title: kTenModuleTinhGio,
     subtitle: 'Bi da, sân, karaoke', // một dòng, ô 2 cột trên máy 360 chỉ rộng ~130
     icon: Icons.timer_rounded,
     iconBuilder: cumIconTinhGio, // cụm bốn hình: bi da, cầu lông, bóng đá, micro

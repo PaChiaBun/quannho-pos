@@ -402,3 +402,4 @@ Chủ Quán yêu cầu: đổi tên module, và ô vuông ở Trang chủ có nh
 - Ảnh duyệt: `test/modules/tinh_gio/goldens/o_module_360.png`, `o_module_1024.png` (ô thật, lưới như Trang chủ), `chon_loai_hinh_360.png`, `nganh_icon.png`.
 - Bài hướng dẫn đổi tên theo; xuất lại `huong_dan.json` (bản 202611240645), đóng dấu `tinh-gio.md`, `quan-ly-ban.md`, `kho-hang.md`. Lúc đầu câu tả hình "quả bóng" làm Boom trả lời câu lạc đề "kết quả bóng đá tối qua" → bỏ câu tả hình, test Boom xanh lại (133 đạt; chỉ còn test đồng bộ đỏ vì các bài của việc khác).
 - Chưa xem trên máy thật / máy ảo, mới xem qua ảnh chụp từ test. Chưa commit, chờ Chủ Quán duyệt hình.
+- 24/11 chiều: Chủ Quán duyệt hình, đã commit `d50c320`. Cài bản mới lên máy ảo Pixel 7 thì thấy tên ô ngắt thành "Các hoạt động tính / giờ" (ô máy này rộng hơn ảnh thử 360). Sửa: nối "tính giờ" bằng dấu cách không ngắt trong `kTenModuleTinhGio`; ô module dùng chung hằng này. Cài lại, máy ảo hiện "Các hoạt động / tính giờ".

@@ -6,8 +6,9 @@ import 'nganh_icon.dart';
 /// Lưu ở app_settings, khoá [kLoaiHinhSettingKey], giá trị là [LoaiHinh.id].
 const kLoaiHinhSettingKey = 'tinh_gio_loai_hinh';
 
-/// Tên module ở Trang chủ, trong danh sách thêm module và trong bài hướng dẫn.
-const kTenModuleTinhGio = 'Các hoạt động tính giờ';
+/// Tên ô module ở Trang chủ. "tính giờ" nối bằng dấu cách không ngắt (\u00A0) để ô rộng không
+/// ngắt thành "Các hoạt động tính / giờ".
+const kTenModuleTinhGio = 'Các hoạt động tính\u00A0giờ';
 
 class LoaiHinh {
   final String id;
