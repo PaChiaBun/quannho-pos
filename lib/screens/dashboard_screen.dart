@@ -1,5 +1,6 @@
 import '../modules/tinh_gio/tinh_gio.dart' show kTinhGioModuleId;
 import '../modules/tinh_gio/tinh_gio_widgets.dart';
+import 'ban_screen.dart' show BanScreen;
 import 'package:flutter/material.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/foundation.dart';
@@ -2407,6 +2408,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       Navigator.push(context, _smoothRoute(const QrOrderScreen()));
       return;
     }
+    // tinh_gio → sơ đồ bàn ở chế độ tính giờ: tên theo ngành, chỉ bàn tính giờ (tab 7 là mọi bàn)
+    if (route == '/tinh_gio') {
+      Navigator.push(context, _smoothRoute(const BanScreen(cheDoTinhGio: true)));
+      return;
+    }
     // chain → push trực tiếp Báo cáo chuỗi (chỉ Chủ quán thấy ô này)
     if (route == '/chain') {
       Navigator.push(context, _smoothRoute(const ChainReportScreen()));
@@ -2419,7 +2425,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       '/loyalty': 4,
       '/report': 5,
       '/table': 7, // Module Quản lý Bàn — BanScreen tại index 7
-      '/tinh_gio': 7, // Module Tính giờ — cũng là BanScreen (bàn có gắn giá giờ)
       '/kitchen': 8, // Module Phiếu bếp — KitchenScreen tại index 8
       '/staff': 9, // Module Nhân viên — NhanVienScreen tại index 9
       '/chamcong': 10, // Module Chấm công — ChamCongScreen tại index 10

@@ -1,6 +1,6 @@
 {
- "version": 202611250456,
- "hash": "4c6b1ca41be4cd59141ebb725801442b0106007d379d3da355742511f5c624e3",
+ "version": 202611250516,
+ "hash": "2ba92a97231e6ba8518e4cc2f02618ad1e709823c5a4e6eae77fe90bb9dd1e5e",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3496,7 +3496,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Ô Các hoạt động tính giờ ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn Quản lý Bàn. Quán chỉ có một loại hình thì chọn loại hình đó, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\".\n• Nút \"Lịch đặt\" (hình tờ lịch) ở góc trên màn Quản lý Bàn mở lịch đặt trước."
+   "text": "• Ô Các hoạt động tính giờ ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn riêng cùng tên: chỉ hiện các bàn có giá giờ và mọi bàn của khu mang biểu tượng ngành (bi da, sân, phòng hát). Bàn ăn uống thường không hiện ở đây; xem mọi bàn thì vào Bàn. Quán chỉ có một loại hình thì chọn loại hình đó, ô và màn đổi tên theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.\n• Thẻ bàn ghi \"Chưa đặt giá giờ\" là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\".\n• Thanh \"Lịch đặt\" ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bat-module-cac-hoat-dong-tinh-gio-va-cho",
@@ -3512,7 +3512,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt giá giờ cho bàn, phòng, sân",
-   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Đặt giá giờ\" (dòng nhỏ bên dưới ghi \"Chưa tính giờ\" hoặc giá đang dùng).\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Tiền giờ 60.000 đ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
+   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở màn Các hoạt động tính giờ, chạm vào bàn ghi \"Chưa đặt giá giờ\". Bàn ở màn Quản lý Bàn, hoặc bàn đã có giá: giữ lâu vào bàn đang trống, chọn \"Đặt giá giờ\" (dòng nhỏ bên dưới ghi \"Chưa tính giờ\" hoặc giá đang dùng).\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Tiền giờ 60.000 đ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tinh-gio-cho-mot-ban",
@@ -3592,7 +3592,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt trước sân, bàn, phòng",
-   "text": "Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:\n1. Ở Quản lý Bàn bấm nút \"Lịch đặt\" ở góc trên.\n2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.\n3. Bấm \"Đặt\" ở bàn cần đặt. Nhập tên khách, số điện thoại, bấm vào dòng giờ để chọn giờ bắt đầu, chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm \"Đặt\".\n\nHai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn."
+   "text": "Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:\n1. Ở màn Các hoạt động tính giờ bấm thanh \"Lịch đặt\" (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).\n2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.\n3. Bấm \"Đặt\" ở bàn cần đặt. Nhập tên khách, số điện thoại, bấm vào dòng giờ để chọn giờ bắt đầu, chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm \"Đặt\".\n\nHai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-khach-dat-truoc-da-den",
@@ -3713,6 +3713,14 @@
    "section": "Lỗi thường gặp",
    "title": "Đặt trước báo \"Khung giờ này đã qua\"",
    "text": "Vì sao: Giờ kết thúc đã qua\nLàm gì: Chọn lại giờ"
+  },
+  {
+   "id": "tinh-gio#loi-ban-khong-hien-o-man-cac-hoat-dong-tinh-gio",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Bàn không hiện ở màn Các hoạt động tính giờ",
+   "text": "Vì sao: Bàn chưa có giá giờ và khu của bàn không mang biểu tượng ngành\nLàm gì: Vào màn Bàn, giữ lâu vào bàn, chọn \"Đặt giá giờ\""
   },
   {
    "id": "tinh-gio#loi-khong-thay-hop-nhac-truoc-gio-dat",

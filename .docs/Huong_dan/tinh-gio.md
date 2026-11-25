@@ -27,11 +27,12 @@ nguon:
 - Mọi máy của quán phải cập nhật app. Máy nào chưa cập nhật sẽ không thanh toán được bàn tính giờ.
 
 ## Màn hình gồm những gì
-- Ô **Các hoạt động tính giờ** ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn **Quản lý Bàn**. Quán chỉ có một loại hình thì chọn loại hình đó, ô đổi tên và biểu tượng theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.
+- Ô **Các hoạt động tính giờ** ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn riêng cùng tên: chỉ hiện các bàn có giá giờ và mọi bàn của khu mang biểu tượng ngành (bi da, sân, phòng hát). Bàn ăn uống thường không hiện ở đây; xem mọi bàn thì vào **Bàn**. Quán chỉ có một loại hình thì chọn loại hình đó, ô và màn đổi tên theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.
+- Thẻ bàn ghi **"Chưa đặt giá giờ"** là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.
 - Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ "4 chỗ • 60.000 đ/giờ".
 - Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ "1g05 • giờ 65.000 đ"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.
 - Trong màn chi tiết bàn có dải **"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán"**.
-- Nút **"Lịch đặt"** (hình tờ lịch) ở góc trên màn Quản lý Bàn mở lịch đặt trước.
+- Thanh **"Lịch đặt"** ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước.
 
 ## Các việc thường làm
 
@@ -45,7 +46,7 @@ Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis
 
 ### Đặt giá giờ cho bàn, phòng, sân
 Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:
-1. Ở Quản lý Bàn, **giữ lâu** vào bàn đang trống, chọn **"Đặt giá giờ"** (dòng nhỏ bên dưới ghi "Chưa tính giờ" hoặc giá đang dùng).
+1. Ở màn Các hoạt động tính giờ, chạm vào bàn ghi **"Chưa đặt giá giờ"**. Bàn ở màn Quản lý Bàn, hoặc bàn đã có giá: **giữ lâu** vào bàn đang trống, chọn **"Đặt giá giờ"** (dòng nhỏ bên dưới ghi "Chưa tính giờ" hoặc giá đang dùng).
 2. Gõ số tiền vào ô **"Giá một giờ"**, ví dụ 60000, hoặc bấm một mức ở hàng **"Chọn nhanh"** (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.
 3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm **"Cả khu · … bàn"**; không thì để **"Chỉ …"** (tên bàn).
 4. Bấm nút **"Lưu"** ở dưới cùng.
@@ -89,7 +90,7 @@ Tiền giờ nằm trong doanh thu như mọi món. Muốn tách tiền giờ v�
 
 ### Đặt trước sân, bàn, phòng
 Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:
-1. Ở Quản lý Bàn bấm nút **"Lịch đặt"** ở góc trên.
+1. Ở màn Các hoạt động tính giờ bấm thanh **"Lịch đặt"** (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).
 2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.
 3. Bấm **"Đặt"** ở bàn cần đặt. Nhập tên khách, số điện thoại, bấm vào dòng giờ để chọn giờ bắt đầu, chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm **"Đặt"**.
 
@@ -122,6 +123,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | Thẻ bàn không hiện đồng hồ dù bàn có giá giờ | Bàn được mở trước khi đặt giá giờ | Lượt khách đó không tính giờ; lượt mở bàn sau sẽ tính |
 | Đặt trước báo "Trùng giờ với lượt đặt của …" | Khung giờ đã có người đặt trên bàn đó | Chọn giờ khác hoặc bàn khác |
 | Đặt trước báo "Khung giờ này đã qua" | Giờ kết thúc đã qua | Chọn lại giờ |
+| Bàn không hiện ở màn Các hoạt động tính giờ | Bàn chưa có giá giờ và khu của bàn không mang biểu tượng ngành | Vào màn Bàn, giữ lâu vào bàn, chọn "Đặt giá giờ" |
 | Không thấy hộp nhắc trước giờ đặt | App đang tắt, lượt vừa đặt khi còn dưới 30 phút, hoặc đã có người bấm "Đã nhắc" | Mở app ở máy quầy trong giờ bán; xem dòng "đã nhắc" trong Lịch đặt |
 | Lượt đặt ghi "Đã nhận" vẫn giữ khung giờ dù khách đã về | Khung đã đặt được giữ tới hết giờ | Đặt khách khác vào sau giờ kết thúc của khung đó |
 

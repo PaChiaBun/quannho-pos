@@ -440,3 +440,14 @@ Chủ Quán chụp hộp giữ lâu vào "Bàn 1" (khu bi da), bảo đừng đ�
 - Quán không bật module: hộp y như cũ, vẫn "Sửa thông tin bàn".
 - "Tính tiền giờ" giờ chỉ còn một nghĩa: nút thu tiền giờ trong bàn chưa gọi món.
 - Thử trên máy ảo: giữ lâu "Bàn 1" khu bi da thấy đúng hai mục mới. Bài `tinh-gio.md`, `quan-ly-ban.md` sửa theo, xuất lại (bản 202611250456).
+
+### 25/11 — Ô "Các hoạt động tính giờ" mở màn riêng
+
+Chủ Quán báo bấm ô lại ra màn Bàn, vẫn còn tên "Quản lý bàn". Làm chế độ riêng `BanScreen(cheDoTinhGio: true)`, đẩy thành màn mới (có nút quay lại, không có thanh dưới) thay vì nhảy tab 7; tab Bàn giữ nguyên mọi bàn.
+
+- Tên màn theo loại hình quán; chữ "bàn" ở nút Thêm và bộ lọc đổi theo ngành (sân, phòng). Các hộp con vẫn ghi "bàn".
+- Hiện: bàn có giá giờ + mọi bàn của khu mang biểu tượng ngành (`locBanTinhGio`, `locKhuTinhGio`).
+- Bàn chưa có giá ghi "Chưa đặt giá giờ", chạm vào mở hộp đặt giá (không mở bàn, kẻo đồng hồ không chạy).
+- Thêm bàn ở khu đã có giá thì theo giá của khu; thêm khu chỉ cho chọn biểu tượng ngành. Không sắp xếp khu ở màn này.
+- Thanh "Lịch đặt" ở đầu màn.
+- Máy ảo, quán Demo: màn mang tên mới, khu bi da 3 bàn "Chưa đặt giá giờ"; đã bấm mở hộp giá, Lịch đặt, Thêm khu, Thêm bàn, quay lại (không lưu gì). Chưa thử: lưu thêm khu / thêm bàn, máy tính bảng, tài khoản nhân viên, hộp nhắc 30 phút khi đang ở màn này.

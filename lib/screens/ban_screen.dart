@@ -63,6 +63,7 @@ import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvid
 import '../modules/tinh_gio/dat_truoc.dart';
 import '../modules/tinh_gio/dat_truoc_ui.dart';
 import '../modules/tinh_gio/loai_hinh.dart';
+import '../modules/tinh_gio/nganh_icon.dart' show NganhCumIcon;
 import '../modules/tinh_gio/tinh_gio.dart';
 import '../modules/tinh_gio/tinh_gio_widgets.dart';
 
@@ -337,7 +338,10 @@ final productToppingLinksProvider =
 // MAIN SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 class BanScreen extends ConsumerStatefulWidget {
-  const BanScreen({super.key});
+  /// Mở từ ô "Các hoạt động tính giờ": tên theo ngành, chỉ hiện bàn tính giờ.
+  final bool cheDoTinhGio;
+
+  const BanScreen({super.key, this.cheDoTinhGio = false});
 
   @override
   ConsumerState<BanScreen> createState() => _BanScreenState();
@@ -351,6 +355,13 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   String _tableCardSize = 'vua'; // 'to' | 'vua' | 'nho'
 
   BanRepository get _banRepo => ref.read(banRepositoryProvider);
+
+  bool get _tinhGio => widget.cheDoTinhGio;
+
+  LoaiHinh get _loaiHinh => ref.read(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last;
+
+  /// "bàn" / "sân" / "phòng" theo ngành ở chế độ tính giờ; màn Bàn thường luôn là "bàn".
+  String get _danhXung => _tinhGio ? _loaiHinh.danhXung : 'bàn';
 
   @override
   void dispose() {
@@ -384,7 +395,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const _ZoneFormSheet(),
+      builder: (_) => _ZoneFormSheet(nganhMacDinh: _tinhGio ? _loaiHinh.maKhuVuc : null),
     );
     if (result == null) return;
     try {
@@ -540,10 +551,16 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       );
       return;
     }
-    var zones = await _banRepo.getZones();
+    // Chế độ tính giờ: chỉ thêm vào khu đang hiện ở màn này, không thì bàn mới thêm xong lại không thấy.
+    Future<List<BanZoneModel>> layKhu() async {
+      final ds = await _banRepo.getZones();
+      return _tinhGio ? locKhuTinhGio(ds, await _banRepo.getAllTables()) : ds;
+    }
+
+    var zones = await layKhu();
     if (zones.isEmpty) {
       await _addZone();
-      zones = await _banRepo.getZones();
+      zones = await layKhu();
       if (zones.isEmpty || !mounted) return;
     }
     if (!mounted) return;
@@ -573,9 +590,11 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       final baseOrder = existingTables.isEmpty
           ? 0
           : existingTables.map((t) => t.sortOrder).reduce(max) + 1;
+      final moi = <String>[];
       for (int i = 0; i < batchCount; i++) {
         final finalName = batchCount == 1 ? baseName : '$baseName ${i + 1}';
         final tableId = const Uuid().v4();
+        moi.add(tableId);
         await _banRepo.upsertTable(
           BanTableModel(
             id: tableId,
@@ -587,6 +606,20 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             isActive: true,
           ),
         );
+      }
+      // Chế độ tính giờ: bàn mới theo luôn giá của bàn cùng khu (khu chưa có giá thì chờ Chủ quán đặt).
+      final giaCungKhu = existingTables.where((t) => t.tinhGio).firstOrNull?.giaGioProductId;
+      if (_tinhGio && giaCungKhu != null) {
+        final loi = await _banRepo.datGiaGio(moi, giaCungKhu);
+        if (loi != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã thêm nhưng chưa đặt được giá giờ: $loi'),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
       HapticFeedback.lightImpact();
     } catch (e, st) {
@@ -700,6 +733,43 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     );
   }
 
+  Future<void> _datGiaGio(BanTableModel table, BanZoneModel zone) async {
+    final perms = await ref.read(userActionPermsProvider.future);
+    if (!mounted) return;
+    if (!perms.contains('ban.manage_structure')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bạn không có quyền đặt giá giờ. Nhờ Chủ quán hoặc Quản lý đặt giá cho ${table.label}.',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final tatCa = ref.read(allBanTablesProvider).value ?? const <BanTableModel>[];
+    final daLuu = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => TinhGioGiaGioSheet(
+        table: table,
+        tenKhu: zone.name,
+        banCuaKhu: tatCa.where((b) => b.zoneId == table.zoneId).toList(),
+      ),
+    );
+    if (daLuu == true) {
+      ref.invalidate(allBanTablesProvider);
+      ref.invalidate(banTablesForZoneProvider);
+    }
+  }
+
+  /// Chạm bàn trống. Ở chế độ tính giờ, bàn chưa có giá thì hỏi giá trước: mở luôn là đồng hồ không chạy.
+  void _chamBanTrong(BanTableModel table, BanZoneModel zone) =>
+      _tinhGio && !table.tinhGio ? _datGiaGio(table, zone) : _openTable(table, zone);
+
   void _showTableOptions(
     BanTableModel table,
     BanSessionModel? session,
@@ -715,38 +785,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         giaGio: ref.read(tinhGioGiaTheoMonProvider)[table.giaGioProductId]?.sellPrice,
         onGiaGio: !ref.read(tinhGioModuleActiveProvider)
             ? null
-            : () async {
+            : () {
                 Navigator.pop(context);
-                final perms = await ref.read(userActionPermsProvider.future);
-                if (!mounted) return;
-                if (!perms.contains('ban.manage_structure')) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Bạn không có quyền "Sửa/Xóa bàn".',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                      ),
-                      backgroundColor: _kRed,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                  return;
-                }
-                final tatCa = ref.read(allBanTablesProvider).value ?? const <BanTableModel>[];
-                final daLuu = await showModalBottomSheet<bool>(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (_) => TinhGioGiaGioSheet(
-                    table: table,
-                    tenKhu: zone.name,
-                    banCuaKhu: tatCa.where((b) => b.zoneId == table.zoneId).toList(),
-                  ),
-                );
-                if (daLuu == true) {
-                  ref.invalidate(allBanTablesProvider);
-                  ref.invalidate(banTablesForZoneProvider);
-                }
+                _datGiaGio(table, zone);
               },
         onEdit: () async {
           Navigator.pop(context);
@@ -843,6 +884,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     final allTablesAsync = ref.watch(allBanTablesProvider);
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
     ref.watch(userActionPermsProvider);
+    if (_tinhGio) ref.watch(tinhGioLoaiHinhProvider); // đổi loại hình thì đổi tên màn
 
     // Khi session load xong (từ null → có storeId) → bắt đầu sync
     ref.listen<SessionData?>(sessionProvider, (previous, next) {
@@ -898,12 +940,17 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
-          'Quản lý bàn',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: _kNavy,
+        iconTheme: const IconThemeData(color: _kNavy), // theme đặt màu trắng, nút quay lại chìm mất
+        titleSpacing: _tinhGio ? 0 : null,
+        title: FittedBox(
+          fit: BoxFit.scaleDown, // "Các hoạt động tính giờ" trên máy 360
+          child: Text(
+            _tinhGio ? _loaiHinh.ten : 'Quản lý bàn',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: _kNavy,
+            ),
           ),
         ),
         actions: [
@@ -927,7 +974,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
               );
             },
           ),
-          if (ref.watch(tinhGioModuleActiveProvider))
+          if (!_tinhGio && ref.watch(tinhGioModuleActiveProvider))
             IconButton(
               icon: const Icon(Icons.event_note_rounded, color: _kNavy),
               tooltip: 'Lịch đặt',
@@ -950,6 +997,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       body: Column(
         children: [
           const QrLockedBanner(),
+          if (_tinhGio) _thanhLichDat(),
           Expanded(
             child: zonesAsync.when(
               loading: () =>
@@ -967,8 +1015,12 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                   ),
                 );
               },
-              data: (zones) {
-                if (_cachedZones.length != zones.length ||
+              data: (tatCaKhu) {
+                final zones = _tinhGio
+                    ? locKhuTinhGio(tatCaKhu, allTablesAsync.value ?? const <BanTableModel>[])
+                    : tatCaKhu;
+                if (_tinhGio ||
+                    _cachedZones.length != zones.length ||
                     _cachedZones.isEmpty) {
                   _cachedZones = zones;
                 }
@@ -994,7 +1046,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                           // Cột phải: Panel tổng quan (fixed 280px)
                           SizedBox(
                             width: 280,
-                            child: _BanRightPanel(zones: zones),
+                            child: _BanRightPanel(zones: zones, chiTinhGio: _tinhGio),
                           ),
                         ],
                       );
@@ -1021,10 +1073,40 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         backgroundColor: _kNavy,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
-          'Thêm bàn',
+          'Thêm $_danhXung',
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Chế độ tính giờ: lịch đặt là việc hay dùng nên có hẳn một thanh, không chỉ biểu tượng trên góc.
+  Widget _thanhLichDat() {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const LichDatScreen()),
+        ),
+        child: SizedBox(
+          height: 52,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.event_note_rounded, color: _kNavy, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  'Lịch đặt',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: _kNavy),
+                ),
+                const Spacer(),
+                Icon(Icons.chevron_right_rounded, color: _kNavy.withValues(alpha: 0.5)),
+              ],
+            ),
           ),
         ),
       ),
@@ -1171,8 +1253,10 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           zones: zones,
           selectedIndex: _selectedZoneIndex,
           onSelect: (i) => setState(() => _selectedZoneIndex = i),
-          onReorder: (oldIdx, newIdx) =>
-              _handleReorderZones(zones, oldIdx, newIdx),
+          // đang lọc khu thì không sắp xếp: lưu thứ tự một phần sẽ làm lệch thứ tự các khu còn lại
+          onReorder: (oldIdx, newIdx) {
+            if (!_tinhGio) _handleReorderZones(zones, oldIdx, newIdx);
+          },
           onEditZone: (zone) => _editZone(zone),
           onAddZone: _addZone,
         ),
@@ -1184,7 +1268,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             child: Row(
               children: [
                 _buildFilterChip(
-                  label: 'Tất cả bàn',
+                  label: 'Tất cả $_danhXung',
                   value: 'all',
                   color: _kNavy,
                 ),
@@ -1196,7 +1280,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                 ),
                 const SizedBox(width: 8),
                 _buildFilterChip(
-                  label: 'Bàn trống',
+                  label: '${_danhXung[0].toUpperCase()}${_danhXung.substring(1)} trống',
                   value: 'empty',
                   color: _kGreen,
                 ),
@@ -1243,9 +1327,12 @@ class _BanScreenState extends ConsumerState<BanScreen> {
               return allTablesAsync.when(
                 loading: () => const SizedBox(),
                 error: (e, _) => const SizedBox(),
-                data: (allTables) {
+                data: (moiBan) {
+                  // Khu truyền vào đã lọc; khu thường có bàn tính giờ vẫn chỉ hiện bàn tính giờ của nó.
+                  final allTables = _tinhGio ? locBanTinhGio(moiBan, zones) : moiBan;
                   if (allTables.isEmpty) {
                     return _EmptyState(
+                      cheDoTinhGio: _tinhGio,
                       onAddZone: _addZone,
                       onAddTable: () => _addTable(null),
                     );
@@ -1291,8 +1378,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 _statusFilter == 'occupied'
-                                    ? 'Hiện tại không có bàn nào có khách'
-                                    : 'Không có bàn nào trống',
+                                    ? 'Hiện tại không có $_danhXung nào có khách'
+                                    : 'Không có $_danhXung nào trống',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   color: const Color(0xFF9E9085),
@@ -1306,6 +1393,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                     }
 
                     return _EmptyState(
+                      cheDoTinhGio: _tinhGio,
                       onAddZone: _addZone,
                       onAddTable: () => _addTable(
                         _selectedZoneIndex > 0 &&
@@ -1374,7 +1462,7 @@ zone.iconCode,
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          '${zoneTables.length} bàn  •  '
+                                          '${zoneTables.length} $_danhXung  •  '
                                           '${zoneTables.where((t) => activeSessions.containsKey(t.id)).length} có khách',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 12,
@@ -1421,7 +1509,8 @@ zone.iconCode,
                                                 session,
                                                 zone,
                                               )
-                                            : _openTable(table, zone),
+                                            : _chamBanTrong(table, zone),
+                                        nhacDatGia: _tinhGio,
                                         onLongPress: () => _showTableOptions(
                                           table,
                                           session,
@@ -1477,7 +1566,8 @@ zone.iconCode,
                         cardSize: _tableCardSize,
                         onTap: () => session != null
                             ? _manageSession(table, session, zone)
-                            : _openTable(table, zone),
+                            : _chamBanTrong(table, zone),
+                        nhacDatGia: _tinhGio,
                         onLongPress: () =>
                             _showTableOptions(table, session, zone),
                       );
@@ -1498,7 +1588,8 @@ zone.iconCode,
 // ─────────────────────────────────────────────────────────────────────────────
 class _BanRightPanel extends ConsumerWidget {
   final List<BanZoneModel> zones;
-  const _BanRightPanel({required this.zones});
+  final bool chiTinhGio;
+  const _BanRightPanel({required this.zones, this.chiTinhGio = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1510,10 +1601,15 @@ class _BanRightPanel extends ConsumerWidget {
       child: allTablesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const SizedBox(),
-        data: (allTables) => activeSessionsAsync.when(
+        data: (moiBan) => activeSessionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => const SizedBox(),
-          data: (activeSessions) {
+          data: (moiPhien) {
+            final allTables = chiTinhGio ? locBanTinhGio(moiBan, zones) : moiBan;
+            final hien = {for (final t in allTables) t.id};
+            final activeSessions = chiTinhGio
+                ? ({...moiPhien}..removeWhere((id, _) => !hien.contains(id)))
+                : moiPhien;
             final occupied = allTables
                 .where((t) => activeSessions.containsKey(t.id))
                 .toList();
@@ -2141,6 +2237,8 @@ class _TableCard extends ConsumerWidget {
   final String cardSize; // 'to' | 'vua' | 'nho'
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  /// Chế độ tính giờ: bàn chưa có giá thì ghi rõ trên thẻ.
+  final bool nhacDatGia;
 
   const _TableCard({
     required this.table,
@@ -2149,6 +2247,7 @@ class _TableCard extends ConsumerWidget {
     required this.cardSize,
     required this.onTap,
     required this.onLongPress,
+    this.nhacDatGia = false,
   });
 
   @override
@@ -2428,6 +2527,8 @@ zone.iconCode,
                           Text(
                             giaGioMon != null
                                 ? '${table.seats} chỗ • ${fmtVnd(giaGioMon.sellPrice)}/giờ'
+                                : nhacDatGia && !table.tinhGio
+                                ? 'Chưa đặt giá giờ'
                                 : '${table.seats} chỗ',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: infoFontSize,
@@ -2499,7 +2600,8 @@ zone.iconCode,
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAddZone;
   final VoidCallback onAddTable;
-  const _EmptyState({required this.onAddZone, required this.onAddTable});
+  final bool cheDoTinhGio;
+  const _EmptyState({required this.onAddZone, required this.onAddTable, this.cheDoTinhGio = false});
 
   @override
   Widget build(BuildContext context) {
@@ -2509,7 +2611,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🪑', style: TextStyle(fontSize: 64)),
+            if (cheDoTinhGio)
+              const NganhCumIcon(size: 48, color: _kNavy)
+            else
+              const Text('🪑', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
             Text(
               'Bắt đầu thiết lập',
@@ -2521,7 +2626,10 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Thêm khu vực (Trong nhà, Ngoài trời...)\nRồi thêm bàn vào từng khu',
+              cheDoTinhGio
+                  ? 'Thêm khu (Bi da, Sân cầu lông, Phòng hát...), thêm bàn hoặc sân vào khu, '
+                        'rồi chạm vào để đặt giá giờ.\nBàn đã có sẵn ở màn Bàn: giữ lâu vào bàn, chọn "Đặt giá giờ".'
+                  : 'Thêm khu vực (Trong nhà, Ngoài trời...)\nRồi thêm bàn vào từng khu',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
@@ -11532,7 +11640,10 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
 
 class _ZoneFormSheet extends StatefulWidget {
   final BanZoneModel? existing;
-  const _ZoneFormSheet({this.existing});
+  /// Khác null khi thêm khu ở chế độ tính giờ: chọn sẵn biểu tượng ngành và chỉ cho chọn biểu tượng ngành
+  /// (khu mang biểu tượng thường sẽ không hiện ở màn đó).
+  final int? nganhMacDinh;
+  const _ZoneFormSheet({this.existing, this.nganhMacDinh});
 
   @override
   State<_ZoneFormSheet> createState() => _ZoneFormSheetState();
@@ -11550,7 +11661,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
     _selectedColor = widget.existing != null
         ? Color(widget.existing!.colorValue)
         : _kNavy;
-    _selectedIconCode = widget.existing?.iconCode ?? 0xe318;
+    _selectedIconCode = widget.existing?.iconCode ?? widget.nganhMacDinh ?? 0xe318;
   }
 
   String _colorToHex(Color c) =>
@@ -11642,7 +11753,10 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _kZoneIconCodes.map((iconCp) {
+                    children: (widget.nganhMacDinh == null
+                            ? _kZoneIconCodes
+                            : [for (final l in kLoaiHinh) l.maKhuVuc])
+                        .map((iconCp) {
                       final isSel = _selectedIconCode == iconCp;
                       return GestureDetector(
                         onTap: () => setState(() => _selectedIconCode = iconCp),

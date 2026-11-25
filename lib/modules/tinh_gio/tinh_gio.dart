@@ -1,7 +1,8 @@
 // Bàn tính giờ (bi da, karaoke, sân): phép tính dùng chung ở app.
 // Số THẬT do máy chủ chốt (ban_chot_gio_v1, migration 20261123_ban_tinh_gio_v1.sql). Các hàm dưới đây
 // phải ra cùng kết quả với máy chủ để tiền tạm tính trên thẻ bàn khớp dòng tiền giờ lúc tính tiền.
-import '../../core/repositories/ban_repository.dart' show BanSessionItemModel;
+import '../../core/repositories/ban_repository.dart' show BanSessionItemModel, BanTableModel, BanZoneModel;
+import 'loai_hinh.dart' show loaiHinhTheoMaKhuVuc;
 
 /// Mã module ở Trang chủ.
 const kTinhGioModuleId = 'tinh_gio';
@@ -39,6 +40,22 @@ String tinhGioDongHo(DateTime tu, DateTime luc) {
 
 /// Máy chủ văng hai lỗi này khi thanh toán / đóng bàn tính giờ mà chưa chốt (hoặc chốt quá cũ).
 /// App bắt, gọi chốt giờ lại rồi cho thu ngân xem lại tổng.
+/// Khu dành cho bàn tính giờ: mang biểu tượng ngành (bi da, sân, phòng hát…).
+bool laKhuTinhGio(BanZoneModel k) => loaiHinhTheoMaKhuVuc(k.iconCode) != null;
+
+/// Các bàn hiện ở màn "Các hoạt động tính giờ": bàn đã có giá giờ, cộng mọi bàn của khu ngành
+/// (kể cả bàn mới chưa đặt giá, để Chủ quán thấy mà đặt).
+List<BanTableModel> locBanTinhGio(List<BanTableModel> ban, List<BanZoneModel> khu) {
+  final khuNganh = {for (final k in khu) if (laKhuTinhGio(k)) k.id};
+  return ban.where((b) => b.tinhGio || khuNganh.contains(b.zoneId)).toList();
+}
+
+/// Các khu hiện ở màn đó: khu ngành và khu đang có bàn tính giờ.
+List<BanZoneModel> locKhuTinhGio(List<BanZoneModel> khu, List<BanTableModel> ban) {
+  final coBan = {for (final b in ban) if (b.tinhGio) b.zoneId};
+  return khu.where((k) => laKhuTinhGio(k) || coBan.contains(k.id)).toList();
+}
+
 /// Danh mục của các món giá giờ app tự tạo khi Chủ quán gõ giá một giờ.
 const kDanhMucTienGio = 'Tiền giờ';
 

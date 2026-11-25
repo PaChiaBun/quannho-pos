@@ -204,4 +204,22 @@ void main() {
     expect(laMonGiaGio('Bún bò Huế đặc biệt', 'Món nước'), isFalse);
     expect(laMonGiaGio('Cà phê sữa đá', null), isFalse);
   });
+
+  test('màn Các hoạt động tính giờ: khu ngành hiện mọi bàn, khu thường chỉ hiện bàn có giá giờ', () {
+    BanZoneModel khu(String id, int icon) => BanZoneModel(
+        id: id, storeId: 's', name: id, colorValue: 0xFF1C2151, iconCode: icon, sortOrder: 0, isActive: true);
+    BanTableModel ban(String id, String khu, {String? gia}) => BanTableModel(
+        id: id, zoneId: khu, storeId: 's', label: id, seats: 4, sortOrder: 0, isActive: true, giaGioProductId: gia);
+    final cacKhu = [khu('biDa', 0xF1A01), khu('trongNha', 0xe318), khu('sanVuon', 0xe1a7), khu('chung', 0xF1A00)];
+    final cacBan = [
+      ban('b1', 'biDa'),
+      ban('b2', 'biDa', gia: 'g'),
+      ban('a1', 'trongNha', gia: 'g'),
+      ban('a2', 'trongNha'),
+      ban('v1', 'sanVuon'),
+    ];
+    expect(locBanTinhGio(cacBan, cacKhu).map((b) => b.id), ['b1', 'b2', 'a1']);
+    expect(locKhuTinhGio(cacKhu, cacBan).map((k) => k.id), ['biDa', 'trongNha', 'chung']);
+    expect(locBanTinhGio([ban('x', 'trongNha')], cacKhu), isEmpty);
+  });
 }
