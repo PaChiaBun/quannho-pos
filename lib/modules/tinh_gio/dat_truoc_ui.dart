@@ -191,6 +191,8 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         foregroundColor: _kNavy,
+        // theme của app đặt biểu tượng thanh trên màu trắng: không ghi lại thì nút quay lại chìm vào nền kem
+        iconTheme: const IconThemeData(color: _kNavy),
         title: Text('Lịch đặt', style: _chu(20, FontWeight.w800)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),

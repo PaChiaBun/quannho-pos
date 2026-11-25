@@ -427,3 +427,7 @@ Chủ Quán yêu cầu tinh chỉnh UX/UI cho sang, đẹp hơn.
 - Ảnh thử cỡ 360×800: `goldens/gia_gio_trong.png`, `gia_gio_da_co.png`. Thử thật trên máy ảo, quán Demo: bấm chọn nhanh 60.000 + "Cả khu" + Lưu → A 1, A 2, A 3 đều "60.000 đ/giờ". Trên máy thật lộ khung ô nhập mặc định của theme quanh số tiền (ảnh thử không có theme nên không thấy) → đã tắt.
 - Chưa thử: gõ tay bằng bàn phím trên bản cuối (bản trước đã thử), mất mạng, tài khoản Quản lý, máy Sunmi thật.
 - Bài hướng dẫn sửa theo nút mới, xuất lại (bản 202611250412). Test module + Boom 169 đạt.
+
+### 25/11 — Màn Lịch đặt không thấy nút quay lại
+
+Chủ Quán báo màn Lịch đặt không có chỗ quay lại. Nút vẫn có nhưng theme của app đặt biểu tượng thanh trên màu trắng, màn này nền kem nên nút chìm mất (ảnh thử không dùng theme của app nên không lộ). Sửa: ghi rõ màu biểu tượng xanh đậm cho thanh trên của màn Lịch đặt. Thử trên máy ảo: thấy mũi tên, bấm về đúng màn Quản lý bàn.
