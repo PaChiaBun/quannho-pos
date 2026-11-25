@@ -41,15 +41,16 @@ Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis
 2. App hỏi **"Quán thuộc loại hình nào?"**: chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn **"Nhiều loại"**.
 3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn "Nhiều loại" thì ô giữ tên Các hoạt động tính giờ.
 
-Đổi loại hình sau này: giữ lâu vào một bàn trống, chọn **"Tính tiền giờ"**, bấm dòng **"Loại hình: … • Đổi"**.
+Đổi loại hình sau này: giữ lâu vào một bàn trống, chọn **"Tính tiền giờ"**, bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ "Bi da", "Nhiều loại").
 
 ### Đặt giá giờ cho bàn, phòng, sân
 Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:
-1. Vào **Kho hàng**, bấm **"Thêm sản phẩm"** → **"Thêm sản phẩm mới"**, tạo một món làm giá giờ, ví dụ "Giờ bàn lỗ", giá bán **60.000đ**, danh mục "Tiền giờ". Giá bán của món là giá **một giờ**.
-2. Ở Quản lý Bàn, **giữ lâu** vào bàn đang trống, chọn **"Tính tiền giờ"**.
-3. Chọn món giá giờ trong danh sách (có ô **"Tìm món"**). Bật **"Áp cho cả khu …"** nếu muốn đặt cùng giá cho mọi bàn của khu.
+1. Ở Quản lý Bàn, **giữ lâu** vào bàn đang trống, chọn **"Tính tiền giờ"**.
+2. Gõ số tiền vào ô **"Giá một giờ"**, ví dụ 60000, hoặc bấm một mức ở hàng **"Chọn nhanh"** (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.
+3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm **"Cả khu · … bàn"**; không thì để **"Chỉ …"** (tên bàn).
+4. Bấm nút **"Lưu"** ở dưới cùng.
 
-Mỗi loại giá tạo một món riêng, ví dụ "Giờ bàn lỗ" và "Giờ phòng VIP".
+App tự tạo trong Kho hàng một món tên "Tiền giờ 60.000 đ", danh mục "Tiền giờ"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.
 
 > Chỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi.
 
@@ -57,14 +58,16 @@ Mỗi loại giá tạo một món riêng, ví dụ "Giờ bàn lỗ" và "Giờ
 Giữ lâu vào bàn trống, chọn **"Tính tiền giờ (đang bật)"**, bấm **"Không tính giờ (bàn thường)"**.
 
 ### Đổi giá mỗi giờ
-Sửa giá bán của món giá giờ trong **Kho hàng**. Bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán.
+Giữ lâu vào bàn trống, chọn **"Tính tiền giờ (đang bật)"**, gõ giá mới vào ô **"Giá một giờ"**, bấm **"Lưu"**. Bàn đang có khách thì đợi tính tiền xong mới đổi được.
+
+Cách khác: sửa giá bán của món "Tiền giờ …" trong **Kho hàng**, mọi bàn đang dùng món đó đổi giá theo; bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán.
 
 ### Mở bàn và xem đồng hồ
 Mở bàn như bàn thường. Đồng hồ chạy từ lúc mở bàn, theo giờ của máy chủ nên máy sai giờ cũng không làm sai tiền. Thẻ bàn và màn chi tiết bàn hiện thời lượng và tiền giờ tạm tính. Khách vẫn gọi đồ ăn uống, gửi bếp như thường.
 
 ### Tính tiền bàn tính giờ
 1. Trong màn chi tiết bàn bấm **"Thanh toán"**. Bàn chưa gọi món nào thì bấm **"Tính tiền giờ"**.
-2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ "Giờ bàn lỗ · Bàn 3 · 14:05–15:35 (1g30)".
+2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ "Tiền giờ 60.000 đ · Bàn 3 · 14:05–15:35 (1g30)".
 3. Màn **"Thu tiền"** hiện tổng đã gồm tiền giờ. Thu tiền như bàn thường; mã giảm giá và điểm áp trên cả tiền giờ.
 
 Khách chơi tiếp sau khi đã mở màn Thu tiền: bấm **"Hủy bỏ"**, lúc sau bấm Thanh toán lại. Dòng tiền giờ được tính lại, không sinh dòng thứ hai.
@@ -111,7 +114,8 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | Giữ lâu vào bàn không thấy "Tính tiền giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
 | "Chỉ Chủ quán / Quản lý đặt được giá giờ" | Tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đặt giá giờ |
 | "Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được" | Bàn đang chạy giờ | Tính tiền bàn đó rồi đổi |
-| Danh sách chọn giá giờ ghi "Chưa có món nào. Vào Kho hàng bấm "Thêm sản phẩm" để tạo món giá giờ trước." | Chưa có món nào để làm giá giờ | Vào Kho hàng tạo món giá giờ rồi quay lại |
+| Bấm Lưu giá giờ báo "Chưa lưu được giá giờ. Kiểm tra mạng rồi thử lại." | Máy mất mạng lúc tạo món giá giờ | Kiểm tra mạng rồi bấm Lưu lại |
+| Nút "Lưu giá giờ" bị mờ | Chưa gõ giá, hoặc giá dưới 1.000 đ | Gõ giá một giờ từ 1.000 đ trở lên |
 | "Giờ chơi cần tính lại (chưa chốt hoặc đã chốt quá 15 phút). Đóng màn thanh toán rồi bấm Thanh toán lại." | Màn Thu tiền để mở quá 15 phút, hoặc máy đó chưa cập nhật app | Đóng màn Thu tiền, bấm Thanh toán lại; máy chưa cập nhật thì cập nhật app |
 | "Chưa chốt được giờ: …" khi bấm Thanh toán | Mất mạng lúc chốt giờ | Kiểm tra mạng rồi bấm Thanh toán lại |
 | Bấm sửa số lượng dòng tiền giờ, app báo "Dòng tiền giờ" | Tiền giờ do hệ thống tính theo đồng hồ | Muốn bỏ tiền giờ thì Quản lý huỷ dòng đó |
@@ -123,7 +127,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 
 ## Liên quan module khác
 - **Quản lý Bàn**: tính giờ chạy ngay trên sơ đồ bàn, gọi món, gửi bếp, chuyển, gộp, thanh toán như bàn thường.
-- **Kho hàng**: món giá giờ là một món bình thường tạo ở Kho hàng; giá bán là giá một giờ.
+- **Kho hàng**: món giá giờ ("Tiền giờ …") là một món bình thường nằm trong Kho hàng, app tự tạo khi đặt giá giờ; giá bán là giá một giờ.
 - **Báo cáo**: tiền giờ là một dòng trong hoá đơn, vào doanh thu và tab Sản phẩm.
 - **Bếp**: dòng tiền giờ không lên phiếu bếp.
 

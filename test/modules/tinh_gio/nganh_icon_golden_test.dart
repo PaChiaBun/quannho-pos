@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quannho_pos/core/models/product_model.dart';
+import 'package:quannho_pos/core/providers/app_providers.dart';
 import 'package:quannho_pos/core/repositories/ban_repository.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
@@ -199,6 +201,50 @@ void main() {
     expect(find.text('Pickleball'), findsOneWidget);
     await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/chon_loai_hinh_360.png'));
   });
+
+  // Hộp đặt giá giờ trên máy 360×800: bàn chưa có giá, và bàn đã có giá 60.000 (điền sẵn, có nút gỡ).
+  for (final (ten, coGia) in const [('trong', false), ('da_co', true)]) {
+    testWidgets('hộp đặt giá giờ $ten', (tester) async {
+      await _napPhong();
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      ProductModel mon(String id, String ten, double gia, String dm) => ProductModel(
+          id: id, storeId: 's', name: ten, category: dm, unit: 'giờ', productType: 'finished', stockQty: 0, minStock: 0,
+          sellPrice: gia, costPrice: 0, stationCode: 'nong', isAvailable: true, isActive: true, isDeleted: false);
+      BanTableModel ban(String id, String ten, String? gia) => BanTableModel(
+          id: id, zoneId: 'z', storeId: 's', label: ten, seats: 4, sortOrder: 0, isActive: true, giaGioProductId: gia);
+      final b = ban('b2', 'Bàn 2', coGia ? 'g60' : null);
+      await runZonedGuarded(() async {
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            tinhGioLoaiHinhProvider.overrideWith((ref) async => loaiHinhTheoId('bi_da')),
+            posProductsProvider.overrideWithValue(AsyncData([
+              mon('c1', 'Cà phê sữa đá', 25000, 'Cà phê'),
+              if (coGia) mon('g60', 'Tiền giờ 60.000 đ', 60000, 'Tiền giờ'),
+              if (coGia) mon('g90', 'Giờ phòng VIP', 90000, 'Tiền giờ'),
+            ])),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              backgroundColor: const Color(0xFF8E8A85),
+              body: Align(
+                alignment: Alignment.bottomCenter,
+                child: TinhGioGiaGioSheet(table: b, tenKhu: 'Khu A', banCuaKhu: [ban('b1', 'Bàn 1', null), b, ban('b3', 'Bàn 3', null)]),
+              ),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+      }, (_, _) {});
+      expect(tester.takeException(), isNull, reason: 'hộp không được tràn trên máy 360');
+      expect(find.text('Cà phê sữa đá'), findsNothing, reason: 'không liệt kê thực đơn');
+      expect(find.text('60.000'), coGia ? findsNWidgets(2) : findsOneWidget, reason: 'ô giá điền sẵn + chip');
+      expect(find.text('Không tính giờ (bàn thường)'), coGia ? findsOneWidget : findsNothing);
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/gia_gio_$ten.png'));
+    });
+  }
 
   // Màn Lịch đặt với dữ liệu mẫu, ngày cố định để ảnh không đổi theo ngày chạy test.
   for (final (ten, co) in const [('360', Size(360, 800)), ('1024', Size(1024, 700))]) {

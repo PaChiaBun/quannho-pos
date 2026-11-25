@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/models/product_model.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/repositories/ban_repository.dart';
+import '../../core/repositories/core_product_repository.dart';
 import '../../core/utils/money_formatter.dart';
 import '../../shared/widgets/module_tile.dart';
 import 'loai_hinh.dart';
@@ -185,15 +186,44 @@ class TinhGioGiaGioSheet extends ConsumerStatefulWidget {
   ConsumerState<TinhGioGiaGioSheet> createState() => _TinhGioGiaGioSheetState();
 }
 
+String _soCham(int v) => fmtVnd(v).replaceAll(' đ', '');
+
+/// Ô giá: chỉ nhận chữ số, tự chèn dấu chấm hàng nghìn ("60000" → "60.000").
+class _GiaFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue cu, TextEditingValue moi) {
+    final so = moi.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final chu = so.isEmpty ? '' : _soCham(int.parse(so.length > 9 ? so.substring(0, 9) : so));
+    return TextEditingValue(text: chu, selection: TextSelection.collapsed(offset: chu.length));
+  }
+}
+
 class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
-  final _timCtrl = TextEditingController();
+  /// Mức giá thường gặp ở quán bi da, sân, phòng hát — bấm để điền nhanh.
+  static const _goiY = [30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000];
+  static const _kTeal = Color(0xFF0D9488);
+
+  final _giaCtrl = TextEditingController();
   bool _caKhu = false;
   bool _dangLuu = false;
   String? _loi;
 
+  int get _gia => int.tryParse(_giaCtrl.text.replaceAll('.', '')) ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bàn đã có giá: điền sẵn để sửa.
+    final id = widget.table.giaGioProductId;
+    final p = id == null
+        ? null
+        : (ref.read(posProductsProvider).value ?? const <ProductModel>[]).where((x) => x.id == id).firstOrNull;
+    if (p != null && p.sellPrice >= 1000) _giaCtrl.text = _soCham(p.sellPrice.round());
+  }
+
   @override
   void dispose() {
-    _timCtrl.dispose();
+    _giaCtrl.dispose();
     super.dispose();
   }
 
@@ -216,32 +246,68 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
     }
   }
 
+  /// Lưu giá vừa gõ: dùng lại món giá giờ cùng giá nếu có, không thì tạo món mới trong Kho hàng.
+  Future<void> _luuGia(List<ProductModel> monGio) async {
+    if (_dangLuu) return;
+    final gia = _gia;
+    if (gia < 1000) {
+      setState(() => _loi = 'Nhập giá một giờ, ít nhất 1.000 đ.');
+      return;
+    }
+    var id = monGio.where((p) => p.sellPrice.round() == gia).firstOrNull?.id;
+    if (id == null) {
+      setState(() {
+        _dangLuu = true;
+        _loi = null;
+      });
+      try {
+        id = await CoreProductRepository.instance.create(
+          name: '$kDanhMucTienGio ${fmtVnd(gia)}',
+          category: kDanhMucTienGio,
+          unit: 'giờ',
+          sellPrice: gia.toDouble(),
+        );
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _dangLuu = false;
+          _loi = 'Chưa lưu được giá giờ. Kiểm tra mạng rồi thử lại.';
+        });
+        return;
+      }
+      if (!mounted) return;
+      _dangLuu = false;
+    }
+    await _chon(id);
+  }
+
   TextStyle _chu(double size, FontWeight w, [Color? c]) =>
       GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: w, color: c ?? _kNavy);
 
+  Color _nhat(double a) => _kNavy.withValues(alpha: a);
+
   @override
   Widget build(BuildContext context) {
-    final tuKhoa = _timCtrl.text.trim().toLowerCase();
+    // Chỉ các món giá giờ (và món bàn này đang dùng), không phải cả thực đơn.
     final mon = (ref.watch(posProductsProvider).value ?? const <ProductModel>[])
-        .where((p) => !p.isTopping && (tuKhoa.isEmpty || p.name.toLowerCase().contains(tuKhoa)))
-        .toList()
-      ..sort((a, b) {
-        // món đang chọn lên đầu, rồi danh mục có chữ "giờ", rồi theo tên
-        int hang(ProductModel p) => p.id == widget.table.giaGioProductId
-            ? 0
-            : ((p.category ?? '').toLowerCase().contains('giờ') || p.name.toLowerCase().contains('giờ'))
-                ? 1
-                : 2;
-        final h = hang(a).compareTo(hang(b));
-        return h != 0 ? h : a.name.compareTo(b.name);
-      });
+        .where((p) => !p.isTopping && (p.id == widget.table.giaGioProductId || laMonGiaGio(p.name, p.category)))
+        .toList();
+    final gia = _gia;
+    final loaiHinh = ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last;
+    // Chọn nhanh: giá quán đang dùng đứng trước, rồi các mức thường gặp.
+    final giaDaCo = {for (final p in mon) p.sellPrice.round()}..removeWhere((g) => g < 1000);
+    final chonNhanh = [...giaDaCo.toList()..sort(), ..._goiY.where((g) => !giaDaCo.contains(g))];
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
-        decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
+        margin: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.86),
+        decoration: BoxDecoration(
+          color: _kCream,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 30, offset: const Offset(0, 10))],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -249,24 +315,138 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
             Container(
               width: 40,
               height: 4,
-              decoration: BoxDecoration(
-                color: _kNavy.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(2),
+              decoration: BoxDecoration(color: _nhat(0.15), borderRadius: BorderRadius.circular(2)),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(top: 14, bottom: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _dauHop(loaiHinh),
+                    const SizedBox(height: 16),
+                    _oGia(gia, mon),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                      child: Row(
+                        children: [
+                          Text('Chọn nhanh', style: _chu(12.5, FontWeight.w800, _nhat(0.6))),
+                          if (giaDaCo.isNotEmpty) ...[
+                            const Spacer(),
+                            const Icon(Icons.check_circle_rounded, size: 14, color: _kTeal),
+                            const SizedBox(width: 4),
+                            Text('giá quán đang dùng', style: _chu(12, FontWeight.w600, _nhat(0.6))),
+                          ],
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 46,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: chonNhanh.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (_, i) => _chipGia(chonNhanh[i], dangDung: giaDaCo.contains(chonNhanh[i])),
+                      ),
+                    ),
+                    if (widget.banCuaKhu.length > 1) ...[
+                      const SizedBox(height: 16),
+                      _phamVi(),
+                    ],
+                    if (_loi != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                        child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
+                      ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 14),
-            Text('Tính tiền giờ · ${widget.table.label}', style: _chu(18, FontWeight.w800)),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
-              child: Text(
-                'Chọn món giá giờ. Giá bán của món là giá MỘT GIỜ. Chưa có thì vào Kho hàng bấm "Thêm sản phẩm", '
-                'ví dụ "Giờ bàn lỗ" 60.000đ, danh mục "Tiền giờ".',
-                textAlign: TextAlign.center,
-                style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  onPressed: _dangLuu || gia < 1000 ? null : () => _luuGia(mon),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    disabledBackgroundColor: _nhat(_dangLuu ? 0.85 : 0.1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: _dangLuu
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                        )
+                      : Text(
+                          gia >= 1000 ? 'Lưu  ·  ${fmtVnd(gia)} / giờ' : 'Lưu giá giờ',
+                          style: _chu(15.5, FontWeight.w800, gia >= 1000 ? Colors.white : _nhat(0.38)),
+                        ),
+                ),
               ),
             ),
-            TextButton.icon(
-              onPressed: _dangLuu
+            if (widget.table.tinhGio || _caKhu)
+              TextButton.icon(
+                onPressed: _dangLuu ? null : () => _chon(null),
+                style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
+                icon: const Icon(Icons.timer_off_rounded, size: 18, color: _kRed),
+                label: Text('Không tính giờ (bàn thường)', style: _chu(13.5, FontWeight.w700, _kRed)),
+              )
+            else
+              const SizedBox(height: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Huy hiệu ngành + tên bàn + nút đổi loại hình.
+  Widget _dauHop(LoaiHinh loaiHinh) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2DD4BF), _kTeal, Color(0xFF115E59)],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [BoxShadow(color: _kTeal.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 5))],
+            ),
+            child: Center(child: loaiHinh.bieuTuong(size: 28, color: Colors.white)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Giá giờ · ${widget.table.label}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _chu(19, FontWeight.w800).copyWith(letterSpacing: -0.3),
+                ),
+                const SizedBox(height: 2),
+                Text('Thu theo số phút', maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(12.5, FontWeight.w500, _nhat(0.6))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: Colors.white,
+            shape: StadiumBorder(side: BorderSide(color: _nhat(0.14))),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: _dangLuu
                   ? null
                   : () => showModalBottomSheet<void>(
                         context: context,
@@ -274,124 +454,163 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                         isScrollControlled: true,
                         builder: (_) => const TinhGioLoaiHinhSheet(),
                       ),
-              icon: (ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last)
-                  .bieuTuong(size: 18, color: _kNavy),
-              label: Text(
-                'Loại hình: ${(ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last).nhan} • Đổi',
-                style: _chu(13, FontWeight.w700),
-              ),
-            ),
-            if (widget.banCuaKhu.length > 1)
-              SwitchListTile(
-                dense: true,
-                value: _caKhu,
-                activeThumbColor: _kNavy,
-                onChanged: _dangLuu ? null : (v) => setState(() => _caKhu = v),
-                title: Text(
-                  'Áp cho cả khu ${widget.tenKhu} (${widget.banCuaKhu.length} bàn)',
-                  style: _chu(14, FontWeight.w700),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: TextField(
-                controller: _timCtrl,
-                onChanged: (_) => setState(() {}),
-                style: _chu(14, FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Tìm món',
-                  prefixIcon: const Icon(Icons.search_rounded, color: _kNavy),
-                  filled: true,
-                  fillColor: Colors.white,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 40),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 6, 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(loaiHinh.nhan, style: _chu(12.5, FontWeight.w700)),
+                      const Icon(Icons.expand_more_rounded, size: 18, color: _kNavy),
+                    ],
                   ),
                 ),
               ),
             ),
-            if (_loi != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Thẻ trắng: số tiền lớn + quy ra tiền cho 30 phút, 1 giờ 30, 2 giờ.
+  Widget _oGia(int gia, List<ProductModel> mon) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _nhat(0.08)),
+        boxShadow: [BoxShadow(color: _nhat(0.07), blurRadius: 18, offset: const Offset(0, 6))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Giá một giờ', style: _chu(12.5, FontWeight.w700, _nhat(0.6))),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _giaCtrl,
+                  enabled: !_dangLuu,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [_GiaFormatter()],
+                  onChanged: (_) => setState(() => _loi = null),
+                  onSubmitted: (_) => _luuGia(mon),
+                  cursorColor: _kNavy,
+                  style: _chu(34, FontWeight.w800).copyWith(letterSpacing: -0.5),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    hintStyle: _chu(34, FontWeight.w800, _nhat(0.2)),
+                    // app có khung ô nhập mặc định trong theme: tắt hết để số tiền nằm trần trên thẻ trắng
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
+                    isCollapsed: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
               ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                children: [
-                  if (widget.table.tinhGio || _caKhu)
-                    _dong(
-                      icon: Icons.timer_off_rounded,
-                      ten: 'Không tính giờ (bàn thường)',
-                      phu: 'Gỡ giá giờ',
-                      dangChon: false,
-                      onTap: () => _chon(null),
+              Text('đ / giờ', style: _chu(15, FontWeight.w700, _nhat(0.55))),
+            ],
+          ),
+          Divider(height: 18, color: _nhat(0.08)),
+          if (gia >= 1000)
+            Row(
+              children: [
+                for (final (nhan, phut) in const [('30 phút', 30), ('1 giờ 30', 90), ('2 giờ', 120)])
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(nhan, style: _chu(11.5, FontWeight.w600, _nhat(0.55))),
+                        const SizedBox(height: 2),
+                        Text(fmtVnd(tinhGioThanhTien(phut, gia.toDouble())), style: _chu(13.5, FontWeight.w800)),
+                      ],
                     ),
-                  for (final p in mon)
-                    _dong(
-                      icon: Icons.timer_rounded,
-                      ten: p.name,
-                      phu: '${fmtVnd(p.sellPrice)} / giờ',
-                      dangChon: p.id == widget.table.giaGioProductId,
-                      onTap: () => _chon(p.id),
-                    ),
-                  if (mon.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Chưa có món nào. Vào Kho hàng bấm "Thêm sản phẩm" để tạo món giá giờ trước.',
-                        textAlign: TextAlign.center,
-                        style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.6)),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+                  ),
+              ],
+            )
+          else
+            Text('Tính theo từng phút, làm tròn lên 1.000 đ.', style: _chu(12.5, FontWeight.w500, _nhat(0.6))),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipGia(int g, {required bool dangDung}) {
+    final chon = g == _gia;
+    return Material(
+      color: chon ? _kNavy : Colors.white,
+      shape: StadiumBorder(side: BorderSide(color: chon ? _kNavy : _nhat(0.14))),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: _dangLuu
+            ? null
+            : () => setState(() {
+                  _giaCtrl.text = _soCham(g);
+                  _loi = null;
+                }),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (dangDung) ...[
+                Icon(Icons.check_circle_rounded, size: 15, color: chon ? Colors.white : _kTeal),
+                const SizedBox(width: 5),
+              ],
+              Text(_soCham(g), style: _chu(14, FontWeight.w700, chon ? Colors.white : _kNavy)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _dong({
-    required IconData icon,
-    required String ten,
-    required String phu,
-    required bool dangChon,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Material(
-        color: dangChon ? _kNavy.withValues(alpha: 0.08) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _dangLuu ? null : onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 52), // vùng chạm tối thiểu 52
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(icon, color: _kNavy, size: 22),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(ten, maxLines: 2, overflow: TextOverflow.ellipsis, style: _chu(14, FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(phu, style: _chu(13, FontWeight.w700, _kNavy.withValues(alpha: 0.7))),
-                  if (dangChon) ...[
-                    const SizedBox(width: 6),
-                    const Icon(Icons.check_circle_rounded, color: _kNavy, size: 20),
-                  ],
-                ],
+  // Áp cho một bàn hay cả khu.
+  Widget _phamVi() {
+    Widget doan(String chu, bool chon, bool giaTri) => Expanded(
+          child: Semantics(
+            button: true,
+            selected: chon,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _dangLuu ? null : () => setState(() => _caKhu = giaTri),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                height: 44,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: chon ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: chon ? [BoxShadow(color: _nhat(0.10), blurRadius: 8, offset: const Offset(0, 2))] : null,
+                ),
+                child: Text(
+                  chu,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _chu(13.5, chon ? FontWeight.w800 : FontWeight.w600, chon ? _kNavy : _nhat(0.6)),
+                ),
               ),
             ),
           ),
-        ),
+        );
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: _nhat(0.06), borderRadius: BorderRadius.circular(14)),
+      child: Row(
+        children: [
+          doan('Chỉ ${widget.table.label}', !_caKhu, false),
+          doan('Cả khu · ${widget.banCuaKhu.length} bàn', _caKhu, true),
+        ],
       ),
     );
   }

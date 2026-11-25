@@ -208,8 +208,8 @@
       "lib/modules/tinh_gio/dat_truoc.dart": "5905c43fef80126d",
       "lib/modules/tinh_gio/dat_truoc_ui.dart": "cc774b3705aa80ca",
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
-      "lib/modules/tinh_gio/tinh_gio.dart": "6404adfb5ee98db1",
-      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "0fb10aa94b289e8e",
+      "lib/modules/tinh_gio/tinh_gio.dart": "48e2aeee8da76475",
+      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "2da7e0714bde30f2",
       "lib/screens/ban_screen.dart": "17c3f9f02774c2dd",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"

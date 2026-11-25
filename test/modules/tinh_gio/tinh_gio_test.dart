@@ -196,4 +196,12 @@ void main() {
       expect(kModuleConfigs['pos']!.bieuTuong(size: 24, color: Colors.white), isA<Icon>(), reason: 'ô khác vẫn vẽ bằng Icon');
     });
   });
+
+  test('hộp đặt giá giờ chỉ liệt kê món giá giờ, không liệt kê thực đơn', () {
+    expect(laMonGiaGio('Tiền giờ 60.000 đ', kDanhMucTienGio), isTrue);
+    expect(laMonGiaGio('Bàn lỗ', 'Tiền giờ'), isTrue);
+    expect(laMonGiaGio('Giờ phòng VIP', null), isTrue);
+    expect(laMonGiaGio('Bún bò Huế đặc biệt', 'Món nước'), isFalse);
+    expect(laMonGiaGio('Cà phê sữa đá', null), isFalse);
+  });
 }

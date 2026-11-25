@@ -1,6 +1,6 @@
 {
- "version": 202611240645,
- "hash": "d0b42a2efa5b5e39c2c73922275ee61749d4ca7a09b725961d3d9fb6c10452ba",
+ "version": 202611250412,
+ "hash": "27166682540240838671b60dd4a28d79d46e97ac088933009556bbb273402288",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3504,7 +3504,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bật module Các hoạt động tính giờ và chọn loại hình",
-   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Các hoạt động tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn \"Nhiều loại\".\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn \"Nhiều loại\" thì ô giữ tên Các hoạt động tính giờ.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Tính tiền giờ\", bấm dòng \"Loại hình: … • Đổi\"."
+   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Các hoạt động tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn \"Nhiều loại\".\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn \"Nhiều loại\" thì ô giữ tên Các hoạt động tính giờ.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Tính tiền giờ\", bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ \"Bi da\", \"Nhiều loại\")."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-gia-gio-cho-ban-phong-san",
@@ -3512,7 +3512,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt giá giờ cho bàn, phòng, sân",
-   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Vào Kho hàng, bấm \"Thêm sản phẩm\" → \"Thêm sản phẩm mới\", tạo một món làm giá giờ, ví dụ \"Giờ bàn lỗ\", giá bán 60.000đ, danh mục \"Tiền giờ\". Giá bán của món là giá một giờ.\n2. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Tính tiền giờ\".\n3. Chọn món giá giờ trong danh sách (có ô \"Tìm món\"). Bật \"Áp cho cả khu …\" nếu muốn đặt cùng giá cho mọi bàn của khu.\n\nMỗi loại giá tạo một món riêng, ví dụ \"Giờ bàn lỗ\" và \"Giờ phòng VIP\".\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
+   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Tính tiền giờ\".\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Tiền giờ 60.000 đ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tinh-gio-cho-mot-ban",
@@ -3528,7 +3528,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đổi giá mỗi giờ",
-   "text": "Sửa giá bán của món giá giờ trong Kho hàng. Bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán."
+   "text": "Giữ lâu vào bàn trống, chọn \"Tính tiền giờ (đang bật)\", gõ giá mới vào ô \"Giá một giờ\", bấm \"Lưu\". Bàn đang có khách thì đợi tính tiền xong mới đổi được.\n\nCách khác: sửa giá bán của món \"Tiền giờ …\" trong Kho hàng, mọi bàn đang dùng món đó đổi giá theo; bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-mo-ban-va-xem-dong-ho",
@@ -3544,7 +3544,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Tính tiền bàn tính giờ",
-   "text": "1. Trong màn chi tiết bàn bấm \"Thanh toán\". Bàn chưa gọi món nào thì bấm \"Tính tiền giờ\".\n2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ \"Giờ bàn lỗ · Bàn 3 · 14:05–15:35 (1g30)\".\n3. Màn \"Thu tiền\" hiện tổng đã gồm tiền giờ. Thu tiền như bàn thường; mã giảm giá và điểm áp trên cả tiền giờ.\n\nKhách chơi tiếp sau khi đã mở màn Thu tiền: bấm \"Hủy bỏ\", lúc sau bấm Thanh toán lại. Dòng tiền giờ được tính lại, không sinh dòng thứ hai."
+   "text": "1. Trong màn chi tiết bàn bấm \"Thanh toán\". Bàn chưa gọi món nào thì bấm \"Tính tiền giờ\".\n2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ \"Tiền giờ 60.000 đ · Bàn 3 · 14:05–15:35 (1g30)\".\n3. Màn \"Thu tiền\" hiện tổng đã gồm tiền giờ. Thu tiền như bàn thường; mã giảm giá và điểm áp trên cả tiền giờ.\n\nKhách chơi tiếp sau khi đã mở màn Thu tiền: bấm \"Hủy bỏ\", lúc sau bấm Thanh toán lại. Dòng tiền giờ được tính lại, không sinh dòng thứ hai."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-tien-gio-tinh-the-nao",
@@ -3651,12 +3651,20 @@
    "text": "Vì sao: Bàn đang chạy giờ\nLàm gì: Tính tiền bàn đó rồi đổi"
   },
   {
-   "id": "tinh-gio#loi-danh-sach-chon-gia-gio-ghi-chua-co-mon-nao-vao-kho-hang-bam",
+   "id": "tinh-gio#loi-bam-luu-gia-gio-bao-chua-luu-duoc-gia-gio-kiem-tra-mang-roi",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
-   "title": "Danh sách chọn giá giờ ghi \"Chưa có món nào. Vào Kho hàng bấm \"Thêm sản phẩm\" để tạo món giá giờ trước.\"",
-   "text": "Vì sao: Chưa có món nào để làm giá giờ\nLàm gì: Vào Kho hàng tạo món giá giờ rồi quay lại"
+   "title": "Bấm Lưu giá giờ báo \"Chưa lưu được giá giờ. Kiểm tra mạng rồi thử lại.\"",
+   "text": "Vì sao: Máy mất mạng lúc tạo món giá giờ\nLàm gì: Kiểm tra mạng rồi bấm Lưu lại"
+  },
+  {
+   "id": "tinh-gio#loi-nut-luu-gia-gio-bi-mo",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Nút \"Lưu giá giờ\" bị mờ",
+   "text": "Vì sao: Chưa gõ giá, hoặc giá dưới 1.000 đ\nLàm gì: Gõ giá một giờ từ 1.000 đ trở lên"
   },
   {
    "id": "tinh-gio#loi-gio-choi-can-tinh-lai-chua-chot-hoac-da-chot-qua-15-phut-don",

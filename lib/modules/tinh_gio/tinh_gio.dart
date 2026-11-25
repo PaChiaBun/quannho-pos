@@ -39,6 +39,14 @@ String tinhGioDongHo(DateTime tu, DateTime luc) {
 
 /// Máy chủ văng hai lỗi này khi thanh toán / đóng bàn tính giờ mà chưa chốt (hoặc chốt quá cũ).
 /// App bắt, gọi chốt giờ lại rồi cho thu ngân xem lại tổng.
+/// Danh mục của các món giá giờ app tự tạo khi Chủ quán gõ giá một giờ.
+const kDanhMucTienGio = 'Tiền giờ';
+
+/// Món dùng làm giá giờ: tên hoặc danh mục có chữ "giờ". Hộp đặt giá giờ chỉ liệt kê các món này,
+/// không liệt kê cả thực đơn (24/11: quán Demo hiện "Bún bò 55.000 đ / giờ").
+bool laMonGiaGio(String ten, String? danhMuc) =>
+    ten.toLowerCase().contains('giờ') || (danhMuc ?? '').toLowerCase().contains('giờ');
+
 bool laLoiCanChotGio(Object? loi) {
   final s = '$loi';
   return s.contains('CHUA_CHOT_GIO') || s.contains('CHOT_GIO_QUA_CU');

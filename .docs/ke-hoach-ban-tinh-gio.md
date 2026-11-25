@@ -403,3 +403,27 @@ Chủ Quán yêu cầu: đổi tên module, và ô vuông ở Trang chủ có nh
 - Bài hướng dẫn đổi tên theo; xuất lại `huong_dan.json` (bản 202611240645), đóng dấu `tinh-gio.md`, `quan-ly-ban.md`, `kho-hang.md`. Lúc đầu câu tả hình "quả bóng" làm Boom trả lời câu lạc đề "kết quả bóng đá tối qua" → bỏ câu tả hình, test Boom xanh lại (133 đạt; chỉ còn test đồng bộ đỏ vì các bài của việc khác).
 - Chưa xem trên máy thật / máy ảo, mới xem qua ảnh chụp từ test. Chưa commit, chờ Chủ Quán duyệt hình.
 - 24/11 chiều: Chủ Quán duyệt hình, đã commit `d50c320`. Cài bản mới lên máy ảo Pixel 7 thì thấy tên ô ngắt thành "Các hoạt động tính / giờ" (ô máy này rộng hơn ảnh thử 360). Sửa: nối "tính giờ" bằng dấu cách không ngắt trong `kTenModuleTinhGio`; ô module dùng chung hằng này. Cài lại, máy ảo hiện "Các hoạt động / tính giờ".
+
+### 25/11 — Hộp đặt giá giờ: gõ thẳng giá, không chọn trong thực đơn
+
+Chủ Quán mở hộp "Tính tiền giờ" trên máy ảo, thấy cả thực đơn hiện thành giá giờ ("Bún bò Huế đặc biệt 55.000 đ / giờ").
+
+- Nguyên nhân: hộp liệt kê mọi món của quán để chọn làm món giá giờ; quán chưa tạo món giá giờ thì chỉ toàn đồ ăn uống.
+- Sửa: bỏ ô "Tìm món", thay bằng ô **"Giá một giờ"** + nút **"Lưu"**. Bấm Lưu thì app dùng lại món giá giờ cùng giá nếu đã có, không thì tự tạo món "Tiền giờ 60.000 đ" (danh mục "Tiền giờ", đơn vị giờ) qua `CoreProductRepository.create` rồi gắn cho bàn / cả khu. Máy chủ không đổi gì.
+- Bên dưới chỉ còn mục "Hoặc chọn giá đã có": các món có chữ "giờ" trong tên hoặc danh mục (`laMonGiaGio`), cộng món bàn đang dùng.
+- Thử thật trên máy ảo, quán Demo: bàn A 2 gõ 60000 → thẻ bàn ghi "4 chỗ • 60.000 đ/giờ"; mở hộp ở A 3 thấy "Tiền giờ 60.000 đ". Chưa thử "Áp cho cả khu", chưa thử lúc mất mạng, chưa thử tài khoản Quản lý (không phải Chủ quán) có tạo được món không.
+- Quán Demo có thêm món "Tiền giờ 60.000 đ" và bàn A 2 gắn giá này.
+- Bài hướng dẫn sửa mục đặt giá, đổi giá và bảng lỗi; xuất lại `huong_dan.json` (482 đoạn, bản 202611250344). Test module + Boom 167 đạt.
+
+### 25/11 — Làm lại giao diện hộp đặt giá giờ
+
+Chủ Quán yêu cầu tinh chỉnh UX/UI cho sang, đẹp hơn.
+
+- Đầu hộp: huy hiệu ngành (nền xanh ngọc như ô module) + "Giá giờ · tên bàn" + nút đổi loại hình dạng viên thuốc ở góc phải.
+- Thẻ trắng "Giá một giờ": số tiền cỡ lớn, tự chèn dấu chấm hàng nghìn khi gõ; bên dưới quy ra tiền cho 30 phút, 1 giờ 30, 2 giờ. Bàn đã có giá thì điền sẵn.
+- Hàng "Chọn nhanh": giá quán đang dùng (có dấu tích) đứng trước, rồi các mức thường gặp 30.000–150.000. Bấm là điền vào ô, chưa lưu.
+- Công tắc "Áp cho cả khu" đổi thành thanh hai lựa chọn "Chỉ <bàn>" / "Cả khu · N bàn".
+- Một nút chính dưới cùng "Lưu · 60.000 đ / giờ" (quay vòng khi đang lưu); nút chữ đỏ "Không tính giờ (bàn thường)" khi bàn đang có giá.
+- Ảnh thử cỡ 360×800: `goldens/gia_gio_trong.png`, `gia_gio_da_co.png`. Thử thật trên máy ảo, quán Demo: bấm chọn nhanh 60.000 + "Cả khu" + Lưu → A 1, A 2, A 3 đều "60.000 đ/giờ". Trên máy thật lộ khung ô nhập mặc định của theme quanh số tiền (ảnh thử không có theme nên không thấy) → đã tắt.
+- Chưa thử: gõ tay bằng bàn phím trên bản cuối (bản trước đã thử), mất mạng, tài khoản Quản lý, máy Sunmi thật.
+- Bài hướng dẫn sửa theo nút mới, xuất lại (bản 202611250412). Test module + Boom 169 đạt.
