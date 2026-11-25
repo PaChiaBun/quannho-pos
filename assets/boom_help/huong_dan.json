@@ -1,6 +1,6 @@
 {
- "version": 202611250412,
- "hash": "27166682540240838671b60dd4a28d79d46e97ac088933009556bbb273402288",
+ "version": 202611250456,
+ "hash": "4c6b1ca41be4cd59141ebb725801442b0106007d379d3da355742511f5c624e3",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3136,7 +3136,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "1. Thiết lập khu vực và bàn (lần đầu)",
-   "text": "1. Bấm \"Bắt đầu thiết lập ngay\" (khi chưa có bàn) hoặc \"Thêm khu vực\": \"Tên khu vực\" (Trong nhà, Ngoài trời…), \"Biểu tượng\", \"Màu sắc\" → \"Thêm khu vực\".\n2. \"Thêm bàn\": \"Tên bàn (vd: Bàn 1, Bàn VIP)\", \"Khu vực\", \"Số chỗ ngồi\".\n3. Tạo nhiều bàn một lần: tăng \"Số lượng bàn\" — app tạo \"Bàn 1\", \"Bàn 2\"… theo tên gốc.\n4. Sửa tên bàn, xoá bàn: giữ lâu thẻ bàn → \"Sửa thông tin bàn\" (có \"Xoá bàn\"); sửa khu có \"Xoá khu\"."
+   "text": "1. Bấm \"Bắt đầu thiết lập ngay\" (khi chưa có bàn) hoặc \"Thêm khu vực\": \"Tên khu vực\" (Trong nhà, Ngoài trời…), \"Biểu tượng\", \"Màu sắc\" → \"Thêm khu vực\".\n2. \"Thêm bàn\": \"Tên bàn (vd: Bàn 1, Bàn VIP)\", \"Khu vực\", \"Số chỗ ngồi\".\n3. Tạo nhiều bàn một lần: tăng \"Số lượng bàn\" — app tạo \"Bàn 1\", \"Bàn 2\"… theo tên gốc.\n4. Sửa tên bàn, xoá bàn: giữ lâu thẻ bàn → \"Sửa thông tin bàn\" (quán bật Các hoạt động tính giờ thì mục này ghi \"Sửa tên, số chỗ\"; trong đó có \"Xoá bàn\"); sửa khu có \"Xoá khu\"."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-2-mo-ban",
@@ -3504,7 +3504,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bật module Các hoạt động tính giờ và chọn loại hình",
-   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Các hoạt động tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn \"Nhiều loại\".\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn \"Nhiều loại\" thì ô giữ tên Các hoạt động tính giờ.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Tính tiền giờ\", bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ \"Bi da\", \"Nhiều loại\")."
+   "text": "Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis, pickleball, bóng bàn ở đâu:\n1. Trang chủ, bấm \"Sửa\", bấm ô \"Thêm\", chọn \"Các hoạt động tính giờ\".\n2. App hỏi \"Quán thuộc loại hình nào?\": chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn \"Nhiều loại\".\n3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn \"Nhiều loại\" thì ô giữ tên Các hoạt động tính giờ.\n\nĐổi loại hình sau này: giữ lâu vào một bàn trống, chọn \"Đặt giá giờ\", bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ \"Bi da\", \"Nhiều loại\")."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-gia-gio-cho-ban-phong-san",
@@ -3512,7 +3512,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt giá giờ cho bàn, phòng, sân",
-   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Tính tiền giờ\".\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Tiền giờ 60.000 đ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
+   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở Quản lý Bàn, giữ lâu vào bàn đang trống, chọn \"Đặt giá giờ\" (dòng nhỏ bên dưới ghi \"Chưa tính giờ\" hoặc giá đang dùng).\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Tiền giờ 60.000 đ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tinh-gio-cho-mot-ban",
@@ -3520,7 +3520,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bỏ tính giờ cho một bàn",
-   "text": "Giữ lâu vào bàn trống, chọn \"Tính tiền giờ (đang bật)\", bấm \"Không tính giờ (bàn thường)\"."
+   "text": "Giữ lâu vào bàn trống, chọn \"Đặt giá giờ\", bấm \"Không tính giờ (bàn thường)\"."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-doi-gia-moi-gio",
@@ -3528,7 +3528,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đổi giá mỗi giờ",
-   "text": "Giữ lâu vào bàn trống, chọn \"Tính tiền giờ (đang bật)\", gõ giá mới vào ô \"Giá một giờ\", bấm \"Lưu\". Bàn đang có khách thì đợi tính tiền xong mới đổi được.\n\nCách khác: sửa giá bán của món \"Tiền giờ …\" trong Kho hàng, mọi bàn đang dùng món đó đổi giá theo; bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán."
+   "text": "Giữ lâu vào bàn trống, chọn \"Đặt giá giờ\", gõ giá mới vào ô \"Giá một giờ\", bấm \"Lưu\". Bàn đang có khách thì đợi tính tiền xong mới đổi được.\n\nCách khác: sửa giá bán của món \"Tiền giờ …\" trong Kho hàng, mọi bàn đang dùng món đó đổi giá theo; bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-mo-ban-va-xem-dong-ho",
@@ -3627,11 +3627,11 @@
    "text": "Còn 30 phút tới giờ đặt, app bật hộp \"Sắp tới giờ đặt\" kèm chuông, ghi bàn, giờ, tên và số điện thoại khách. Bấm \"Gọi khách\" để gọi, rồi bấm \"Đã nhắc\". Một người bấm \"Đã nhắc\" thì máy khác không nhắc nữa, và lịch ghi giờ đã nhắc. Hộp nhắc chỉ hiện khi app đang mở; app đang tắt thì không có thông báo. Lượt đặt khi còn dưới 30 phút tới giờ thì không nhắc."
   },
   {
-   "id": "tinh-gio#loi-giu-lau-vao-ban-khong-thay-tinh-tien-gio",
+   "id": "tinh-gio#loi-giu-lau-vao-ban-khong-thay-dat-gia-gio",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
-   "title": "Giữ lâu vào bàn không thấy \"Tính tiền giờ\"",
+   "title": "Giữ lâu vào bàn không thấy \"Đặt giá giờ\"",
    "text": "Vì sao: Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách\nLàm gì: Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại"
   },
   {

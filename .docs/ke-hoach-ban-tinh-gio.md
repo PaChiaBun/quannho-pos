@@ -431,3 +431,12 @@ Chủ Quán yêu cầu tinh chỉnh UX/UI cho sang, đẹp hơn.
 ### 25/11 — Màn Lịch đặt không thấy nút quay lại
 
 Chủ Quán báo màn Lịch đặt không có chỗ quay lại. Nút vẫn có nhưng theme của app đặt biểu tượng thanh trên màu trắng, màn này nền kem nên nút chìm mất (ảnh thử không dùng theme của app nên không lộ). Sửa: ghi rõ màu biểu tượng xanh đậm cho thanh trên của màn Lịch đặt. Thử trên máy ảo: thấy mũi tên, bấm về đúng màn Quản lý bàn.
+
+### 25/11 — Hộp giữ lâu vào bàn: "Đặt giá giờ" thay "Tính tiền giờ", bỏ chữ "thông tin bàn"
+
+Chủ Quán chụp hộp giữ lâu vào "Bàn 1" (khu bi da), bảo đừng để là "thông tin bàn", nhìn không hợp logic. Em hiểu là: hộp đang trình bày như mục sửa thông tin bàn, còn việc chính của quán tính giờ (đặt giá) nằm dưới, lại mang tên "Tính tiền giờ" trùng với nút thu tiền giờ trong bàn.
+
+- Khi quán bật module: mục **"Đặt giá giờ"** đứng đầu, dòng phụ ghi "Chưa tính giờ" hoặc giá đang dùng ("60.000 đ / giờ"); mục sửa ghi **"Sửa tên, số chỗ"** (không chữ "bàn", vì sân và phòng hát cũng dùng hộp này).
+- Quán không bật module: hộp y như cũ, vẫn "Sửa thông tin bàn".
+- "Tính tiền giờ" giờ chỉ còn một nghĩa: nút thu tiền giờ trong bàn chưa gọi món.
+- Thử trên máy ảo: giữ lâu "Bàn 1" khu bi da thấy đúng hai mục mới. Bài `tinh-gio.md`, `quan-ly-ban.md` sửa theo, xuất lại (bản 202611250456).

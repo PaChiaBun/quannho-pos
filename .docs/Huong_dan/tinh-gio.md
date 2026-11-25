@@ -41,11 +41,11 @@ Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis
 2. App hỏi **"Quán thuộc loại hình nào?"**: chọn Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng; quán có từ hai loại trở lên thì chọn **"Nhiều loại"**.
 3. Ô ở Trang chủ đổi tên và biểu tượng theo loại hình vừa chọn. Chọn "Nhiều loại" thì ô giữ tên Các hoạt động tính giờ.
 
-Đổi loại hình sau này: giữ lâu vào một bàn trống, chọn **"Tính tiền giờ"**, bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ "Bi da", "Nhiều loại").
+Đổi loại hình sau này: giữ lâu vào một bàn trống, chọn **"Đặt giá giờ"**, bấm nút ghi tên loại hình ở góc trên bên phải hộp (ví dụ "Bi da", "Nhiều loại").
 
 ### Đặt giá giờ cho bàn, phòng, sân
 Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:
-1. Ở Quản lý Bàn, **giữ lâu** vào bàn đang trống, chọn **"Tính tiền giờ"**.
+1. Ở Quản lý Bàn, **giữ lâu** vào bàn đang trống, chọn **"Đặt giá giờ"** (dòng nhỏ bên dưới ghi "Chưa tính giờ" hoặc giá đang dùng).
 2. Gõ số tiền vào ô **"Giá một giờ"**, ví dụ 60000, hoặc bấm một mức ở hàng **"Chọn nhanh"** (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.
 3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm **"Cả khu · … bàn"**; không thì để **"Chỉ …"** (tên bàn).
 4. Bấm nút **"Lưu"** ở dưới cùng.
@@ -55,10 +55,10 @@ App tự tạo trong Kho hàng một món tên "Tiền giờ 60.000 đ", danh m�
 > Chỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi.
 
 ### Bỏ tính giờ cho một bàn
-Giữ lâu vào bàn trống, chọn **"Tính tiền giờ (đang bật)"**, bấm **"Không tính giờ (bàn thường)"**.
+Giữ lâu vào bàn trống, chọn **"Đặt giá giờ"**, bấm **"Không tính giờ (bàn thường)"**.
 
 ### Đổi giá mỗi giờ
-Giữ lâu vào bàn trống, chọn **"Tính tiền giờ (đang bật)"**, gõ giá mới vào ô **"Giá một giờ"**, bấm **"Lưu"**. Bàn đang có khách thì đợi tính tiền xong mới đổi được.
+Giữ lâu vào bàn trống, chọn **"Đặt giá giờ"**, gõ giá mới vào ô **"Giá một giờ"**, bấm **"Lưu"**. Bàn đang có khách thì đợi tính tiền xong mới đổi được.
 
 Cách khác: sửa giá bán của món "Tiền giờ …" trong **Kho hàng**, mọi bàn đang dùng món đó đổi giá theo; bàn đang chạy giờ sẽ tính cả lượt theo giá mới, vì tiền giờ tính lúc bấm Thanh toán.
 
@@ -111,7 +111,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
-| Giữ lâu vào bàn không thấy "Tính tiền giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
+| Giữ lâu vào bàn không thấy "Đặt giá giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
 | "Chỉ Chủ quán / Quản lý đặt được giá giờ" | Tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đặt giá giờ |
 | "Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được" | Bàn đang chạy giờ | Tính tiền bàn đó rồi đổi |
 | Bấm Lưu giá giờ báo "Chưa lưu được giá giờ. Kiểm tra mạng rồi thử lại." | Máy mất mạng lúc tạo món giá giờ | Kiểm tra mạng rồi bấm Lưu lại |

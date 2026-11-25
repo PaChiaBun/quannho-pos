@@ -712,6 +712,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       builder: (_) => _TableOptionsSheet(
         table: table,
         session: session,
+        giaGio: ref.read(tinhGioGiaTheoMonProvider)[table.giaGioProductId]?.sellPrice,
         onGiaGio: !ref.read(tinhGioModuleActiveProvider)
             ? null
             : () async {
@@ -12550,8 +12551,10 @@ class _TableOptionsSheet extends StatelessWidget {
   final BanSessionModel? session;
   final VoidCallback onEdit;
   final VoidCallback? onTransfer;
-  /// Khác null khi quán bật module Tính giờ: mở hộp chọn món giá giờ cho bàn.
+  /// Khác null khi quán bật module Tính giờ: mở hộp đặt giá giờ cho bàn.
   final VoidCallback? onGiaGio;
+  /// Giá một giờ bàn đang dùng (null khi bàn chưa có giá hoặc chưa đọc được món).
+  final double? giaGio;
 
   const _TableOptionsSheet({
     required this.table,
@@ -12559,6 +12562,7 @@ class _TableOptionsSheet extends StatelessWidget {
     required this.onEdit,
     this.onTransfer,
     this.onGiaGio,
+    this.giaGio,
   });
 
   @override
@@ -12593,23 +12597,39 @@ class _TableOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          if (session == null)
-            ListTile(
-              leading: const Icon(Icons.edit_rounded, color: _kNavy),
-              title: Text(
-                'Sửa thông tin bàn',
-                style: GoogleFonts.plusJakartaSans(color: _kNavy),
-              ),
-              onTap: onEdit,
-            ),
+          // Quán tính giờ: việc chính khi giữ lâu là đặt giá, nên đứng trước và ghi luôn giá đang dùng.
+          // "Tính tiền giờ" để dành cho nút thu tiền trong bàn, không dùng lại ở đây.
           if (session == null && onGiaGio != null)
             ListTile(
               leading: const Icon(Icons.timer_rounded, color: _kNavy),
               title: Text(
-                table.tinhGio ? 'Tính tiền giờ (đang bật)' : 'Tính tiền giờ',
+                'Đặt giá giờ',
+                style: GoogleFonts.plusJakartaSans(color: _kNavy, fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                !table.tinhGio
+                    ? 'Chưa tính giờ'
+                    : giaGio == null
+                        ? 'Đang tính giờ'
+                        : '${fmtVnd(giaGio!)} / giờ',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _kNavy.withValues(alpha: 0.6),
+                ),
+              ),
+              trailing: Icon(Icons.chevron_right_rounded, color: _kNavy.withValues(alpha: 0.5)),
+              onTap: onGiaGio,
+            ),
+          if (session == null)
+            ListTile(
+              leading: const Icon(Icons.edit_rounded, color: _kNavy),
+              title: Text(
+                // sân, phòng hát cũng dùng hộp này: không ghi chữ "bàn" khi quán bật tính giờ
+                onGiaGio != null ? 'Sửa tên, số chỗ' : 'Sửa thông tin bàn',
                 style: GoogleFonts.plusJakartaSans(color: _kNavy),
               ),
-              onTap: onGiaGio,
+              onTap: onEdit,
             ),
           if (session != null)
             ListTile(

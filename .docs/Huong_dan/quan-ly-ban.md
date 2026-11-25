@@ -35,7 +35,7 @@ nguon:
 1. Bấm **"Bắt đầu thiết lập ngay"** (khi chưa có bàn) hoặc **"Thêm khu vực"**: **"Tên khu vực"** (Trong nhà, Ngoài trời…), **"Biểu tượng"**, **"Màu sắc"** → **"Thêm khu vực"**.
 2. **"Thêm bàn"**: **"Tên bàn (vd: Bàn 1, Bàn VIP)"**, **"Khu vực"**, **"Số chỗ ngồi"**.
 3. Tạo nhiều bàn một lần: tăng **"Số lượng bàn"** — app tạo "Bàn 1", "Bàn 2"… theo tên gốc.
-4. Sửa tên bàn, xoá bàn: giữ lâu thẻ bàn → **"Sửa thông tin bàn"** (có **"Xoá bàn"**); sửa khu có **"Xoá khu"**.
+4. Sửa tên bàn, xoá bàn: giữ lâu thẻ bàn → **"Sửa thông tin bàn"** (quán bật Các hoạt động tính giờ thì mục này ghi **"Sửa tên, số chỗ"**; trong đó có **"Xoá bàn"**); sửa khu có **"Xoá khu"**.
 
 ### 2. Mở bàn
 1. Chạm bàn trống → bảng mở bàn: chỉnh **"Số khách"** (sức chứa chỉ để tham khảo, có thể thêm ghế).
