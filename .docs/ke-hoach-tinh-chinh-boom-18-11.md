@@ -479,5 +479,5 @@ Chủ Quán duyệt nháp và chốt ba ý: không tiết lộ nơi đặt máy 
 
 **Việc để lại cho lúc phát hành module Tính giờ:** phải chạy `db-fix/dang_huong_dan_boom.sh` để đăng cả bộ. Máy chủ chỉ lấy đoạn từ bản đã đăng (app gửi số phiên bản không có trên máy chủ thì máy chủ dùng bản mới nhất nó có), nên chưa đăng thì câu hỏi về Tính giờ sẽ không có bài kèm.
 
-**Hỏi lại "máy chủ đặt ở đâu": CHƯA LÀM ĐƯỢC** — khung trình duyệt đã về màn đăng nhập, chờ Chủ Quán đăng nhập lại.
+**Hỏi lại "máy chủ đặt ở đâu" (26/11 11:48, web, quán Demo vì Chủ Quán đăng nhập quán này): ĐẠT.** App kèm đúng một đoạn việc 21; Boom trả lời một câu: máy chủ được bảo mật nên Bé Boom không thể tiết lộ vị trí đặt máy chủ; kèm nút gợi ý mở bài. Mô hình thường, 0,0006 USD, 2,4 giây. Không còn "chưa có thông tin xác thực", không bảo gọi Hotline, không rút lại câu trước. Lưu ý: trên Demo câu này đi đường "hỏi kèm bài" (nhãn không có `+ask`), khác đường `+ask+hd+cd` của quán T hôm 23/11; chưa hỏi lại trên quán T.
 
