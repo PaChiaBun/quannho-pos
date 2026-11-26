@@ -4810,14 +4810,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           fontFeatures: const [FontFeature.tabularFigures()],
         );
         TextStyle donVi(Color mau) => GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: mau.withValues(alpha: 0.75),
+          color: mau.withValues(alpha: 0.92),
         );
         TextStyle nhan = GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white.withValues(alpha: 0.6),
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: Colors.white.withValues(alpha: 0.92),
         );
         final gio = soPhutChoi ~/ 60, phut = soPhutChoi % 60;
         // "11 giờ 42 phút": số to, chữ đơn vị nhỏ.
@@ -4832,11 +4832,35 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ]),
           maxLines: 1,
         );
-        final tien = Text(
-          t.daHuy ? '0 đ' : fmtVnd(t.tienGio),
-          maxLines: 1,
-          style: so(t.daHuy ? Colors.white.withValues(alpha: 0.5) : mauTien),
-        );
+        final chuTien = t.daHuy ? '0 đ' : fmtVnd(t.tienGio);
+        // Số tiền nổi khối: lớp dưới là viền xanh đen (nét vẽ quanh chữ) đổ bóng cứng lệch xuống + bóng mềm,
+        // lớp trên là chữ vàng. Chủ Quán chọn 27/11 (viền trắng, viền vàng sẫm bị chê).
+        final tien = t.daHuy
+            ? Text(chuTien, maxLines: 1, style: so(Colors.white.withValues(alpha: 0.5)))
+            : Stack(
+                children: [
+                  Text(
+                    chuTien,
+                    maxLines: 1,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 34,
+                      height: 1.05,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      foreground: Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 4
+                        ..strokeJoin = StrokeJoin.round
+                        ..color = const Color(0xFF0A0926),
+                      shadows: const [
+                        Shadow(color: Color(0xFF05041A), offset: Offset(0, 4)),
+                        Shadow(color: Color(0xB3000000), offset: Offset(0, 8), blurRadius: 14),
+                      ],
+                    ),
+                  ),
+                  Text(chuTien, maxLines: 1, style: so(mauTien)),
+                ],
+              );
         final chan = t.daHuy
             ? 'Quản lý đã bỏ tiền giờ của lượt này'
             : t.theoKhungDat
@@ -4845,24 +4869,41 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ? '${fmtVnd(gia).replaceAll(' ', ' ')}/giờ  •  tính theo phút, chốt khi Thanh toán'
             : 'Tính theo phút, chốt khi Thanh toán';
 
+        // Khối nổi 3D: lớp ngoài là "bề dày" xanh đậm lộ ra 4 điểm ảnh ở đáy (12 thì Chủ Quán chê đen nặng), hai lớp
+        // bóng mờ (gần và xa) đổ xuống thẻ món; mặt khối sáng dần lên phía trên như bắt ánh đèn.
         return Container(
           width: double.infinity,
           margin: margin,
+          padding: const EdgeInsets.only(bottom: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF15134A),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.45),
+                blurRadius: 10,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 40,
+                spreadRadius: -4,
+                offset: const Offset(0, 30),
+              ),
+            ],
+          ),
+          child: Container(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF2B2878), _kNavy],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0, 0.45, 1],
+              colors: [Color(0xFF4741B0), Color(0xFF2B2780), Color(0xFF1E1B5E)],
             ),
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: _kNavy.withValues(alpha: 0.25),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(24),
+            // mép trên sáng như cạnh khối bắt ánh đèn
+            border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4927,7 +4968,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Đã chơi', style: nhan),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: thoiLuong),
                         ],
                       ),
@@ -4943,7 +4984,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(t.theoKhungDat ? 'Tiền giờ (đủ khung)' : 'Tiền giờ', style: nhan),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: tien),
                         ],
                       ),
@@ -4992,6 +5033,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 ),
               ],
             ],
+          ),
           ),
         );
       },
@@ -6695,7 +6737,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             SliverToBoxAdapter(
                               child: _daiDangTinhGio(
                                 items,
-                                margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                                margin: const EdgeInsets.fromLTRB(16, 8, 16, 30),
                               ),
                             ),
                             if (pendingAdds.isNotEmpty)
