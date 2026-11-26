@@ -30,8 +30,8 @@ nguon:
 - Ô **Các hoạt động tính giờ** ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn riêng cùng tên: chỉ hiện các bàn có giá giờ và mọi bàn của khu mang biểu tượng ngành (bi da, sân, phòng hát). Bàn ăn uống thường không hiện ở đây; xem mọi bàn thì vào **Bàn**. Quán chỉ có một loại hình thì chọn loại hình đó, ô và màn đổi tên theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.
 - Thẻ bàn ghi **"Chưa đặt giá giờ"** là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.
 - Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ "4 chỗ • 60.000 đ/giờ".
-- Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ "1g05 • giờ 65.000 đ"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.
-- Trong màn chi tiết bàn có dải **"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán"**; ô tổng ghi **"TỔNG TẠM TÍNH (gồm tiền giờ)"**, đã cộng cả tiền giờ.
+- Thẻ bàn đang có khách hiện đồng hồ đã chơi (giờ:phút, ví dụ "1:05"), dòng dưới ghi giờ vào và tiền giờ tạm tính, ví dụ "Vào 14:05 • giờ 65.000 đ"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ. Bàn chạy quá 6 giờ thì đồng hồ chuyển nền trắng chữ đỏ có dấu cảnh báo, để nhân viên xem khách còn chơi không (hay quên đóng bàn).
+- Trong màn chi tiết bàn, trên cùng là khối nền xanh đậm **"ĐANG TÍNH GIỜ"**: góc phải ghi **Vào lúc** (ví dụ "Vào lúc 14:05"), giữa là hai số lớn **Đã chơi** (ví dụ "1 giờ 05 phút") và **Tiền giờ**; dòng dưới ghi đơn giá, ví dụ "60.000 đ/giờ • tính theo phút, chốt khi Thanh toán". Bàn chạy quá 6 giờ thì có thêm dải đỏ "Quá 6 giờ, xem khách còn chơi không". Đồ ăn uống nằm bên dưới. Ô tổng ghi **"TỔNG TẠM TÍNH (gồm tiền giờ)"**, đã cộng cả tiền giờ.
 - Thanh **"Lịch đặt"** ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước.
 
 ## Các việc thường làm
@@ -51,7 +51,7 @@ Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:
 3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm **"Cả khu · … bàn"**; không thì để **"Chỉ …"** (tên bàn).
 4. Bấm nút **"Lưu"** ở dưới cùng.
 
-App tự tạo trong Kho hàng một món tên "Tiền giờ 60.000 đ", danh mục "Tiền giờ"; mỗi mức giá là một món. Không cần vào Kho hàng tạo trước.
+App tự tạo trong Kho hàng một món tên "Giờ chơi 60.000 đ/giờ", danh mục "Tiền giờ"; mỗi mức giá là một món (món tạo từ trước có thể mang tên "Tiền giờ 60.000 đ", vẫn dùng bình thường). Không cần vào Kho hàng tạo trước.
 
 > Chỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi.
 
@@ -68,7 +68,7 @@ Mở bàn như bàn thường. Đồng hồ chạy từ lúc mở bàn, theo gi�
 
 ### Tính tiền bàn tính giờ
 1. Trong màn chi tiết bàn bấm **"Thanh toán"**. Bàn chưa gọi món nào thì bấm **"Tính tiền giờ"**.
-2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi món giá giờ, tên bàn, giờ vào, giờ ra và thời lượng, ví dụ "Tiền giờ 60.000 đ · Bàn 3 · 14:05–15:35 (1g30)".
+2. App chốt giờ: thêm một dòng tiền giờ vào bàn, ghi tên bàn, giờ vào, giờ ra, thời lượng và đơn giá, ví dụ "Giờ chơi · Bàn 3 · 14:05 – 15:35 · 1 giờ 30 phút × 60.000 đ/giờ"; số tiền của dòng là 90.000 đ. Bàn chơi qua ngày thì giờ vào, giờ ra ghi kèm ngày, ví dụ "25/11 11:39 – 26/11 12:01".
 3. Màn **"Thu tiền"** hiện tổng đã gồm tiền giờ. Thu tiền như bàn thường; mã giảm giá và điểm áp trên cả tiền giờ.
 
 Khách chơi tiếp sau khi đã mở màn Thu tiền: bấm **"Hủy bỏ"**, lúc sau bấm Thanh toán lại. Dòng tiền giờ được tính lại, không sinh dòng thứ hai.

@@ -2277,15 +2277,20 @@ class _TableCard extends ConsumerWidget {
     final dsDat = ref.watch(tinhGioModuleActiveProvider)
         ? (ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[])
         : const <DatTruoc>[];
-    final tamTinh = isOccupied && session!.gioBatDau != null
+    final gioVao = isOccupied && session!.gioBatDau != null
+        ? DateTime.fromMillisecondsSinceEpoch(session!.gioBatDau!)
+        : null;
+    final luc = gioVao != null ? (ref.watch(tinhGioTickProvider).value ?? DateTime.now()) : DateTime.now();
+    final tamTinh = gioVao != null
         ? tinhGioTamTinhBan(
             gioBatDauMs: session!.gioBatDau!,
             giaMotGio: giaGioMon?.sellPrice,
             mon: sessionItems ?? const <BanSessionItemModel>[],
-            luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+            luc: luc,
             khungDatDen: khungDatCuaPhien(dsDat, session!.id, table.id),
           )
         : null;
+    final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
     final tongHien = tamTinh?.tong ?? totalAmount;
     // Lượt đặt trước kế tiếp của bàn (trong 12 giờ tới).
     final datKe = luotDatKeTiep(dsDat, table.id, DateTime.now());
@@ -2498,29 +2503,51 @@ zone.iconCode,
                             ),
                           ],
                           if (tamTinh != null) ...[
-                            const SizedBox(height: 1),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.timer_rounded,
-                                  size: infoFontSize + 1,
-                                  color: Colors.white.withValues(alpha: 0.95),
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  tamTinh.daHuy
-                                      ? '${tinhGioThoiLuong(tamTinh.soPhut)} • đã bỏ tiền giờ'
-                                      : tamTinh.theoKhungDat
-                                      ? 'khung đặt ${tinhGioThoiLuong(tamTinh.soPhut)} • giờ ${fmtVnd(tamTinh.tienGio)}'
-                                      : '${tinhGioThoiLuong(tamTinh.soPhut)} • giờ ${fmtVnd(tamTinh.tienGio)}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: infoFontSize,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white.withValues(alpha: 0.95),
+                            SizedBox(height: cardSize == 'nho' ? 2 : 4),
+                            // Đồng hồ đã chơi (giờ:phút) chạy theo nhịp 20 giây; quá 6 giờ thì nền trắng chữ đỏ.
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: chayLau ? 6 : 0,
+                                vertical: chayLau ? 1 : 0,
+                              ),
+                              decoration: chayLau
+                                  ? BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                    )
+                                  : null,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    chayLau ? Icons.warning_amber_rounded : Icons.timer_rounded,
+                                    size: amountFontSize,
+                                    color: chayLau ? _kRed : Colors.white,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    tinhGioDongHo(gioVao!, luc),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: amountFontSize,
+                                      fontWeight: FontWeight.w900,
+                                      color: chayLau ? _kRed : Colors.white,
+                                      fontFeatures: const [FontFeature.tabularFigures()],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              tamTinh.daHuy
+                                  ? 'Vào ${tinhGioGioVao(gioVao, luc)} • đã bỏ tiền giờ'
+                                  : tamTinh.theoKhungDat
+                                  ? 'Vào ${tinhGioGioVao(gioVao, luc)} • khung đặt ${fmtVnd(tamTinh.tienGio)}'
+                                  : 'Vào ${tinhGioGioVao(gioVao, luc)} • giờ ${fmtVnd(tamTinh.tienGio)}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: infoFontSize,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white.withValues(alpha: 0.95),
+                              ),
                             ),
                           ],
                         ] else
@@ -4729,10 +4756,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   // Khóa tự mở sau 45 giây: một lệnh gửi bếp treo không được làm nút chết vĩnh viễn.
   final StaleLock _sendKitchenLock = StaleLock(maxHold: const Duration(seconds: 45));
 
-  /// Dải "Đang tính giờ …" của bàn tính giờ (rỗng với bàn thường). [items] = mọi dòng của phiên.
   /// Tạm tính tiền giờ của phiên (null với bàn thường). Gọi trong builder của Consumer để chỉ phần đó
-  /// dựng lại theo nhịp đồng hồ.
-  ({TinhGioTamTinh t, DateTime? khung})? _tamTinhGio(WidgetRef ref, List<BanSessionItemModel> items) {
+  /// dựng lại theo nhịp đồng hồ. [items] = mọi dòng của phiên.
+  ({TinhGioTamTinh t, DateTime? khung, DateTime vao, DateTime luc, double? gia})? _tamTinhGio(
+    WidgetRef ref,
+    List<BanSessionItemModel> items,
+  ) {
     if (!widget.table.tinhGio && widget.session.gioBatDau == null) return null;
     final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
         widget.session.gioBatDau;
@@ -4744,51 +4773,224 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             widget.table.id,
           )
         : null;
+    final gia = ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice;
+    final luc = ref.watch(tinhGioTickProvider).value ?? DateTime.now();
     final t = tinhGioTamTinhBan(
       gioBatDauMs: moc,
-      giaMotGio: ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice,
+      giaMotGio: gia,
       mon: items,
-      luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+      luc: luc,
       khungDatDen: khung,
     );
-    return (t: t, khung: khung);
+    return (t: t, khung: khung, vao: DateTime.fromMillisecondsSinceEpoch(moc), luc: luc, gia: gia);
   }
 
-  Widget _daiDangTinhGio(List<BanSessionItemModel> items) {
+  /// Khối "Giờ chơi" của bàn tính giờ, kiểu đồng hồ bấm giờ: nền xanh đậm như thẻ bàn có khách, số giờ đã
+  /// chơi và tiền giờ to, giờ vào ở góc phải, đơn giá ở chân (rỗng với bàn thường).
+  Widget _daiDangTinhGio(List<BanSessionItemModel> items, {EdgeInsets margin = const EdgeInsets.only(bottom: 10)}) {
     if (!widget.table.tinhGio && widget.session.gioBatDau == null) return const SizedBox.shrink();
     return Consumer(
       builder: (context, ref, _) {
         final tg = _tamTinhGio(ref, items);
         if (tg == null) return const SizedBox.shrink();
-        final (:t, :khung) = tg;
+        final (:t, :khung, :vao, :luc, :gia) = tg;
+        final daChoi = luc.difference(vao);
+        final chayLau = daChoi >= kTinhGioCanhBaoLau;
+        final soPhutChoi = daChoi.isNegative ? 0 : daChoi.inMinutes;
+        const mauTien = Color(0xFFFFC94D); // vàng ấm: gợi tiền, xa màu đỏ cảnh báo, rõ trên nền xanh đậm
+        const mauDo = Color(0xFFFF9B9B);
+        // Số giờ luôn trắng: đỏ cạnh số tiền cam khó tách; cảnh báo đã có dải riêng bên dưới.
+        const mauGio = Colors.white;
+
+        TextStyle so(Color mau) => GoogleFonts.plusJakartaSans(
+          fontSize: 34,
+          height: 1.05,
+          fontWeight: FontWeight.w800,
+          color: mau,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
+        TextStyle donVi(Color mau) => GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: mau.withValues(alpha: 0.75),
+        );
+        TextStyle nhan = GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white.withValues(alpha: 0.6),
+        );
+        final gio = soPhutChoi ~/ 60, phut = soPhutChoi % 60;
+        // "11 giờ 42 phút": số to, chữ đơn vị nhỏ.
+        final thoiLuong = Text.rich(
+          TextSpan(children: [
+            if (gio > 0) ...[
+              TextSpan(text: '$gio', style: so(mauGio)),
+              TextSpan(text: ' giờ ', style: donVi(mauGio)),
+            ],
+            TextSpan(text: gio > 0 ? phut.toString().padLeft(2, '0') : '$phut', style: so(mauGio)),
+            TextSpan(text: ' phút', style: donVi(mauGio)),
+          ]),
+          maxLines: 1,
+        );
+        final tien = Text(
+          t.daHuy ? '0 đ' : fmtVnd(t.tienGio),
+          maxLines: 1,
+          style: so(t.daHuy ? Colors.white.withValues(alpha: 0.5) : mauTien),
+        );
+        final chan = t.daHuy
+            ? 'Quản lý đã bỏ tiền giờ của lượt này'
+            : t.theoKhungDat
+            ? 'Khách đặt trước: tính đủ khung tới ${gioPhut(khung!)}'
+            : gia != null
+            ? '${fmtVnd(gia).replaceAll(' ', ' ')}/giờ  •  tính theo phút, chốt khi Thanh toán'
+            : 'Tính theo phút, chốt khi Thanh toán';
+
         return Container(
           width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          margin: margin,
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
           decoration: BoxDecoration(
-            color: _kNavy.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2B2878), _kNavy],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: _kNavy.withValues(alpha: 0.25),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.timer_rounded, size: 18, color: _kNavy),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  t.daHuy
-                      ? 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • Quản lý đã bỏ tiền giờ'
-                      : t.theoKhungDat
-                      ? 'Khách đặt trước: tính đủ khung tới ${gioPhut(khung!)} '
-                            '(${tinhGioThoiLuong(t.soPhut)}) • tiền giờ ${fmtVnd(t.tienGio)} • chốt khi bấm Thanh toán'
-                      : 'Đang tính giờ ${tinhGioThoiLuong(t.soPhut)} • tiền giờ tạm tính '
-                            '${fmtVnd(t.tienGio)} • chốt khi bấm Thanh toán',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: _kNavy,
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: t.daHuy ? Colors.white38 : (chayLau ? _kRed : _kGreen),
+                      shape: BoxShape.circle,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  Text(
+                    t.daHuy ? 'ĐÃ BỎ TIỀN GIỜ' : 'ĐANG TÍNH GIỜ',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Giờ vào ở góc phải; khác ngày thì kèm ngày ("Vào lúc 26/11 13:07").
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Vào lúc ${tinhGioGioVao(vao, luc)}',
+                            maxLines: 1,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 11,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Đã chơi', style: nhan),
+                          const SizedBox(height: 4),
+                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: thoiLuong),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      margin: const EdgeInsets.symmetric(horizontal: 14),
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
+                    Expanded(
+                      flex: 10,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.theoKhungDat ? 'Tiền giờ (đủ khung)' : 'Tiền giờ', style: nhan),
+                          const SizedBox(height: 4),
+                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: tien),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 14),
+              Container(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+              const SizedBox(height: 10),
+              Text(
+                chan,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.65),
+                ),
+              ),
+              if (chayLau) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _kRed.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _kRed.withValues(alpha: 0.45)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, size: 17, color: mauDo),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Quá ${kTinhGioCanhBaoLau.inHours} giờ, xem khách còn chơi không.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFFFC9C9),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -6489,6 +6691,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
                         return CustomScrollView(
                           slivers: [
+                            // Giờ chơi đứng đầu, đồ uống bên dưới (như hoá đơn bàn bi da quen dùng).
+                            SliverToBoxAdapter(
+                              child: _daiDangTinhGio(
+                                items,
+                                margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                              ),
+                            ),
                             if (pendingAdds.isNotEmpty)
                               SliverToBoxAdapter(
                                 child: _PendingAddsBox(
@@ -7134,7 +7343,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         );
                                       },
                                     ),
-                                    _daiDangTinhGio(items),
                                     // Action buttons — Thêm món + Gửi bếp
                                     Row(
                                       children: [

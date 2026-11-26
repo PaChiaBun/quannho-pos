@@ -176,8 +176,8 @@ BEGIN
     'T5b đúng một dòng tiền giờ: món thật, số lượng 1, trạng thái xong, có giờ vào / ra');
   PERFORM public._tg_ok((SELECT total_amount = 100000 FROM public.ban_sessions WHERE id = P1),
     'T5c tổng bàn = nước 10.000 + giờ 90.000');
-  PERFORM public._tg_ok((SELECT product_name LIKE 'Giờ bàn lỗ · Bi da 1 · %(1g30)' FROM public.ban_session_items WHERE id = v_id),
-    'T5d tên dòng có món, bàn, giờ vào–ra, thời lượng — ' || (SELECT product_name FROM public.ban_session_items WHERE id = v_id));
+  PERFORM public._tg_ok((SELECT product_name LIKE 'Giờ chơi · Bi da 1 · % – % · 1 giờ 30 phút × 60.000 đ/giờ' FROM public.ban_session_items WHERE id = v_id),
+    'T5d tên dòng có bàn, giờ vào–ra, thời lượng, đơn giá (20261127) — ' || (SELECT product_name FROM public.ban_session_items WHERE id = v_id));
 
   -- ── T6: bấm chốt lần nữa (người khác) không sinh dòng thứ hai ────────────────────
   PERFORM public._tg_as('authenticated', B, S);

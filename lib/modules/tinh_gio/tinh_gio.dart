@@ -38,6 +38,24 @@ String tinhGioDongHo(DateTime tu, DateTime luc) {
   return '${phut ~/ 60}:${(phut % 60).toString().padLeft(2, '0')}';
 }
 
+/// "1 giờ 30 phút", "45 phút", "2 giờ" — chữ đầy đủ cho khối Giờ chơi, không viết tắt "1g30".
+String tinhGioThoiLuongDai(int soPhut) {
+  final g = soPhut ~/ 60, p = soPhut % 60;
+  if (g == 0) return '$p phút';
+  return p == 0 ? '$g giờ' : '$g giờ $p phút';
+}
+
+/// Giờ vào: "13:07"; khác ngày với [luc] thì kèm ngày "26/11 13:07" (bàn quên đóng qua đêm).
+String tinhGioGioVao(DateTime vao, DateTime luc) {
+  String h2(int n) => n.toString().padLeft(2, '0');
+  final gio = '${h2(vao.hour)}:${h2(vao.minute)}';
+  final cungNgay = vao.year == luc.year && vao.month == luc.month && vao.day == luc.day;
+  return cungNgay ? gio : '${h2(vao.day)}/${h2(vao.month)} $gio';
+}
+
+/// Bàn chạy quá mốc này thì thẻ và khối Giờ chơi báo đỏ (26/11 Demo A 1 bị quên 24 giờ, 1,46 triệu).
+const kTinhGioCanhBaoLau = Duration(hours: 6);
+
 /// Máy chủ văng hai lỗi này khi thanh toán / đóng bàn tính giờ mà chưa chốt (hoặc chốt quá cũ).
 /// App bắt, gọi chốt giờ lại rồi cho thu ngân xem lại tổng.
 /// Khu dành cho bàn tính giờ: mang biểu tượng ngành (bi da, sân, phòng hát…).

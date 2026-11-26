@@ -268,7 +268,8 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
       });
       try {
         id = await CoreProductRepository.instance.create(
-          name: '$kDanhMucTienGio ${fmtVnd(gia)}',
+          // "/giờ" luôn đi kèm đơn giá: tên cũ "Tiền giờ 60.000 đ" đọc như số tiền phải trả.
+          name: 'Giờ chơi ${fmtVnd(gia)}/giờ',
           category: kDanhMucTienGio,
           unit: 'giờ',
           sellPrice: gia.toDouble(),

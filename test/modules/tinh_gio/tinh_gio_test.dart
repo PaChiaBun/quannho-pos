@@ -53,6 +53,12 @@ void main() {
     expect(tinhGioThoiLuong(90), '1g30');
     expect(tinhGioDongHo(t0, t0.add(const Duration(minutes: 65, seconds: 59))), '1:05');
     expect(tinhGioDongHo(t0, t0.subtract(const Duration(minutes: 3))), '0:00');
+    expect(tinhGioThoiLuongDai(45), '45 phút');
+    expect(tinhGioThoiLuongDai(120), '2 giờ');
+    expect(tinhGioThoiLuongDai(90), '1 giờ 30 phút');
+    expect(tinhGioThoiLuongDai(1462), '24 giờ 22 phút');
+    expect(tinhGioGioVao(DateTime(2026, 11, 26, 13, 7), DateTime(2026, 11, 26, 23, 59)), '13:07');
+    expect(tinhGioGioVao(DateTime(2026, 11, 26, 13, 7), DateTime(2026, 11, 27, 0, 42)), '26/11 13:07');
   });
 
   test('nhận ra lỗi máy chủ đòi chốt giờ', () {

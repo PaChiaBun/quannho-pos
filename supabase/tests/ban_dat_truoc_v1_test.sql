@@ -189,9 +189,8 @@ BEGIN
   PERFORM public._dt_ok((j->'data'->>'so_phut')::int = 60 AND (j->'data'->>'thanh_tien')::numeric = 60000
     AND (j->'data'->>'theo_khung_dat')::boolean,
     'D9e chốt lúc khách mới chơi 0 phút: vẫn tính đủ khung 60 phút = 60.000 — ' || left(j::text, 150));
-  PERFORM public._dt_ok(v_ten LIKE '% (1g00)'
-    AND v_ten LIKE '%' || to_char(v_tu AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI') || '–'
-        || to_char((v_tu + interval '60 minutes') AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI') || ' (1g00)',
+  PERFORM public._dt_ok(v_ten LIKE '%' || to_char(v_tu AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI') || ' – %'
+        || to_char((v_tu + interval '60 minutes') AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI') || ' · 1 giờ × %',
     'D9f tên dòng: giờ ra = giờ vào + số phút tính tiền — ' || v_ten);
   j := public._dt_rpc(format(luu, S, d9, T1::text, 'Sua sau khi nhan', '', v_tu, v_tu + interval '60 minutes', NULL, 0));
   PERFORM public._dt_ok(j->>'error_code' = 'INVALID_STATE', 'D9g lượt đã nhận không sửa được');
