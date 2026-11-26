@@ -1,3 +1,6 @@
+import 'package:quannho_pos/core/providers/app_providers.dart';
+import 'package:quannho_pos/core/models/product_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/core/repositories/ban_repository.dart';
 import 'package:flutter/material.dart';
@@ -221,5 +224,21 @@ void main() {
     expect(locBanTinhGio(cacBan, cacKhu).map((b) => b.id), ['b1', 'b2', 'a1']);
     expect(locKhuTinhGio(cacKhu, cacBan).map((k) => k.id), ['biDa', 'trongNha', 'chung']);
     expect(locBanTinhGio([ban('x', 'trongNha')], cacKhu), isEmpty);
+  });
+
+  test('món giá giờ không hiện trong thực đơn bán hàng (gọi như món thì thu hai lần)', () {
+    ProductModel mon(String id, String? dm) => ProductModel(
+        id: id, storeId: 's', name: id, category: dm, unit: 'phần', productType: 'finished', stockQty: 0,
+        minStock: 0, sellPrice: 30000, costPrice: 0, stationCode: 'nong', isAvailable: true, isActive: true,
+        isDeleted: false);
+    final c = ProviderContainer(overrides: [
+      allProductsProvider.overrideWith((ref) => Stream.value([mon('cafe', 'Cà phê'), mon('gio', kDanhMucTienGio)])),
+    ]);
+    addTearDown(c.dispose);
+    final sub = c.listen(posProductsProvider, (_, _) {});
+    addTearDown(sub.close);
+    return Future<void>.delayed(Duration.zero, () {
+      expect(c.read(posProductsProvider).value?.map((p) => p.id), ['cafe']);
+    });
   });
 }

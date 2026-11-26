@@ -1,3 +1,4 @@
+import '../../modules/tinh_gio/tinh_gio.dart' show kDanhMucTienGio;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,7 +75,9 @@ final allProductsProvider = StreamProvider.autoDispose<List<ProductModel>>((ref)
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
-/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần không bán lẻ)
+/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần không bán lẻ).
+/// Không có món giá giờ (danh mục "Tiền giờ"): máy chủ tự ghi dòng tiền giờ lúc thanh toán; gọi nó như
+/// món thì thu hai lần (26/11 quán Demo gọi "Tiền giờ 30.000 đ" vào Bàn 2).
 final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>((ref) {
   return ref
       .watch(allProductsProvider)
@@ -83,6 +86,7 @@ final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>
             .where(
               (p) =>
                   p.isActive &&
+                  p.category != kDanhMucTienGio &&
                   (p.sellPrice > 0 ||
                       (p.category != 'Nguyên liệu' &&
                           p.productType != 'ingredient')),

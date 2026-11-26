@@ -210,15 +210,21 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
 
   int get _gia => int.tryParse(_giaCtrl.text.replaceAll('.', '')) ?? 0;
 
-  @override
-  void initState() {
-    super.initState();
-    // Bàn đã có giá: điền sẵn để sửa.
+  /// Bàn đã có giá thì điền sẵn để sửa, một lần, khi danh sách món đã tải (mở hộp lúc món chưa tải xong
+  /// thì điền muộn hơn một chút).
+  bool _daDienSan = false;
+
+  void _dienSan() {
+    if (_daDienSan) return;
     final id = widget.table.giaGioProductId;
-    final p = id == null
-        ? null
-        : (ref.read(posProductsProvider).value ?? const <ProductModel>[]).where((x) => x.id == id).firstOrNull;
-    if (p != null && p.sellPrice >= 1000) _giaCtrl.text = _soCham(p.sellPrice.round());
+    if (id == null) {
+      _daDienSan = true;
+      return;
+    }
+    final p = ref.watch(tinhGioGiaTheoMonProvider)[id];
+    if (p == null) return;
+    _daDienSan = true;
+    if (_giaCtrl.text.isEmpty && p.sellPrice >= 1000) _giaCtrl.text = _soCham(p.sellPrice.round());
   }
 
   @override
@@ -288,9 +294,14 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Chỉ các món giá giờ (và món bàn này đang dùng), không phải cả thực đơn.
-    final mon = (ref.watch(posProductsProvider).value ?? const <ProductModel>[])
-        .where((p) => !p.isTopping && (p.id == widget.table.giaGioProductId || laMonGiaGio(p.name, p.category)))
+    _dienSan();
+    // Chỉ các món giá giờ (và món bàn này đang dùng), không phải cả thực đơn. Đọc từ mọi món vì thực đơn
+    // bán hàng (posProductsProvider) đã giấu món giá giờ.
+    final mon = (ref.watch(allProductsProvider).value ?? const <ProductModel>[])
+        .where((p) =>
+            p.isActive &&
+            !p.isTopping &&
+            (p.id == widget.table.giaGioProductId || laMonGiaGio(p.name, p.category)))
         .toList();
     final gia = _gia;
     final loaiHinh = ref.watch(tinhGioLoaiHinhProvider).value ?? kLoaiHinh.last;

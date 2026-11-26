@@ -1,6 +1,6 @@
 {
- "version": 202611250516,
- "hash": "2ba92a97231e6ba8518e4cc2f02618ad1e709823c5a4e6eae77fe90bb9dd1e5e",
+ "version": 202611260529,
+ "hash": "4bb37ce4c621b05d441c84aacdb4af3337eb65ab439498621be3631279565340",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3496,7 +3496,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Ô Các hoạt động tính giờ ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn riêng cùng tên: chỉ hiện các bàn có giá giờ và mọi bàn của khu mang biểu tượng ngành (bi da, sân, phòng hát). Bàn ăn uống thường không hiện ở đây; xem mọi bàn thì vào Bàn. Quán chỉ có một loại hình thì chọn loại hình đó, ô và màn đổi tên theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.\n• Thẻ bàn ghi \"Chưa đặt giá giờ\" là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\".\n• Thanh \"Lịch đặt\" ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước."
+   "text": "• Ô Các hoạt động tính giờ ở Trang chủ (ô có bốn hình nhỏ xếp vuông) mở màn riêng cùng tên: chỉ hiện các bàn có giá giờ và mọi bàn của khu mang biểu tượng ngành (bi da, sân, phòng hát). Bàn ăn uống thường không hiện ở đây; xem mọi bàn thì vào Bàn. Quán chỉ có một loại hình thì chọn loại hình đó, ô và màn đổi tên theo ngành: Bi da, Karaoke, Cầu lông, Tennis, Pickleball, Bóng bàn, Sân bóng.\n• Thẻ bàn ghi \"Chưa đặt giá giờ\" là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.\n• Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ \"4 chỗ • 60.000 đ/giờ\".\n• Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ \"1g05 • giờ 65.000 đ\"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.\n• Trong màn chi tiết bàn có dải \"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán\"; ô tổng ghi \"TỔNG TẠM TÍNH (gồm tiền giờ)\", đã cộng cả tiền giờ.\n• Thanh \"Lịch đặt\" ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bat-module-cac-hoat-dong-tinh-gio-va-cho",
@@ -3713,6 +3713,14 @@
    "section": "Lỗi thường gặp",
    "title": "Đặt trước báo \"Khung giờ này đã qua\"",
    "text": "Vì sao: Giờ kết thúc đã qua\nLàm gì: Chọn lại giờ"
+  },
+  {
+   "id": "tinh-gio#loi-ban-co-ca-dong-tien-gio-d-goi-nhu-mon-lan-dong-tien-gio-luc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Bàn có cả dòng \"Tiền giờ … đ\" gọi như món lẫn dòng tiền giờ lúc thanh toán (thu hai lần)",
+   "text": "Vì sao: Dòng gọi như món được thêm từ thực đơn trước khi app giấu món giá giờ\nLàm gì: Bấm thùng rác ở dòng \"Tiền giờ … đ\" đang \"Chưa gửi\" rồi mới Thanh toán"
   },
   {
    "id": "tinh-gio#loi-ban-khong-hien-o-man-cac-hoat-dong-tinh-gio",

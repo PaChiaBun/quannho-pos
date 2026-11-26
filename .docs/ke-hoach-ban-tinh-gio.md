@@ -451,3 +451,21 @@ Chủ Quán báo bấm ô lại ra màn Bàn, vẫn còn tên "Quản lý bàn".
 - Thêm bàn ở khu đã có giá thì theo giá của khu; thêm khu chỉ cho chọn biểu tượng ngành. Không sắp xếp khu ở màn này.
 - Thanh "Lịch đặt" ở đầu màn.
 - Máy ảo, quán Demo: màn mang tên mới, khu bi da 3 bàn "Chưa đặt giá giờ"; đã bấm mở hộp giá, Lịch đặt, Thêm khu, Thêm bàn, quay lại (không lưu gì). Chưa thử: lưu thêm khu / thêm bàn, máy tính bảng, tài khoản nhân viên, hộp nhắc 30 phút khi đang ở màn này.
+
+### 26/11 — Món giá giờ bị gọi như món thường (thu hai lần)
+
+Chủ Quán chụp Bàn 2 quán Demo: có dòng "Tiền giờ 30.000 đ" ở trạng thái "Chưa gửi" cạnh dải "Đang tính giờ", tổng 30.000 trong khi tiền giờ tạm tính 1.000, hỏi "sao rối thế".
+
+- Đọc máy chủ (chỉ đọc): dòng đó thêm lúc 05:22:30 UTC, 6 giây sau khi mở bàn, người thêm là tài khoản quán, không có `gio_tu`: gọi từ "Thêm món". Bàn 1 cũng có "Tiền giờ 60.000 đ" gọi như món. Nguyên nhân: món giá giờ app tự tạo (danh mục "Tiền giờ") hiện chung trong thực đơn; mở bàn xong app tự mở thực đơn nên dễ bấm. Thanh toán thì thu cả dòng món lẫn dòng tiền giờ máy chủ ghi.
+- Sửa app: `posProductsProvider` (thực đơn màn Bán hàng và Thêm món của Bàn) bỏ món danh mục "Tiền giờ"; hộp đặt giá giờ đọc từ `allProductsProvider`; giá điền sẵn khi danh sách món tải xong. Ô tổng trong bàn tính giờ ghi "TỔNG TẠM TÍNH (gồm tiền giờ)" và dùng số tạm tính (thay dòng giờ đã chốt, không cộng trùng), khớp thẻ bàn.
+- Thử máy ảo: thực đơn "Thêm món" không còn "Tiền giờ"; Bàn 2 ghi "TỔNG TẠM TÍNH (gồm tiền giờ) 33.000 đ". Hai dòng gọi nhầm ở Bàn 1, Bàn 2 Demo vẫn còn (dữ liệu, em không xoá).
+- CHƯA sửa: thực đơn QR cho khách (`get_qr_menu_v4` trên máy chủ) vẫn trả món "Tiền giờ"; cần migration, chờ Chủ Quán cho áp.
+- Ghi nhận thêm: A 2, A 3 Demo mở từ 25/11 trưa vẫn chạy, đã 24 giờ 47 (≈ 1.487.000 đ mỗi bàn); A 1 đã thanh toán 1.462.000 đ cho 24 giờ 22.
+
+### 26/11 — Sửa thực đơn QR (ĐÃ ÁP production 26/11 13:00, mốc hoàn tác quannho_before_qr_tien_gio_20261126_130017.dump)
+
+- `supabase/migrations/20261126_qr_an_mon_tien_gio.sql`: `get_qr_menu_v4` và `qr_price_items_v4` thêm điều kiện `category <> 'Tiền giờ'`. Bản gốc đọc từ production 26/11; tệp `_ROLLBACK` là nguyên bản đó. Gửi đơn (`submit_qr_order_v4`) và nhân viên sửa đơn (`update_qr_order_items_v4`) đều gọi `qr_price_items_v4` nên cùng được chặn.
+- Test `supabase/tests/qr_an_mon_tien_gio_test.sql` (9 điểm): thực đơn còn món thường, không có "Tiền giờ", vẫn không có nguyên liệu; tính giá từ chối "Tiền giờ", món thường đúng tiền; quyền anon không đổi. Bản sao (`chuoi_stage_dryrun.sh`, TAG=qr_tien_gio): 9/9 PASS.
+- Script áp: `db-fix/qr_an_mon_tien_gio_ap_dung.sh` (backup → áp → test). Chưa chạy, chờ Chủ Quán cho áp. Hiện production có 2 món "Tiền giờ" (đều ở quán Demo).
+- Chưa thử: bài test chạy trên bản CHƯA áp để chắc nó bắt được lỗi.
+- 26/11 13:00 Chủ Quán cho áp: `db-fix/qr_an_mon_tien_gio_ap_dung.sh` → backup, áp (2 hàm), test 9/9 PASS trên production (tự ROLLBACK). Kiểm lại chỉ đọc: cả 10 kênh QR đang mở vẫn trả thực đơn, quyền anon / authenticated không đổi, 0 đơn QR mới trong 10 phút quanh lúc áp. Hoàn tác: `ROLLBACK=1 bash db-fix/qr_an_mon_tien_gio_ap_dung.sh`.

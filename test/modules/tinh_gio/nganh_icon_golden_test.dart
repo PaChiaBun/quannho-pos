@@ -219,7 +219,7 @@ void main() {
         await tester.pumpWidget(ProviderScope(
           overrides: [
             tinhGioLoaiHinhProvider.overrideWith((ref) async => loaiHinhTheoId('bi_da')),
-            posProductsProvider.overrideWithValue(AsyncData([
+            allProductsProvider.overrideWith((ref) => Stream.value(<ProductModel>[
               mon('c1', 'Cà phê sữa đá', 25000, 'Cà phê'),
               if (coGia) mon('g60', 'Tiền giờ 60.000 đ', 60000, 'Tiền giờ'),
               if (coGia) mon('g90', 'Giờ phòng VIP', 90000, 'Tiền giờ'),

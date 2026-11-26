@@ -4730,27 +4730,37 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   final StaleLock _sendKitchenLock = StaleLock(maxHold: const Duration(seconds: 45));
 
   /// Dải "Đang tính giờ …" của bàn tính giờ (rỗng với bàn thường). [items] = mọi dòng của phiên.
+  /// Tạm tính tiền giờ của phiên (null với bàn thường). Gọi trong builder của Consumer để chỉ phần đó
+  /// dựng lại theo nhịp đồng hồ.
+  ({TinhGioTamTinh t, DateTime? khung})? _tamTinhGio(WidgetRef ref, List<BanSessionItemModel> items) {
+    if (!widget.table.tinhGio && widget.session.gioBatDau == null) return null;
+    final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
+        widget.session.gioBatDau;
+    if (moc == null) return null;
+    final khung = ref.watch(tinhGioModuleActiveProvider)
+        ? khungDatCuaPhien(
+            ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[],
+            widget.session.id,
+            widget.table.id,
+          )
+        : null;
+    final t = tinhGioTamTinhBan(
+      gioBatDauMs: moc,
+      giaMotGio: ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice,
+      mon: items,
+      luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
+      khungDatDen: khung,
+    );
+    return (t: t, khung: khung);
+  }
+
   Widget _daiDangTinhGio(List<BanSessionItemModel> items) {
     if (!widget.table.tinhGio && widget.session.gioBatDau == null) return const SizedBox.shrink();
     return Consumer(
       builder: (context, ref, _) {
-        final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
-            widget.session.gioBatDau;
-        if (moc == null) return const SizedBox.shrink();
-        final khung = ref.watch(tinhGioModuleActiveProvider)
-            ? khungDatCuaPhien(
-                ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[],
-                widget.session.id,
-                widget.table.id,
-              )
-            : null;
-        final t = tinhGioTamTinhBan(
-          gioBatDauMs: moc,
-          giaMotGio: ref.watch(tinhGioGiaTheoMonProvider)[widget.table.giaGioProductId]?.sellPrice,
-          mon: items,
-          luc: ref.watch(tinhGioTickProvider).value ?? DateTime.now(),
-          khungDatDen: khung,
-        );
+        final tg = _tamTinhGio(ref, items);
+        if (tg == null) return const SizedBox.shrink();
+        final (:t, :khung) = tg;
         return Container(
           width: double.infinity,
           margin: const EdgeInsets.only(bottom: 10),
@@ -7049,22 +7059,31 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          'TỔNG CỘNG',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: _kNavy.withValues(
-                                              alpha: 0.6,
-                                            ),
-                                          ),
+                                        // Bàn tính giờ: tổng gồm tiền giờ tạm tính, khớp số trên thẻ bàn.
+                                        Consumer(
+                                          builder: (context, ref, _) {
+                                            final tg = _tamTinhGio(ref, items);
+                                            return Text(
+                                              tg == null ? 'TỔNG CỘNG' : 'TỔNG TẠM TÍNH\n(gồm tiền giờ)',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: _kNavy.withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                              ),
+                                            );
+                                          },
                                         ),
-                                        Text(
-                                          fmtVnd(total),
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w800,
-                                            color: _kNavy,
+                                        Consumer(
+                                          builder: (context, ref, _) => Text(
+                                            // tong thay dòng giờ đã chốt bằng số tạm tính, không cộng trùng
+                                            fmtVnd(_tamTinhGio(ref, items)?.t.tong ?? total),
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kNavy,
+                                            ),
                                           ),
                                         ),
                                       ],

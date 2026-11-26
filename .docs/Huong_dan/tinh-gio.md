@@ -31,7 +31,7 @@ nguon:
 - Thẻ bàn ghi **"Chưa đặt giá giờ"** là bàn chưa có giá. Ở màn này chạm vào bàn đó thì app mở hộp đặt giá trước; đặt giá xong chạm lại mới mở bàn.
 - Thẻ bàn trống có giá giờ ghi thêm giá, ví dụ "4 chỗ • 60.000 đ/giờ".
 - Thẻ bàn đang có khách ghi thời lượng và tiền giờ tạm tính, ví dụ "1g05 • giờ 65.000 đ"; số tiền lớn bên dưới là tổng bàn đã gồm tiền giờ.
-- Trong màn chi tiết bàn có dải **"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán"**.
+- Trong màn chi tiết bàn có dải **"Đang tính giờ … • tiền giờ tạm tính … • chốt khi bấm Thanh toán"**; ô tổng ghi **"TỔNG TẠM TÍNH (gồm tiền giờ)"**, đã cộng cả tiền giờ.
 - Thanh **"Lịch đặt"** ở đầu màn Các hoạt động tính giờ, hoặc nút hình tờ lịch ở góc trên màn Quản lý Bàn, mở lịch đặt trước.
 
 ## Các việc thường làm
@@ -123,13 +123,14 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | Thẻ bàn không hiện đồng hồ dù bàn có giá giờ | Bàn được mở trước khi đặt giá giờ | Lượt khách đó không tính giờ; lượt mở bàn sau sẽ tính |
 | Đặt trước báo "Trùng giờ với lượt đặt của …" | Khung giờ đã có người đặt trên bàn đó | Chọn giờ khác hoặc bàn khác |
 | Đặt trước báo "Khung giờ này đã qua" | Giờ kết thúc đã qua | Chọn lại giờ |
+| Bàn có cả dòng "Tiền giờ … đ" gọi như món lẫn dòng tiền giờ lúc thanh toán (thu hai lần) | Dòng gọi như món được thêm từ thực đơn trước khi app giấu món giá giờ | Bấm thùng rác ở dòng "Tiền giờ … đ" đang "Chưa gửi" rồi mới Thanh toán |
 | Bàn không hiện ở màn Các hoạt động tính giờ | Bàn chưa có giá giờ và khu của bàn không mang biểu tượng ngành | Vào màn Bàn, giữ lâu vào bàn, chọn "Đặt giá giờ" |
 | Không thấy hộp nhắc trước giờ đặt | App đang tắt, lượt vừa đặt khi còn dưới 30 phút, hoặc đã có người bấm "Đã nhắc" | Mở app ở máy quầy trong giờ bán; xem dòng "đã nhắc" trong Lịch đặt |
 | Lượt đặt ghi "Đã nhận" vẫn giữ khung giờ dù khách đã về | Khung đã đặt được giữ tới hết giờ | Đặt khách khác vào sau giờ kết thúc của khung đó |
 
 ## Liên quan module khác
 - **Quản lý Bàn**: tính giờ chạy ngay trên sơ đồ bàn, gọi món, gửi bếp, chuyển, gộp, thanh toán như bàn thường.
-- **Kho hàng**: món giá giờ ("Tiền giờ …") là một món bình thường nằm trong Kho hàng, app tự tạo khi đặt giá giờ; giá bán là giá một giờ.
+- **Kho hàng**: món giá giờ ("Tiền giờ …", danh mục "Tiền giờ") nằm trong Kho hàng, app tự tạo khi đặt giá giờ; giá bán là giá một giờ. Món này không hiện trong thực đơn **Thêm món** và màn **Bán hàng**: không gọi tiền giờ như món, app tự thêm dòng tiền giờ lúc bấm Thanh toán.
 - **Báo cáo**: tiền giờ là một dòng trong hoá đơn, vào doanh thu và tab Sản phẩm.
 - **Bếp**: dòng tiền giờ không lên phiếu bếp.
 
