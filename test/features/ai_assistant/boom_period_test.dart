@@ -7,7 +7,8 @@ import 'package:quannho_pos/features/ai_assistant/providers/boom_chat_provider.d
         boomGoiNguoiDung,
         boomWantsDataAdvice,
         boomIsFollowUp,
-        boomSmalltalkReply;
+        boomSmalltalkReply,
+        boomXinSo;
 import 'package:quannho_pos/features/ai_assistant/services/boom_read_only_data_service.dart';
 
 // Chủ Quán test web 24/10: hỏi "doanh thu tháng này" mà Boom trả doanh thu hôm nay.
@@ -387,6 +388,41 @@ void main() {
     );
     for (final q in ['cảm ơn', 'chào boom', 'bạn là ai']) {
       expect(boomSmalltalkReply(q, 'Anh'), isNot(contains('chưa hiểu')));
+    }
+  });
+
+  test('Lô 3: lời chê / bỏ đi kèm "cảm ơn" → xin lỗi; cảm ơn thường giữ nguyên', () {
+    for (final q in [
+      'vậy thôi tôi không dùng nữa, cảm ơn',
+      'app không an toàn thì tôi bỏ app, cảm ơn',
+      'ko xài nữa đâu cảm ơn',
+      'thất vọng quá, cảm ơn',
+      'vay toi khong dung nua cam on', // gõ không dấu
+    ]) {
+      final r = boomSmalltalkReply(q, 'Anh');
+      expect(r, contains('xin lỗi'), reason: q);
+      expect(r, isNot(contains('không có gì')), reason: q);
+    }
+    for (final q in [
+      'cảm ơn Boom nhé',
+      'không cần đâu, cảm ơn',
+      'ổn rồi cảm ơn',
+      'dùng được rồi, cảm ơn nhiều',
+    ]) {
+      expect(boomSmalltalkReply(q, 'Anh'), contains('không có gì'), reason: q);
+    }
+  });
+
+  test('Lô 3: câu chỉ nói tiếp thì không tính là xin số (máy chủ lỗi thì không in số bán hàng)', () {
+    for (final q in ['sao vậy', 'ở đâu vậy', 'nói rõ hơn đi', 'chấm công thế nào']) {
+      expect(boomXinSo(q), isFalse, reason: q);
+    }
+    for (final q in [
+      'doanh thu tháng này bao nhiêu',
+      'món nào bán chạy, nên quảng cáo món nào',
+      'hôm nay bán được mấy đơn',
+    ]) {
+      expect(boomXinSo(q), isTrue, reason: q);
     }
   });
 

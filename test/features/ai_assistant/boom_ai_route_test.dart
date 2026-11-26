@@ -36,8 +36,11 @@ class FakeAi extends BoomAiService {
   final feedbacks = <String>[];
   bool feedbackOk = true;
 
+  /// false = máy chưa đăng nhập thật (không gửi được tới máy chủ)
+  bool sendable = true;
+
   @override
-  bool get canSend => true;
+  bool get canSend => sendable;
 
   String? xungHo;
   final setXungHoCalls = <String>[];
@@ -332,6 +335,57 @@ void main() {
         expect(ai.advised.last, q);
         expect(ai.histories.last, isNotNull, reason: q);
       }
+    },
+  );
+
+  test(
+    'Máy chủ được hỏi mà không trả lời → báo Boom đang trục trặc, không nói "chưa hiểu rõ" hay "chỉ xem được kỳ…" (lô 3, 13–16/11)',
+    () async {
+      const trucTrac = 'đang gặp trục trặc';
+      // câu app không tự trả lời được: trước đây ra "Bé Boom chưa hiểu rõ lắm"
+      for (final q in ['kể chuyện cười đi', 'hôm nay thế nào']) {
+        final m = await ask(q);
+        expect(m.content, contains(trucTrac), reason: q);
+        expect(m.content, isNot(contains('chưa hiểu')), reason: q);
+      }
+      // kỳ app không tự đọc được nhưng máy chủ đọc được: trước đây ra "Bé Boom xem được số liệu theo: hôm nay…"
+      for (final q in [
+        'doanh thu hôm kia',
+        'thứ 6 tuần rồi bán bao nhiêu phần trà sữa',
+      ]) {
+        final m = await ask(q);
+        expect(m.content, contains(trucTrac), reason: q);
+        expect(m.content, isNot(contains('xem được số liệu theo')), reason: q);
+      }
+      // hết lượt: chỉ câu báo hết lượt, không kèm câu sai
+      ai.askLimit = 'BUDGET_EXCEEDED';
+      for (final q in ['kể chuyện cười đi', 'doanh thu hôm kia']) {
+        final m = await ask(q);
+        expect(m.content, contains('đã dùng hết lượt'), reason: q);
+        expect(m.content, isNot(contains('chưa hiểu')), reason: q);
+        expect(m.content, isNot(contains('xem được số liệu theo')), reason: q);
+        expect(m.content, isNot(contains(trucTrac)), reason: q);
+      }
+      // máy chưa đăng nhập thật (không gửi được tới máy chủ): app vốn chỉ chạy đường cũ → giữ câu cũ
+      ai
+        ..askLimit = null
+        ..sendable = false;
+      expect((await ask('kể chuyện cười đi')).content, contains('chưa hiểu'));
+      expect(
+        (await ask('doanh thu hôm kia')).content,
+        contains('xem được số liệu theo'),
+      );
+    },
+  );
+
+  test(
+    'Lời chê / bỏ đi có chữ "cảm ơn" → xin lỗi, không đáp "Dạ không có gì ạ!" (lô 3, 18/11)',
+    () async {
+      final m = await ask('vậy thôi tôi không dùng app nữa, cảm ơn');
+      expect(m.content, contains('xin lỗi'));
+      expect(m.content, contains('Hotline 0927 55 8888'));
+      expect(m.content, isNot(contains('không có gì')));
+      expect((await ask('cảm ơn Boom nhé')).content, contains('không có gì'));
     },
   );
 

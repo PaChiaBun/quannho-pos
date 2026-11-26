@@ -481,3 +481,22 @@ Chủ Quán duyệt nháp và chốt ba ý: không tiết lộ nơi đặt máy 
 
 **Hỏi lại "máy chủ đặt ở đâu" (26/11 11:48, web, quán Demo vì Chủ Quán đăng nhập quán này): ĐẠT.** App kèm đúng một đoạn việc 21; Boom trả lời một câu: máy chủ được bảo mật nên Bé Boom không thể tiết lộ vị trí đặt máy chủ; kèm nút gợi ý mở bài. Mô hình thường, 0,0006 USD, 2,4 giây. Không còn "chưa có thông tin xác thực", không bảo gọi Hotline, không rút lại câu trước. Lưu ý: trên Demo câu này đi đường "hỏi kèm bài" (nhãn không có `+ask`), khác đường `+ask+hd+cd` của quán T hôm 23/11; chưa hỏi lại trên quán T.
 
+### 26/11 — Lô 3: sửa phía app theo câu khách thật (ĐÃ SỬA MÃ, CHƯA PHÁT HÀNH)
+
+Chủ Quán bảo "Làm lô 3". Bốn hiện tượng ở bảng 21/11 (nhóm 4, 6, 10 và câu "Dạ không có gì ạ!" của nhóm 1) hoá ra chung một gốc, trừ câu cuối: **app hỏi máy chủ, máy chủ không trả lời, app lặng lẽ tự đáp bằng một câu có sẵn sai chỗ.** Đếm lại trên sổ 16 ngày (chỉ số đếm): 5 lượt "chưa hiểu rõ" đều rơi đúng sau một lượt máy chủ báo lỗi (15–16/11); lượt "chỉ xem được kỳ…" và lượt in số bán hàng lạc đề (13/11) không có dòng lỗi nào bên máy chủ, tức lời gọi hỏng trước khi máy chủ kịp ghi sổ (mạng, vé đăng nhập, hoặc hết lượt: bản 38 chưa có phần báo hết lượt). Máy chủ không chậm: 106 lượt hỏi gần nhất đều dưới 12 giây, mốc chờ của app là 30 giây.
+
+Sửa trong `lib/features/ai_assistant/providers/boom_chat_provider.dart`:
+
+| Nhóm | Trước | Sau |
+|---|---|---|
+| 4 | Máy chủ lỗi → "Bé Boom chưa hiểu rõ lắm, hãy hỏi doanh thu hôm nay…" | "Bé Boom đang gặp trục trặc nên chưa trả lời được câu này. … thử lại sau một chút nhé!"; hết lượt thì chỉ còn câu báo hết lượt |
+| 6 | Máy chủ không trả lời + kỳ app không tự đọc được ("thứ 6 tuần rồi", "hôm kia") → "Bé Boom xem được số liệu theo: hôm nay, hôm qua…" | Như nhóm 4 (kỳ đó máy chủ đọc được, lỗi là ở lời gọi) |
+| 10 | Câu chỉ nói tiếp lượt số trước + máy chủ không trả lời → in bảng số bán hàng rồi "chưa phân tích được" | Chỉ in số khi chính câu đó xin số (`boomXinSo`); còn lại báo trục trặc |
+| 1 (phần app) | Câu chê / bỏ đi có chữ "cảm ơn" → "Dạ không có gì ạ!" | "Dạ, Bé Boom xin lỗi vì chưa giúp được … gọi Hotline 0927 55 8888" |
+
+Điều kiện "máy chủ đã được hỏi mà không trả lời" chỉ tính khi máy đang đăng nhập thật; máy không gửi được tới máy chủ thì app vẫn chạy đường cũ và giữ các câu cũ. Các câu app tự trả lời ĐÚNG khi máy chủ lỗi không đổi: doanh thu kỳ quen thuộc tính trên máy, bài hướng dẫn nguyên văn, ba mục gợi ý.
+
+Kiểm thử: thêm 4 (2 chạy cả luồng với máy chủ giả, 2 cho hàm), cả phần trợ lý 135 / 135 qua. Chưa thử trên máy thật và chưa phát hành; cần bản app mới (web / APK / Windows / iOS) thì khách mới thấy.
+
+**Giới hạn đã biết:** danh sách cụm chê chỉ có vài cụm rõ ràng ("không dùng", "bỏ app", "không an toàn", "thất vọng"…), câu chê nói kiểu khác vẫn nhận "Dạ không có gì ạ!". Lượt ngay sau nhóm 6 (Boom bảo "gửi ảnh báo cáo") là câu trả lời của máy chủ, lô này không đụng.
+

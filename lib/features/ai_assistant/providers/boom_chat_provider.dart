@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/repositories/chain_repository.dart';
+import '../../../screens/forgot_password_sheet.dart' show kHotlineDisplay;
 import '../boom_xung_ho.dart';
 import '../classifier/intent_classifier.dart';
 import '../help/boom_help_repository.dart';
@@ -919,10 +920,32 @@ final _mentionsPeriodP = _viPair(
   r' (?:hôm nay|hôm qua|nay|tuần|tháng|ngày|quý|năm) ',
 );
 
+// shortcut: chỉ bắt vài cụm chê rõ ràng, câu chê nói kiểu khác vẫn nhận "Dạ không có gì ạ!"; thêm cụm khi gặp câu thật.
+final _buonP = _viPair(
+  r' (?:(?:không|ko|k|hông|chẳng|chả|khỏi) (?:dùng|xài|an toàn|giúp được|được việc|ổn)|(?:bỏ|xoá|xóa|gỡ) app|thất vọng|vô dụng|(?:tệ|chán|dở|kém) quá) ',
+);
+
+/// Máy chủ được hỏi mà không trả lời (lỗi, mất mạng) và app không có gì đúng để nói thay → báo thật là Boom đang
+/// trục trặc. 15–16/11 khoá GPT hỏng: khách bấm câu gợi ý của chính app thì nhận "Bé Boom chưa hiểu rõ lắm".
+String boomTrucTrac(String goi) =>
+    'Bé Boom đang gặp trục trặc nên chưa trả lời được câu này. $goi thử lại sau một chút nhé!';
+
+/// Chính câu này có xin số của quán không. Câu chỉ nói tiếp lượt số trước ("sao vậy", hỏi lặp cách làm) thì không:
+/// máy chủ không trả lời được thì đừng in số bán hàng chẳng liên quan (13/11).
+bool boomXinSo(String query) =>
+    boomWantsDataAdvice(query) ||
+    boomMentionsShopBusiness(query) ||
+    boomAsksShopNumber(query) ||
+    boomAsksPeriodMetric(query);
+
 /// Câu chào / cảm ơn / hỏi Boom là ai — đáp thân thiện ngay trên máy, không tốn lượt GPT (trước đây trả
 /// "Bé Boom chưa hiểu rõ lắm ạ" — Chủ Quán 24/10: Boom bị luật kìm).
 String boomSmalltalkReply(String query, String goi) {
   final s = _padVi(query);
+  // Lời chê / bỏ đi kèm câu cảm ơn ("vậy tôi không dùng nữa, cảm ơn") → xin lỗi, không đáp "Dạ không có gì ạ!" (18/11)
+  if (_viHit(_buonP, s)) {
+    return 'Dạ, Bé Boom xin lỗi vì chưa giúp được $goi ạ. $goi cần người hỗ trợ thì gọi Hotline $kHotlineDisplay nhé.';
+  }
   if (RegExp(r' (?:cảm ơn|cám ơn|thank|thanks|tkx|tks) ').hasMatch(s)) {
     return 'Dạ không có gì ạ! $goi cần gì cứ hỏi Bé Boom nhé.';
   }
@@ -1655,9 +1678,11 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     // Lấy thông tin session thực tế
     final storeId = session?.storeId;
 
+    final chuaHieu =
+        'Bé Boom chưa hiểu rõ lắm ạ. $_goi có thể hỏi về "doanh thu hôm nay" hoặc "món bán chạy" được không ạ?';
     String fullReply = classification.intent == 'smalltalk'
         ? boomSmalltalkReply(query, _goi)
-        : 'Bé Boom chưa hiểu rõ lắm ạ. $_goi có thể hỏi về "doanh thu hôm nay" hoặc "món bán chạy" được không ạ?';
+        : chuaHieu;
     List<String>? suggestions;
     String? completedTool;
     int toolLatencyMs = 0;
@@ -1681,13 +1706,15 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     // đủ số (hỏi thật 03/11: app chọn sai đường làm gần nửa câu thiếu số). Lỗi → đường cũ bên dưới.
     // lastLimit là của lần gọi máy chủ gần nhất: xoá trước để lượt không hỏi máy chủ không đọc nhầm giá trị cũ
     aiForAdvice?.lastLimit = null;
-    final asked =
+    final hoiMayChu =
         kBoomServerRoute &&
-            chainFacts == null &&
-            !otherStore &&
-            !picked &&
-            classification.intent != 'smalltalk' &&
-            !(helpWins && (_helpAction(query) || boomAsksHowTo(query))) &&
+        chainFacts == null &&
+        !otherStore &&
+        !picked &&
+        classification.intent != 'smalltalk' &&
+        !(helpWins && (_helpAction(query) || boomAsksHowTo(query)));
+    final asked =
+        hoiMayChu &&
             aiForAdvice != null &&
             storeId != null &&
             storeId.isNotEmpty
@@ -1710,6 +1737,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     final hetLuot = asked == null
         ? boomLimitText(aiForAdvice?.lastLimit, _goi)
         : null;
+    // Máy chủ ĐÃ được hỏi (máy đang đăng nhập thật) mà không trả lời: lỗi, mất mạng hoặc hết lượt. Máy chưa đăng nhập
+    // thật thì app vốn chỉ chạy đường cũ, không tính là trục trặc.
+    final khongTraLoi =
+        hoiMayChu &&
+        asked == null &&
+        (aiForAdvice?.canSend ?? false) &&
+        (storeId?.isNotEmpty ?? false);
     final dataAdvice =
         asked == null &&
         !usesData &&
@@ -1884,6 +1918,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                   (salesPerms != null && !boomCanSeeSales(salesPerms)
                       ? 'Bé Boom chưa trả lời được câu này lúc này. $_goi thử lại sau một chút nhé!'
                       : 'Bé Boom chưa đọc được số liệu của quán lúc này. $_goi thử lại sau một chút nhé!')
+            : !boomXinSo(query)
+            ? han ?? boomTrucTrac(_goi)
             : '${_factsText(facts)}\n${han ?? 'Bé Boom chưa phân tích được câu này lúc này ạ.'}';
       }
       suggestions = ['Món nào bán ế?', 'Doanh thu tháng này?'];
@@ -2060,9 +2096,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                     ).end.difference(_rangeOf(classification).start).inDays >
                     92)) {
           // Kỳ Boom chưa đọc được ("hôm kia", "20/10", "tháng 5 năm ngoái") — nói rõ, không trả nhầm số hôm nay.
-          fullReply =
-              'Bé Boom xem được số liệu theo: hôm nay, hôm qua, tuần này / trước, tháng này / trước, tháng N, '
-              'quý, N ngày gần đây (tối đa 92 ngày) và doanh thu cả năm. Kỳ khác $_goi xem ở màn Báo cáo nhé.';
+          // Kỳ này máy chủ đọc được ("thứ 6 tuần rồi"); máy chủ vừa không trả lời thì báo thật, không nói như thể
+          // Boom không xem được kỳ đó (13/11).
+          fullReply = khongTraLoi
+              ? hetLuot ?? boomTrucTrac(_goi)
+              : 'Bé Boom xem được số liệu theo: hôm nay, hôm qua, tuần này / trước, tháng này / trước, tháng N, '
+                    'quý, N ngày gần đây (tối đa 92 ngày) và doanh thu cả năm. Kỳ khác $_goi xem ở màn Báo cáo nhé.';
           suggestions = ['Doanh thu tháng này?', 'Doanh thu tháng trước?'];
           // Không phải lượt đọc dữ liệu: không ghi "tool_completed" (không làm đẹp số liệu đo lường)
         } else if (classification.intent == 'revenue_summary' ||
@@ -2195,6 +2234,9 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       }
     }
 
+    if (khongTraLoi && fullReply == chuaHieu) {
+      fullReply = hetLuot ?? boomTrucTrac(_goi);
+    }
     if (hetLuot != null && !fullReply.contains(hetLuot)) {
       fullReply = fullReply.trim().isEmpty
           ? hetLuot
