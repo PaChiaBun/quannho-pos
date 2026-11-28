@@ -140,7 +140,7 @@ Mở nhầm bàn: huỷ trong 5 phút đầu thì chỉ cần chọn lý do. Bà
 Tiền giờ nằm trong doanh thu như mọi món. Muốn tách tiền giờ với đồ ăn uống: Báo cáo, tab **Sản phẩm**, lọc danh mục của món giá giờ (ví dụ "Tiền giờ").
 
 ### Báo cáo tính giờ (giờ đông khách, theo bàn)
-Mở module **Báo cáo** → tab **"Tính giờ"** (tab cuối, kéo hàng tab sang trái nếu không thấy; chỉ có khi quán bật module Các hoạt động tính giờ, ai xem được Báo cáo thì xem được tab này). Chọn **"Hôm nay"**, **"7 ngày"**, **"30 ngày"** hoặc **"Tháng này"**:
+Mở module **Báo cáo** → tab **"Doanh thu"**, chọn **"Hôm nay"**, **"Tuần này"** hoặc **"Tháng này"** (bấm ‹ › để lùi / tới kỳ khác), kéo xuống cuối tới khối **"Các hoạt động tính giờ"** (chỉ có khi quán bật module này; ai xem được Báo cáo thì xem được). Tuần / tháng đang chạy chỉ tính tới hôm nay:
 - **"Lượt chơi"**, **"Giờ chơi"**, **"Tiền giờ"**, **"Món kèm"** (đồ ăn uống gọi thêm trong các lượt đó), kèm trung bình mỗi lượt và tiền giờ chiếm bao nhiêu phần trăm.
 - **"Giờ đông khách"**: mỗi cột là một giờ trong ngày, cột cao là nhiều bàn có khách; dòng trên ghi giờ đông nhất và trung bình bao nhiêu phần trăm số bàn có khách giờ đó. Dùng để chọn giờ đặt giá cao / khuyến mãi giờ vắng.
 - **"Theo ngày"**: tiền giờ (vàng) và món kèm (xanh) từng ngày.
@@ -214,7 +214,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
-| Báo cáo tính giờ ghi "Chưa có lượt chơi nào được thanh toán trong khoảng này." | Chưa thanh toán bàn tính giờ nào trong khoảng đã chọn | Chọn khoảng dài hơn ("30 ngày") |
+| Khối tính giờ trong Báo cáo ghi "Chưa có lượt chơi nào được thanh toán trong kỳ này." | Chưa thanh toán bàn tính giờ nào trong kỳ đã chọn | Chọn "Tuần này" / "Tháng này" hoặc bấm ‹ để xem kỳ trước |
 | "Đã lưu lượt đặt, nhưng chưa nhận được cọc: …" | Lượt đặt đã ghi nhưng bước nhận cọc lỗi (mất mạng, máy chủ chưa có tiền cọc vào ví khách) | Bấm lại nút đặt trong hộp đó (chỉ làm phần cọc); hoặc chạm lượt đặt → "Sửa lượt đặt" để nhập cọc |
 | "Máy chủ chưa có tiền cọc vào ví khách. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần cọc | Báo chủ app; trong lúc chờ đặt không cọc |
 | "Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại" | Có tiền cọc mà chưa có khách | Chọn khách hoặc nhập số điện thoại |

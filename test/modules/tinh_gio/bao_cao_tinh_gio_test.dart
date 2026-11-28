@@ -68,4 +68,18 @@ void main() {
     expect(soNgayCua((tu: DateTime(2030, 12, 1), den: DateTime(2030, 12, 7))), 7);
     expect(soNgayCua((tu: DateTime(2030, 12, 7), den: DateTime(2030, 12, 7, 15))), 1);
   });
+
+  test('khoangTuKy: kỳ của tab Doanh thu → ngày đầu – ngày cuối, cắt ở hôm nay', () {
+    final nay = DateTime(2026, 11, 28, 20);
+    ms(DateTime d) => d.millisecondsSinceEpoch;
+    // Hôm nay
+    var k = khoangTuKy(ms(DateTime(2026, 11, 28)), ms(DateTime(2026, 11, 29)), homNay: nay);
+    expect([k.tu, k.den], [DateTime(2026, 11, 28), DateTime(2026, 11, 28)]);
+    // Tuần này (T2 23/11 – CN 29/11): cắt ở hôm nay 28/11
+    k = khoangTuKy(ms(DateTime(2026, 11, 23)), ms(DateTime(2026, 11, 30)), homNay: nay);
+    expect([k.tu, k.den, soNgayCua(k)], [DateTime(2026, 11, 23), DateTime(2026, 11, 28), 6]);
+    // Tháng trước: đủ tháng
+    k = khoangTuKy(ms(DateTime(2026, 10, 1)), ms(DateTime(2026, 11, 1)), homNay: nay);
+    expect([k.tu, k.den, soNgayCua(k)], [DateTime(2026, 10, 1), DateTime(2026, 10, 31), 31]);
+  });
 }

@@ -626,7 +626,17 @@ void main() {
           luotChoiProvider.overrideWith((ref, k) async => ds),
           banBaoCaoTinhGioProvider.overrideWith((ref) async => [b('s1', 'Sân 1'), b('s2', 'Sân 2'), b('s3', 'Sân 3')]),
         ],
-        child: MaterialApp(debugShowCheckedModeBanner: false, home: BaoCaoTinhGioScreen(homNay: DateTime(2030, 12, 7))),
+        // Khối trong tab Doanh thu của Báo cáo, kỳ "Tuần này" 01/12 – 07/12/2030 (28/11: gộp vào Doanh thu).
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: const Color(0xFFF5F3EF),
+            body: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+              children: [BaoCaoTinhGioKhoi(khoang: (tu: DateTime(2030, 12, 1), den: DateTime(2030, 12, 7)))],
+            ),
+          ),
+        ),
       ));
       await tester.pumpAndSettle();
     }, (_, __) {});

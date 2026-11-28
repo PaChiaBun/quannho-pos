@@ -175,7 +175,6 @@ final banBaoCaoTinhGioProvider = FutureProvider.autoDispose<List<BanTableModel>>
 // MÀN BÁO CÁO
 // ─────────────────────────────────────────────────────────────────────────────
 const _kNavy = Color(0xFF1C2151);
-const _kCream = Color(0xFFFFF8F0);
 const _kGold = Color(0xFFE0A400);
 const _kTeal = Color(0xFF0D9488);
 
@@ -184,198 +183,176 @@ TextStyle _chu(double size, FontWeight w, [Color? c]) =>
 
 String _gioPhut(double phut) => tinhGioThoiLuongDai(phut.round());
 
-/// Báo cáo tính giờ. Từ 28/11 nằm trong module Báo cáo (tab "Tính giờ", [laTab] = true: chỉ nội dung, không thanh
-/// trên — Chủ Quán chuyển từ màn Tính giờ sang).
-class BaoCaoTinhGioScreen extends ConsumerStatefulWidget {
-  /// Ngày "hôm nay" (ảnh mẫu trong test cố định); null = bây giờ.
-  final DateTime? homNay;
-  final bool laTab;
-  const BaoCaoTinhGioScreen({super.key, this.homNay, this.laTab = false});
+/// Khối báo cáo tính giờ trong tab **Doanh thu** của module Báo cáo (28/11 Chủ Quán: đưa vào Doanh thu, dùng chung
+/// kỳ Hôm nay / Tuần này / Tháng này; chỉ hiện khi quán bật module Các hoạt động tính giờ). [khoang] = các ngày của kỳ
+/// (tới hôm nay, không tính ngày chưa tới).
+class BaoCaoTinhGioKhoi extends ConsumerWidget {
+  final KhoangBaoCao khoang;
+  const BaoCaoTinhGioKhoi({super.key, required this.khoang});
 
   @override
-  ConsumerState<BaoCaoTinhGioScreen> createState() => _BaoCaoTinhGioScreenState();
-}
-
-class _BaoCaoTinhGioScreenState extends ConsumerState<BaoCaoTinhGioScreen> {
-  String _chon = '7';
-
-  KhoangBaoCao get _khoang {
-    final n = widget.homNay ?? DateTime.now();
-    final hom = DateTime(n.year, n.month, n.day);
-    return switch (_chon) {
-      'nay' => (tu: hom, den: hom),
-      '30' => (tu: hom.subtract(const Duration(days: 29)), den: hom),
-      'thang' => (tu: DateTime(hom.year, hom.month), den: hom),
-      _ => (tu: hom.subtract(const Duration(days: 6)), den: hom),
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final k = _khoang;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final k = khoang;
     final luot = ref.watch(luotChoiProvider(k));
     final ban = ref.watch(banBaoCaoTinhGioProvider).value ?? const <BanTableModel>[];
     final tenBan = {for (final b in ban) b.id: b.label};
-    final noiDung = Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(16, widget.laTab ? 16 : 4, 16, widget.laTab ? 80 : 32),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final (ma, nhan) in const [('nay', 'Hôm nay'), ('7', '7 ngày'), ('30', '30 ngày'), ('thang', 'Tháng này')])
-                    ChoiceChip(
-                      label: Text(nhan, style: _chu(13, FontWeight.w700, _chon == ma ? Colors.white : _kNavy)),
-                      selected: _chon == ma,
-                      selectedColor: _kNavy,
-                      backgroundColor: Colors.white,
-                      showCheckmark: false,
-                      onSelected: (_) => setState(() => _chon = ma),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ...luot.when(
-                loading: () => [const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))],
-                error: (e, _) => [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Text('Chưa tải được báo cáo. Kiểm tra mạng rồi thử lại.', textAlign: TextAlign.center, style: _chu(14, FontWeight.w600)),
-                        TextButton(onPressed: () => ref.invalidate(luotChoiProvider(k)), child: const Text('Thử lại')),
-                      ],
-                    ),
-                  ),
-                ],
-                data: (ds) {
-                  final soBanTinhGio = ban.where((b) => b.tinhGio).length;
-                  final t = tongHopTinhGio(ds,
-                      soNgay: soNgayCua(k), soBan: soBanTinhGio > 0 ? soBanTinhGio : {for (final l in ds) l.tableId}.length);
-                  if (t.luot == 0) {
-                    return [
-                      Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text('Chưa có lượt chơi nào được thanh toán trong khoảng này.',
-                            textAlign: TextAlign.center, style: _chu(14, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
-                      ),
-                    ];
-                  }
-                  return [
-                    _oTong(t),
-                    const SizedBox(height: 16),
-                    _GioDong(t),
-                    if (soNgayCua(k) > 1) ...[const SizedBox(height: 16), _TheoNgay(t, k)],
-                    const SizedBox(height: 16),
-                    _theoBan(t, tenBan, soNgayCua(k)),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Chỉ tính lượt đã thanh toán, theo giờ thanh toán. Tiền là trước giảm giá / phụ thu của hoá đơn.',
-                      style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.55)),
-                    ),
-                  ];
-                },
-              ),
-            ],
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFFFFF3D6), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.timer_rounded, size: 18, color: Color(0xFFB07A00)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Các hoạt động tính giờ', style: _chu(16, FontWeight.w800))),
+          ],
         ),
-      );
-    if (widget.laTab) return noiDung;
-    return Scaffold(
-      backgroundColor: _kCream,
-      appBar: AppBar(
-        backgroundColor: _kCream,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: _kNavy,
-        // theme của app đặt biểu tượng thanh trên màu trắng: không ghi lại thì nút quay lại chìm vào nền kem
-        iconTheme: const IconThemeData(color: _kNavy),
-        title: Text('Báo cáo tính giờ', style: _chu(20, FontWeight.w800)),
-      ),
-      body: noiDung,
-    );
-  }
-
-  Widget _oTong(TongHopTinhGio t) {
-    Widget o(String nhan, String so, {String? phu, Color? mau}) => Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE6DDD0)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(nhan, style: _chu(12, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
-              const SizedBox(height: 2),
-              FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(so, style: _chu(20, FontWeight.w800, mau))),
-              if (phu != null) Text(phu, style: _chu(11.5, FontWeight.w600, _kNavy.withValues(alpha: 0.55))),
-            ],
-          ),
-        );
-    final cot = MediaQuery.sizeOf(context).width >= 700 ? 4 : 2;
-    final o4 = [
-      o('Lượt chơi', '${t.luot}', phu: 'TB ${_gioPhut(t.phut / t.luot)} / lượt'),
-      o('Giờ chơi', _gioPhut(t.phut)),
-      o('Tiền giờ', fmtVnd(t.tienGio), phu: 'TB ${fmtVnd(t.tienGio / t.luot)} / lượt', mau: const Color(0xFFB07A00)),
-      o('Món kèm', fmtVnd(t.tienMon), phu: 'tiền giờ ${(t.tiLeTienGio * 100).round()}% tổng', mau: _kTeal),
-    ];
-    return GridView.count(
-      crossAxisCount: cot,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: cot == 4 ? 2.1 : 1.75,
-      children: o4,
-    );
-  }
-
-  Widget _theoBan(TongHopTinhGio t, Map<String, String> tenBan, int soNgay) {
-    final ds = t.theoBan.entries.toList()
-      ..sort((a, b) {
-        final c = b.value.tienGio.compareTo(a.value.tienGio);
-        return c != 0 ? c : compareNatural(tenBan[a.key] ?? '', tenBan[b.key] ?? '');
-      });
-    return _Khung(
-      tieuDe: 'Theo bàn',
-      child: Column(
-        children: [
-          for (final e in ds)
+        const SizedBox(height: 12),
+        ...luot.when(
+          loading: () => [const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))],
+          error: (e, _) => [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Row(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(tenBan[e.key] ?? 'Bàn đã xoá', style: _chu(14.5, FontWeight.w800)),
-                        Text(
-                          '${e.value.luot} lượt · ${_gioPhut(e.value.phut)} · TB ${_gioPhut(e.value.phut / soNgay)} / ngày',
-                          style: _chu(12, FontWeight.w600, _kNavy.withValues(alpha: 0.6)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(fmtVnd(e.value.tienGio), style: _chu(14.5, FontWeight.w800, const Color(0xFFB07A00))),
-                      Text('món ${fmtVnd(e.value.tienMon)}', style: _chu(12, FontWeight.w600, _kTeal)),
-                    ],
-                  ),
+                  Text('Chưa tải được báo cáo tính giờ. Kiểm tra mạng rồi thử lại.',
+                      textAlign: TextAlign.center, style: _chu(14, FontWeight.w600)),
+                  TextButton(onPressed: () => ref.invalidate(luotChoiProvider(k)), child: const Text('Thử lại')),
                 ],
               ),
             ),
-        ],
-      ),
+          ],
+          data: (ds) {
+            final soBanTinhGio = ban.where((b) => b.tinhGio).length;
+            final t = tongHopTinhGio(ds,
+                soNgay: soNgayCua(k), soBan: soBanTinhGio > 0 ? soBanTinhGio : {for (final l in ds) l.tableId}.length);
+            if (t.luot == 0) {
+              return [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE6DDD0)),
+                  ),
+                  child: Text('Chưa có lượt chơi nào được thanh toán trong kỳ này.',
+                      textAlign: TextAlign.center, style: _chu(14, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
+                ),
+              ];
+            }
+            return [
+              _oTong(context, t),
+              const SizedBox(height: 16),
+              _GioDong(t),
+              if (soNgayCua(k) > 1) ...[const SizedBox(height: 16), _TheoNgay(t, k)],
+              const SizedBox(height: 16),
+              _theoBan(t, tenBan, soNgayCua(k)),
+              const SizedBox(height: 10),
+              Text(
+                'Chỉ tính lượt đã thanh toán, theo giờ thanh toán. Tiền là trước giảm giá / phụ thu của hoá đơn.',
+                style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.55)),
+              ),
+            ];
+          },
+        ),
+      ],
     );
   }
+}
+
+/// Khoảng ngày của kỳ tab Doanh thu: [tuMs, denMs) (mili giây, đầu mút sau không tính) → ngày đầu – ngày cuối, cắt ở
+/// hôm nay (tuần / tháng đang chạy không chia trung bình cho ngày chưa tới).
+KhoangBaoCao khoangTuKy(int tuMs, int denMs, {DateTime? homNay}) {
+  final tu = DateTime.fromMillisecondsSinceEpoch(tuMs);
+  final denCuoi = DateTime.fromMillisecondsSinceEpoch(denMs).subtract(const Duration(days: 1));
+  final n = homNay ?? DateTime.now();
+  final hom = DateTime(n.year, n.month, n.day);
+  var den = DateTime(denCuoi.year, denCuoi.month, denCuoi.day);
+  final dau = DateTime(tu.year, tu.month, tu.day);
+  if (den.isAfter(hom)) den = hom.isBefore(dau) ? dau : hom;
+  return (tu: dau, den: den);
+}
+
+Widget _oTong(BuildContext context, TongHopTinhGio t) {
+  Widget o(String nhan, String so, {String? phu, Color? mau}) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE6DDD0)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(nhan, style: _chu(12, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+            const SizedBox(height: 2),
+            FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(so, style: _chu(20, FontWeight.w800, mau))),
+            if (phu != null) Text(phu, style: _chu(11.5, FontWeight.w600, _kNavy.withValues(alpha: 0.55))),
+          ],
+        ),
+      );
+  final cot = MediaQuery.sizeOf(context).width >= 700 ? 4 : 2;
+  final o4 = [
+    o('Lượt chơi', '${t.luot}', phu: 'TB ${_gioPhut(t.phut / t.luot)} / lượt'),
+    o('Giờ chơi', _gioPhut(t.phut)),
+    o('Tiền giờ', fmtVnd(t.tienGio), phu: 'TB ${fmtVnd(t.tienGio / t.luot)} / lượt', mau: const Color(0xFFB07A00)),
+    o('Món kèm', fmtVnd(t.tienMon), phu: 'tiền giờ ${(t.tiLeTienGio * 100).round()}% tổng', mau: _kTeal),
+  ];
+  return GridView.count(
+    crossAxisCount: cot,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    mainAxisSpacing: 8,
+    crossAxisSpacing: 8,
+    childAspectRatio: cot == 4 ? 2.1 : 1.75,
+    children: o4,
+  );
+}
+
+
+Widget _theoBan(TongHopTinhGio t, Map<String, String> tenBan, int soNgay) {
+  final ds = t.theoBan.entries.toList()
+    ..sort((a, b) {
+      final c = b.value.tienGio.compareTo(a.value.tienGio);
+      return c != 0 ? c : compareNatural(tenBan[a.key] ?? '', tenBan[b.key] ?? '');
+    });
+  return _Khung(
+    tieuDe: 'Theo bàn',
+    child: Column(
+      children: [
+        for (final e in ds)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(tenBan[e.key] ?? 'Bàn đã xoá', style: _chu(14.5, FontWeight.w800)),
+                      Text(
+                        '${e.value.luot} lượt · ${_gioPhut(e.value.phut)} · TB ${_gioPhut(e.value.phut / soNgay)} / ngày',
+                        style: _chu(12, FontWeight.w600, _kNavy.withValues(alpha: 0.6)),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(fmtVnd(e.value.tienGio), style: _chu(14.5, FontWeight.w800, const Color(0xFFB07A00))),
+                    Text('món ${fmtVnd(e.value.tienMon)}', style: _chu(12, FontWeight.w600, _kTeal)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 class _Khung extends StatelessWidget {

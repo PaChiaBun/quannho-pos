@@ -25,10 +25,10 @@
     },
     "bao-cao.md": {
       "lib/core/repositories/dashboard_repository.dart": "0ab8baa68798e9a3",
-      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "78775b5f70b7840d",
+      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "5a4cd4b9785c334a",
       "lib/screens/bill_lookup_section.dart": "5ffa6b912dcf7002",
       "lib/screens/einvoice_report_tab.dart": "edfadf318db1980b",
-      "lib/screens/report_screen.dart": "ba827587cb2dd1ff",
+      "lib/screens/report_screen.dart": "a2c6015008ba2b5b",
       "supabase/migrations/20261104_topping_bao_cao_v1.sql": "90417bacd6051a33"
     },
     "bep.md": {
@@ -206,7 +206,7 @@
       "lib/screens/kitchen_screen.dart": "d788ded3865f290d"
     },
     "tinh-gio.md": {
-      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "78775b5f70b7840d",
+      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "5a4cd4b9785c334a",
       "lib/modules/tinh_gio/dat_truoc.dart": "f9e09cd780f4548f",
       "lib/modules/tinh_gio/dat_truoc_ui.dart": "02bac7bc4f0c1a3b",
       "lib/modules/tinh_gio/gia_gio_ui.dart": "b81d9523d30b7b7c",
