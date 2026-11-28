@@ -38,6 +38,25 @@ String goiCuaPhienChu(int goiPhut, double? goiGia) => (goiGia ?? 0) > 0
     ? 'Gói ${thoiLuongChu(goiPhut)} ${fmtVnd(goiGia!)}'
     : 'Phần còn của gói ${thoiLuongChu(goiPhut)}';
 
+/// Lượt nhắc kế tiếp: phiên có gói, đang trong 10 phút cuối (`daHet` false) hoặc đã hết trong vòng 30 phút
+/// (`daHet` true), chưa nhắc ([daHien] chứa `khoa`). Hết gói thì nhắc "hết" (bỏ qua nhắc "sắp hết" chưa kịp hiện).
+({BanSessionModel s, DateTime het, bool daHet, String khoa})? goiCanNhac(
+    Iterable<BanSessionModel> ds, DateTime nay, Set<String> daHien) {
+  for (final s in ds) {
+    final goi = s.goiPhut;
+    if (goi == null || goi <= 0 || s.gioBatDau == null) continue;
+    final het = DateTime.fromMillisecondsSinceEpoch(s.gioBatDau!).add(Duration(minutes: goi));
+    final khoa = '${s.id}|${s.gioBatDau}|$goi';
+    if (!nay.isBefore(het) && nay.isBefore(het.add(const Duration(minutes: 30))) && !daHien.contains('$khoa|het')) {
+      return (s: s, het: het, daHet: true, khoa: khoa);
+    }
+    if (!nay.isBefore(het.subtract(kGoiNhacTruoc)) && nay.isBefore(het) && !daHien.contains('$khoa|sap')) {
+      return (s: s, het: het, daHet: false, khoa: khoa);
+    }
+  }
+  return null;
+}
+
 /// Thẻ bàn: "còn 25'" / "lố 8'" (null khi không gói).
 String? goiNganChu(int? goiPhut, DateTime? vao, DateTime luc) {
   if (goiPhut == null || goiPhut <= 0 || vao == null) return null;
@@ -401,26 +420,11 @@ class _TinhGioNhacGoiState extends ConsumerState<TinhGioNhacGoi> {
   void _xet() {
     if (!mounted || _dangHien || !_duocNhac) return;
     final ds = ref.read(activeSessionsProvider).value ?? const <String, BanSessionModel>{};
-    final nay = DateTime.now();
-    for (final s in ds.values) {
-      final goi = s.goiPhut;
-      if (goi == null || goi <= 0 || s.gioBatDau == null) continue;
-      final het = DateTime.fromMillisecondsSinceEpoch(s.gioBatDau!).add(Duration(minutes: goi));
-      final khoa = '${s.id}|${s.gioBatDau}|$goi';
-      // Hết gói: nhắc trong 30 phút sau mốc (mở app muộn hơn thì thôi). Sắp hết: trong 10 phút cuối.
-      if (!nay.isBefore(het) && nay.isBefore(het.add(const Duration(minutes: 30))) && !_daHien.contains('$khoa|het')) {
-        _daHien
-          ..add('$khoa|het')
-          ..add('$khoa|sap');
-        unawaited(_hien(s, het, true));
-        return;
-      }
-      if (!nay.isBefore(het.subtract(kGoiNhacTruoc)) && nay.isBefore(het) && !_daHien.contains('$khoa|sap')) {
-        _daHien.add('$khoa|sap');
-        unawaited(_hien(s, het, false));
-        return;
-      }
-    }
+    final n = goiCanNhac(ds.values, DateTime.now(), _daHien);
+    if (n == null) return;
+    _daHien.add('${n.khoa}|sap');
+    if (n.daHet) _daHien.add('${n.khoa}|het');
+    unawaited(_hien(n.s, n.het, n.daHet));
   }
 
   Future<void> _hien(BanSessionModel s, DateTime het, bool daHet) async {

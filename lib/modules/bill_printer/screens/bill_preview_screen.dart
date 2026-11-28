@@ -50,6 +50,12 @@ class BillData {
   final BillType type;
   final String? waiterName;
   final String? transferCode; // mã đơn QN… đưa vào nội dung CK của QR (bill bàn)
+  /// Phần trả bằng ví khách (tiền cọc đặt trước, module Tính giờ). > 0 thì bill in thêm "Đã cọc" và "CÒN PHẢI TRẢ",
+  /// mã QR chuyển khoản lấy số còn phải trả (không thì khách quét QR trả luôn phần đã cọc — QC 28/11).
+  final double daTruVi;
+
+  /// Số khách còn phải trả sau phần ví.
+  double get conPhaiTra => total - daTruVi > 0 ? total - daTruVi : 0;
 
   const BillData({
     required this.shopName,
@@ -71,6 +77,7 @@ class BillData {
     this.type = BillType.receipt,
     this.waiterName,
     this.transferCode,
+    this.daTruVi = 0,
   });
 }
 
@@ -634,6 +641,21 @@ class BillPdfGenerator {
                 pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
                 pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
               ),
+              if (bill.daTruVi > 0) ...[
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Đã cọc (ví khách):', style: pw.TextStyle(font: font, fontSize: fs)),
+                    pw.Text('-${_money(bill.daTruVi)}', style: pw.TextStyle(font: font, fontSize: fs)),
+                  ],
+                ),
+                _fitRow(
+                  'CÒN PHẢI TRẢ:',
+                  _money(bill.conPhaiTra),
+                  pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
+                  pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
+                ),
+              ],
             ],
           );
         }
@@ -721,7 +743,7 @@ class BillPdfGenerator {
                 bill.transferCode ?? '',
                 bill.tableName ?? bill.orderNumber,
               );
-              final amount = bill.total.round();
+              final amount = bill.conPhaiTra.round(); // trừ phần đã cọc (ví khách)
               // In chuỗi VietQR chuẩn (app ngân hàng đọc được), không in đường dẫn ảnh.
               try {
                 qrWidget = pw.BarcodeWidget(

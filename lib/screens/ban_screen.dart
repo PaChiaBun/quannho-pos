@@ -4977,7 +4977,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final isReplay = data['is_replay'] == true;
       final finalTotal = ((data['total_amount'] as num?) ?? 0).toDouble();
       // đợt 4: phần đã trừ ví khách (cọc + trả thêm bằng ví); v5 không trả trường này = 0
-      final viDaTru = ((data['vi_da_tru'] as num?) ?? 0).toDouble();
+      var viDaTru = ((data['vi_da_tru'] as num?) ?? 0).toDouble();
+      // Đối soát lại sau mạng chập (reconcile) không trả vi_da_tru: đọc từ bản ghi thanh toán để hộp thành công
+      // và hoá đơn vẫn ghi phần đã trừ cọc (QC 28/11).
+      if (!data.containsKey('vi_da_tru')) {
+        try {
+          final r = await Supabase.instance.client
+              .from('payment_settlements')
+              .select('vi_da_tru')
+              .eq('id', settlementId)
+              .maybeSingle()
+              .timeout(const Duration(seconds: 8));
+          viDaTru = ((r?['vi_da_tru'] as num?) ?? 0).toDouble();
+        } catch (_) {}
+      }
       final serverSubtotal = ((data['subtotal'] as num?) ?? 0).toDouble();
       final serverDiscount = ((data['discount'] as num?) ?? 0).toDouble();
       final clientItemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
@@ -5062,6 +5075,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             subtotal: serverSubtotal,
             discount: serverDiscount,
             total: finalTotal,
+            daTruVi: viDaTru,
             paymentMethod: payMethod,
             type: BillType.receipt,
             waiterName: _resolveWaiterName(
@@ -8451,8 +8465,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
     if (phone.length < 9 && coc == null) return;
     setState(() {
       _searchingCustomer = true;
-      _customerId = null;
-      _customerName = null;
+      // Bàn có cọc: giữ khách + số dư ví đã đọc cùng cọc; tra lại mà lỗi mạng thì màn vẫn trừ cọc đúng như máy chủ
+      // (QC 28/11: xoá trước khi tra → mạng chập thì màn đòi đủ tổng, máy chủ vẫn trừ ví).
+      if (coc == null) {
+        _customerId = null;
+        _customerName = null;
+      }
       _usePts = 0;
     });
     try {
@@ -8499,7 +8517,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           _soDuVi = ((res['real_balance'] as num?)?.toDouble()) ?? 0;
           _usePts = 0; // reset khi tìm khách mới
         });
-      } else if (mounted) {
+      } else if (mounted && coc == null) {
         setState(() {
           _customerId = null;
           _customerName = null;
@@ -8602,6 +8620,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         subtotal: itemsTotal + _shippingFee,
         discount: _couponDiscount + (_usePts * _redeemRate),
         total: finalTotal,
+        daTruVi: _viTru(finalTotal),
         note: 'TẠM TÍNH - CHƯA THANH TOÁN',
         type: BillType.receipt,
         waiterName: _resolveWaiterName(items, session?.displayName),

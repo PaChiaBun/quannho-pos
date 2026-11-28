@@ -185,6 +185,20 @@ BEGIN
   PERFORM public._gg_ok((j->>'thanh_tien')::numeric = 120000 AND (j->>'ten') LIKE '% · chơi 3 giờ 20 phút · phần còn của gói 1 giờ 20 phút + 2 giờ × 60.000 đ/giờ',
     'G13b bàn mới (tối thiểu 180): 200 phút, gói còn 80 → lố 120 phút = 120.000 — ' || (j->>'ten'));
 
+  -- ── QC 28/11: đổi gói sau khi đã chốt giờ thì dòng tiền giờ được chốt lại ─────────────────────
+  IF to_regproc('public.qn_tinh_gio_ghi_lai_neu_da_chot_v1') IS NOT NULL THEN
+    UPDATE public.ban_sessions SET goi_phut = NULL, goi_gia = NULL, gio_bat_dau = clock_timestamp() - interval '89 minutes 30 seconds'
+     WHERE id = P1;
+    DELETE FROM public.ban_session_items WHERE session_id = P1;
+    j := public.qn_tinh_gio_ghi_dong_v1(S, P1);   -- chốt khi chưa có gói: 90 phút × 60.000 = 90.000
+    PERFORM public._gg_as('authenticated', A, S);
+    j := public._gg_rpc(format($q$SELECT public.ban_chon_goi_gio_v1(%L, %L, %L)$q$, S, P1, G120));
+    PERFORM public._gg_as('admin');
+    PERFORM public._gg_ok((j->>'success')::boolean
+      AND (SELECT subtotal FROM public.ban_session_items WHERE session_id = P1 AND gio_tu IS NOT NULL) = 100000,
+      'G16 chọn gói sau khi đã chốt: dòng tiền giờ chốt lại thành 100.000 (không giữ 90.000 cũ) — ' || j::text);
+  END IF;
+
   RAISE NOTICE '>>> GÓI GIỜ: TẤT CẢ PASS <<<';
 END
 $test$;

@@ -91,6 +91,8 @@ Chọn gói cho khách đang chơi:
 2. Gói tính từ lúc khách vào. Khối ghi **"Gói 2 giờ 100.000 đ · còn 25 phút"**, thẻ bàn ghi **"gói còn 25'"**; hết gói thì ghi **"hết gói, lố 8'"**.
 3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm **"Đã báo khách"**.
 
+Hoá đơn và phiếu tạm tính của bàn có cọc in thêm "Đã cọc (ví khách)" và "CÒN PHẢI TRẢ"; mã QR chuyển khoản trên đó lấy số còn phải trả.
+
 Tiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ "chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ". Ai có quyền thu tiền chọn gói được; **đổi hoặc bỏ** gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong "Đặt giá giờ" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ.
 
 ### Làm tròn theo block, chơi tối thiểu
@@ -216,6 +218,8 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | "Bàn này có tiền cọc trong ví khách. Cập nhật app để thanh toán …" | Máy đó chưa cập nhật app, chưa biết trừ cọc | Cập nhật app rồi thanh toán, hoặc thanh toán ở máy đã cập nhật |
 | "Còn buổi chờ khách: huỷ lượt đặt trước rồi mới xử lý cọc" | Lịch cố định còn buổi chưa tới | Cọc giữ cho các buổi sau; huỷ hết các buổi còn lại rồi xử lý cọc |
 | "Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần | Báo chủ app; trong lúc chờ đặt từng buổi (tắt "Lặp lại hàng tuần") |
+| Gộp bàn (hoặc huỷ bàn) đã nhận khách có cọc, cọc không trừ ở bàn đích | Cọc gắn với lượt đặt của bàn cũ | Vào **Lịch đặt** → chạm lượt đó → **"Xử lý tiền cọc"** (để trong ví / quán giữ / hoàn) |
+| "Bàn của lượt này đang mở: thanh toán bàn sẽ tự trừ cọc" | Bấm xử lý cọc khi bàn vẫn đang có khách | Không cần làm gì: thanh toán bàn đó sẽ trừ cọc |
 | "Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần gói giờ | Báo chủ app; trong lúc chờ tính theo giờ như thường |
 | "Đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý" | Bàn đã có gói, tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đổi gói |
 | "Gói không còn ở bàn này" | Gói vừa bị xoá hoặc sửa trong "Đặt giá giờ" | Đóng hộp, bấm "Chọn gói" lại |

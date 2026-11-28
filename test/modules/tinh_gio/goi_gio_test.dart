@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quannho_pos/core/repositories/ban_repository.dart' show BanSessionModel;
 import 'package:quannho_pos/modules/tinh_gio/goi_gio_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio.dart';
 
@@ -52,6 +53,24 @@ void main() {
         expect([k.thanhTien, k.soPhutTinh, k.doan.length], [khongGoi.thanhTien, khongGoi.soPhutTinh, khongGoi.doan.length]);
       }
     }
+  });
+
+  test('nhắc gói: 10 phút cuối nhắc sắp hết, hết gói nhắc hết, không nhắc lại', () {
+    BanSessionModel phien(int? goi) => BanSessionModel(
+        id: 's1', tableId: 't1', storeId: 'st', status: 'open', openedAt: 0, totalAmount: 0, guestCount: 1,
+        gioBatDau: vao.millisecondsSinceEpoch, goiPhut: goi, goiGia: 50000);
+    final daHien = <String>{};
+    expect(goiCanNhac([phien(60)], vao.add(const Duration(minutes: 49)), daHien), isNull);
+    final sap = goiCanNhac([phien(60)], vao.add(const Duration(minutes: 51)), daHien)!;
+    expect([sap.daHet, sap.het], [false, vao.add(const Duration(hours: 1))]);
+    daHien.add('${sap.khoa}|sap');
+    expect(goiCanNhac([phien(60)], vao.add(const Duration(minutes: 55)), daHien), isNull, reason: 'đã nhắc sắp hết');
+    final het = goiCanNhac([phien(60)], vao.add(const Duration(minutes: 61)), daHien)!;
+    expect(het.daHet, isTrue);
+    daHien.add('${het.khoa}|het');
+    expect(goiCanNhac([phien(60)], vao.add(const Duration(minutes: 70)), daHien), isNull, reason: 'đã nhắc hết');
+    expect(goiCanNhac([phien(60)], vao.add(const Duration(minutes: 95)), <String>{}), isNull, reason: 'quá 30 phút sau hết gói');
+    expect(goiCanNhac([phien(null)], vao.add(const Duration(minutes: 55)), <String>{}), isNull, reason: 'không gói');
   });
 
   test('chữ còn / lố gói', () {

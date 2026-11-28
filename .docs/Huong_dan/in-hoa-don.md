@@ -117,7 +117,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 ### 8. Thiết kế mẫu in
 **Thiết Kế Mẫu In** có 4 tab: **Hoá Đơn**, **Bếp Nóng**, **Bếp Bar**, **Tem Dán Ly**. Thanh trên cùng chọn chế độ **"Thiết kế"**, **"Mẫu dựng sẵn"**, **"Xem trước"** (màn hẹp như máy cầm tay: chế độ chưa chọn chỉ hiện biểu tượng — giữ ngón tay để xem tên).
 - **Hoá Đơn**: chọn **"Khổ giấy"**, bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối "Danh sách món", "Tổng tiền" là **bắt buộc**. Thêm khối: **"Thêm block"**. Xem lại các thiết kế trước đây: nút **"Lịch sử thiết kế"**.
-- **Hiện mã QR chuyển khoản của quán trên bill**: tab Hoá Đơn → khối **"QR Code"** → **"Nguồn mã QR"**: "VietQR Tự động" (khai tài khoản ngân hàng của quán) hoặc "Tải ảnh QR lên" → "Lưu".
+- **Hiện mã QR chuyển khoản của quán trên bill**: tab Hoá Đơn → khối **"QR Code"** → **"Nguồn mã QR"**: "VietQR Tự động" (khai tài khoản ngân hàng của quán) hoặc "Tải ảnh QR lên" → "Lưu". Bàn có tiền cọc (module Các hoạt động tính giờ): bill in thêm "Đã cọc (ví khách)" và "CÒN PHẢI TRẢ", mã QR "VietQR Tự động" lấy số còn phải trả.
 - **Bếp Nóng / Bếp Bar**: **"Khổ Giấy"**, **"Tiêu Đề Phiếu"** (vd PHIẾU BẾP, BAR NƯỚC), **"Hiển Thị Trên Phiếu"** (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), **"Cỡ Chữ"**.
 - **Tem Dán Ly**: **"Khổ Tem"**, **"Hiển Thị Trên Tem"** (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), **"Cỡ Chữ"**.
 - Có sẵn **mẫu dựng sẵn**: chọn mẫu → **"Dùng mẫu này"**. Mọi thay đổi phải bấm **"Lưu"**.

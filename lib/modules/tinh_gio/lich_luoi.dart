@@ -224,7 +224,9 @@ class _LichLuoiState extends State<LichLuoi> {
                                     ),
                                   ),
                                 for (var i = 0; i < bans.length; i++)
-                                  for (final d in widget.dat.where((d) => d.tableId == bans[i].id))
+                                  // lượt đã huỷ / không đến (cọc xong) không chiếm ô: chạm ô đó đặt lại được (QC 28/11);
+                                  // còn cọc chưa xử lý thì vẫn vẽ để người xử lý; dạng danh sách vẫn thấy đủ
+                                  for (final d in widget.dat.where((d) => d.tableId == bans[i].id && (d.conHieuLuc || d.coCocCho)))
                                     if (lichViTriKhoi(d, widget.ngay, gioDau) case final v?)
                                       Positioned(
                                         left: i * rongCot + 3,

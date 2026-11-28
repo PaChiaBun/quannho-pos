@@ -1,6 +1,6 @@
 {
- "version": 202611281058,
- "hash": "1db68cd1b1d560fde506d47973f35355da8c5c80adf849036db4b2751e02d389",
+ "version": 202611281228,
+ "hash": "c7e1df28fd297f57626235bec761d67407d16e40e8942b41c9e17133d26259e0",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -1568,7 +1568,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "8. Thiết kế mẫu in",
-   "text": "Thiết Kế Mẫu In có 4 tab: Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly. Thanh trên cùng chọn chế độ \"Thiết kế\", \"Mẫu dựng sẵn\", \"Xem trước\" (màn hẹp như máy cầm tay: chế độ chưa chọn chỉ hiện biểu tượng — giữ ngón tay để xem tên).\n• Hoá Đơn: chọn \"Khổ giấy\", bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối \"Danh sách món\", \"Tổng tiền\" là bắt buộc. Thêm khối: \"Thêm block\". Xem lại các thiết kế trước đây: nút \"Lịch sử thiết kế\".\n• Hiện mã QR chuyển khoản của quán trên bill: tab Hoá Đơn → khối \"QR Code\" → \"Nguồn mã QR\": \"VietQR Tự động\" (khai tài khoản ngân hàng của quán) hoặc \"Tải ảnh QR lên\" → \"Lưu\".\n• Bếp Nóng / Bếp Bar: \"Khổ Giấy\", \"Tiêu Đề Phiếu\" (vd PHIẾU BẾP, BAR NƯỚC), \"Hiển Thị Trên Phiếu\" (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), \"Cỡ Chữ\".\n• Tem Dán Ly: \"Khổ Tem\", \"Hiển Thị Trên Tem\" (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), \"Cỡ Chữ\".\n• Có sẵn mẫu dựng sẵn: chọn mẫu → \"Dùng mẫu này\". Mọi thay đổi phải bấm \"Lưu\"."
+   "text": "Thiết Kế Mẫu In có 4 tab: Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly. Thanh trên cùng chọn chế độ \"Thiết kế\", \"Mẫu dựng sẵn\", \"Xem trước\" (màn hẹp như máy cầm tay: chế độ chưa chọn chỉ hiện biểu tượng — giữ ngón tay để xem tên).\n• Hoá Đơn: chọn \"Khổ giấy\", bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối \"Danh sách món\", \"Tổng tiền\" là bắt buộc. Thêm khối: \"Thêm block\". Xem lại các thiết kế trước đây: nút \"Lịch sử thiết kế\".\n• Hiện mã QR chuyển khoản của quán trên bill: tab Hoá Đơn → khối \"QR Code\" → \"Nguồn mã QR\": \"VietQR Tự động\" (khai tài khoản ngân hàng của quán) hoặc \"Tải ảnh QR lên\" → \"Lưu\". Bàn có tiền cọc (module Các hoạt động tính giờ): bill in thêm \"Đã cọc (ví khách)\" và \"CÒN PHẢI TRẢ\", mã QR \"VietQR Tự động\" lấy số còn phải trả.\n• Bếp Nóng / Bếp Bar: \"Khổ Giấy\", \"Tiêu Đề Phiếu\" (vd PHIẾU BẾP, BAR NƯỚC), \"Hiển Thị Trên Phiếu\" (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), \"Cỡ Chữ\".\n• Tem Dán Ly: \"Khổ Tem\", \"Hiển Thị Trên Tem\" (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), \"Cỡ Chữ\".\n• Có sẵn mẫu dựng sẵn: chọn mẫu → \"Dùng mẫu này\". Mọi thay đổi phải bấm \"Lưu\"."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-9-ket-tien",
@@ -3536,7 +3536,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bán gói giờ (ví dụ 2 giờ 100.000 đ)",
-   "text": "Cài gói cho bàn:\n1. Giữ lâu vào bàn → \"Đặt giá giờ\" → bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Ở phần \"Gói giờ\" bấm \"Thêm gói giờ\", chọn thời gian (30 phút tới 5 giờ), gõ \"Giá trọn gói\", bấm \"Xong\". Mỗi bàn tối đa 6 gói, không trùng thời gian.\n3. Bấm \"Lưu\". Muốn mọi bàn của khu có cùng gói thì chọn \"Cả khu\" trước khi lưu.\n\nChọn gói cho khách đang chơi:\n1. Mở bàn đang tính giờ. Trong khối \"ĐANG TÍNH GIỜ\" bấm \"Chọn gói\", chọn gói khách mua.\n2. Gói tính từ lúc khách vào. Khối ghi \"Gói 2 giờ 100.000 đ · còn 25 phút\", thẻ bàn ghi \"gói còn 25'\"; hết gói thì ghi \"hết gói, lố 8'\".\n3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm \"Đã báo khách\".\n\nTiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ \"chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ\". Ai có quyền thu tiền chọn gói được; đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong \"Đặt giá giờ\" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ."
+   "text": "Cài gói cho bàn:\n1. Giữ lâu vào bàn → \"Đặt giá giờ\" → bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Ở phần \"Gói giờ\" bấm \"Thêm gói giờ\", chọn thời gian (30 phút tới 5 giờ), gõ \"Giá trọn gói\", bấm \"Xong\". Mỗi bàn tối đa 6 gói, không trùng thời gian.\n3. Bấm \"Lưu\". Muốn mọi bàn của khu có cùng gói thì chọn \"Cả khu\" trước khi lưu.\n\nChọn gói cho khách đang chơi:\n1. Mở bàn đang tính giờ. Trong khối \"ĐANG TÍNH GIỜ\" bấm \"Chọn gói\", chọn gói khách mua.\n2. Gói tính từ lúc khách vào. Khối ghi \"Gói 2 giờ 100.000 đ · còn 25 phút\", thẻ bàn ghi \"gói còn 25'\"; hết gói thì ghi \"hết gói, lố 8'\".\n3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm \"Đã báo khách\".\n\nHoá đơn và phiếu tạm tính của bàn có cọc in thêm \"Đã cọc (ví khách)\" và \"CÒN PHẢI TRẢ\"; mã QR chuyển khoản trên đó lấy số còn phải trả.\n\nTiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ \"chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ\". Ai có quyền thu tiền chọn gói được; đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong \"Đặt giá giờ\" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-lam-tron-theo-block-choi-toi-thieu",
@@ -3761,6 +3761,22 @@
    "section": "Lỗi thường gặp",
    "title": "\"Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.\"",
    "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần\nLàm gì: Báo chủ app; trong lúc chờ đặt từng buổi (tắt \"Lặp lại hàng tuần\")"
+  },
+  {
+   "id": "tinh-gio#loi-gop-ban-hoac-huy-ban-da-nhan-khach-co-coc-coc-khong-tru-o-ba",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Gộp bàn (hoặc huỷ bàn) đã nhận khách có cọc, cọc không trừ ở bàn đích",
+   "text": "Vì sao: Cọc gắn với lượt đặt của bàn cũ\nLàm gì: Vào Lịch đặt → chạm lượt đó → \"Xử lý tiền cọc\" (để trong ví / quán giữ / hoàn)"
+  },
+  {
+   "id": "tinh-gio#loi-ban-cua-luot-nay-dang-mo-thanh-toan-ban-se-tu-tru-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Bàn của lượt này đang mở: thanh toán bàn sẽ tự trừ cọc\"",
+   "text": "Vì sao: Bấm xử lý cọc khi bàn vẫn đang có khách\nLàm gì: Không cần làm gì: thanh toán bàn đó sẽ trừ cọc"
   },
   {
    "id": "tinh-gio#loi-may-chu-chua-co-goi-gio-bao-chu-app-cap-nhat-may-chu",

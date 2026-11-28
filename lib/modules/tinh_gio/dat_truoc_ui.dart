@@ -581,8 +581,9 @@ class _LuotDatSheet extends ConsumerWidget {
             if (dat.chuoiId != null)
               viec('huy_chuoi', Icons.event_busy_rounded, 'Huỷ buổi này và các buổi sau', mau: _kRed),
           ],
-          // đã huỷ / không đến mà cọc chưa xử lý (đóng hộp hỏi lúc trước)
-          if (!dat.conHieuLuc && dat.coCocCho)
+          // đã huỷ / không đến mà cọc chưa xử lý (đóng hộp hỏi lúc trước); đã nhận khách mà cọc chưa trừ (bàn bị gộp /
+          // huỷ — QC 28/11): máy chủ chỉ cho khi bàn không còn mở, còn mở thì báo "thanh toán bàn sẽ tự trừ cọc"
+          if (dat.coCocCho && (!dat.conHieuLuc || dat.trangThai == 'da_nhan'))
             viec('xu_ly_coc', Icons.savings_rounded, 'Xử lý tiền cọc ${fmtVnd(dat.tienCoc)}', mau: _kOrange),
         ],
       ),
@@ -1542,7 +1543,11 @@ class _XuLyCocSheetState extends State<XuLyCocSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('${widget.khongDen ? 'Khách không đến' : 'Đã huỷ'} · ${widget.tenBan}', textAlign: TextAlign.center, style: _chu(18, FontWeight.w800)),
+          Text(
+              '${widget.khongDen ? 'Khách không đến' : widget.dat.trangThai == 'da_nhan' ? 'Bàn đã gộp / huỷ, cọc chưa trừ' : 'Đã huỷ'}'
+              ' · ${widget.tenBan}',
+              textAlign: TextAlign.center,
+              style: _chu(18, FontWeight.w800)),
           const SizedBox(height: 4),
           Text('${d.tenKhach} · ${_ngayChu(d.gioTu)} ${gioPhut(d.gioTu)} · đã cọc $tien $quy',
               textAlign: TextAlign.center, style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.7))),

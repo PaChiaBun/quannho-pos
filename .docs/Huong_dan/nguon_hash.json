@@ -42,7 +42,7 @@
     },
     "in-hoa-don.md": {
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "aec1e69fd2d84a4e",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "0592e9405d40aee9",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "e531357829f319e5",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
       "lib/modules/bill_printer/screens/print_rules_screen.dart": "ab8bdd344e611481",
@@ -207,14 +207,14 @@
     "tinh-gio.md": {
       "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "f10fcbaa3d87efe8",
       "lib/modules/tinh_gio/dat_truoc.dart": "f9e09cd780f4548f",
-      "lib/modules/tinh_gio/dat_truoc_ui.dart": "9f0652d18e6bf3c2",
+      "lib/modules/tinh_gio/dat_truoc_ui.dart": "02bac7bc4f0c1a3b",
       "lib/modules/tinh_gio/gia_gio_ui.dart": "89a3474bccb200b1",
-      "lib/modules/tinh_gio/goi_gio_ui.dart": "c1b01472fe30da40",
+      "lib/modules/tinh_gio/goi_gio_ui.dart": "92becf363b60576f",
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
       "lib/modules/tinh_gio/ngay_le_ui.dart": "11024880ff66605b",
       "lib/modules/tinh_gio/tinh_gio.dart": "15ba669234240f78",
       "lib/modules/tinh_gio/tinh_gio_widgets.dart": "d5fcf19cb39a134a",
-      "lib/screens/ban_screen.dart": "fb05442e29731393",
+      "lib/screens/ban_screen.dart": "ac29512616130a77",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }
