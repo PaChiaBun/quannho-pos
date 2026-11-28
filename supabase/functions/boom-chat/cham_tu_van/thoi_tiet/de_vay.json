@@ -1,0 +1,14 @@
+[
+  {"id":"V01","quan":"a","troi":"nang_nong","loai":"thu_chi","q":"minh dinh vay 50tr mua may pha espresso moi, tra gop 12 thang thi moi thang tra may co noi ko b?"},
+  {"id":"V02","quan":"a","troi":"mua_sang","loai":"thu_chi","q":"Em muốn mở thêm 1 xe cà phê ở toà bên kia, cần khoảng 120 triệu mà chỉ có 40 triệu, vay phần còn lại thì bao lâu trả xong?"},
+  {"id":"V03","quan":"a","troi":"mua_chieu","loai":"thu_chi","q":"muon chi gai 30tr sua lai ki ot, hua tra moi thang 3tr. voi so thu chi hien gio thi tra vay co du song ko"},
+  {"id":"V04","quan":"b","troi":"mua_chieu","loai":"thu_chi","q":"Quán đang tính vay ngân hàng 300 triệu để sửa lại tầng 2 thêm chỗ ngồi, lãi khoảng 10%/năm, mỗi tháng trả bao nhiêu thì an toàn cho quán?"},
+  {"id":"V05","quan":"b","troi":"nang_nong","loai":"thu_chi","q":"tra gop may lam da 80 trieu, moi thang 7tr trong 1 nam. so thang nay co gong noi ko hay nen tra truoc 1 cuc"},
+  {"id":"V06","quan":"b","troi":"mua_sang","loai":"thu_chi","q":"Có người rủ hùn mở chi nhánh 2 cần 1 tỷ, mình bỏ nửa, phần còn lại vay. Với doanh thu hiện tại quán mình có kham nổi khoản nợ 500tr không?"},
+  {"id":"V07","quan":"c","troi":"mua_sang","loai":"thu_chi","q":"vay 60tr mua tu dong + bep moi, tra 5tr/thang thi bao lau het no? thang nay ban e la it hon"},
+  {"id":"V08","quan":"c","troi":"nang_nong","loai":"thu_chi","q":"Tôi đang nợ mối gạo với mối thịt khoảng 25 triệu, muốn trả dứt trong 3 tháng mà vẫn đủ tiền chợ mỗi ngày thì có được không?"},
+  {"id":"V09","quan":"c","troi":"mua_chieu","loai":"thu_chi","q":"mượn em trai 100 trieu sửa mái che với nền quán, tính trả lại trong 1 năm thì mỗi tháng phải để ra bao nhiêu? quán có chịu nổi ko"},
+  {"id":"V10","quan":"d","troi":"mua_chieu","loai":"thu_chi","q":"Định vay 150 triệu mua lò nướng điện thay than, trả góp 24 tháng. Tiền than đỡ được có đủ bù tiền góp mỗi tháng không?"},
+  {"id":"V11","quan":"d","troi":"nang_nong","loai":"thu_chi","q":"no the tin dung 45tr luc sam do quan, gio muon tra het trong 6 thang, cat bot chi phi nao de du tien tra"},
+  {"id":"V12","quan":"d","troi":"mua_sang","loai":"thu_chi","q":"vay 200tr thue them mat bang ke ben mo rong cho ngoi, moi thang tra goc lai tam 9tr. lai quan hien gio co du gánh ko hay rui ro qua"}
+]

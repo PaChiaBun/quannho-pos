@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D20_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chỉ nêu bún, bỏ rau sống/sườn (~912.000đ) và nguyên nhân nhập dư; câu 'giữ nếu hao hụt vẫn cao' bị lộn ý."
+  },
+  {
+   "id": "D20_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ nêu bún, không nói nguyên nhân nhập dư và tổng hao hụt ~912.000đ."
+  },
+  {
+   "id": "D20_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ nêu bún, không giải thích hao hụt thường do nhập dư, thiếu rau/sườn."
+  },
+  {
+   "id": "D20_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ nêu bún, không giải thích hao hụt thường do nhập dư, thiếu rau/sườn."
+  },
+  {
+   "id": "D20_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ nêu bún, không giải thích nguyên nhân nhập dư, thiếu rau/sườn."
+  },
+  {
+   "id": "D20_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Đúng hướng nhưng chỉ nêu bún, không giải thích nguyên nhân nhập dư, thiếu rau/sườn."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D20_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Nghiêng về đổi mối và kết luận bún có vấn đề chất lượng/bảo quản chỉ từ 26 kg hao hụt, bỏ qua khả năng nhập dư."
+  },
+  {
+   "id": "D20_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nghiêng về đổi mối khi chưa có số chất lượng/giá, tự đặt ngưỡng 'dưới 10%' không có trong khối."
+  },
+  {
+   "id": "D20_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Kết luận có vấn đề bảo quản/chất lượng rồi khuyên đổi mối, kèm ngưỡng 10% bịa và mâu thuẫn với chính câu 'còn thiếu thông tin'."
+  },
+  {
+   "id": "D20_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nghiêng về đổi mối chỉ vì 'khoản hao hụt đáng kể', việc làm (hỏi mối khác) không xử lý nguyên nhân nhập dư."
+  },
+  {
+   "id": "D20_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Khẳng định hao hụt cho thấy vấn đề chất lượng/bảo quản và khuyên tìm mối mới, đặt điều kiện 'không hao hụt' phi thực tế."
+  },
+  {
+   "id": "D20_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nghiêng về đổi mối khi chưa có số chất lượng/giá, tự đặt ngưỡng 'dưới 10%' không có trong khối."
+  }
+ ]
+}

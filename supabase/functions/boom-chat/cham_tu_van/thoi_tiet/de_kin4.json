@@ -1,0 +1,182 @@
+[
+ {
+  "id": "P01",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "nguoi",
+  "q": "mai mua sang ha? t5 co Lan voi Tu thoi, co can goi Hoa vo phu ko",
+  "y_chinh": "Mai Thứ Năm 29/10 mưa to 85%, mưa từ 6h đến khoảng 12h, nặng nhất 8–9h, trùng giờ đông 7h–8h (19,6 và 17,1 triệu cả tháng); lịch Thứ Năm có Lan 6–14h và Tú 10–18h, không có số cho thấy mưa đông hơn nên không cần gọi thêm Hoà.",
+  "can_tranh": "Khuyên gọi thêm Hoà vì 'mưa khách đông'; bịa mưa làm giảm/tăng bao nhiêu %; nói sai lịch (Hoà không làm Thứ Năm)."
+ },
+ {
+  "id": "P02",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "mon",
+  "q": "nang 35-37 do ca tuan, chieu nen day mon gi",
+  "y_chinh": "Cả 7 ngày nắng nóng 35–37°C, mưa 5%; buổi chiều bán chạy Trà tắc 70, Bạc xỉu 60, Cà phê sữa đá 55 ly cả tháng → đẩy trà tắc (18.000đ), trà đào (30.000đ, 300 ly/tháng) vào khung 14h–15h vắng nhất (1,96 và 1,83 triệu cả tháng).",
+  "can_tranh": "Bịa giá vốn trà; hứa tăng doanh thu % vì nóng; đề xuất món mới cần mua máy mà không có số."
+ },
+ {
+  "id": "P03",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "bay",
+  "q": "Chủ nhật 1/11 mưa mấy giờ vậy em, có nên làm thêm bánh mì không",
+  "y_chinh": "Quán nghỉ Chủ nhật (doanh thu Chủ nhật = 0) nên không cần làm bánh mì cho ngày đó; Chủ nhật 1/11 mưa 65% khoảng 16h–21h. Nếu tính bánh mì thì tính cho Thứ Bảy 31/10 (Thứ Bảy chỉ 7,1 triệu cả tháng) và tháng này đã bỏ 96 ổ bánh mì.",
+  "can_tranh": "Khuyên làm/bớt bánh mì cho Chủ nhật như ngày mở cửa; quên quán nghỉ Chủ nhật."
+ },
+ {
+  "id": "P04",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "nhap_hang",
+  "q": "sữa đặc còn 3 lon, hạt cf 2,5kg. tuần này mưa sáng hoài thì nhập ít lại hay nhập đủ",
+  "y_chinh": "Kho đã dưới mức tối thiểu: sữa đặc 3/12 lon, hạt cà phê 2,5/5 kg, ly 500ml 150/300 cái; dù cả 7 ngày đều mưa sáng (50–85%), vẫn nên nhập ít nhất lên mức tối thiểu vì cà phê sữa đá bán 1.150 ly/tháng (ước ~48 ly mỗi ngày mở).",
+  "can_tranh": "Khuyên cắt nhập dưới mức tối thiểu vì mưa; bịa mưa làm giảm X% lượng bán."
+ },
+ {
+  "id": "P05",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "gio_ban",
+  "q": "Mấy hôm tới chiều mưa, đóng sớm 16h luôn được ko? Tú làm tới 18h",
+  "y_chinh": "Khung 16h–18h bán 6,6 triệu cả tháng (16h 2,93 + 17h 3,67 triệu) ≈ 6,9% doanh thu, ước ~275.000đ mỗi ngày mở; mai Thứ Năm mưa từ 15h (nặng nhất ~17h, 75%) nên có thể đóng sớm, còn Thứ Sáu–Thứ Bảy mưa từ 17h nên giữ tới 17h; hôm nay chỉ 35% mưa nhẹ 16–18h.",
+  "can_tranh": "Nói mưa cả chiều mọi ngày; bỏ qua Thứ Hai–Thứ Ba tuần sau nắng; khẳng định mưa làm mất hết khách chiều."
+ },
+ {
+  "id": "P06",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "chuan_bi",
+  "q": "t7 cn dong khach ma du bao mua toi, nau tran chau bn cho vua",
+  "y_chinh": "Thứ Bảy 31/10 dông 70% và Chủ nhật 1/11 mưa 65%, mưa khoảng 16h/17h–21h, trùng giờ đông 17h–21h (≈ 50% doanh thu); tháng này đã bỏ 7 kg trân châu nấu dư, bột trân châu chỉ còn 1,5/5 kg → nấu chia nhiều mẻ nhỏ theo khách, nhập bột lên mức tối thiểu.",
+  "can_tranh": "Đưa số kg cụ thể như chắc chắn; bịa mưa giảm X% khách; quên trân châu nấu dư đã bị bỏ."
+ },
+ {
+  "id": "P07",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "nguoi",
+  "q": "Thứ 5 mưa từ 3h chiều, cho Thảo nghỉ luôn được ko",
+  "y_chinh": "Thứ Năm lịch chỉ có Ngọc 9–15h và Thảo 16–22h; cho Thảo nghỉ thì cả buổi tối không còn ai. Mai Thứ Năm 29/10 mưa 80%, khoảng 15h–20h nặng nhất ~17h; Thứ Năm bán 16,57 triệu cả tháng (ước ~4,1 triệu/ngày) và tối là giờ đông.",
+  "can_tranh": "Đồng ý cho Thảo nghỉ mà không thấy tối không còn người; bịa thêm nhân viên làm Thứ Năm."
+ },
+ {
+  "id": "P08",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "chi_tien",
+  "q": "nắng 36 37 độ cả tuần, chạy thêm quảng cáo fb 500k cho trà trái cây có đáng ko",
+  "y_chinh": "Cả tuần nắng nóng 35–37°C, mưa 5%; không có số quảng cáo cũ để so, nên tính hoà vốn: Trà đào cam sả lãi ~22.000đ/ly (32.000 − 10.000) → cần thêm ~23 ly để bù 500.000đ (Trà dâu lãi 19.000đ → ~27 ly).",
+  "can_tranh": "Hứa quảng cáo tăng doanh thu X%; bịa giá vốn món không có cost."
+ },
+ {
+  "id": "P09",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "nhap_hang",
+  "q": "ly 700 het roi, nang vay mai nhap bn",
+  "y_chinh": "Ly 700ml đã hết (0, tối thiểu 200) → nhập ngay ít nhất 200 cái; mai Thứ Năm nắng 36°C; quán bán khoảng 4.100 ly trà/tháng (ước ~146 ly/ngày) nhưng số liệu không tách cỡ ly 700.",
+  "can_tranh": "Bịa số ly tăng thêm vì nóng; bịa tỷ lệ ly cỡ 700."
+ },
+ {
+  "id": "P10",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "bay",
+  "q": "tuần sau thứ 7 7/11 trời sao, tính làm sự kiện ngoài sân",
+  "y_chinh": "Dự báo chỉ có đến Thứ Ba 3/11, chưa có 7/11 nên không nói được; tuần này trời mưa sáng gần như cả 7 ngày (Thứ Bảy 31/10 mưa 70% khoảng 10h–14h) → hẹn xem lại gần ngày. Thứ Bảy bán 27,6 triệu cả tháng, chỉ sau Chủ nhật.",
+  "can_tranh": "Đoán thời tiết 7/11; lấy dự báo Thứ Bảy 31/10 làm như của 7/11."
+ },
+ {
+  "id": "P11",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "chuan_bi",
+  "q": "mai mua to buoi sang, bun bo nau bao nhieu",
+  "y_chinh": "Mai Thứ Năm 29/10 mưa to 85% từ 6h đến khoảng 12h, nặng nhất 8–9h; bún bò buổi sáng bán 420 phần/tháng (ước ~15 phần mỗi sáng, ~29 phần cả ngày) → giữ mức thường, chia mẻ, nhập bún tươi vừa phải vì tháng này đã bỏ 26 kg bún.",
+  "can_tranh": "Bịa mưa giảm X% khách; khuyên nấu nhiều hơn hẳn mà không có số."
+ },
+ {
+  "id": "P12",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "mo_nghi",
+  "q": "chiều tối mấy bữa tới mưa, đóng ca 16-20 luôn cho khỏe được ko",
+  "y_chinh": "Ca 16h–20h bán 21,87 triệu cả tháng ≈ 16,5% doanh thu (ước ~781.000đ/ngày), món tối chạy là bún thịt nướng 210 phần; mưa chiều tối Thứ Năm 15–20h (75%), Thứ Sáu–Thứ Bảy 17–21h, Chủ nhật 16–21h, nhưng Thứ Hai–Thứ Ba 2–3/11 nắng → nếu đóng chỉ nên thử ngày mưa trùm cả ca, có Bảo làm 15–20h.",
+  "can_tranh": "Nói mưa cả tuần; đóng luôn cả ngày nắng; quên ca tối có doanh thu."
+ },
+ {
+  "id": "P13",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "bay",
+  "q": "thứ 4 tháng này bán tụt còn nửa, có phải tại mưa ko",
+  "y_chinh": "Thứ Tư tháng này chỉ 11,5 triệu so ~20,9 triệu các ngày Thứ Hai, Ba, Năm, Sáu (tháng trước Thứ Tư 19,1 triệu); app không có số thời tiết các ngày đã qua nên không kết luận được do mưa; hôm nay Thứ Tư nắng 35°C, mưa 5% → xem hôm nay bán ra sao để so.",
+  "can_tranh": "Khẳng định do mưa (hoặc không do mưa) như chắc chắn; bịa thời tiết các Thứ Tư đã qua."
+ },
+ {
+  "id": "P14",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "chi_tien",
+  "q": "Nóng quá trưa ai ra ăn, tăng mã TRUAVUI lên 10k cho đỡ ế được ko",
+  "y_chinh": "Cả tuần nắng 35–37°C, mưa 5%, nhưng không có số cho thấy nóng làm vắng trưa; trưa vẫn là giờ đông nhất (11h 21,9 triệu, 12h 25 triệu cả tháng); TRUAVUI 5.000đ đã dùng 542 lần, giảm 2,71 triệu — lên 10.000đ thì ước ~5,4 triệu nếu số lần giữ nguyên.",
+  "can_tranh": "Khẳng định nóng làm giảm khách trưa X%; khuyên tăng mã mà không tính tiền giảm."
+ },
+ {
+  "id": "P15",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "nhap_hang",
+  "q": "gas con 1 binh, gao 8 ky. mai mua to sang, nhap luon hom nay hay doi",
+  "y_chinh": "Gas 1/2 bình, gạo 8/20 kg đều dưới mức tối thiểu; mai Thứ Năm mưa to 85% từ 6h–12h nên hàng giao buổi sáng dễ trễ; hôm nay mưa sáng 5h–10h rồi tạnh → nên nhập trong chiều nay.",
+  "can_tranh": "Hẹn nhập sáng mai giữa mưa to; nói hôm nay mưa cả ngày."
+ },
+ {
+  "id": "P16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "bay",
+  "q": "mua sang ca tuan vay thi doanh thu sang giam may %? de t con tinh",
+  "y_chinh": "Không có số đo mưa làm giảm bao nhiêu % (app không có doanh thu theo thời tiết) nên không đưa % được; chỉ nói chắc: mưa sáng gần cả tuần, mai Thứ Năm 85% từ 6h–12h trùng giờ đông 7h (19,45 triệu cả tháng) và 11h (22,04 triệu); Chủ nhật quán nghỉ.",
+  "can_tranh": "Bịa con số % giảm; lấy số chung ngoài dữ liệu quán làm như của quán."
+ },
+ {
+  "id": "P17",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "nhap_hang",
+  "q": "Than hết sạch rồi. Mai chiều mưa thì mua mấy bao",
+  "y_chinh": "Than đã hết (0, tối thiểu 3 bao) → mua ít nhất 3 bao trước 6h vì sáng 6h–13h là ca chính; mai Thứ Năm mưa 80% khoảng 15h–20h, trùng ca tối 17h–21h nên cần chỗ che lò và giữ than khô.",
+  "can_tranh": "Bịa số bao dùng mỗi ngày; nói mai mưa buổi sáng."
+ },
+ {
+  "id": "P18",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "nguoi",
+  "q": "t6 nóng 37 độ, tối có Phúc với Ngọc, gọi thêm Khoa được ko",
+  "y_chinh": "Thứ Sáu 30/10 nóng nhất 37°C, mưa 5%; lịch tối Thứ Sáu có Phúc và Ngọc 17–21h (Khoa làm Thứ Ba, Năm, Bảy); ca tối chỉ ≈ 16,5% doanh thu và không có số cho thấy nóng làm đông tối → không cần thêm Khoa, lo nước, quạt cho người đứng lò than.",
+  "can_tranh": "Gọi thêm người vì 'nóng khách đông' không có số; nói sai lịch Khoa."
+ },
+ {
+  "id": "P19",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "mo_nghi",
+  "q": "t7 mua dong toi, nghi ca toi t7 dc ko",
+  "y_chinh": "Thứ Bảy 31/10 dông 70%, mưa khoảng 17h–21h, trùng nguyên ca tối; nhưng Thứ Bảy bán cao nhất tuần (26 triệu cả tháng, ước 6,5 triệu/ngày) và ca tối cả tháng 19,45 triệu (ước ~810.000đ/ngày mở); số liệu không tách đơn giao sàn nên chưa biết mưa đẩy đơn giao lên không → cân nhắc chỉ bán giao, Phúc và Khoa có lịch tối Thứ Bảy.",
+  "can_tranh": "Khẳng định đơn giao tăng X% khi mưa; quên Thứ Bảy là ngày đông nhất."
+ },
+ {
+  "id": "P20",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gio_ban",
+  "q": "Mai mấy giờ tạnh mưa vậy",
+  "y_chinh": "Mai Thứ Năm 29/10 mưa to 85%, mưa từ 6h, nặng nhất 8–9h (~79%), còn ~55% lúc 11h, tạnh khoảng 12h; nhiệt độ 24–29°C — giờ trưa 11h là giờ đông nhất (22,04 triệu cả tháng) vẫn còn mưa.",
+  "can_tranh": "Nói tạnh trước 10h; trả lời dài lan man không nêu giờ."
+ }
+]

@@ -1,0 +1,212 @@
+[
+ {
+  "id": "H01",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "chi_tiep_thi",
+  "q": "Mình tính bỏ 1tr5 chạy quảng cáo Facebook cho bạc xỉu trong 2 tuần, có đáng không em? Phải bán thêm bao nhiêu ly mới hoà?"
+ },
+ {
+  "id": "H02",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "chi_tiep_thi",
+  "q": "Có bạn KOL học sinh báo giá 3 triệu một clip review quán. Chị phải bán thêm bao nhiêu ly trà sữa mới gỡ lại tiền?"
+ },
+ {
+  "id": "H03",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "chi_tiep_thi",
+  "q": "in 2000 to roi phat o cho het 800k, co loi khong hay phi tien"
+ },
+ {
+  "id": "H04",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "chi_tiep_thi",
+  "q": "Làm lại cái bảng hiệu đèn led hết 4 triệu rưỡi. Bán cơm tấm sườn thì phải thêm bao nhiêu dĩa mới bù được?"
+ },
+ {
+  "id": "H05",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "chi_tiep_thi",
+  "q": "Định chạy TikTok 2 triệu một tháng, quán mình bán mang đi thôi thì có nên không?"
+ },
+ {
+  "id": "H06",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "chi_tiep_thi",
+  "q": "Thứ 7 này chị muốn livestream tặng voucher, tốn tầm 1 triệu 2 tiền quà với thuê đứa quay. Đáng không em, mỗi ngày phải bán thêm mấy ly?"
+ },
+ {
+  "id": "H07",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "chi_tiep_thi",
+  "q": "Bỏ 600k đẩy bài cho món bún bò Huế trên Facebook thì cần thêm bao nhiêu tô mới hoà vốn hả em?"
+ },
+ {
+  "id": "H08",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "chi_tiep_thi",
+  "q": "chay qc grabfood 1tr/thang cho com tam suon bi cha dc ko, ban them bao nhieu dia moi lai"
+ },
+ {
+  "id": "H09",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "chi_tiep_thi",
+  "q": "Cty in ly có logo báo 2tr5 cho 3000 cái, coi như quảng cáo. Tính ra có đáng không?"
+ },
+ {
+  "id": "H10",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "chi_tiep_thi",
+  "q": "Thuê 5 bạn reviewer nhỏ mỗi bạn 500k để đăng bài, tổng 2tr5. Có hời hơn thuê một KOL to không, và phải bán thêm bao nhiêu mới huề?"
+ },
+ {
+  "id": "H11",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gio_don",
+  "q": "Từ 6 giờ tới 8 giờ tối quán bán được bao nhiêu? Chị đang tính đóng sớm lúc 7h cho đỡ mệt."
+ },
+ {
+  "id": "H12",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "gio_don",
+  "q": "Khung 11h đến 12h trưa mỗi giờ ra mấy đơn vậy em? Có cần kêu thêm một đứa phụ không?"
+ },
+ {
+  "id": "H13",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "gio_don",
+  "q": "7h-8h sang ban dc bao nhieu don 1 tieng, 3 nguoi co lam kip ko"
+ },
+ {
+  "id": "H14",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "gio_don",
+  "q": "Buổi sáng 9h tới 11h vắng quá, có nên dời giờ mở cửa sang 11h không?"
+ },
+ {
+  "id": "H15",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gio_don",
+  "q": "Ca chiều mở lại từ 4 giờ, tầm 4 đến 5 giờ có đáng mở không hay để 5 giờ mới mở?"
+ },
+ {
+  "id": "H16",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "gio_don",
+  "q": "Tối từ 5 tới 9 giờ bán được nhiêu tiền, có bằng nửa buổi sáng không?"
+ },
+ {
+  "id": "H17",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "gio_don",
+  "q": "Từ 2 giờ chiều tới 6 giờ quán lèo tèo, chị có nên đóng cửa lúc 2h luôn không em?"
+ },
+ {
+  "id": "H18",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gio_don",
+  "q": "8h toi den 9h toi la gio dong nhat ha em? may don 1 gio, co can them nguoi pha khong"
+ },
+ {
+  "id": "H19",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "gio_don",
+  "q": "Giờ cao điểm trưa 11 tới 1 giờ quán chạy bao nhiêu đơn một tiếng? 4 người có đuối không?"
+ },
+ {
+  "id": "H20",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "gio_don",
+  "q": "Mình định mở sớm hơn từ 5h30 sáng, nhìn số giờ 6h hiện giờ thì có đáng không?"
+ },
+ {
+  "id": "H21",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "tiep_thi_chung",
+  "q": "Làm sao kéo thêm khách mới ở khu này vậy em, toàn khách quen không à."
+ },
+ {
+  "id": "H22",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi_chung",
+  "q": "Nên đăng gì lên fanpage cho dân văn phòng chú ý tới quán?"
+ },
+ {
+  "id": "H23",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi_chung",
+  "q": "lam sao de hs truong ben canh ghe quan nhieu hon"
+ },
+ {
+  "id": "H24",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "tiep_thi_chung",
+  "q": "Quán bún cơm thì có cần làm tiếp thị gì không hay cứ nấu ngon là được?"
+ },
+ {
+  "id": "H25",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "tiep_thi_chung",
+  "q": "Tuần này nên đăng bài gì cho quán cơm tấm, gợi ý giúp chị vài ý."
+ },
+ {
+  "id": "H26",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "tiep_thi_chung",
+  "q": "Món cold brew cam sả ế quá, có cách nào quảng bá cho nó không?"
+ },
+ {
+  "id": "H27",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "tiep_thi_chung",
+  "q": "Quán vắng hơn tháng trước, chị muốn làm gì đó cho đông lại mà chưa biết bắt đầu từ đâu."
+ },
+ {
+  "id": "H28",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "tiep_thi_chung",
+  "q": "Có nên mở bán trên ShopeeFood để thêm khách không em?"
+ },
+ {
+  "id": "H29",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "tiep_thi_chung",
+  "q": "Khach cu lau roi ko quay lai, lam gi de ho nho toi quan"
+ },
+ {
+  "id": "H30",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "tiep_thi_chung",
+  "q": "Cuối tuần đông rồi, giờ muốn ngày thường cũng đông thì nên làm chương trình gì?"
+ }
+]

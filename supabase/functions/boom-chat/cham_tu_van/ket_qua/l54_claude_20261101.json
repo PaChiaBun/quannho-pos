@@ -1,0 +1,202 @@
+{
+ "moi": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo sáng Cà phê sữa đá + Bánh mì thịt cho buổi chiều, trái món bán chạy chiều (Trà tắc, Bạc xỉu)."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không hỏi chủ quán lý do riêng Thứ 4 (chợ, công trình), combo bún bò lại đặt khung trưa thay vì gắn với Thứ 4."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo sáng Cà phê sữa đá + Bánh mì thịt cho khung 14–16h, trái món bán chạy chiều."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 'thấp hơn 50% so thứ 2' sai (thực ~45%) và giảm giá Cơm sườn vốn đã lời mỏng 48%."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo sáng Cà phê sữa đá + Bánh mì thịt cho buổi chiều thay vì trà / bạc xỉu."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không so Thứ 4 với ~5,2 triệu/ngày các ngày khác và không hỏi chủ lý do, chỉ đoán chung 'giữa tuần'."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng Bánh mì thịt 25.000đ cho đơn 50.000đ là ưu đãi quá đắt, bỏ sót khung chiều 14–16h và không nói rõ mất đơn."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Trà tắc + Bánh mì thịt 45.000đ đắt hơn mua lẻ 43.000đ, lại đẩy bánh mì buổi chiều."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Cơm sườn + Trà đá 45.000đ đắt hơn mua lẻ 43.000đ, lại giảm giá món đã lời mỏng (giá vốn 48%)."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Trà tắc + Bánh mì thịt 45.000đ đắt hơn mua lẻ 43.000đ, lại đẩy bánh mì buổi chiều."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Combo Cơm sườn + Trà đá 45.000đ đắt hơn mua lẻ 43.000đ; nói 'thấp hơn 50%' sai (thực ~45%)."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Trà tắc + Bánh mì thịt 45.000đ đắt hơn mua lẻ 43.000đ."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Cơm sườn + Trà đá 45.000đ đắt hơn mua lẻ 43.000đ, không so Thứ 4 với các ngày khác."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gợi ý tặng topping trong khi quán không có nhóm topping, bỏ sót khung chiều 14–16h."
+  }
+ ]
+}

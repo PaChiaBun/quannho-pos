@@ -79,7 +79,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
         ),
         title: Text(
           _isEdit ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         actions: [
@@ -95,7 +95,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
               ),
               child: Text(
                 _loading ? 'Đang lưu...' : 'LƯU',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     color: Colors.white, fontWeight: FontWeight.w800,
                     fontSize: 13),
               ),
@@ -171,7 +171,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Chọn nhiều loại hàng NCC cung cấp',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, color: _kLabel,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
@@ -213,7 +213,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                     onSubmitted: (val) => _addCustomTag(val),
                     decoration: InputDecoration(
                       hintText: 'Nhập thêm loại hàng → nhấn Enter',
-                      hintStyle: GoogleFonts.outfit(fontSize: 13.5, color: _kMuted),
+                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: _kMuted),
                       filled: true,
                       fillColor: const Color(0xFFF8F7FF),
                       prefixIcon: const Icon(Icons.add_rounded, size: 18, color: _kViolet),
@@ -316,7 +316,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                         _isEdit
                             ? 'Cập nhật nhà cung cấp'
                             : 'Thêm nhà cung cấp',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 15, fontWeight: FontWeight.w800),
                       ),
               ),
@@ -330,11 +330,11 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   TextStyle get _inputStyle =>
-      GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: _kInk);
+      GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: _kInk);
 
   InputDecoration _inputDeco(String hint, {IconData? icon}) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.outfit(fontSize: 14.5, color: _kMuted),
+    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14.5, color: _kMuted),
     prefixIcon: icon != null
         ? Icon(icon, size: 18, color: _kViolet.withValues(alpha: 0.55))
         : null,
@@ -362,7 +362,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
       const SizedBox(width: 7),
       Text(
         text.toUpperCase(),
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 12.5, fontWeight: FontWeight.w800,
           color: _kNavy, letterSpacing: 0.5,
         ),
@@ -393,7 +393,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
         children: [
           Row(children: [
             Text(label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w700, color: _kLabel)),
             if (required)
               const Text(' *',
@@ -470,7 +470,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
               _isEdit
                   ? 'Đã cập nhật nhà cung cấp'
                   : 'Đã thêm nhà cung cấp',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
           ]),
           backgroundColor: _kGreen,
@@ -539,7 +539,7 @@ class _Chip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
               color: selected

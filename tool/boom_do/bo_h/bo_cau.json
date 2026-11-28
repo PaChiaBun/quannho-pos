@@ -1,0 +1,795 @@
+{
+ "note": "Bộ H — bộ câu kiểm tra kín cho trợ lý Boom (Quán Nhỏ POS): câu đời thường, viết tắt, không dấu, Bắc/Nam; HUONG_DAN có expect là id đoạn trong assets/boom_help/huong_dan.json.",
+ "cases": [
+  {
+   "q": "khách trả tiền rồi giờ đổi ý ko lấy nữa, hoàn lại tiền cho khách trên máy kiểu gì vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-khach-muon-huy-hoan-tien-don-da-thanh-toan"
+   ],
+   "chu_de": "huỷ đơn đã thu"
+  },
+  {
+   "q": "Đang tính tiền thì rớt wifi, ko biết khách ck đã vô chưa, giờ bấm lại có bị ăn 2 lần ko",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan",
+    "ban-hang#loi-ket-noi-mang-cham-hoac-khong-on-dinh"
+   ],
+   "chu_de": "mất mạng khi thu"
+  },
+  {
+   "q": "bấm vô ly bạc xỉu nó hiện mờ mờ chữ hết ko cho bán, trong khi tủ còn nguyên hộp sữa",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-mon-da-het-hang-khi-cham-mon",
+    "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc"
+   ],
+   "chu_de": "món báo hết"
+  },
+  {
+   "q": "them nhanh ly matcha bang dau cong ma phieu lai chay xuong may in bep nong, ben quay nuoc ko co",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-do-uong-them-bang-nut-dau-lai-in-ra-may-bep-nong",
+    "in-hoa-don#loi-do-uong-in-ra-may-bep-nong-thay-vi-bar"
+   ],
+   "chu_de": "món nước in sai máy"
+  },
+  {
+   "q": "Mình mới mở thêm cái quán thứ 2 ở Thủ Đức, giờ muốn coi tiền 2 quán gộp chung 1 chỗ thì làm sao ạ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang",
+    "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+   ],
+   "chu_de": "gộp nhiều quán"
+  },
+  {
+   "q": "quán bên Gò Vấp tuần rồi nghỉ 3 hôm sửa điện mà cái nhãn so sánh nó không đỏ, cứ xám xám là sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#loi-quan-giam-manh-ma-chip-xam",
+    "bao-cao-chuoi#cac-viec-thuong-lam-4-hieu-chip-tang-giam"
+   ],
+   "chu_de": "chip xám"
+  },
+  {
+   "q": "add quan moi vo nhom ma no bao quan nay thuoc cho khac roi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#loi-cua-hang-nay-da-thuoc-mot-chuoi-khac"
+   ],
+   "chu_de": "quán ở chuỗi khác"
+  },
+  {
+   "q": "khách quay lại xin in lại cái bill hôm thứ 7 tuần trước để về thanh toán cty, tìm hoài ko ra",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-hoa-don",
+    "bao-cao#loi-khong-tim-thay-bill-cu-o-tab-hoa-don"
+   ],
+   "chu_de": "in lại bill cũ"
+  },
+  {
+   "q": "Số lời bên báo cáo với số lời trong sổ tiền tháng 9 lệch nhau cả triệu, tin cái nào giờ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi"
+   ],
+   "chu_de": "lợi nhuận lệch"
+  },
+  {
+   "q": "bam vao muc kho trong bao cao thi no ghi la dang tat, bat o dau",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-module-kho-dang-tat",
+    "bao-cao#tung-tab-kho"
+   ],
+   "chu_de": "báo cáo kho tắt"
+  },
+  {
+   "q": "cái tablet để ở quầy pha chế ko kêu reng gì khi có phiếu mới, phải ngó liên tục mệt quá",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-khong-nghe-chuong"
+   ],
+   "chu_de": "không có chuông"
+  },
+  {
+   "q": "món kem dừa toàn nhảy qua màn bên nước trong khi là bên bếp làm",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-mon-nam-sai-tram-vd-mon-trang-mieng-co-chu-kem-vao-bep-nuoc"
+   ],
+   "chu_de": "sai trạm"
+  },
+  {
+   "q": "ban o quay may pc tinh tien xong ma ben bep ko thay mon len man hinh",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#loi-don-ban-o-quay-pc-khong-len-man-bep"
+   ],
+   "chu_de": "đơn quầy không lên bếp"
+  },
+  {
+   "q": "Nhỏ Vy quên bấm về hôm qua, sáng nay coi thấy ca nó bị trừ mất một nửa tiền, sửa sao cho em nó",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-ca-bi-tru-50",
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ],
+   "chu_de": "quên ra ca"
+  },
+  {
+   "q": "nv đứng ngay trong quán mà bấm vô làm nó cứ báo xa quá ko cho",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-dinh-vi-lech-pham-vi"
+   ],
+   "chu_de": "GPS lệch"
+  },
+  {
+   "q": "chị quản lý (tên vai trò quản lý nhà hàng) mở phần chấm công chỉ thấy mỗi ca của chị",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-quan-ly-mo-cham-cong-chi-thay-ca-cua-minh"
+   ],
+   "chu_de": "quản lý chỉ thấy ca mình"
+  },
+  {
+   "q": "Mới mua con Xprinter cắm usb vô máy tính win 10, làm sao cho nó in bill",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+   ],
+   "chu_de": "cài máy in Windows"
+  },
+  {
+   "q": "bill in ra bị mất chữ bên phải, cột giá tiền bị cụt mất",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#loi-bill-bi-cut-mep-chu-qua-to"
+   ],
+   "chu_de": "bill cụt"
+  },
+  {
+   "q": "ban tren web bang laptop thi khong ra to giay nao het tron",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#loi-ban-tren-web-ma-khong-ra-bill",
+    "in-hoa-don#cac-viec-thuong-lam-7-may-chu-in-print-server"
+   ],
+   "chu_de": "web không in"
+  },
+  {
+   "q": "Tạo mã giảm 20% cho khách dịp 20/10 thì vô đâu làm",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "chu_de": "tạo voucher"
+  },
+  {
+   "q": "khách đưa 500k muốn gửi trước uống dần, ghi vào tài khoản cho khách kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+   ],
+   "chu_de": "nạp ví"
+  },
+  {
+   "q": "nhập mã KM cho khách mà nó báo hết hạn, rõ ràng tui mới tạo hôm thứ 2",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#loi-ma-giam-gia-da-het-han-su-dung-chua-den-thoi-gian-ap-dung-da"
+   ],
+   "chu_de": "mã hết hạn"
+  },
+  {
+   "q": "bán cả chục ly cà phê sữa rồi mà số cà phê bột trong kho ko hề nhúc nhích",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#loi-ban-mon-ma-nguyen-lieu-khong-giam"
+   ],
+   "chu_de": "nguyên liệu không trừ"
+  },
+  {
+   "q": "giá vốn 1 ly trà đào nó hiện 2 triệu mấy, vô lý quá trời",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#loi-gia-von-phan-cao-bat-thuong-gap-1-000-lan",
+    "kho-hang#cac-viec-thuong-lam-4-quy-cach-pha-che-mua-theo-lon-hop-tru"
+   ],
+   "chu_de": "giá vốn sai"
+  },
+  {
+   "q": "sua tuoi bi chua phai do bo 2 hop thi ghi vo dau cho kho khop",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-5-ghi-hao-hut",
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong"
+   ],
+   "chu_de": "hao hụt"
+  },
+  {
+   "q": "Hôm nay hết trân châu đen, muốn giấu tạm ly trà sữa trân châu để khách quét mã không đặt được",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "chu_de": "tắt bán tạm"
+  },
+  {
+   "q": "chiều nay đại lý giao 3 thùng sữa đặc với 10kg đường, nhập vô sao cho có tên nhà cung cấp luôn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung",
+    "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon"
+   ],
+   "chu_de": "nhập hàng"
+  },
+  {
+   "q": "ton ly nhua no hien so am -45, sao ky vay",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#loi-ton-am"
+   ],
+   "chu_de": "tồn âm"
+  },
+  {
+   "q": "Bấm gửi duyệt bảng lương tháng 10 mà nó không cho, báo còn mấy vấn đề",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-khong-the-gui-duyet-ky-luong-chua-san-sang-do-con-cac-van-de"
+   ],
+   "chu_de": "không gửi duyệt lương"
+  },
+  {
+   "q": "trả lương cho nv xong hết rồi mà trong thu chi không thấy trừ khoản lương nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-so-thu-chi-khong-co-khoan-luong"
+   ],
+   "chu_de": "lương không vào thu chi"
+  },
+  {
+   "q": "lương bé Thảo tháng rồi ít bất thường, hụt cả trăm nghìn so với mọi khi, lỗi gì vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-luong-it-bat-thuong"
+   ],
+   "chu_de": "lương thấp"
+  },
+  {
+   "q": "da duyet ky luong roi moi thay tinh thieu ngay cong cho 1 ban, sua lai duoc ko",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-ky-luong-da-duyet-so-lieu-bi-khoa"
+   ],
+   "chu_de": "kỳ lương khoá"
+  },
+  {
+   "q": "có bạn mới vô làm phục vụ, cho bạn vào app quán sao, tìm hoài k thấy nút thêm người",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "chu_de": "thêm nhân viên"
+  },
+  {
+   "q": "nhân viên quên mk không đăng nhập được, chủ quán làm gì giúp nó",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch",
+    "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+   ],
+   "chu_de": "quên mật khẩu"
+  },
+  {
+   "q": "da tat quyen giam gia cho thu ngan roi ma ban ay van giam duoc binh thuong",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#loi-tat-quyen-roi-ma-nhan-vien-van-lam-duoc"
+   ],
+   "chu_de": "tắt quyền chưa ăn"
+  },
+  {
+   "q": "tối qua tầm 9h máy in bếp không ra phiếu, muốn tra lại xem lúc đó bị gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ],
+   "chu_de": "tra sự cố"
+  },
+  {
+   "q": "ben ho tro bao gui log cho ho de kiem tra, lay o dau ra",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+   ],
+   "chu_de": "gửi log"
+  },
+  {
+   "q": "mấy dòng lỗi kỹ thuật tháng trước sao tự nhiên mất sạch, ai xoá vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-4-may-chu-tu-don-log-cu"
+   ],
+   "chu_de": "log tự dọn"
+  },
+  {
+   "q": "khách quét mã trên bàn thì nó báo quán tạm ngừng nhận vì lượt quét bất thường",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#loi-khach-quan-tam-ngung-nhan-don-qua-ma-qr-nay-do-co-luot-quet",
+    "qr-goi-mon#cac-viec-thuong-lam-7-khi-ma-qr-bi-khoa-bi-quet-pha"
+   ],
+   "chu_de": "QR bị khoá"
+  },
+  {
+   "q": "khách tự đặt mang đi bằng đt xong, mình thu tiền rồi đẩy xuống bếp thế nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-5-thu-tien-va-gui-bep-don-mang-di"
+   ],
+   "chu_de": "đơn QR mang đi"
+  },
+  {
+   "q": "khach chon nham ban 3 thay vi ban 8 luc dat bang dien thoai, doi lai sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-4-duyet-don-tai-ban"
+   ],
+   "chu_de": "duyệt đơn QR sai bàn"
+  },
+  {
+   "q": "bàn 4 muốn dồn qua bàn 7 ngồi chung nhóm bạn, mà 2 bàn đều đang có món rồi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban",
+    "quan-ly-ban#loi-ban-x-dang-co-khach-khong-the-chuyen-sang"
+   ],
+   "chu_de": "gộp bàn"
+  },
+  {
+   "q": "khách kêu 3 ly đã báo bếp rồi, giờ khách bớt 1 ly mà ko thấy nút trừ đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#loi-khong-thay-nut-o-mon-da-gui-bep",
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "chu_de": "giảm món đã gửi bếp"
+  },
+  {
+   "q": "khach ngoi 1 luc bo ve chua goi gi, dong ban do lai sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+   ],
+   "chu_de": "huỷ bàn"
+  },
+  {
+   "q": "tiền điện tháng 9 hết 1tr2, ghi vào sổ chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "chu_de": "ghi chi"
+  },
+  {
+   "q": "lo ghi khoan mua da 2 lan, muon bo bot 1 dong",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ],
+   "chu_de": "xoá khoản nhầm"
+  },
+  {
+   "q": "lợi nhuận tháng này thấp bất thường, hình như tiền nhập hàng bị tính 2 lần",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te"
+   ],
+   "chu_de": "lợi nhuận thấp"
+  },
+  {
+   "q": "khach tra bang vi ma so tien cua quan ko thay dong nao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#loi-khong-thay-khoan-ban-bang-vi-trong-thu-chi"
+   ],
+   "chu_de": "bán bằng ví"
+  },
+  {
+   "q": "muốn giao việc lau máy pha, đổ rác cho ca tối, mỗi ngày tick xong mới được về",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist"
+   ],
+   "chu_de": "tạo checklist"
+  },
+  {
+   "q": "tao viec cho ca sang roi ma ban pha che mo len chang thay gi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#loi-nhan-vien-khong-thay-viec-da-tao"
+   ],
+   "chu_de": "không thấy việc"
+  },
+  {
+   "q": "het ca muon de lai loi nhan cho ca sau la het da vien voi sua",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+   ],
+   "chu_de": "bàn giao ca"
+  },
+  {
+   "q": "hom nay ban dc bao nhieu tien roi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "doanh thu hôm nay"
+  },
+  {
+   "q": "Hôm qua có mấy đơn bị huỷ, tổng tiền huỷ bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "đơn huỷ"
+  },
+  {
+   "q": "tuần này thu tiền mặt bao nhiêu, chuyển khoản bao nhiêu vậy em",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tiền mặt / CK"
+  },
+  {
+   "q": "Tháng 9 doanh thu tổng là bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "doanh thu tháng N"
+  },
+  {
+   "q": "top 5 món bán chạy nhất tháng này",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "món bán chạy"
+  },
+  {
+   "q": "món nào bán ế nhất 30 ngày qua",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "món ế"
+  },
+  {
+   "q": "sữa đặc còn bao nhiêu lon",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tồn nguyên liệu"
+  },
+  {
+   "q": "tran chau con bnhieu kg trong kho",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tồn nguyên liệu"
+  },
+  {
+   "q": "Bot matcha con bao nhieu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tồn nguyên liệu"
+  },
+  {
+   "q": "gio ai dang vao ca vay",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "ai đang làm"
+  },
+  {
+   "q": "Tuần trước bé Linh làm tổng cộng bao nhiêu giờ",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "giờ công"
+  },
+  {
+   "q": "lương tháng này phải trả tổng cộng hết bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "lương phải trả"
+  },
+  {
+   "q": "chi phi thang truoc het bao nhieu, gom nhung khoan gi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "chi phí"
+  },
+  {
+   "q": "tháng 10 quán mình lãi hay lỗ, bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "lãi lỗ"
+  },
+  {
+   "q": "năm nay tới giờ doanh thu được bao nhiêu rồi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "doanh thu năm"
+  },
+  {
+   "q": "khách nào mua nhiều nhất tháng này",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "khách quen"
+  },
+  {
+   "q": "mã giảm giá 20/10 có bao nhiêu lượt dùng, giảm hết bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "voucher"
+  },
+  {
+   "q": "7 ngay qua trung binh moi don bao nhieu tien",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "giá trị TB đơn"
+  },
+  {
+   "q": "hôm qua huỷ bao nhiêu món, ai huỷ nhiều nhất",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "huỷ món"
+  },
+  {
+   "q": "tháng này nhập hàng hết bao nhiêu tiền rồi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "chi nhập hàng"
+  },
+  {
+   "q": "hôm nay bán được mấy ly trà sữa trân châu rồi",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "số lượng món"
+  },
+  {
+   "q": "tuần này có bao nhiêu đơn chuyển khoản",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "đơn CK"
+  },
+  {
+   "q": "thang truoc tien dien nuoc ghi chi het bao nhieu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "chi phí"
+  },
+  {
+   "q": "hôm qua những ai đi trễ, trễ mấy lần",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "đi trễ"
+  },
+  {
+   "q": "Ly nhựa size L còn mấy cái",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tồn kho"
+  },
+  {
+   "q": "thang 8 tra luong cho nhan vien het bao nhieu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "lương đã trả"
+  },
+  {
+   "q": "hôm nay giảm giá cho khách tổng cộng bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "giảm giá"
+  },
+  {
+   "q": "hôm qua tổng tiền khách chuyển khoản là bao nhiêu để tui dò với ngân hàng",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "tiền CK"
+  },
+  {
+   "q": "khung giờ nào hôm nay bán đông nhất",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "doanh thu theo giờ"
+  },
+  {
+   "q": "tháng này với tháng trước doanh thu chênh nhau bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "so sánh doanh thu"
+  },
+  {
+   "q": "bên quán Gò Vấp hôm nay bán được bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "chu_de": "doanh thu chi nhánh"
+  },
+  {
+   "q": "dựa vào số bán tháng rồi thì quán em nên cắt bớt món nào",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "tối ưu thực đơn"
+  },
+  {
+   "q": "doanh thu tuần này tụt so với tuần trước, coi giùm tại sao rồi nên làm gì",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "phân tích giảm doanh thu"
+  },
+  {
+   "q": "chi phí nguyên liệu của quán có cao quá không so với doanh thu, đánh giá giúp",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "tỉ lệ giá vốn"
+  },
+  {
+   "q": "nhin gio dong khach cua quan thi nen xep them nguoi ca nao",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "xếp ca"
+  },
+  {
+   "q": "mon nao loi nhieu nhat cua quan nen day ban manh",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "món lời"
+  },
+  {
+   "q": "tháng này quán mình làm ăn có ổn không, phân tích giùm cái",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "tổng quan"
+  },
+  {
+   "q": "voucher tháng rồi chạy có hiệu quả không, có nên chạy tiếp tháng sau",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "hiệu quả voucher"
+  },
+  {
+   "q": "lương nv đang chiếm bao nhiêu phần doanh thu, vậy có hợp lý ko",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "tỉ lệ lương"
+  },
+  {
+   "q": "coi số khách quen của quán, quán mình giữ chân khách có tốt không",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "giữ chân khách"
+  },
+  {
+   "q": "trong kho món nào nhập nhiều quá bị đọng vốn, nên nhập ít lại cái gì",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "chu_de": "tồn đọng"
+  },
+  {
+   "q": "Mở quán cà phê 30m2 vốn 200 triệu thì nên chia vốn thế nào cho hợp lý",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "vốn mở quán"
+  },
+  {
+   "q": "Hộ kinh doanh năm 2026 doanh thu dưới bao nhiêu thì không phải nộp thuế",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "thuế"
+  },
+  {
+   "q": "lương tối thiểu vùng 1 năm nay bao nhiêu, nv part-time có phải đóng bảo hiểm k",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "luật lao động"
+  },
+  {
+   "q": "cach bao quan sua tuoi trong kho de khong bi chua",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "bảo quản"
+  },
+  {
+   "q": "định giá ly trà sữa sao cho lời khoảng 60%",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "định giá"
+  },
+  {
+   "q": "nhân viên thử việc 2 tháng có cần ký hợp đồng không",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "hợp đồng"
+  },
+  {
+   "q": "giữ chân khách quen thì tích điểm hay giảm giá trực tiếp hiệu quả hơn",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "chăm sóc khách"
+  },
+  {
+   "q": "giờ cao điểm 11h-13h làm sao ra món nhanh hơn",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "vận hành"
+  },
+  {
+   "q": "hoa don dien tu khoi tao tu may tinh tien thi quan nho co bat buoc khong",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "hoá đơn điện tử"
+  },
+  {
+   "q": "Có nên chạy mua 1 tặng 1 trong 7 ngày khai trương không",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "khuyến mãi"
+  },
+  {
+   "q": "cách tính giá vốn 1 ly cà phê sữa đá nói chung ra sao",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "giá vốn chung"
+  },
+  {
+   "q": "làm sao chống nhân viên ăn gian tiền mặt ở két",
+   "loai": "TU_VAN",
+   "expect": [],
+   "chu_de": "kiểm soát tiền"
+  },
+  {
+   "q": "tối nay VN đá banh mấy giờ vậy",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "bóng đá"
+  },
+  {
+   "q": "bay e nau pho bo voi",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "nấu ăn"
+  },
+  {
+   "q": "mai Sài Gòn có mưa không",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "thời tiết"
+  },
+  {
+   "q": "viết giùm bài thơ tặng người yêu",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "thơ"
+  },
+  {
+   "q": "giá vàng SJC hôm nay nhiêu",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "giá vàng"
+  },
+  {
+   "q": "giai giup phuong trinh x2 - 5x + 6 = 0",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "toán"
+  },
+  {
+   "q": "cuối tuần coi phim gì hay",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "phim"
+  },
+  {
+   "q": "dịch câu 'chúc mừng sinh nhật' sang tiếng Hàn",
+   "loai": "LAC_DE",
+   "expect": [],
+   "chu_de": "dịch"
+  }
+ ]
+}

@@ -1,5 +1,89 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## Chỉ mục cho truy vấn POS gọi liên tục (ĐÃ áp production 28/10/2026)
+
+- Migration `20261107_chi_muc_mon_ban_thu_chi.sql` (CONCURRENTLY, rollback ở cuối file): `ban_session_items(session_id)`, `finance_records(store_id, recorded_at DESC)`, `product_modifiers(store_id)`. Món của bàn 10,7ms → 0,1ms.
+- App: ghi chú nhanh tải 1 lần cho cả quán (`storeModifiersProvider`, `productModifiersProvider` chỉ cắt theo món); `kitchenReadyStreamProvider` dùng `expand` để rời màn Bàn là dừng vòng tải phiếu bếp; realtime `kitchen_ticket_items` lọc theo `store_id`. Test `test/screens/ban_polling_leak_test.dart`.
+
+## Bàn tính giờ (migration `20261123_ban_tinh_gio_v1.sql`, ĐÃ ÁP production 23/11/2026 14:34; phần app đã viết, chưa phát hành)
+
+Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`. Bi da, karaoke, sân: tiền giờ là MỘT dòng món của phiên bàn, gắn một món thật trong Menu (`sell_price` = giá một giờ). `settle_ban_session_v5` và các hàm báo cáo không đổi.
+
+- Cột mới (để trống được): `ban_dining_tables.gia_gio_product_id` (trống = bàn thường), `ban_sessions.gio_bat_dau` (mốc đoạn đang tính, máy chủ đặt), `ban_session_items.gio_tu` / `gio_den` (khác NULL = dòng tiền giờ).
+- App gọi: `ban_chot_gio_v1(phiên, quán)` ghi / ghi đè dòng tiền giờ của đoạn đang chạy; `ban_chuyen_ban_tinh_gio_v1(phiên, quán, bàn đích)` chuyển hoặc gộp bàn có tính giờ. Cả hai kiểm quyền bằng `verify_staff_qr_membership_v4(…, p_require_checkout => true)`.
+- Trigger `qn_tinh_gio_ban_v1` / `qn_tinh_gio_phien_v1` / `qn_tinh_gio_mon_v1`: app không ghi được dòng tiền giờ, không sửa mốc, không tự đổi bàn của phiên tính giờ; phiên tính giờ chưa chốt (hoặc chốt quá 15 phút) không đóng được với MỌI vai, kể cả hàm thanh toán; huỷ bàn tính giờ mở quá 5 phút phải chốt trước; chỉ Chủ quán / Quản lý gắn giá giờ.
+- Tính: theo phút làm tròn lên, tiền làm tròn lên 1.000đ. Test `supabase/tests/ban_tinh_gio_v1_test.sql`; áp / hoàn tác `db-fix/ban_tinh_gio_ap_dung.sh`.
+
+## Giá theo khung giờ + làm tròn block (migration `20261128_gia_gio_khung_block.sql`, ĐÃ ÁP production 28/11; kế hoạch `.docs/ke-hoach-gia-gio-khung-block.md`)
+
+Đợt 1 của `.docs/lo-trinh-tinh-gio.md`. Cài riêng từng bàn: `ban_gia_gio_cau_hinh` (bàn → `block_phut` 1/5/10/15/20/30/60, `toi_thieu_phut`, `an_han_phut`) và `ban_gia_gio_khung` (bàn, thứ 1 = T2 … 7 = CN theo ngày khung bắt đầu, từ – đến giờ VN, đến < từ = qua đêm, từ = đến = cả ngày, giá một giờ, `thu_tu` khung trên thắng). App chỉ đọc (đúng quán); ghi qua `ban_gia_gio_luu_v1(quán, mảng bàn, block, tối thiểu, ân hạn, khung jsonb)` — Chủ quán / Quản lý (`p_require_manage`), bàn đang chạy giờ thì từ chối, mặc định = xoá cài đặt. Tiền tính MỘT chỗ: `qn_tinh_gio_tinh_tien_v2` (làm tròn số phút rồi tách từng phút theo khung, tiền = ceil(Σ phút × giá / 60 / 1000) × 1000); `qn_tinh_gio_ghi_dong_v1` gọi nó, tên dòng ghi chi tiết khi nhiều giá / làm tròn. Bàn không cài gì: đúng công thức cũ (test hồi quy 2.000 lượt). Test `supabase/tests/gia_gio_khung_block_test.sql`; áp / hoàn tác `db-fix/gia_gio_khung_block_ap_dung.sh`.
+
+## Ngày lễ trong bảng giá giờ (migration `20261128_gia_gio_ngay_le.sql`, ĐÃ ÁP production 28/11; kế hoạch `.docs/ke-hoach-ngay-le-gia-gio.md`)
+
+Đợt 6. `ban_ngay_le` (quán, `ngay` date, `ten`): ngày lễ CỦA QUÁN, dùng chung mọi bàn; app đọc (đúng quán), ghi qua `ban_ngay_le_luu_v1(quán, thêm jsonb [{ngay, ten}], xoá date[])` — Chủ quán / Quản lý, ngày từ tuần trước tới 3 năm tới, tối đa 500 ngày. `ban_gia_gio_khung.thu` nhận thêm 8 = Ngày lễ. `qn_tinh_gio_tinh_tien_v2`: mỗi phút, nếu ngày đó (hoặc hôm trước, cho phần qua đêm) là ngày lễ thì xét khung Lễ TRƯỚC (khung Lễ luôn thắng), không khung Lễ nào chứa thì xét theo thứ như đợt 1. Không ngày lễ / không khung Lễ = đúng đợt 1. Test `supabase/tests/gia_gio_ngay_le_test.sql`; áp / hoàn tác `db-fix/gia_gio_ngay_le_ap_dung.sh`.
+
+## Gói giờ (migration `20261128_goi_gio.sql`, ĐÃ ÁP production 28/11; kế hoạch `.docs/ke-hoach-goi-gio.md`)
+
+Đợt 7. `ban_goi_gio` (bàn, `so_phut` 15–720, `gia`, `thu_tu`; tối đa 6 / bàn, không trùng số phút): ghi qua `ban_goi_gio_luu_v1(quán, mảng bàn, gói jsonb)` — Chủ quán / Quản lý. `ban_sessions.goi_phut`, `goi_gia`: gói của ĐOẠN đang tính, chép giá lúc chọn; trigger `qn_tinh_gio_goi_khoa` giữ nguyên khi app (anon / authenticated) ghi thẳng. `ban_chon_goi_gio_v1(quán, phiên, mã gói | null)`: chọn lần đầu cần quyền thu tiền, đổi / bỏ cần Chủ quán / Quản lý. Tiền: `qn_tinh_gio_tinh_tien_v3(…, gói phút, gói giá)` — số phút tính = max(làm tròn, gói); tiền = giá gói + ceil(Σ giá từng phút sau gói / 60 / 1000) × 1000; `v2` thành vỏ gọi v3 không gói. `qn_tinh_gio_ghi_dong_v1` đọc gói của phiên, tên dòng "chơi … · gói 2 giờ 100.000 đ + …". `ban_chuyen_ban_tinh_gio_v1`: chuyển bàn → bàn mới `goi_phut` = phần còn, `goi_gia` = 0; gộp bàn → bỏ gói ở phiên nguồn (đã chốt). Test `supabase/tests/goi_gio_test.sql`; áp / hoàn tác `db-fix/goi_gio_ap_dung.sh`.
+
+
+
+## Tiền cọc = ví khách (migration `20261128_tien_coc_vi_khach.sql`, ĐÃ ÁP production 28/11; kế hoạch `.docs/ke-hoach-tien-coc.md`)
+
+Đợt 4 của `.docs/lo-trinh-tinh-gio.md`. `ban_dat_truoc.customer_id`, `coc_trang_thai` (`da_thu` đang trong ví chờ trừ | `da_tru` | `trong_vi` | `quan_giu` | `da_hoan`), `coc_quy`, `coc_finance_id`, `coc_settlement_id`, `coc_khoa`; `payment_settlements.vi_da_tru`. Nhận cọc `ban_dat_truoc_nhan_coc_v1` = cộng `customers.real_balance` (không bonus) + `balance_transactions` `topup_real` + `finance_records` income đúng quỹ; xử lý cọc `ban_dat_truoc_xu_ly_coc_v1` (hoàn = phiếu chi, cần Quản lý). Thanh toán bàn `settle_ban_session_v6` gọi nguyên v5 rồi trừ ví (`spend_real`), giảm phiếu thu lúc thanh toán đúng phần ví và ghi phần ví quỹ `wallet` (Thu Chi không tính) → cọc không đếm hai lần; v5 gọi thẳng khi phiên có cọc → `COC_CAN_CAP_NHAT_APP`. App: `BanRepository.settleBanSession` gọi v6, máy chủ chưa có v6 thì về v5 (chưa ghi gì); màn Thu tiền đọc cọc bằng `DatTruocRepository.docCocCuaPhien` (chép `qn_coc_cua_phien_v1`), số trả bằng ví `tienTraBangVi` (chép v6). Test `supabase/tests/tien_coc_vi_khach_test.sql`, `test/modules/tinh_gio/tien_coc_test.dart`; áp / hoàn tác `db-fix/tien_coc_vi_khach_ap_dung.sh`.
+
+## Lịch cố định (migration `20261128_dat_truoc_lich_co_dinh.sql`, ĐÃ ÁP production 28/11; kế hoạch `.docs/ke-hoach-lich-co-dinh.md`)
+
+Đợt 3 của `.docs/lo-trinh-tinh-gio.md`. Cột `ban_dat_truoc.chuoi_id` (null = lượt lẻ). `ban_dat_truoc_lap_v1(quán, bàn, tên, sđt, giờ buổi đầu, số phút, thứ[], đến ngày, ghi chú, cọc, bỏ qua trùng)`: sinh buổi theo giờ đồng hồ VN, bỏ buổi đã qua, khoá theo bàn, kiểm trùng mọi buổi; trùng mà chưa cho bỏ qua thì không ghi gì và trả danh sách; tối đa 120 buổi / 366 ngày, buổi 15 phút – 24 giờ. `ban_dat_truoc_huy_chuoi_v1(quán, chuỗi, từ lúc)` huỷ buổi `da_dat` của chuỗi từ mốc. Quyền như hàm đặt cũ (`p_require_checkout`). Test `supabase/tests/dat_truoc_lich_co_dinh_test.sql`; áp / hoàn tác `db-fix/dat_truoc_lich_co_dinh_ap_dung.sh`.
+
+## Sửa sau QC tính giờ 28/11 (4 migration, ĐÃ ÁP production 28/11; nhật ký `.docs/lo-trinh-tinh-gio.md`)
+
+- `20261128_dat_truoc_lap_where_true.sql` (18:44): `ban_dat_truoc_lap_v1` xoá bảng tạm `_qn_buoi` bằng `DELETE … WHERE true` (PostgREST bật safeupdate chặn DELETE không WHERE). Không có tệp hoàn tác riêng: hoàn tác = chạy lại bản trong `20261128_dat_truoc_lich_co_dinh.sql` (có lỗi). Test SQL phải `LOAD 'safeupdate';`.
+- `20261128_tinh_gio_qc_sua.sql` (19:10): `ban_dat_truoc_xu_ly_coc_v1` xử lý được cọc của lượt `da_nhan` khi phiên đã đóng không trừ (gộp / huỷ bàn); `settle_ban_session_v6` bỏ qua khách lượt đặt đã xoá; `ban_chon_goi_gio_v1` đổi gói sau khi đã chốt thì chốt lại dòng tiền giờ qua `qn_tinh_gio_ghi_lai_neu_da_chot_v1`.
+- `20261128_gop_ban_mang_coc.sql` (19:33): `ban_chuyen_ban_tinh_gio_v1` nhánh gộp gắn lượt đặt đã nhận còn cọc sang phiên đích (trả `coc_mang`); bàn đích có cọc của khách khác thì không mang.
+- `20261128_goi_con_lai_bo_toi_thieu.sql` (19:45): `qn_tinh_gio_tinh_tien_v3` phần gói còn lại sau chuyển bàn (`goi_gia = 0`) không áp "chơi tối thiểu"; app chép trong `gia_gio.dart`.
+- Gắn khách cho lượt đặt: `ban_dat_truoc_gan_khach_v1(quán, lượt, khách)` (trong `20261128_tien_coc_vi_khach.sql`) gắn cả các buổi còn chờ của lịch cố định; lượt đang giữ cọc (`da_thu`) thì không đổi khách. Hộp đặt (`dat_truoc_ui.dart`) đọc 40 lượt mới nhất (`DatTruocRepository.docGanDay`) để gợi ý khách quen (`khachQuenTu`), chỉ đọc.
+
+## Đặt trước (migration `20261124_ban_dat_truoc_v1.sql`, ĐÃ ÁP production 24/11/2026 12:48; phần app đã viết, chưa phát hành)
+
+Giai đoạn 3 của `.docs/ke-hoach-ban-tinh-gio.md`. Bảng `ban_dat_truoc` (quán, bàn, tên khách, số điện thoại, giờ từ – đến, trạng thái `da_dat` / `da_nhan` / `huy` / `khong_den`, phiên bàn đã gắn, đã nhắc lúc nào / ai nhắc). App chỉ đọc (vai `authenticated`); ghi qua `ban_dat_truoc_luu_v1`, `ban_dat_truoc_doi_trang_thai_v1`, `ban_dat_truoc_nhan_v1`, `ban_dat_truoc_da_nhac_v1`. Không cho hai lượt còn hiệu lực trùng giờ trên một bàn (khoá theo bàn trong hàm lưu). Lượt đã nhận: chốt giờ tính tới hết khung đã đặt (`qn_tinh_gio_ghi_dong_v1` có thêm tham số `p_du_khung`). Đặt trước không tạo doanh thu; tiền vào báo cáo khi phiên bàn thanh toán như thường. Test `supabase/tests/ban_dat_truoc_v1_test.sql`; áp / hoàn tác `db-fix/ban_dat_truoc_ap_dung.sh`.
+
+## Vòng đời phiên bàn — chặn client tự đóng (ĐÃ áp production 22/10/2026 20:27)
+
+- `ban_sessions.status`: `open` → `closed` (thanh toán qua `settle_ban_session_v5`, bán quầy qua `complete_pos_sale_v1`, hoặc phiên nguồn rỗng khi gộp bàn) | `cancelled` (huỷ bàn có lý do + duyệt + `void_audit_logs`).
+- Migration `20261022_chan_dong_phien_ban_v1.sql`: trigger `guard_ban_session_status_v1` (BEFORE UPDATE OF status / DELETE) chỉ áp vai trò `anon`/`authenticated` — client không được đặt `closed` khi còn món chưa huỷ (đếm qua `ban_session_active_item_count_v1`, SECURITY DEFINER), không mở lại/đổi phiên đã kết thúc, không đặt trạng thái lạ, không xoá phiên còn món. RPC SECURITY DEFINER không bị ảnh hưởng. `cancelled` từ client tạm vẫn cho phép (app < 1.0.5+16 đặt trước khi ghi audit).
+- App: `BanRepository.closeSession` đã xoá; đóng phiên ở client chỉ còn `mergeSession` (sau khi chuyển hết món) và `runCancelSteps` (huỷ bàn).
+
+## Checkout V5 — source đang kiểm thử, chưa deploy
+
+Cập nhật rà soát 02/09: `finance_records.checkout_reference_id` được trigger suy ra chỉ khi reference là order/settlement cùng store; unique trên `(store_id, checkout_reference_id)` không chặn nạp ví lặp dùng customer ID. `guard_ban_item_financial_change_v5` serialize thay đổi món với khóa phiên, cấm sửa tiền/hủy sau thanh toán nhưng vẫn cho KDS cập nhật tiến độ. POS truyền `p_kitchen_session_ids`; RPC khóa các phiên, ghi liên kết order và đóng phiên cùng transaction. `reconcile_pos_sale_v1` đọc kết quả theo khóa cho pending phiên bản cũ. PostgreSQL 17.11 local đã qua gate hai database fixture; chưa đối chiếu đầy đủ schema/RLS production.
+
+- `20260902_atomic_settlement_v5.sql` bổ sung settlement/idempotency POS và khóa giao dịch theo cửa hàng.
+- `complete_pos_sale_v1` ghi order/items/finance/stock/loyalty và trừ ví trong cùng transaction. Customer được khóa `FOR UPDATE`; replay trả snapshot ví đã dùng, không trừ lại.
+- `pos_idempotency_operations.wallet_real_used/wallet_bonus_used` lưu giá trị canonical; `finance_records.fund_type='wallet'` tách khỏi cash/bank. Không coi tiền ví là tiền mặt mới thu.
+- `p_expected_total` đối chiếu số tiền nhân viên xác nhận trước ghi dữ liệu. Giá/điểm/voucher cuối cùng do server xác định.
+- SharedPreferences có thêm khóa checkout pending (metadata phục hồi, không phải database offline). POS chưa rõ kết quả phải giữ key và không cho đổi intent.
+- Cần chạy PostgreSQL runtime/concurrency gate và kiểm tra schema production trước phát hành. Xem `.docs/duplicate-bill-settlement-v5.md` và nhật ký ngày 2026-09-02.
+
+## QR Order — quan hệ dữ liệu mục tiêu
+
+```text
+stores
+  └─ qr_channels (TABLE_SHARED hoặc COUNTER, unique theo store/type)
+       └─ qr_requests
+            ├─ qr_request_items + edit audit
+            ├─ qr_handoff_tokens (hash, one-time, expiry)
+            └─ orders (đúng một order cho mỗi request)
+                 ├─ TABLE → ban_sessions → ban_session_items → kitchen_tickets
+                 └─ COUNTER → payment paid → kitchen_tickets
+```
+
+- TABLE request chưa biết bàn khi khách submit; `table_id`/`session_id` chỉ được ghi bởi RPC gán bàn sau atomic claim.
+- TABLE checkout thanh toán toàn bộ order hợp lệ chưa thanh toán của `ban_session` nhưng không hợp nhất/xóa audit từng request/order.
+- COUNTER không có `table_id`/`session_id` và phải `paid` trước kitchen dispatch.
+- `store_id`, unique source key và idempotency key phải được cưỡng chế trong migration/RPC; không tin dữ liệu client.
+- Bộ migration QR V3 hiện có chưa apply và còn schema per-table/device-pairing; không coi đó là schema mục tiêu.
+
 > 📌 Đọc file này trước khi tạo module mới để hiểu luồng data toàn hệ thống.
 > Cập nhật: 2026-05-02
 
@@ -48,7 +132,7 @@ stores (
 user_accounts (
   id            uuid PK,
   phone         text UNIQUE,        -- +84xxxxxxxxx
-  password_hash text,               -- SHA-256(phone:password:qn_pos_2024_salt)
+  password_hash text,               -- SHA-256(phone:password:[ĐÃ XÓA — salt, xem mã nguồn])
   display_name  text,
   created_at    timestamptz
 )
@@ -80,6 +164,15 @@ store_members (
 
 -- ⚠️ Cập nhật kiến trúc 2026-07-28: Không còn phụ thuộc vào bảng store_roles để cấp quyền nữa.
 -- Danh sách modules & actions được lưu trực tiếp vào từng Nhân viên (staff_members.modules).
+
+-- 🔒 Khóa ghi phân quyền (22/10/2026, ĐÃ ÁP production): migration 20261022_khoa_ghi_phan_quyen_v1.sql
+--   Trigger BEFORE (SECURITY INVOKER) chỉ áp khi current_user = anon/authenticated:
+--   • store_roles  : chỉ Chủ quán/Quản lý (qn_is_manager) được ghi.
+--   • staff_members: Chủ toàn quyền; Quản lý không gán/nâng owner·manager, không sửa/xóa Chủ·Quản lý khác;
+--                    người thường chỉ ghi dòng CỦA MÌNH, máy chủ ép role = store_members.role và giữ nguyên
+--                    modules/hourly_rate/pin_hash/is_active, không được xóa.
+--   RPC SECURITY DEFINER, service_role, admin không bị ảnh hưởng. Test: supabase/tests/khoa_ghi_phan_quyen_v1_test.sql (24 kiểm tra).
+--   Hoàn tác: 20261022_khoa_ghi_phan_quyen_v1_ROLLBACK.sql. Nguồn sự thật quyền thật vẫn là store_members (RLS qn_is_manager).
 ```
 
 ### TẦNG 3: Sản Phẩm & Khách Hàng (Core Data)
@@ -625,6 +718,14 @@ CREATE POLICY "store_isolation" ON products
 
 ---
 
+### Hóa đơn điện tử (nền tảng v1 — migration `20261016_einvoice_foundation_v1.sql`, CHƯA áp lên production)
+
+- `einvoice_store_config(store_id PK, enabled default false, updated_by, updated_at)`: công tắc theo quán. Chỉ ghi qua RPC `set_einvoice_enabled_v1` (Chủ quán, có advisory lock, ghi audit cùng giao dịch).
+- `einvoice_audit_logs`: nhật ký đổi công tắc (cũ → mới, người đổi).
+- `einvoice_documents`: hóa đơn theo bill, `UNIQUE(store_id, provider, ref_id)` làm khóa chống trùng; `status` ∈ queued/issued/pending_code/rejected/failed/cancelled; lưu `inv_no`, `tax_authority_code`, `provider_transaction_id`, lỗi, số lần thử. Worker meInvoice (chưa có) ghi bằng `service_role`.
+- RLS: authenticated chỉ SELECT theo `current_store_id()`; anon không có quyền. RPC báo cáo `einvoice_report_v1(from, to)` SECURITY INVOKER.
+- Bất biến: tắt/bật công tắc không đổi việc ghi bill/doanh thu; chưa đụng settlement v5. Chi tiết và lộ trình ở `tich-hop-misa.md`.
+
 ## 8. CHECKLIST KHI THÊM MODULE MỚI
 
 | # | Việc cần làm | Nơi thực hiện |
@@ -699,4 +800,34 @@ static const _supabaseAnonKey = 'eyJhbGci...'; // key ở trên
 
 ---
 
+## Chuỗi cửa hàng (migration `20261017_chuoi_cua_hang_v1.sql`, CHƯA áp production)
+
+| Bảng | Vai trò |
+|---|---|
+| `store_chains` | Chuỗi do Chủ quán tạo (`owner_user_id`) |
+| `store_chain_stores` | Cửa hàng ↔ chuỗi, có `joined_at/left_at`; unique một phần: mỗi cửa hàng tối đa 1 chuỗi đang hoạt động |
+| `store_chain_audit_logs` | Audit tạo chuỗi/thêm/gỡ cửa hàng |
+
+- RPC (chỉ `authenticated`, anon bị chặn): `create_store_chain_v1`, `add_store_to_chain_v1`, `remove_store_from_chain_v1`, `list_my_chains_v1`, `get_chain_report_v1`. Hàm hỗ trợ `qn_is_store_owner(store)` (Chủ, không tính Quản lý).
+- Chỉ Chủ quán lập chuỗi và thêm cửa hàng mình sở hữu. Báo cáo chuỗi chỉ đọc `orders` (completed) của cửa hàng còn trong chuỗi mà người gọi VẪN là chủ; cửa hàng mất quyền nằm ở `excluded_stores`.
+- Chuỗi chỉ là lớp đọc tổng hợp: menu/kho/nhân viên/bàn/doanh thu vẫn tách theo `store_id`. Chưa chung Ví/điểm/khách (xem nợ kỹ thuật ở `trien-khai-sap-toi.md`).
+- Client: `ChainRepository` (`lib/core/repositories/chain_repository.dart`), `ChainReportScreen`, module Lego `chain` (ô trong lưới Modules, chỉ Chủ quán; id nằm trong `_kAllModules`/`kModuleConfigs`, KHÔNG nằm trong `kAllModules` của `staff_service.dart` nên không cấp qua vai trò), `ChainModuleOffer` tự bật module một lần.
+- **Báo cáo v1.1 (migration `20261018_chuoi_bao_cao_them_truong_v1.sql`, CHƯA áp production):** `get_chain_report_v1` thêm vào mỗi cửa hàng và tổng: `gross_revenue` (= doanh thu + giảm giá; vì `orders.total_amount = subtotal − discount`, KHÔNG dùng `discount_amount` luôn rỗng), `void_count/void_amount` (từ `void_audit_logs` theo `created_at`; chỉ tổng hợp, không có người hủy/lý do), `first_order_at`, `wallet_revenue`; thêm chỉ mục `idx_void_audit_store_created`. Chỉ THÊM khóa JSON: client cũ chạy bình thường, client mới coi trường vắng là "không rõ".
+- Test: `supabase/tests/chuoi_cua_hang_v1_test.sql` (38 kiểm tra), `chuoi_bao_cao_truong_moi_test.sql` (19 kiểm tra), dry-run `db-fix/chuoi_stage_dryrun.sh`; Flutter `test/screens/chain_report_screen_test.dart`.
+
+---
+
 *Cập nhật file này sau mỗi khi thêm module hoặc thay đổi kiến trúc data.*
+
+## Trang quản trị: theo dõi tăng trưởng (migration `20261105_admin_tang_truong_v1.sql`)
+
+Không có bảng mới. Hai hàm chỉ đọc, chỉ vé `qn_admin`, đọc `stores`, `orders`, `products`, `store_members`, `admin_store_actions`, `billing_orders`, `admin_test_stores`:
+
+- `admin_growth_v1(p_include_test)` → `money` (MRR, quán trả phí, tặng, không thời hạn, thực thu 30 ngày, trả lần đầu / trả tiếp, Pro hết hạn, sắp hết dùng thử, số lần tự gia hạn), `usage` (dùng thật, khách, chủ nhiều quán), `cohorts` (12 tháng; mỗi bước tính trên quán đủ tuổi, chưa đủ thì NULL), `thresholds`.
+- `admin_store_list_v2(p_filter, p_search, p_include_test, p_limit, p_offset, p_sort, p_dir, p_owner)` → như `admin_store_list_v1`, thêm `owner_user_id`, `owner_store_count`.
+
+Một quán một chủ: `stores.owner_user_id`, thiếu thì thành viên `is_owner` sớm nhất.
+
+## Trang quản trị: nhịp app và nguồn khách (migration `20261107_admin_nhip_app_v1.sql`, ĐÃ ÁP 05/11)
+
+`app_device_days (day, store_id, device_id, platform, app_version, build, last_seen)`: mỗi máy mỗi ngày mỗi quán 1 dòng, khoá RLS, không ai đọc thẳng; ghi qua `app_heartbeat_v1`, đọc qua `admin_app_health_v1` (chỉ `qn_admin`). `stores.signup_source`: friend / facebook / google / sales / other, chủ quán ghi 1 lần qua `store_signup_source_set_v1`.

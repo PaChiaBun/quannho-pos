@@ -16,7 +16,7 @@ enum BillBlockType {
   totals,        // 💰 Tổng tiền [LOCKED]
   paymentMethod, // 💳 Phương thức thanh toán
   loyaltyPoints, // ⭐ Điểm thưởng tích luỹ
-  qrCode,        // 📱 QR Code (VietQR tĩnh hoặc SePay động)
+  qrCode,        // 📱 QR Code VietQR
   customText,    // 📝 Văn bản tự do (wifi, KM, slogan...)
   spacer,        // ↕️ Khoảng trắng
   footer,        // 🙏 Lời cảm ơn / footer
@@ -84,11 +84,9 @@ extension BillBlockTypeX on BillBlockType {
         return {'showEarned': true, 'showBalance': true, 'borderBox': true, 'fontSize': 10};
       case BillBlockType.qrCode:
         return {
-          'mode': 'static',        // 'static' | 'sepay'
           'bankBin': '970422',     // MB Bank default
           'accountNo': '',
           'accountName': '',
-          'sepayApiKey': '',
           'size': 'medium',        // small | medium | large
           'label': 'Quét để thanh toán',
           'showLabel': true,
@@ -104,7 +102,7 @@ extension BillBlockTypeX on BillBlockType {
       case BillBlockType.appBranding:
         return {'fontSize': 8, 'align': 'center'};
       case BillBlockType.taxInfo:
-        return {'invoicePattern': '1/001', 'invoiceSerial': '1C26TAA', 'fontSize': 10, 'showSerial': true, 'showPattern': true};
+        return {'invoicePattern': '', 'invoiceSerial': '', 'fontSize': 10, 'showSerial': true, 'showPattern': true};
     }
   }
 }

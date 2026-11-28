@@ -1,0 +1,170 @@
+[
+ {
+  "id": "V01",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "Chị tính mua thêm cái máy pha espresso 2 group giá 48 triệu, cửa hàng cho góp 12 tháng, mỗi tháng đóng 4,3 triệu. Với doanh thu quán hiện giờ có kham nổi không em?"
+ },
+ {
+  "id": "V02",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "vay ngan hang 60tr lai 1,1%/thang tra trong 18 thang de mo them ki ot thu 2, quan minh co gong noi ko"
+ },
+ {
+  "id": "V03",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "vay_gop",
+  "q": "Mình định mua trả góp tủ mát với máy dán ly, góp 2tr5 mỗi tháng trong 10 tháng. Quán đang bán vầy thì tháng nào cũng trả được chứ?"
+ },
+ {
+  "id": "V04",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "vay_gop",
+  "q": "Em muốn vay 100 triệu để sửa lại tầng 2 cho khách ngồi, lãi 9%/năm, trả đều trong 24 tháng. Mỗi tháng phải gánh bao nhiêu, có nặng quá so với tiền quán làm ra không?"
+ },
+ {
+  "id": "V05",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "Cô đang tính vay góp 30 triệu mua tủ cấp đông với bếp mới, mỗi tháng góp 1,5 triệu. Phải góp mấy tháng mới hết, quán cô trả có dư không con?"
+ },
+ {
+  "id": "V06",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "mua xe ba gac tra gop moi thang 3tr2, 15 thang. lai suat ho noi 1.5%/thang. co nen lay ko hay de tich tien mua dut"
+ },
+ {
+  "id": "V07",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "Chị định vay 80 triệu làm thêm lò nướng với mở rộng mặt bằng, ngân hàng cho lãi 10,5%/năm trả trong 3 năm. Tính giùm chị mỗi tháng trả nhiêu và tiền quán có đủ không."
+ },
+ {
+  "id": "V08",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "vay_gop",
+  "q": "Bên app giao hàng gợi ý cho quán vay vốn 40tr, trừ thẳng vào tiền đơn mỗi ngày tới khi đủ 46tr. Vậy tính ra quán chịu lãi bao nhiêu, có đáng không?"
+ },
+ {
+  "id": "V09",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "tra_mot_lan",
+  "q": "Tuần trước mượn bạn 15 triệu nhập cà phê hạt, hứa cuối tháng 11 trả đủ một lần. Với tình hình bán tháng này thì tới đó có gom kịp không em?"
+ },
+ {
+  "id": "V10",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "tra_mot_lan",
+  "q": "Lỡ vay nóng 20tr lãi 3%/tháng để đóng tiền mặt bằng, 2 tháng nữa trả cả gốc lẫn lãi một cục. Tới lúc đó phải có bao nhiêu và có nên trả sớm không?"
+ },
+ {
+  "id": "V11",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "tra_mot_lan",
+  "q": "no nha cung cap tran chau voi bot sua 18tr, ho cho goi dau toi 15/12 thanh toan 1 lan. quan e co can de rieng moi ngay bao nhieu ko"
+ },
+ {
+  "id": "V12",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "tra_mot_lan",
+  "q": "Mình chơi hụi, kỳ này hốt rồi nên cuối năm phải đóng lại một lần 36 triệu. Từ giờ tới đó cần để dành mỗi tuần nhiêu cho chắc?"
+ },
+ {
+  "id": "V13",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "tra_mot_lan",
+  "q": "Cô mượn đứa em 25 triệu không lấy lãi, hẹn sau 3 tháng trả hết một lần. Cô nên trích ra từ doanh thu thế nào để khỏi bị hụt tiền chợ?"
+ },
+ {
+  "id": "V14",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "tra_mot_lan",
+  "q": "Vay ngoài 10 triệu lãi 5%/tháng, hết tháng sau phải trả luôn cả vốn lẫn lời. Con tính thử cô phải trả bao nhiêu, vậy có cắt cổ quá không?"
+ },
+ {
+  "id": "V15",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "tra_mot_lan",
+  "q": "Mối than với mối thịt cho chị nợ gối đầu tổng cộng 32 triệu, tới hạn ngày 30 tháng sau là phải thanh toán dứt. Quán chị có xoay kịp không?"
+ },
+ {
+  "id": "V16",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "tra_mot_lan",
+  "q": "muon chi hang xom 12tr lai 2%/thang, 4 thang sau tra 1 lan ca goc lai. tinh giup chi tong phai tra va moi thang nen de ra bao nhieu"
+ },
+ {
+  "id": "V17",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "Tháng sau chị muốn quán lên được 120 triệu doanh thu. So với tháng này thì mỗi ngày phải bán thêm khoảng bao nhiêu ly?"
+ },
+ {
+  "id": "V18",
+  "quan": "a",
+  "troi": "nang_nong",
+  "loai": "khong_phai_vay",
+  "q": "Mấy công ty quanh đây đặt cà phê ghi sổ, giờ còn nợ quán gần 7 triệu chưa trả. Có nên ngưng cho ghi nợ không, hay cách nào thu cho êm?"
+ },
+ {
+  "id": "V19",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "Bạn nhân viên xin ứng trước 3 triệu lương tháng sau để về quê. Cho ứng thì quán có bị kẹt tiền xoay không, nên trừ lại kiểu gì?"
+ },
+ {
+  "id": "V20",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "Mình có sẵn 35 triệu tiết kiệm, đang phân vân có nên bỏ ra mua máy lắc trà sữa tự động không. Bao lâu thì máy đó hoàn vốn?"
+ },
+ {
+  "id": "V21",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "may chu thau cong trinh an chiu thang nay chua thanh toan, tong cong khoang 9tr. co nen bat tra truoc moi cho an tiep ko"
+ },
+ {
+  "id": "V22",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "Cô muốn mỗi tháng quán kiếm ròng được 30 triệu bỏ túi. Với giá bán và chi phí như bây giờ thì doanh thu phải lên bao nhiêu?"
+ },
+ {
+  "id": "V23",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "khong_phai_vay",
+  "q": "Tiền để dành của chị có 25 triệu, định mua máy nướng sườn bằng điện thay bếp than. Bỏ tiền mặt ra mua vậy có hợp lý không, bao lâu gỡ lại?"
+ },
+ {
+  "id": "V24",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "khong_phai_vay",
+  "q": "Hai đứa làm bán thời gian xin ứng mỗi đứa 1tr5 trước Tết. Chị cho ứng thì cuối tháng tính lương sao cho khỏi lộn?"
+ }
+]

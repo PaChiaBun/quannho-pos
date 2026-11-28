@@ -1,0 +1,373 @@
+{
+ "note": "Người mới hỏi cách dùng app, lô 3 (04/11/2026). Expect là đoạn đã đọc thấy trả lời đúng, dùng để đo hồi quy.",
+ "cases": [
+  {
+   "q": "xài thử hết hạn rồi giờ sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-5-app-co-mat-phi-khong-gia-bao-nhieu-dun"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "nhập mã KM cho khách mà nó báo hết hạn, rõ ràng tui mới tạo hôm thứ 2",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#loi-ma-giam-gia-da-het-han-su-dung-chua-den-thoi-gian-ap-dung-da"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "muốn giao việc lau máy pha, đổ rác cho ca tối, mỗi ngày tick xong mới được về",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "bấm vô ly bạc xỉu nó hiện mờ mờ chữ hết ko cho bán, trong khi tủ còn nguyên hộp sữa",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-mon-hien-mo-chu-het-bam-khong-cho-ban-du-tu-con-nguyen-hang"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "sửa giá 1 món ở đâu vậy",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "món không bán nữa xoá sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-10-xoa-mon-doi-danh-muc-hang-loat"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "ly trà sữa có size M L thì cài thế nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-3-tuy-chon-mon-modifiers-va-ghi-chu-nhan"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "them topping tran chau cho tra sua sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-2-topping-tra-sua-com-them"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "khách đòi in lại cái bill vừa xong",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-in-hoa-don-that-bai-kiem-tra-may-in-roi-bam-in-lai-dung-yen"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "khách quen giảm 10% lúc tính tiền bấm chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-1-them-khach"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "hôm nay bán được bao nhiêu coi ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "muon xem bao cao thang truoc",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "xuất báo cáo ra excel được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "đổi mật khẩu của mình ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "mình là chủ quán mà quên mật khẩu rồi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "không muốn nhân viên thấy doanh thu thì làm sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-5-module-quyet-dinh-quyen-thao-tac"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "nhân viên hỏi mã quán, lấy ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "nv nghỉ việc rồi xoá khỏi app sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3-xoa-nhan-vien-khoi-quan"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "them ban moi cho quan",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "khách đổi từ bàn 2 qua bàn 5 thì chuyển sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "2 người ngồi 1 bàn muốn trả riêng, tách bill được ko",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "in tem dán ly như nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "muốn hiện mã QR chuyển khoản của quán trên bill",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-8-thiet-ke-mau-in"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "khách quen ghi nợ cuối tháng trả được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "tiền thừa trả khách app có tính không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cach-tinh-diem-hang-vi"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "dùng trên máy tính được không, tải ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-8-dung-tren-may-tinh-dung-nhieu-may-cung"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "1 tài khoản dùng được mấy máy cùng lúc",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-8-dung-tren-may-tinh-dung-nhieu-may-cung"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "mình bán thử mấy đơn test giờ muốn xoá cho sạch báo cáo",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-11-nhap-lai-don-hom-qua-xoa-don-ban-thu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "cuối ngày đếm tiền chốt ca làm ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-12-cuoi-ngay-dem-tien-chot-tien-chot-ca"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "tiền đi chợ mỗi sáng ghi vào đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "giá vốn nhập chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "kiem kho cuoi thang lam sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "nhân viên chấm công kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-4-xem-chi-tiet-mot-ca-chu-quan-quan-ly"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "muốn xoá hẳn quán với tài khoản thì sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-10-xoa-han-quan-xoa-tai-khoan-doi-so-die"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "xuất hoá đơn điện tử được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "app có đổi sang tiếng anh được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "có nối được với grab shopee không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "gọi hỗ trợ ở đâu, số nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-7-goi-ho-tro-so-hotline-lien-he-quan-nho"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "đồ ăn in xuống bếp đồ uống in ra quầy cài sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-3-tao-luat-in-tab-luat-in"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "muốn khách quét mã gọi món tại bàn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#qr-goi-mon-la-gi"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "tích điểm cho khách quen làm sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "đổi số điện thoại đăng nhập được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-10-xoa-han-quan-xoa-tai-khoan-doi-so-die"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "đơn hôm qua quên nhập giờ nhập lại có để ngày hôm qua được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-11-nhap-lai-don-hom-qua-xoa-don-ban-thu"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "sao không thấy nút thanh toán đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-khong-thay-nut-thanh-toan"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "mới mua máy sunmi về làm gì đầu tiên",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-moi-tai-moi-cai-app-xong-bat-dau-tu-dau"
+   ],
+   "chu_de": "người mới lô 3"
+  },
+  {
+   "q": "ban dau chua co mon nao ma khach toi roi, ban nhanh sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-moi-tai-moi-cai-app-xong-bat-dau-tu-dau"
+   ],
+   "chu_de": "người mới lô 3"
+  }
+ ]
+}

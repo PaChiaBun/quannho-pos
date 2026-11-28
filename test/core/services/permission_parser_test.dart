@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../../lib/core/services/staff_service.dart';
+import 'package:quannho_pos/core/services/staff_service.dart';
 
 void main() {
   group('StaffService.parseActionPermissions', () {
@@ -53,6 +53,88 @@ void main() {
       final input = ['pos.cancel_bill', 123, null, 'tinhluong.view_all'];
       final result = StaffService.parseActionPermissions(input);
       expect(result, ['pos.cancel_bill', 'tinhluong.view_all']);
+    });
+  });
+
+  group('StaffService.deriveActionPermsFromModules (Lego Modules)', () {
+    test('role có module pos phải tự động có toàn bộ quyền pos.* kể cả checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(['pos']);
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('pos.apply_discount'), isTrue);
+      expect(perms.contains('pos.cancel_bill'), isTrue);
+    });
+
+    test('role có module ban phải tự động có pos.checkout và ban.manage_structure', () {
+      final perms = StaffService.deriveActionPermsFromModules(['ban']);
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('ban.manage_structure'), isTrue);
+    });
+
+    test('role Thu ngân tiếng Việt mới tạo chưa có app_settings vẫn tự động có pos.checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(
+        ['pos', 'ban'],
+        roleName: 'Thu ngân',
+      );
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('pos.view_history'), isTrue);
+    });
+
+    test('role Quản lý / Manager tự động có toàn bộ kAllActions', () {
+      final perms = StaffService.deriveActionPermsFromModules(
+        ['pos', 'kho'],
+        roleName: 'Quản lý',
+      );
+      expect(perms.containsAll(kAllActions), isTrue);
+    });
+
+    test(
+        'kAllActions chỉ chứa 16 quyền vận hành POS, tuyệt đối không chứa ai_boom.*', () {
+      expect(kAllActions.length, 16);
+      for (final action in kAllActions) {
+        expect(action.startsWith('ai_boom.'), isFalse,
+            reason: 'kAllActions must not contain AI Boom action: $action');
+      }
+    });
+
+    test(
+        'role Quản lý / Manager tự động có kAllActions nhưng KHÔNG có quyền ai_boom.* nhạy cảm', () {
+      final perms = StaffService.deriveActionPermsFromModules(
+        ['pos', 'kho'],
+        roleName: 'manager',
+      );
+      expect(perms.containsAll(kAllActions), isTrue);
+
+      // Sensitive AI Boom actions must be omitted (fail-closed)
+      const sensitiveAiActions = [
+        'ai_boom.sales',
+        'ai_boom.inventory',
+        'ai_boom.finance',
+        'ai_boom.operations',
+        'ai_boom.team_shift',
+        'ai_boom.all_payroll'
+      ];
+      for (final sensitive in sensitiveAiActions) {
+        expect(perms.contains(sensitive), isFalse, reason: 'Manager must not automatically get $sensitive');
+      }
+    });
+
+    test(
+        'StaffService.parseActionPermissions lọc bỏ toàn bộ ai_boom.* nếu bị chèn vào POS actions',
+        () {
+      final input = [
+        'pos.checkout',
+        'ai_boom.sales',
+        'ai_boom.all_payroll', 'ban.manage_structure'];
+      final parsed = StaffService.parseActionPermissions(input);
+      expect(parsed, ['pos.checkout', 'ban.manage_structure']);
+      expect(parsed.contains('ai_boom.sales'), isFalse);
+      expect(parsed.contains('ai_boom.all_payroll'), isFalse);
+    });
+
+    test('role chỉ có kho_pro chỉ có quyền kho, không có pos.checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(['kho_pro']);
+      expect(perms.contains('kho.edit_quantity'), isTrue);
+      expect(perms.contains('pos.checkout'), isFalse);
     });
   });
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,28 +18,85 @@ class AppLogger {
     _staffName = staffName;
   }
 
+  /// Quán của phiên đang chạy (dùng cho nhịp app khi trở lại từ nền).
+  static String? get sessionStoreId => _storeId;
+
   /// Thiết lập Device ID để định danh thiết bị ghi log
   static void setDeviceId(String deviceId) {
     _deviceId = deviceId;
   }
 
-  /// Ghi vết thao tác người dùng (Chủ quán, Quản lý, Nhân viên) trên tất cả các module
+  /// Ghi vết thao tác người dùng (Chủ quán, Quản lý, Nhân viên) trên tất cả các module.
+  /// `critical: true` -> gửi lên máy chủ gần như ngay (hủy bàn, thanh toán, PIN...).
   static void logUserAction({
     required String tag,
     required String action,
     Map<String, dynamic>? details,
     String level = 'INFO',
+    bool critical = false,
   }) {
-    final detailsStr = details != null && details.isNotEmpty ? jsonEncode(details) : null;
-    if (level == 'WARNING') {
-      warning(tag, action);
-      if (detailsStr != null) _writeCloud('WARNING', tag, action, detailsStr);
-    } else if (level == 'ERROR') {
-      error(tag, action, detailsStr);
-    } else {
-      info(tag, action);
-      if (detailsStr != null) _writeCloud('INFO', tag, action, detailsStr);
-    }
+    final detailsStr = details != null && details.isNotEmpty
+        ? jsonEncode(details)
+        : null;
+    final lvl = (level == 'WARNING' || level == 'ERROR') ? level : 'INFO';
+    debugPrint('[$lvl] [$tag] $action');
+    _writeLocal(lvl, tag, action, detailsStr);
+    _enqueueCloud(
+      lvl,
+      tag,
+      action,
+      detailsStr,
+      immediate: critical || lvl == 'ERROR',
+    );
+  }
+
+  /// Ghi một HÀNH ĐỘNG nghiệp vụ theo chuẩn trường để sau này tra cứu (tag = 'action').
+  /// Không bao giờ truyền PIN/mật khẩu vào đây.
+  static void action(
+    String code,
+    String label, {
+    String? table,
+    String? sessionId,
+    String? orderId,
+    int? lines,
+    double? total,
+    String? approver,
+    String? result,
+    String? reason,
+    Map<String, dynamic>? extra,
+    bool critical = false,
+    String level = 'INFO',
+  }) {
+    final d = <String, dynamic>{
+      'act': code,
+      if (table != null) 'table': table,
+      if (sessionId != null) 'session': sessionId,
+      if (orderId != null) 'order': orderId,
+      if (lines != null) 'lines': lines,
+      if (total != null) 'total': total.round(),
+      if (approver != null) 'approver': approver,
+      if (result != null) 'result': result,
+      if (reason != null) 'reason': reason,
+      if (_staffName != null) 'staff': _staffName,
+      if (_deviceId != null) 'device': _deviceId,
+      ...?extra,
+    };
+    final parts = <String>[
+      label,
+      if (table != null) table,
+      if (lines != null) '$lines dòng',
+      if (total != null) '${total.round()}đ',
+      if (approver != null) 'duyệt: $approver',
+      if (reason != null) 'lý do: $reason',
+      if (result != null) result,
+    ];
+    logUserAction(
+      tag: 'action',
+      action: parts.join(' · '),
+      details: d,
+      level: level,
+      critical: critical,
+    );
   }
 
   /// Ghi log gỡ lỗi (chỉ lưu cục bộ, không gửi lên Cloud để tránh spam)
@@ -53,7 +111,7 @@ class AppLogger {
     final logMsg = '[$tag] $message';
     debugPrint('[INFO] $logMsg');
     _writeLocal('INFO', tag, message, null);
-    _writeCloud('INFO', tag, message, null);
+    _enqueueCloud('INFO', tag, message, null);
   }
 
   /// Ghi log cảnh báo (lưu cục bộ + gửi lên Cloud)
@@ -61,20 +119,100 @@ class AppLogger {
     final logMsg = '[$tag] $message';
     debugPrint('[WARN] $logMsg');
     _writeLocal('WARNING', tag, message, null);
-    _writeCloud('WARNING', tag, message, null);
+    _enqueueCloud('WARNING', tag, message, null);
   }
 
   /// Ghi log lỗi nghiêm trọng (lưu cục bộ + gửi lên Cloud kèm StackTrace)
-  static void error(String tag, String message, [dynamic error, StackTrace? stackTrace]) {
+  static void error(
+    String tag,
+    String message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) {
     final detailsStr = '${error != null ? "$error\n" : ""}${stackTrace ?? ""}';
-    final logMsg = '[$tag] $message ${detailsStr.isNotEmpty ? "\nDetails: $detailsStr" : ""}';
+    final logMsg =
+        '[$tag] $message ${detailsStr.isNotEmpty ? "\nDetails: $detailsStr" : ""}';
     debugPrint('[ERROR] $logMsg');
     _writeLocal('ERROR', tag, message, detailsStr.isEmpty ? null : detailsStr);
-    _writeCloud('ERROR', tag, message, detailsStr.isEmpty ? null : detailsStr);
+    _enqueueCloud(
+      'ERROR',
+      tag,
+      message,
+      detailsStr.isEmpty ? null : detailsStr,
+      immediate: true,
+    );
   }
 
+  // ── LỖI VĂNG ───────────────────────────────────────────────────────────────
+  // Trước đây lỗi không ai bắt không về máy chủ. Chống ngập: cùng một lỗi (bỏ qua phần số) tối đa 1 dòng/phút,
+  // mọi lỗi tối đa 30 dòng/phút trên mỗi máy; gửi theo lô, không gửi ngay từng dòng.
+  // shortcut: không bắt được lỗi native làm chết app, lỗi trước khi vào quán, và lỗi bất đồng bộ trên web
+  // (SDK web không gọi PlatformDispatcher.onError); cần thì mới bọc runZonedGuarded hoặc thêm dịch vụ ngoài.
+  static const int _uncaughtPerMinute = 30;
+  static final Map<String, DateTime> _uncaughtLast = {};
+  static DateTime? _uncaughtWindow;
+  static int _uncaughtCount = 0;
+  @visibleForTesting
+  static DateTime Function() uncaughtNow = DateTime.now;
+
+  /// Gắn vào FlutterError và PlatformDispatcher; vẫn giữ cách xử lý mặc định.
+  static void attachUncaughtHandlers() {
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      uncaught(details.exception, details.stack);
+      previous?.call(details);
+    };
+    WidgetsBinding.instance.platformDispatcher.onError = onPlatformError;
+  }
+
+  /// Trả false để Flutter vẫn xử lý lỗi như khi chưa gắn bộ bắt.
+  @visibleForTesting
+  static bool onPlatformError(Object error, StackTrace stack) {
+    uncaught(error, stack);
+    return false;
+  }
+
+  static void uncaught(Object error, StackTrace? stack) {
+    try {
+      final text = sanitizeErrorText(error.toString());
+      final message = text.length > 300 ? text.substring(0, 300) : text;
+      final now = uncaughtNow();
+      final key = message.replaceAll(RegExp(r'\d+'), '#');
+      final last = _uncaughtLast[key];
+      if (last != null && now.difference(last) < const Duration(minutes: 1)) return;
+      final window = _uncaughtWindow;
+      if (window == null || now.difference(window) >= const Duration(minutes: 1)) {
+        _uncaughtWindow = now;
+        _uncaughtCount = 0;
+      }
+      if (_uncaughtCount >= _uncaughtPerMinute) return;
+      _uncaughtCount++;
+      if (_uncaughtLast.length >= 100) _uncaughtLast.clear();
+      _uncaughtLast[key] = now;
+      final trace = stack?.toString() ?? '';
+      final details = trace.isEmpty ? null : (trace.length > 3000 ? trace.substring(0, 3000) : trace);
+      debugPrint('[ERROR] [uncaught] $message');
+      _writeLocal('ERROR', 'uncaught', message, details);
+      _enqueueCloud('ERROR', 'uncaught', message, details);
+    } catch (_) {
+      // Bộ bắt lỗi tuyệt đối không được tự gây lỗi mới
+    }
+  }
+
+  /// Bỏ dữ liệu khách có thể lẫn trong chữ lỗi: truy vấn của URL, cả dòng dữ liệu của lỗi Postgres, dãy số dài (SĐT).
+  @visibleForTesting
+  static String sanitizeErrorText(String text) => text
+      .replaceAllMapped(RegExp(r'(https?://[^\s?]*)\?\S*'), (m) => '${m[1]}?…')
+      .replaceAll(RegExp(r'Failing row contains \(.*?\)', dotAll: true), 'Failing row contains (…)')
+      .replaceAll(RegExp(r'\d{9,}'), '***');
+
   /// Ghi log ra file cục bộ app_logs.txt (Cơ chế xoay vòng 5MB)
-  static Future<void> _writeLocal(String level, String tag, String message, String? details) async {
+  static Future<void> _writeLocal(
+    String level,
+    String tag,
+    String message,
+    String? details,
+  ) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/app_logs.txt');
@@ -94,32 +232,225 @@ class AppLogger {
       final timestamp = DateTime.now().toLocal().toString();
       final staff = _staffName ?? 'System';
       final devId = _deviceId ?? 'Unknown';
-      final logLine = '[$timestamp] [$level] [$devId] [$staff] [$tag] $message${details != null ? "\n--> DETAILS: $details" : ""}\n';
+      final logLine =
+          '[$timestamp] [$level] [$devId] [$staff] [$tag] $message${details != null ? "\n--> DETAILS: $details" : ""}\n';
       await file.writeAsString(logLine, mode: FileMode.append, flush: true);
     } catch (_) {}
   }
 
-  /// Đồng bộ log lên bảng app_logs của Supabase
-  static Future<void> _writeCloud(String level, String tag, String message, String? details) async {
+  // ── GOM LÔ GỬI LÊN MÁY CHỦ ────────────────────────────────────────────────
+  // Thay vì 1 request/dòng, log được xếp hàng (và ghi tạm ra đĩa để không mất khi
+  // thoát đột ngột) rồi gửi một lần bằng 1 request nhiều dòng khi:
+  //   • đủ [flushMaxLines] dòng, hoặc
+  //   • đã [flushInterval] kể từ dòng đầu chưa gửi, hoặc
+  //   • kết thúc một phiên hành động (đóng bàn/ca/đăng xuất/app xuống nền: gọi [flushNow]), hoặc
+  //   • sự kiện quan trọng/lỗi (gửi ngay).
+  // Mỗi dòng mang sẵn thời điểm thật (created_at) và quán/nhân viên/thiết bị lúc xảy ra.
+  static const int flushMaxLines = 60;
+  static const Duration flushInterval = Duration(seconds: 180);
+  static const int maxQueue = 2000;
+  static const int _chunkSize = 200;
+  static final List<Map<String, dynamic>> _queue = [];
+  static Timer? _timer;
+  static bool _flushing = false;
+  static bool _flushAgain = false;
+  static bool _persist = true;
+  static _LifecycleFlusher? _lifecycle;
+
+  /// Không tạo Timer khi chạy `flutter test` (Timer còn treo làm hỏng widget test). Test
+  /// riêng của gom lô bật lại bằng [resetForTest].
+  static bool _timersEnabled = kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST');
+
+  /// Chỉ dùng cho test: thay hàm gửi thật và tắt ghi đĩa.
+  @visibleForTesting
+  static Future<void> Function(String storeId, List<Map<String, dynamic>> rows)?
+  senderOverride;
+
+  @visibleForTesting
+  static void resetForTest({bool persist = false, bool timers = true}) {
+    _uncaughtLast.clear();
+    _uncaughtWindow = null;
+    _uncaughtCount = 0;
+    uncaughtNow = DateTime.now;
+    _timersEnabled = timers;
+    _queue.clear();
+    _timer?.cancel();
+    _timer = null;
+    _flushing = false;
+    _flushAgain = false;
+    _persist = persist;
+    senderOverride = null;
+    _storeId = null;
+    _staffName = null;
+    _deviceId = null;
+  }
+
+  @visibleForTesting
+  static int get pendingCount => _queue.length;
+
+  /// Gọi khi kết thúc một phiên hành động (đóng bàn, đóng ca, đăng xuất...).
+  static Future<void> flushNow() => _flush();
+
+  /// Tự gửi khi app xuống nền/thoát. Gọi một lần trong main().
+  static void attachLifecycle() {
+    if (_lifecycle != null) return;
+    _lifecycle = _LifecycleFlusher();
+    WidgetsBinding.instance.addObserver(_lifecycle!);
+  }
+
+  static void _enqueueCloud(
+    String level,
+    String tag,
+    String message,
+    String? details, {
+    bool immediate = false,
+  }) {
     final storeId = _storeId;
     if (storeId == null || storeId.isEmpty) return;
-
-    try {
-      // Đảm bảo x-store-id tồn tại trong Header REST
-      Supabase.instance.client.rest.headers['x-store-id'] = storeId;
-
-      await Supabase.instance.client.from('app_logs').insert({
-        'store_id': storeId,
-        'device_id': _deviceId ?? 'Unknown',
-        'staff_name': _staffName ?? 'System',
-        'level': level,
-        'tag': tag,
-        'message': message,
-        'details': details,
-      });
-    } catch (_) {
-      // Bỏ qua lỗi kết nối mạng / Supabase khi ghi log đám mây
+    final row = <String, dynamic>{
+      'store_id': storeId,
+      'device_id': _deviceId ?? 'Unknown',
+      'staff_name': _staffName ?? 'System',
+      'level': level,
+      'tag': tag,
+      'message': message,
+      'details': details,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    };
+    _queue.add(row);
+    if (_queue.length > maxQueue)
+      _queue.removeRange(0, _queue.length - maxQueue);
+    _persistAppend(row);
+    if (immediate || _queue.length >= flushMaxLines) {
+      unawaited(_flush());
+    } else {
+      if (_timersEnabled) {
+        _timer ??= Timer(flushInterval, () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
     }
+  }
+
+  static Future<void> _defaultSender(
+    String storeId,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    // Đảm bảo x-store-id tồn tại trong Header REST
+    Supabase.instance.client.rest.headers['x-store-id'] = storeId;
+    await Supabase.instance.client.from('app_logs').insert(rows);
+  }
+
+  static Future<void> _flush() async {
+    if (_flushing) {
+      _flushAgain = true;
+      return;
+    }
+    if (_queue.isEmpty) return;
+    _flushing = true;
+    _timer?.cancel();
+    _timer = null;
+    try {
+      do {
+        _flushAgain = false;
+        // Bỏ dòng quá cũ (>24h) để một lô hỏng không chặn hàng chờ mãi mãi.
+        final cutoff = DateTime.now().toUtc().subtract(const Duration(hours: 24));
+        _queue.removeWhere((q) {
+          final t = DateTime.tryParse('${q['created_at']}');
+          return t != null && t.isBefore(cutoff);
+        });
+        final snapshot = List<Map<String, dynamic>>.of(_queue);
+        // Gom theo quán nhưng giữ thứ tự; mỗi request tối đa [_chunkSize] dòng.
+        final byStore = <String, List<Map<String, dynamic>>>{};
+        for (final r in snapshot) {
+          (byStore[r['store_id'] as String] ??= []).add(r);
+        }
+        var anyFailed = false;
+        for (final entry in byStore.entries) {
+          try {
+            for (var i = 0; i < entry.value.length; i += _chunkSize) {
+              final end = (i + _chunkSize).clamp(0, entry.value.length);
+              final chunk = entry.value.sublist(i, end);
+              await (senderOverride ?? _defaultSender)(entry.key, chunk);
+              _queue.removeWhere((q) => chunk.any((c) => identical(c, q)));
+            }
+          } catch (_) {
+            // Quán này lỗi (mạng/quyền) thì vẫn gửi tiếp quán khác.
+            anyFailed = true;
+          }
+        }
+        await _persistRewrite();
+        if (anyFailed) throw StateError('một phần log chưa gửi được');
+      } while (_flushAgain && _queue.isNotEmpty);
+    } catch (_) {
+      // Mạng/máy chủ lỗi: giữ nguyên hàng chờ, thử lại sau một chu kỳ.
+      if (_timersEnabled) {
+        _timer ??= Timer(flushInterval, () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
+    } finally {
+      _flushing = false;
+    }
+  }
+
+  static Future<File?> _pendingFile() async {
+    if (!_persist || kIsWeb) return null;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      return File('${dir.path}/app_logs_pending.jsonl');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static void _persistAppend(Map<String, dynamic> row) {
+    if (!_persist || kIsWeb) return;
+    unawaited(() async {
+      try {
+        final f = await _pendingFile();
+        await f?.writeAsString('${jsonEncode(row)}\n', mode: FileMode.append);
+      } catch (_) {}
+    }());
+  }
+
+  static Future<void> _persistRewrite() async {
+    try {
+      final f = await _pendingFile();
+      if (f == null) return;
+      if (_queue.isEmpty) {
+        if (await f.exists()) await f.delete();
+      } else {
+        await f.writeAsString(_queue.map((r) => '${jsonEncode(r)}\n').join());
+      }
+    } catch (_) {}
+  }
+
+  /// Nạp lại log chưa gửi từ lần chạy trước (app tắt đột ngột/mất mạng). Gọi trong main().
+  static Future<void> restorePending() async {
+    try {
+      final f = await _pendingFile();
+      if (f == null || !await f.exists()) return;
+      final restored = <Map<String, dynamic>>[];
+      for (final line in await f.readAsLines()) {
+        if (line.trim().isEmpty) continue;
+        try {
+          restored.add(Map<String, dynamic>.from(jsonDecode(line) as Map));
+        } catch (_) {}
+      }
+      if (restored.isEmpty) return;
+      _queue.insertAll(0, restored);
+      if (_queue.length > maxQueue)
+        _queue.removeRange(0, _queue.length - maxQueue);
+      if (_timersEnabled) {
+        _timer ??= Timer(const Duration(seconds: 20), () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
+    } catch (_) {}
   }
 
   /// Hàm tiện ích đọc toàn bộ log cục bộ
@@ -147,5 +478,16 @@ class AppLogger {
         await oldFile.delete();
       }
     } catch (_) {}
+  }
+}
+
+class _LifecycleFlusher with WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      unawaited(AppLogger.flushNow());
+    }
   }
 }

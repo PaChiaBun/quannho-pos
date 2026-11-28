@@ -1,4 +1,4 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../providers/ops_providers.dart';
 import '../repository/ops_repository.dart';
 import '../../../core/providers/session_provider.dart';
+import '../widgets/ops_handover_card.dart';
 
 // ── Màu theo design system Quán Nhỏ ─────────────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);
@@ -76,7 +77,7 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
             const SizedBox(width: 16, height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
             const SizedBox(width: 12),
-            Text('Đang lưu ảnh bằng chứng...', style: GoogleFonts.outfit()),
+            Text('Đang lưu ảnh bằng chứng...', style: GoogleFonts.plusJakartaSans()),
           ]),
           duration: const Duration(seconds: 10),
           backgroundColor: _kNavy,
@@ -107,7 +108,7 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
               : '✅ Hoàn thành · Ảnh lưu Cloud';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(msg, style: GoogleFonts.outfit()),
+          content: Text(msg, style: GoogleFonts.plusJakartaSans()),
           backgroundColor: photoUrl != null ? _kGreen : _kOrange,
           duration: const Duration(seconds: 2),
         ),
@@ -126,22 +127,22 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
   }
 
   Future<void> _showHandoverSheet(List<OpsDailyLogModel> allLogs) async {
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
+    final repo = ref.read(opsRepositoryProvider);
+    // Bảng tự đóng khi lưu xong (pop bằng context của bảng) — không pop nhầm màn bên dưới
+    // nếu bảng đã bị đóng giữa chừng. enableDrag:false + PopScope trong bảng chặn đóng khi đang lưu.
+    final saved = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => _HandoverSheet(
         pendingLogs: allLogs.where((l) => l.isPending).toList(),
-        onSubmit: (h) async {
-          await ref.read(opsRepositoryProvider).createHandover(h);
-          if (mounted) {
-            Navigator.pop(context);
+        onSubmit: repo.createHandover));
+    if (saved != true || !mounted) return;
+    ref.invalidate(opsLatestHandoverProvider);
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('📋 Bàn giao ca đã lưu!', style: GoogleFonts.outfit()),
-              backgroundColor: _kNavy,
-            ));
-          }
-        },
+              content: Text('📋 Bàn giao ca đã lưu!', style: GoogleFonts.plusJakartaSans()),
+        backgroundColor: _kNavy
       ),
     );
   }
@@ -193,6 +194,7 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
                   shiftLabel: currentShift?.timeLabel,
                 ),
               ),
+                const SliverToBoxAdapter(child: OpsHandoverCard()),
               // Overdue banner
               Builder(builder: (_) {
                 final now = DateTime.now();
@@ -222,7 +224,7 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
                       const SizedBox(width: 8),
                       Expanded(child: Text(
                         '${overdueLogs.length} công việc đã quá giờ mục tiêu',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12, fontWeight: FontWeight.w700, color: _kRed),
                       )),
                     ]),
@@ -259,7 +261,7 @@ class _OpsStaffScreenState extends ConsumerState<OpsStaffScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _showHandoverSheet(logs),
                     icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                    label: Text('Bàn Giao Ca', style: GoogleFonts.outfit(
+                    label: Text('Bàn Giao Ca', style: GoogleFonts.plusJakartaSans(
                         fontSize: 14, fontWeight: FontWeight.w700)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _kNavy,
@@ -363,7 +365,7 @@ class _ProgressHeader extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           staffName.isNotEmpty ? staffName : 'Nhân viên',
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -379,7 +381,7 @@ class _ProgressHeader extends StatelessWidget {
                     ),
                     child: Text(
                       _roleLabel(),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: _kOrange,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -404,7 +406,7 @@ class _ProgressHeader extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '$shiftName${shiftLabel != null ? ' • $shiftLabel' : ''}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             color: const Color(0xFF10B981),
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -418,7 +420,7 @@ class _ProgressHeader extends StatelessWidget {
               const Spacer(),
               Text(
                 today,
-                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white60, fontSize: 11),
               ),
             ],
           ),
@@ -434,7 +436,7 @@ class _ProgressHeader extends StatelessWidget {
                   children: [
                     Text(
                       'TIẾN ĐỘ HÔM NAY',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white54,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -447,7 +449,7 @@ class _ProgressHeader extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: '$done',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontSize: 40,
                               fontWeight: FontWeight.w900,
@@ -456,7 +458,7 @@ class _ProgressHeader extends StatelessWidget {
                           ),
                           TextSpan(
                             text: ' / $total',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white54,
                               fontSize: 22,
                               fontWeight: FontWeight.w600,
@@ -464,7 +466,7 @@ class _ProgressHeader extends StatelessWidget {
                           ),
                           TextSpan(
                             text: ' nhiệm vụ',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white38,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -488,10 +490,10 @@ class _ProgressHeader extends StatelessWidget {
                         children: [
                           const Icon(Icons.check_circle_rounded, color: Colors.white, size: 16),
                           const SizedBox(width: 5),
-                          Text('Hoàn thành!', style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+                          Text('Hoàn thành!', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
                         ],
                       )
-                    : Text('${(pct * 100).round()}%', style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                    : Text('${(pct * 100).round()}%', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -561,7 +563,7 @@ class _TimeGroupHeader extends StatelessWidget {
                 const SizedBox(width: 5),
                 Text(
                   time,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: isCuoiCa ? const Color(0xFF7C3AED) : _kNavy,
@@ -687,7 +689,7 @@ class _TaskCardState extends State<_TaskCard> {
                                   Expanded(
                                     child: Text(
                                       widget.template.title,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                         color: isDone ? const Color(0xFFADB5BD) : _kNavy,
@@ -722,7 +724,7 @@ class _TaskCardState extends State<_TaskCard> {
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
                                       widget.template.description!,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 11.5,
                                         color: isDone
                                             ? const Color(0xFFCED4DA)
@@ -749,7 +751,7 @@ class _TaskCardState extends State<_TaskCard> {
                                       const SizedBox(width: 3),
                                       Text(
                                         _fmtTime(widget.log.completedAt!),
-                                        style: GoogleFonts.outfit(fontSize: 11, color: _kGreen, fontWeight: FontWeight.w600),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kGreen, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
@@ -759,7 +761,7 @@ class _TaskCardState extends State<_TaskCard> {
                                   padding: const EdgeInsets.only(top: 3),
                                   child: Text(
                                     'Quá giờ!',
-                                    style: GoogleFonts.outfit(fontSize: 10, color: _kRed, fontWeight: FontWeight.w700),
+                                    style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kRed, fontWeight: FontWeight.w700),
                                   ),
                                 ),
                               if (widget.log.notes != null && widget.log.notes!.isNotEmpty)
@@ -767,7 +769,7 @@ class _TaskCardState extends State<_TaskCard> {
                                   padding: const EdgeInsets.only(top: 2),
                                   child: Text(
                                     widget.log.notes!,
-                                    style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontStyle: FontStyle.italic),
+                                    style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontStyle: FontStyle.italic),
                                     maxLines: _expanded ? null : 1,
                                     overflow: _expanded ? null : TextOverflow.ellipsis,
                                   ),
@@ -864,7 +866,7 @@ class _DescriptionBullets extends StatelessWidget {
                 Expanded(
                   child: Text(
                     line,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5,
                       color: const Color(0xFF37474F),
                       fontWeight: FontWeight.w500,
@@ -905,12 +907,12 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'Chưa có công việc nào',
-              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy),
+              style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy),
             ),
             const SizedBox(height: 8),
             Text(
               'Quản lý chưa thiết lập checklist.\nVui lòng liên hệ quản lý để cài đặt.',
-              style: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -939,14 +941,14 @@ class _NoteDialogState extends State<_NoteDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
-      title: Text('Ghi chú sự cố', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: _kNavy)),
+      title: Text('Ghi chú sự cố', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: _kNavy)),
       content: TextField(
         controller: _ctrl,
         autofocus: true,
         maxLines: 3,
         decoration: InputDecoration(
           hintText: 'VD: Toilet bị tắc, đã báo quản lý...',
-          hintStyle: GoogleFonts.outfit(color: _kMuted),
+          hintStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -957,7 +959,7 @@ class _NoteDialogState extends State<_NoteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, null),
-          child: Text('Bỏ qua', style: GoogleFonts.outfit(color: _kMuted)),
+          child: Text('Bỏ qua', style: GoogleFonts.plusJakartaSans(color: _kMuted)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _ctrl.text.trim()),
@@ -965,7 +967,7 @@ class _NoteDialogState extends State<_NoteDialog> {
             backgroundColor: _kNavy,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: Text('Hoàn thành', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+          child: Text('Hoàn thành', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w700)),
         ),
       ],
     );
@@ -986,14 +988,22 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
   final _issuesCtrl = TextEditingController();
   final _notesCtrl  = TextEditingController();
   bool _saving = false;
+  String? _error;
 
   @override
   void dispose() { _issuesCtrl.dispose(); _notesCtrl.dispose(); super.dispose(); }
 
   Future<void> _submit() async {
-    setState(() => _saving = true);
     final session = ref.read(sessionProvider);
-    if (session == null) return;
+    if (session == null) {
+      setState(
+          () => _error = 'Phiên đăng nhập đã hết. Đăng nhập lại rồi bàn giao.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     final pending = widget.pendingLogs.map((l) => l.id).toList();
     final handover = OpsShiftHandoverModel(
       id:            const Uuid().v4(),
@@ -1008,6 +1018,14 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
     );
     try {
       await widget.onSubmit(handover);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      // Trước đây lỗi bị nuốt: bấm xong không có gì xảy ra, nhân viên tưởng đã lưu.
+      if (mounted) {
+        setState(() => _error =
+            'Chưa lưu được bàn giao (máy chủ chưa sẵn sàng hoặc mất mạng). '
+                'Hãy nhắn trực tiếp cho ca sau / quản lý.');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1016,7 +1034,9 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Container(
+    return PopScope(
+        canPop: !_saving,
+        child: Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1036,12 +1056,12 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
                   borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.swap_horiz_rounded, color: _kNavy, size: 20)),
             const SizedBox(width: 12),
-            Text('Bàn Giao Ca', style: GoogleFonts.outfit(
+            Text('Bàn Giao Ca', style: GoogleFonts.plusJakartaSans(
                 fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
           ]),
           const SizedBox(height: 6),
           Text('Ghi chú cho ca tiếp theo',
-            style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
           const SizedBox(height: 14),
           if (widget.pendingLogs.isNotEmpty)
             Container(
@@ -1056,7 +1076,7 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
                 Icon(Icons.pending_actions_rounded, color: _kOrange, size: 16),
                 const SizedBox(width: 8),
                 Expanded(child: Text('${widget.pendingLogs.length} công việc chưa xong sẽ được ghi nhận',
-                  style: GoogleFonts.outfit(fontSize: 12, color: _kOrange, fontWeight: FontWeight.w600))),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kOrange, fontWeight: FontWeight.w600))),
               ]),
             ),
           TextField(
@@ -1064,12 +1084,12 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
             decoration: InputDecoration(
               labelText: '⚠️ Vấn đề tồn đọng',
               hintText: 'VD: Máy pha cà phê hỏng nút steam...',
-              labelStyle: GoogleFonts.outfit(color: _kMuted, fontSize: 13),
+              labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 13),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: _kNavy, width: 2)),
             ),
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.plusJakartaSans(),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -1077,13 +1097,20 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
             decoration: InputDecoration(
               labelText: '📝 Ghi chú cho ca sau',
               hintText: 'VD: Bàn 5 đặt lúc 3pm, hết đường phèn...',
-              labelStyle: GoogleFonts.outfit(color: _kMuted, fontSize: 13),
+              labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 13),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: _kNavy, width: 2)),
             ),
-            style: GoogleFonts.outfit(),
-          ),
+            style: GoogleFonts.plusJakartaSans()),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!,
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: _kRed,
+                            fontWeight: FontWeight.w600))
+                  ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity, height: 52,
@@ -1093,7 +1120,7 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
                   ? const SizedBox(width: 18, height: 18,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: Text('Xác nhận bàn giao', style: GoogleFonts.outfit(
+              label: Text('Xác nhận bàn giao', style: GoogleFonts.plusJakartaSans(
                   fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
               style: ElevatedButton.styleFrom(backgroundColor: _kNavy, elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
@@ -1101,6 +1128,6 @@ class _HandoverSheetState extends ConsumerState<_HandoverSheet> {
           ),
         ],
       ),
-    );
+    ));
   }
 }

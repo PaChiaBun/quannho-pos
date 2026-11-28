@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D28_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Mục (4) lặp lại số, chung chung; giảm giá Bún bò khi chưa có giá vốn và không nói số chưa rõ lý do Thứ 4 tụt."
+  },
+  {
+   "id": "D28_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói Bún riêu 'giá vốn thấp hơn' không có số; không nói số liệu chưa cho biết lý do Thứ 4 tụt."
+  },
+  {
+   "id": "D08_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khẳng định 'số đơn giảm mạnh' và 'Thứ 4 thường ít khách' trong khi số chỉ cho thấy Thứ 4 mới tụt tháng này."
+  },
+  {
+   "id": "D08_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khẳng định nguyên nhân là 'số đơn giảm mạnh' khi không có số đơn Thứ 4; lý do 'ít nhu cầu' chung chung."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Viết sai 'thấp hơn 55%' (thực ra bằng 55%); Cơm gà 'giá vốn thấp hơn' không có số."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng thêm phần Bún bò khi chưa có giá vốn; mục đo lặp lại, không nói số chưa giải thích vì sao Thứ 4 tụt."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm giá Bún bò khi chưa có giá vốn; không nói số chưa cho biết lý do Thứ 4 tụt."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 'Thứ 4 thường là ngày vắng' và 'số đơn giảm mạnh' trái số liệu (Thứ 4 mới tụt từ 4.785.750đ)."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý lẽ mỏng (chỉ dẫn 2.875.500đ); giảm giá Bún bò khi chưa có giá vốn, không nói số chưa rõ lý do Thứ 4 tụt."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định 'số đơn giảm mạnh' không có số; thiếu mốc đo 4.052.000đ và món ưu đãi cụ thể."
+  },
+  {
+   "id": "D08_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định 'số đơn giảm mạnh' không có số; ưu đãi chưa nêu món, thiếu mốc đo."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khẳng định 'số đơn giảm mạnh' và 'Thứ 4 thường ít khách' trái số (Thứ 4 mới tụt tháng này)."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D28_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu số Thứ 4 (55%, 2.875.500đ), bịa 'Bún bò giá vốn hợp lý', việc tăng giá Cơm sườn lạc đề Thứ 4."
+  },
+  {
+   "id": "D28_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Việc làm (ưu đãi 16–17h, quảng bá trưa) áp mọi ngày, không nhắm riêng Thứ 4; thiếu so 55% ngày thường."
+  },
+  {
+   "id": "D08_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Câu mở vòng vo, lý do chung chung; chỉ 1 việc (combo Bún bò 39.000đ giảm sâu món bán chạy), thiếu giảm nhập / mốc đo."
+  },
+  {
+   "id": "D08_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề xuất combo Cơm sườn (giá vốn 48%) cho Thứ 4 và trộn tổng tháng với trung bình ngày; thiếu giảm nhập nguyên liệu."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy Cơm sườn / đổi nguyên liệu và mời trà đá không nhắm riêng Thứ 4; thiếu giảm nhập và mốc 55%."
+  },
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Combo không giá, tăng giá Cơm sườn áp chung, không giảm nhập / mốc đo cho Thứ 4."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không dùng số Thứ 4 nào; việc chung chung (gợi ý Bún bò, khảo sát, giảm định lượng Cơm sườn) không nhắm Thứ 4."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Giảm 10% cho khách đặt qua app — quán bình dân gần chợ không có số app; lý do 'đi làm' là đoán."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa 'Bún bò giá vốn hợp lý'; ưu đãi 16–17h và giảm 10% áp chung, không dùng số Thứ 4 nào."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Cơm sườn (giá vốn 48%) cho Thứ 4, chỉ 1 việc; lý do 'ít khách' lặp lại câu hỏi."
+  },
+  {
+   "id": "D08_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Cơm sườn (giá vốn 48%) cho Thứ 4, thiếu giảm nhập; lý do vòng vo."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyến mãi giờ cao điểm là ngược hướng (không nhắm Thứ 4 / giờ vắng); thiếu mức 55%, lý do vòng vo."
+  }
+ ]
+}

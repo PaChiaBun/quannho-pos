@@ -1,0 +1,566 @@
+{
+ "moi": [
+  {
+   "id": "D41_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm còn chung (tăng phục vụ, mời combo), chưa gắn món / giờ cụ thể."
+  },
+  {
+   "id": "D41_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Nêu Thứ 7 yếu nhất nhưng không nói ~40% ngày thường; việc làm chèn 'quảng bá món bán chạy' chung chung."
+  },
+  {
+   "id": "D50_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Lấy mức tăng 12.700.000đ tháng trước làm dự báo tháng sau, tự đặt con số không có căn cứ."
+  },
+  {
+   "id": "D50_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu mở lủng củng (ước 58 triệu nhưng 'cao hơn 28%'), không nêu doanh thu chỉ +2% để thấy áp lực."
+  },
+  {
+   "id": "D42_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Mở đầu vòng vo, lẫn lộn 3 ngày còn lại của tháng 10 với khả năng tháng 11, việc làm chung chung."
+  },
+  {
+   "id": "D42_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Khuyên khuyến mãi Thứ 7 cho ki-ốt văn phòng (khách nghỉ) và quảng bá chung, dài."
+  },
+  {
+   "id": "D43_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu sữa đặc, bỏ qua hạt cà phê và ly nhựa sắp hết."
+  },
+  {
+   "id": "D43_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nhắc hạt cà phê, ly nhựa cũng sắp hết; lý lẽ chỉ là dưới mức tối thiểu."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Tự đặt 4 kg 'đủ tháng 11' không căn cứ, bỏ qua hao hụt trân châu 7 kg."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc hao hụt trân châu nấu dư 7 kg và chưa nói cần số ly bán để tính lượng nhập tháng 11."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói chung chung 'tháng 12 thường tăng', không nêu 24–25/12 rơi thứ mấy hay chuẩn bị tối / cuối tuần."
+  },
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 0
+   },
+   "loi": "Dài, sáo ('nhận diện thương hiệu'), không nêu 24–25/12 và giờ đông của quán."
+  },
+  {
+   "id": "D46_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Phần 'cần xem lại' lặp ý, chưa nêu tổng giảm giá 9% và đề xuất thử ngày thường."
+  },
+  {
+   "id": "D46_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chưa nêu tổng giảm giá 9% / 38,3% đơn; phần cuối lặp ý."
+  },
+  {
+   "id": "D47_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gán +4,2% của 3 ngày cho cả tuần, không nêu cuối tuần đông hơn nên ước nhân 7 là mức thấp."
+  },
+  {
+   "id": "D47_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gán +4,2% cho cả tuần, không nêu Thứ 7 / Chủ nhật mạnh hơn."
+  },
+  {
+   "id": "D48_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tự đặt 3.000.000đ không căn cứ, không nêu −4,6% so Thứ 4 tuần trước và ca tối."
+  },
+  {
+   "id": "D48_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa 'cao hơn khoảng 4% so Thứ 4 tuần trước' (so số cả ngày với số tới 14h)."
+  },
+  {
+   "id": "D49_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc làm chỉ 'nhập sớm', không nêu số lượng tối thiểu cần bù (~12 kg), hơi lặp."
+  },
+  {
+   "id": "D49_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khẳng định 'không đủ đáp ứng nhu cầu' không có số dùng mỗi ngày, các mục lặp ý."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D41_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán −14,2% của 28 ngày cho cả tháng, không nêu Thứ 7 yếu, việc làm chỉ là theo dõi chung."
+  },
+  {
+   "id": "D41_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán −14,2% cho cả tháng, bỏ qua Thứ 7 yếu, chèn việc lạc đề (quảng bá, chỉnh giá combo)."
+  },
+  {
+   "id": "D50_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa dự báo 70.000.000đ và +20% không có trong khối số liệu."
+  },
+  {
+   "id": "D50_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 70.000.000đ, +20% và nói sai 'cao hơn tháng trước 20%'."
+  },
+  {
+   "id": "D42_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định 'có khả năng tăng lại' chỉ dựa 20/11, lý lẽ mỏng."
+  },
+  {
+   "id": "D42_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định tăng lại chỉ dựa 20/11, việc làm khuyến mãi chung chung không gắn số đơn."
+  },
+  {
+   "id": "D43_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu sữa đặc, không nhắc hạt cà phê và ly nhựa cũng dưới mức tối thiểu."
+  },
+  {
+   "id": "D43_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chỉ 'nhập ngay', không nêu số lượng hay các mặt hàng sắp hết khác."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Tự đặt 5 kg trân châu 'đủ dùng tháng 11' không có căn cứ, bỏ qua hao hụt trân châu nấu dư 7 kg."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Tự đặt 'ít nhất 5 kg đủ dùng tháng 11', bỏ qua hao hụt 7 kg, ly 700ml đã hết chỉ nêu nhẹ."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán +2,2% của 28 ngày cho cả tháng, không có việc làm, không nêu 24–25/12 hay tối / cuối tuần."
+  },
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý lẽ chung chung, không có việc làm cụ thể cho dịp Noel."
+  },
+  {
+   "id": "D46_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý lẽ lẫn lộn ('doanh thu không bị ảnh hưởng nhiều'), chưa nêu tổng giảm giá 9% / 38,3% đơn."
+  },
+  {
+   "id": "D46_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Sai logic: cho rằng doanh thu tháng sau có thể giảm tối đa 9.348.000đ (đó là tiền quán thu thêm)."
+  },
+  {
+   "id": "D47_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán +4,2% của 3 ngày cho cả tuần, không nói cuối tuần đông hơn, chèn tăng giá Trà dâu tây lạc đề."
+  },
+  {
+   "id": "D47_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán +4,2% cho cả tuần, chèn tăng giá Trà dâu tây và quảng bá Topping lạc đề."
+  },
+  {
+   "id": "D48_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tự đặt 61 đơn / 3.000.000đ, không nhắc ca tối 16–20h, khuyên tận dụng 11–14h khi đã qua."
+  },
+  {
+   "id": "D48_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tự đặt 3.000.000đ / 61 đơn, không nói rõ là ước và không nhắc ca tối 16–20h."
+  },
+  {
+   "id": "D49_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nêu nhập bao nhiêu để về mức tối thiểu 20 kg."
+  },
+  {
+   "id": "D49_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nêu nhập bao nhiêu để về mức tối thiểu 20 kg."
+  }
+ ]
+}

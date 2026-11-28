@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D17_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc thứ 3 (xem doanh thu theo giờ) không có cách đo/thời hạn, và lặp ý ca chưa chấm ra."
+  },
+  {
+   "id": "D17_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nhắc quỹ lương/giờ sáng vắng; 'Cần xem lại' lặp việc (3)."
+  },
+  {
+   "id": "D17_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Lặp nguyên dòng ca quá 16 giờ; chưa nêu khối thiếu số khách theo giờ."
+  },
+  {
+   "id": "D17_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dòng cuối lặp ý ca quá 16 giờ đã nêu ở việc (2)."
+  },
+  {
+   "id": "D17_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Lặp ý ca chưa chấm ra; không nhắc giờ sáng vắng."
+  },
+  {
+   "id": "D17_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nhắc cụ thể giờ sáng vắng/quỹ lương; 'Cần xem lại' lặp việc (3)."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D17_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Chỉ đếm ca (28 ca/người), không lý giải; việc 'theo dõi người trên 30 ca' là ngưỡng tự đặt, chung chung."
+  },
+  {
+   "id": "D17_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Nói 'không có ai làm quá nhiều' sai số liệu (Ngọc 230 giờ ~58 giờ/tuần), lại tự đặt ngưỡng 30 ca."
+  },
+  {
+   "id": "D17_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý lẽ chung chung (ảnh hưởng phục vụ), việc 'xem lại người dưới 20 ca' ngược hướng và tự đặt ngưỡng."
+  },
+  {
+   "id": "D17_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Kết luận 'nhân viên đang làm hợp lý' khi ca rất lệch (Ngọc 38 ca, Khang 18 ca), ngưỡng 30 ca tự đặt."
+  },
+  {
+   "id": "D17_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bỏ sót ca quá 16 giờ chưa chấm ra, lý lẽ chung chung, ngưỡng 'dưới 20 ca' tự đặt."
+  },
+  {
+   "id": "D17_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "'Mỗi người 168 giờ' thiếu đơn vị thời gian, không có việc cụ thể, coi ca chưa chấm ra là chuyện thiếu nhân lực."
+  }
+ ]
+}

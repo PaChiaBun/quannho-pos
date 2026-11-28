@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D44_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nhập 5 kg trân châu và 10 lít sữa 'để đạt tối thiểu' là tính sai, phần Vì sao chung chung."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bịa mức nhập 4 kg trân châu là 'đủ hàng' cho tháng 11 dù không có lượng dùng; chưa khuyên nấu mẻ nhỏ để giảm 7 kg nấu dư."
+  },
+  {
+   "id": "D44_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nhập 5 kg trân châu và 10 lít sữa 'để đạt tối thiểu' là tính sai, hao hụt chỉ nói chung."
+  },
+  {
+   "id": "D44_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nhập 5 kg, 10 lít không suy từ số liệu, phần Vì sao chỉ nhắc lại danh sách, hao hụt không có số."
+  },
+  {
+   "id": "D29_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 0
+   },
+   "loi": "Lặp 1 bình gas / 12 kg gạo ba lần, khuyên theo dõi hao hụt gạo (không có trong số liệu), bỏ hao hụt bún/rau."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Hao hụt bún/rau/sườn chỉ nhắc 'theo dõi', không số, không lịch đặt theo ngày; Việc tuần này lặp lại."
+  },
+  {
+   "id": "D29_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Phần Vì sao chung chung, hao hụt chỉ nói 'theo dõi', không đưa lịch đặt bún/rau theo ngày."
+  },
+  {
+   "id": "D29_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Hao hụt nói chung chung không nêu món, lặp gas/gạo hai lần."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 0
+   },
+   "loi": "Lặp gas/gạo ba lần, hao hụt chỉ nêu tên món, không số, không lịch đặt."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Hao hụt chỉ nêu tên món, không số, không biến thành lịch đặt bún/rau theo ngày."
+  },
+  {
+   "id": "D44_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nhập 5 kg, 10 lít không suy từ số liệu và không nói thiếu lượng dùng; hao hụt không có số."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Số đúng (3,5 kg, 200 ly, 6 lít) nhưng hao hụt không có số và không khuyên nấu mẻ nhỏ; chưa nói lượng tháng 11 cần số ly bán."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D44_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Bảo nhập 5 kg trân châu 'để đủ mức tối thiểu' (chỉ cần 3,5 kg), ly 700ml đã hết mà chỉ bảo 'kiểm tra lại', không nói hao hụt."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tính sai 4,5 kg trân châu để đạt tối thiểu (đúng là 3,5 kg), việc làm chung chung, bỏ qua hao hụt."
+  },
+  {
+   "id": "D44_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Khẳng định nhập 5 kg trân châu 'đủ dùng cho tháng 11' khi không có lượng dùng, bỏ ly 700ml đã hết, lặp ý theo dõi lượng dùng."
+  },
+  {
+   "id": "D44_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bảo 4 kg trân châu 'đủ dùng cho tháng 11' khi thiếu lượng dùng, bỏ qua ly đã hết và sữa tươi."
+  },
+  {
+   "id": "D29_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ lo gas và gạo, bỏ hẳn hao hụt bún 26 kg, rau 15 kg, sườn 2,5 kg (≈ 912.000đ) cần đặt theo ngày."
+  },
+  {
+   "id": "D29_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Bỏ hẳn hao hụt bún, rau, sườn; lịch nhập chỉ có gas và gạo."
+  },
+  {
+   "id": "D29_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Hẹn nhập 30/10 dù hàng đã dưới tối thiểu, hao hụt bún/rau có số nhưng không có việc làm cụ thể."
+  },
+  {
+   "id": "D29_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Hao hụt bún/rau/sườn chỉ nhắc theo dõi, không lịch đặt theo ngày, không mốc đo."
+  },
+  {
+   "id": "D29_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Theo dõi gas/gạo thay vì chỉ ra hao hụt bún 26 kg, rau 15 kg cần đặt theo ngày."
+  },
+  {
+   "id": "D29_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Có số hao hụt bún 26 kg, rau 15 kg nhưng chỉ bảo theo dõi, không lịch đặt theo ngày."
+  },
+  {
+   "id": "D44_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu số ly/sữa cần nhập, bỏ hao hụt trân châu 7 kg nấu dư."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói 3,5 kg rồi lại bảo nhập 5 kg (mâu thuẫn), ly/sữa có số mà vẫn bảo 'kiểm tra lại'."
+  }
+ ]
+}

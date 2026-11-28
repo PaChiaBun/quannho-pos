@@ -1,6 +1,7 @@
 // lib/modules/bill_printer/screens/template_gallery_screen.dart
-// Gallery chọn mẫu hoá đơn & phiếu bếp (10-20 mẫu dựng sẵn)
+// Bộ chọn mẫu hoá đơn & phiếu bếp dựng sẵn — nhúng trong các màn Thiết Kế (không còn màn riêng)
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,141 +12,92 @@ import '../providers/kitchen_ticket_template_provider.dart';
 import '../widgets/bill_preview_widget.dart';
 
 const _kIndigo  = Color(0xFF1C2151);
-const _kOrange  = Color(0xFFFF6B35);
 const _kPurple  = Color(0xFF7C3AED);
 
-class TemplateGalleryScreen extends ConsumerStatefulWidget {
-  const TemplateGalleryScreen({super.key});
+/// Bộ chọn mẫu hoá đơn dựng sẵn — nhúng trong màn Thiết Kế Hoá Đơn.
+class BillPresetPicker extends ConsumerStatefulWidget {
+  /// Gọi sau khi đã áp dụng mẫu (để màn cha chuyển về tab xem trước/cấu hình).
+  final VoidCallback? onApplied;
+  const BillPresetPicker({super.key, this.onApplied});
   @override
-  ConsumerState<TemplateGalleryScreen> createState() => _TemplateGalleryScreenState();
+  ConsumerState<BillPresetPicker> createState() => _BillPresetPickerState();
 }
 
-class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
-  // Hoá đơn
-  String? _selectedBillId;
-  BillBlockTemplate? _previewBillTpl;
-  // Bếp Nóng
-  String? _selectedKitchenNongId;
-  KitchenTicketTemplate? _previewKitchenNongTpl;
-  // Bếp Bar
-  String? _selectedKitchenBarId;
-  KitchenTicketTemplate? _previewKitchenBarTpl;
+class _BillPresetPickerState extends ConsumerState<BillPresetPicker> {
+  String? _selectedId = billPresets.isNotEmpty ? billPresets.first.id : null;
+  BillBlockTemplate? _previewTpl =
+      billPresets.isNotEmpty ? billPresets.first.template : null;
 
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 3, vsync: this);
-    // Tự động chọn mẫu đầu tiên
-    if (billPresets.isNotEmpty) {
-      _selectedBillId = billPresets.first.id;
-      _previewBillTpl = billPresets.first.template;
-    }
-    if (kitchenPresets.isNotEmpty) {
-      _selectedKitchenNongId = kitchenPresets.first.id;
-      _previewKitchenNongTpl = kitchenPresets.first.template;
-      _selectedKitchenBarId = kitchenPresets.first.id;
-      _previewKitchenBarTpl = kitchenPresets.first.template;
-    }
-  }
-
-  @override
-  void dispose() { _tab.dispose(); super.dispose(); }
-
-  // Áp dụng mẫu hoá đơn
-  Future<void> _applyBill(BillPreset p) async {
+  Future<void> _apply(BillPreset p) async {
     await ref.read(billTemplateProvider.notifier).applyPreset(p.template);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã áp dụng mẫu "${p.name}"',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kIndigo,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-      Navigator.pop(context);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('✅ Đã áp dụng mẫu "${p.name}"',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+      backgroundColor: _kIndigo,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
+    widget.onApplied?.call();
   }
 
-  // Áp dụng mẫu phiếu bếp cho trạm chỉ định
-  Future<void> _applyKitchen(KitchenPreset p, String stationKey) async {
-    final provider = stationKey == 'bepBar'
+  @override
+  Widget build(BuildContext context) => _BillGalleryTab(
+        selectedId: _selectedId,
+        previewTpl: _previewTpl,
+        onSelect: (p) => setState(() {
+          _selectedId = p.id;
+          _previewTpl = p.template;
+        }),
+        onApply: _apply,
+      );
+}
+
+/// Bộ chọn mẫu phiếu bếp dựng sẵn cho một trạm ('bepNong' | 'bepBar').
+class KitchenPresetPicker extends ConsumerStatefulWidget {
+  final String stationKey;
+  final VoidCallback? onApplied;
+  const KitchenPresetPicker({super.key, required this.stationKey, this.onApplied});
+  @override
+  ConsumerState<KitchenPresetPicker> createState() => _KitchenPresetPickerState();
+}
+
+class _KitchenPresetPickerState extends ConsumerState<KitchenPresetPicker> {
+  String? _selectedId = kitchenPresets.isNotEmpty ? kitchenPresets.first.id : null;
+  KitchenTicketTemplate? _previewTpl =
+      kitchenPresets.isNotEmpty ? kitchenPresets.first.template : null;
+
+  Future<void> _apply(KitchenPreset p) async {
+    final isBar = widget.stationKey == 'bepBar';
+    final provider = isBar
         ? kitchenTicketTemplateBepBarProvider
         : kitchenTicketTemplateBepNongProvider;
     ref.read(provider.notifier).update(p.template);
     await ref.read(provider.notifier).save();
-    
-    if (mounted) {
-      String stationName = stationKey == 'bepBar' ? 'Bếp Bar (Nước)' : 'Bếp Nóng';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã áp dụng mẫu "${p.name}" cho $stationName',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kPurple,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-      Navigator.pop(context);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+          '✅ Đã áp dụng mẫu "${p.name}" cho ${isBar ? 'Bếp Bar (Nước)' : 'Bếp Nóng'}',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+      backgroundColor: _kPurple,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
+    widget.onApplied?.call();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        backgroundColor: _kIndigo,
-        foregroundColor: Colors.white,
-        title: Text('Chọn Mẫu In', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
-        bottom: TabBar(
-          controller: _tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: _kOrange,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Hoá Đơn'),
-            Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'Bếp Nóng'),
-            Tab(icon: Icon(Icons.local_bar_rounded, size: 18), text: 'Bếp Nước (Bar)'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tab,
-        children: [
-          _BillGalleryTab(
-            selectedId: _selectedBillId,
-            previewTpl: _previewBillTpl,
-            onSelect: (p) => setState(() {
-              _selectedBillId = p.id;
-              _previewBillTpl = p.template;
-            }),
-            onApply: _applyBill,
-          ),
-          _KitchenGalleryTab(
-            selectedId: _selectedKitchenNongId,
-            previewTpl: _previewKitchenNongTpl,
-            onSelect: (p) => setState(() {
-              _selectedKitchenNongId = p.id;
-              _previewKitchenNongTpl = p.template;
-            }),
-            onApply: (p) => _applyKitchen(p, 'bepNong'),
-          ),
-          _KitchenGalleryTab(
-            selectedId: _selectedKitchenBarId,
-            previewTpl: _previewKitchenBarTpl,
-            onSelect: (p) => setState(() {
-              _selectedKitchenBarId = p.id;
-              _previewKitchenBarTpl = p.template;
-            }),
-            onApply: (p) => _applyKitchen(p, 'bepBar'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _KitchenGalleryTab(
+        selectedId: _selectedId,
+        previewTpl: _previewTpl,
+        onSelect: (p) => setState(() {
+          _selectedId = p.id;
+          _previewTpl = p.template;
+        }),
+        onApply: _apply,
+      );
 }
 
 // ─── Bill Gallery Tab ─────────────────────────────────────────────────────────
@@ -169,7 +121,7 @@ class _BillGalleryTab extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Grid mẫu
         Text('${presets.length} mẫu hoá đơn có sẵn',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade500)),
         const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
@@ -230,7 +182,7 @@ class _KitchenGalleryTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text('${presets.length} mẫu phiếu bếp có sẵn',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade500)),
         const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
@@ -272,7 +224,9 @@ class _KitchenGalleryTab extends StatelessWidget {
 // ─── Paper size hint ─────────────────────────────────────────────────────────
 String _paperHint(String paperSize) {
   switch (paperSize.toLowerCase()) {
+    case '50mm': return 'Máy POS cầm tay, giấy rất nhỏ';
     case '58mm': return 'Máy in cầm tay, nhỏ gọn';
+    case 'a5':   return 'Máy in văn phòng, khổ vừa';
     case 'a4':   return 'Máy in văn phòng, khổ lớn';
     default:     return 'Máy in quầy, phổ biến nhất';
   }
@@ -313,7 +267,7 @@ class _PresetCard extends StatelessWidget {
         children: [
           Row(children: [
             Expanded(child: Text(name,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w700,
                     color: isSelected ? Colors.white : _kIndigo))),
             if (isSelected)
@@ -332,7 +286,7 @@ class _PresetCard extends StatelessWidget {
           Text(_paperHint(paperSize),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.75)
@@ -351,7 +305,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-    child: Text(text, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
+    child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
   );
 }
 
@@ -380,13 +334,13 @@ class _PreviewSection extends StatelessWidget {
         ),
         child: Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: accentColor)),
-            Text(description, style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600)),
+            Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: accentColor)),
+            Text(description, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey.shade600)),
           ])),
           ElevatedButton.icon(
             icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
             label: Text('Dùng mẫu này',
-                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -430,7 +384,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wf = tpl.paperSize == '58mm' ? 0.72 : 0.9;
+    final wf = paperWidthMm(tpl.paperSize) <= 48 ? 0.72 : 0.9;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(
@@ -445,19 +399,19 @@ class _KitchenPreviewWidget extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(tpl.headerText, textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: tpl.headerFontSize.toDouble(),
                       fontWeight: FontWeight.w900, letterSpacing: 1.2)),
               const SizedBox(height: 4),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 if (tpl.showTableName)
-                  Text('BÀN 5', style: GoogleFonts.outfit(
+                  Text('BÀN 5', style: GoogleFonts.plusJakartaSans(
                       fontSize: tpl.tableFontSize.toDouble(), fontWeight: FontWeight.w900)),
                 if (tpl.showOrderNumber)
-                  Text('#018', style: GoogleFonts.outfit(fontSize: 10, color: Colors.grey.shade500)),
+                  Text('#018', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.grey.shade500)),
               ]),
               if (tpl.showDateTime)
-                Text('14/05/2026  13:45', style: GoogleFonts.outfit(fontSize: 9, color: Colors.grey.shade500)),
+                Text('14/05/2026  13:45', style: GoogleFonts.plusJakartaSans(fontSize: 9, color: Colors.grey.shade500)),
               if (tpl.showDivider) const Divider(thickness: 1, height: 10),
               ..._sampleItems.map((item) {
                 final hasNote = tpl.showNote && item.$3 != null;
@@ -474,13 +428,13 @@ class _KitchenPreviewWidget extends StatelessWidget {
                       width: tpl.qtyFontSize + 6.0, height: tpl.qtyFontSize + 6.0,
                       decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                       child: Center(child: Text('${item.$2}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: tpl.qtyFontSize.toDouble(),
                               fontWeight: FontWeight.w900, color: Colors.white))),
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(item.$1, style: GoogleFonts.outfit(
+                      Text(item.$1, style: GoogleFonts.plusJakartaSans(
                           fontSize: tpl.itemFontSize.toDouble(),
                           fontWeight: tpl.boldItemName ? FontWeight.w800 : FontWeight.w500)),
                       if (hasNote)
@@ -495,7 +449,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
                               }
                               return Text(
                                 '↳ $displayLine',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: (tpl.itemFontSize - 2).toDouble(),
                                     fontStyle: FontStyle.italic,
                                     color: Colors.blueGrey),

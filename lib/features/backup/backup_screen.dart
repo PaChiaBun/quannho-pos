@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/store_auth_service.dart';
+import '../../core/utils/paged_query.dart';
 
 final _dateFmt = DateFormat('dd/MM/yyyy HH:mm');
 final _fileFmt = DateFormat('yyyyMMdd_HHmm');
@@ -103,9 +104,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   static Future<String> _exportOrders(String storeId) async {
-    final rows = await _db.from('orders').select(
+    // Tải đủ theo trang — trước đây máy chủ chỉ trả 1.000 dòng, file sao lưu thiếu đơn cũ.
+    final rows = await fetchAllPages((offset, end) => _db.from('orders').select(
         'id, order_number, created_at, status, total_amount, payment_method, source_type, source_id, customer_name, note'
-    ).eq('store_id', storeId).order('created_at', ascending: false);
+    ).eq('store_id', storeId).order('created_at')
+        .order('id')
+        .range(offset, end));
 
     final buf = StringBuffer();
     buf.writeln(_csvRow(['ID', 'Số đơn', 'Thời gian', 'Trạng thái',
@@ -121,9 +125,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   static Future<String> _exportFinance(String storeId) async {
-    final rows = await _db.from('finance_records').select(
+    final rows = await fetchAllPages((offset, end) => _db.from('finance_records').select(
         'id, type, amount, description, is_auto, recorded_at'
-    ).eq('store_id', storeId).order('recorded_at', ascending: false);
+    ).eq('store_id', storeId).order('recorded_at')
+        .order('id')
+        .range(offset, end));
 
     final buf = StringBuffer();
     buf.writeln(_csvRow(['ID', 'Loại', 'Số tiền', 'Mô tả', 'Tự động', 'Thời gian']));
@@ -135,13 +141,17 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   static Future<String> _exportPayroll(String storeId) async {
-    final periods = await _db.from('payroll_periods').select(
+    final periods = await fetchAllPages((offset, end) => _db.from('payroll_periods').select(
         'id, name, from_date, to_date, status, total_amount'
-    ).eq('store_id', storeId).order('from_date', ascending: false);
+    ).eq('store_id', storeId).order('from_date', ascending: false)
+        .order('id')
+        .range(offset, end));
 
-    final records = await _db.from('payroll_records').select(
+    final records = await fetchAllPages((offset, end) => _db.from('payroll_records').select(
         'id, period_id, staff_name, salary_mode, total_hours, net_pay, payment_status'
-    ).eq('store_id', storeId).order('created_at', ascending: false);
+    ).eq('store_id', storeId).order('created_at')
+        .order('id')
+        .range(offset, end));
 
     // Map period name
     final periodMap = {for (final p in periods as List) p['id'] as String : p['name'] as String};
@@ -160,9 +170,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   static Future<String> _exportInventory(String storeId) async {
-    final rows = await _db.from('products').select(
+    final rows = await fetchAllPages((offset, end) => _db.from('products').select(
         'id, name, sku, sell_price, cost_price, stock_qty, unit, category, product_type, is_active'
-    ).eq('store_id', storeId).eq('is_deleted', false).order('name');
+    ).eq('store_id', storeId).eq('is_deleted', false).order('name')
+        .order('id')
+        .range(offset, end));
 
     final buf = StringBuffer();
     buf.writeln(_csvRow(['ID', 'Tên sản phẩm', 'SKU', 'Giá bán', 'Giá vốn',
@@ -176,9 +188,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   static Future<String> _exportStaff(String storeId) async {
-    final rows = await _db.from('store_members').select(
+    final rows = await fetchAllPages((offset, end) => _db.from('store_members').select(
         'user_id, role, created_at, user_accounts(display_name, phone)'
-    ).eq('store_id', storeId);
+    ).eq('store_id', storeId)
+        .order('user_id')
+        .range(offset, end));
 
     final buf = StringBuffer();
     buf.writeln(_csvRow(['Tên', 'SĐT', 'Vai trò', 'Ngày thêm']));

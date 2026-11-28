@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đúng món chiều (Trà tắc, Cà phê sữa đá) nhưng không nêu giờ 14h/15h, lý do vòng vo, đo 'số combo' thay vì mốc doanh thu 14–17h ≥ 288.000đ/ngày, mục 'Cần xem lại' thừa."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đúng món chiều và đo doanh thu 14–17h nhưng không có mốc giữ (≥ 288.000đ/ngày), không nêu giờ 14h/15h, 'Cần xem lại' đòi số theo giờ dù đã có."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đúng món chiều nhưng đo 'số combo' dù không có combo, không có mốc 288.000đ/ngày, không nêu giờ 14h/15h vắng nhất."
+  },
+  {
+   "id": "D02_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đúng món chiều nhưng đo 'số combo' không có mốc doanh thu 14–17h, lý do 'chưa đủ để thu hút khách' nói vòng."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Combo Trà tắc + Bạc xỉu 40.000đ giảm khoảng 15% so giá lẻ 47.000đ, làm mỏng lời Bạc xỉu (giá vốn 45%) và không có mốc đo doanh thu."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt là combo sáng cho buổi chiều, sai món bán chạy khung 14–17h."
+  },
+  {
+   "id": "D02_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đẩy combo Cà phê sữa đá + Bánh mì thịt (bán chạy buổi sáng) cho khung 14–17h, trái số liệu món bán chạy chiều."
+  },
+  {
+   "id": "D02_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy combo sáng Cà phê sữa đá + Bánh mì thịt cho buổi chiều và bảo 'kiểm tra món bán chạy chiều' dù số liệu đã có Trà tắc."
+  }
+ ]
+}

@@ -1,0 +1,170 @@
+[
+ {
+  "id": "K01",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gia_tri_don",
+  "q": "Sao dạo này mỗi bill khách trả ít hơn tháng trước vậy em? Nhóm nào kéo xuống?"
+ },
+ {
+  "id": "K02",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "gia_tri_don",
+  "q": "khach mua it tien hon moi lan ha? lam sao cho moi don nhieu tien hon chut"
+ },
+ {
+  "id": "K03",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "gia_tri_don",
+  "q": "Tiền trung bình một đơn của quán tháng này bao nhiêu, có nhỏ đi không, muốn nâng lên thì làm gì?"
+ },
+ {
+  "id": "K04",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "gia_tri_don",
+  "q": "Bill trung bình bên chị có đang tụt không em? Muốn khách gọi thêm đồ uống với món thêm cho đơn to hơn thì sao?"
+ },
+ {
+  "id": "K05",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "gia_tri_don",
+  "q": "Đơn đông lên mà sao tiền mỗi đơn lại giảm? Có phải do topping không"
+ },
+ {
+  "id": "K06",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "gia_tri_don",
+  "q": "Combo sáng có giúp tăng tiền mỗi đơn không hay kéo xuống, nên chỉnh gì?"
+ },
+ {
+  "id": "K07",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "ty_le_mon",
+  "q": "Bún bò chiếm bao nhiêu phần trăm doanh thu tháng này?"
+ },
+ {
+  "id": "K08",
+  "quan": "d",
+  "troi": "nang_nong",
+  "loai": "ty_le_mon",
+  "q": "Cơm tấm chiếm mấy phần tổng doanh thu, còn nước uống với món thêm được bao nhiêu %?"
+ },
+ {
+  "id": "K09",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "ty_le_mon",
+  "q": "ca phe chiem bao nhieu % doanh thu thang nay, banh mi thi sao"
+ },
+ {
+  "id": "K10",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "ty_le_mon",
+  "q": "Nhóm nào bán được ít tiền nhất trong quán, chiếm bao nhiêu phần?"
+ },
+ {
+  "id": "K11",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "ty_le_mon",
+  "q": "Món chủ lực của quán chị chiếm mấy phần doanh thu, có phụ thuộc quá vào 1-2 món không?"
+ },
+ {
+  "id": "K12",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "ty_le_mon",
+  "q": "Sườn trứng với sườn bì chả cộng lại chiếm bao nhiêu % vậy em"
+ },
+ {
+  "id": "K13",
+  "quan": "b",
+  "troi": "mua_sang",
+  "loai": "an_mon",
+  "q": "Mấy món ăn vặt chẳng ai gọi, chị có nên bỏ bớt không?"
+ },
+ {
+  "id": "K14",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "an_mon",
+  "q": "Menu dài quá, món nào nên ẩn đi cho gọn?"
+ },
+ {
+  "id": "K15",
+  "quan": "c",
+  "troi": "mua_chieu",
+  "loai": "an_mon",
+  "q": "mon nao thang nay chua ai goi ha em, an luon dc ko"
+ },
+ {
+  "id": "K16",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "an_mon",
+  "q": "Cơm tấm sườn cây có nên bỏ khỏi menu không em?"
+ },
+ {
+  "id": "K17",
+  "quan": "b",
+  "troi": "nang_nong",
+  "loai": "an_mon",
+  "q": "Topping nào bán ế nên cất đi? Chị muốn thực đơn gọn lại"
+ },
+ {
+  "id": "K18",
+  "quan": "c",
+  "troi": "mua_sang",
+  "loai": "an_mon",
+  "q": "Đồ uống có mấy món bán không được, giữ hay bỏ?"
+ },
+ {
+  "id": "K19",
+  "quan": "a",
+  "troi": "mua_chieu",
+  "loai": "doi_chung",
+  "q": "Tháng này doanh thu sao rồi em, thấy vắng hẳn"
+ },
+ {
+  "id": "K20",
+  "quan": "d",
+  "troi": "mua_chieu",
+  "loai": "doi_chung",
+  "q": "Tuần tới chị nên làm gì để bán được hơn?"
+ },
+ {
+  "id": "K21",
+  "quan": "b",
+  "troi": "mua_chieu",
+  "loai": "doi_chung",
+  "q": "dt thang nay so thang truoc the nao"
+ },
+ {
+  "id": "K22",
+  "quan": "c",
+  "troi": "nang_nong",
+  "loai": "doi_chung",
+  "q": "Tóm tắt giúp chị tình hình quán tháng này với"
+ },
+ {
+  "id": "K23",
+  "quan": "a",
+  "troi": "mua_sang",
+  "loai": "doi_chung",
+  "q": "Tuần sau nên tập trung vào việc gì trước?"
+ },
+ {
+  "id": "K24",
+  "quan": "d",
+  "troi": "mua_sang",
+  "loai": "doi_chung",
+  "q": "Tháng này quán chị có ổn không, chỗ nào cần để ý?"
+ }
+]

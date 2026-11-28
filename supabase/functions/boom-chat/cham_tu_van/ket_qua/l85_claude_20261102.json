@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D27_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tuần 2–4 chỉ giảm giá/tặng và quảng bá mạng xã hội chung chung, không ẩn món chưa bán (Nước cam, Sữa đậu nành)."
+  },
+  {
+   "id": "D24_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu 0,35 phần topping/đơn và mốc đo, không xử lý Trân châu trắng chưa bán."
+  },
+  {
+   "id": "D24_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gợi ý mời Pudding 'khi gọi món chính' không hợp quán trà sữa, không có mốc 0,35 → 0,45 phần/đơn."
+  },
+  {
+   "id": "D27_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không ẩn món chưa bán (Nước cam, Sữa đậu nành), tuần 3–4 chỉ là đánh giá lại."
+  },
+  {
+   "id": "D27_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tuần 2–4 lặp cùng một ý (ưu đãi Nước sâm), không ẩn món chưa bán."
+  },
+  {
+   "id": "D24_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Thiếu số 0,35 phần/đơn hiện tại và không xử lý Trân châu trắng chưa bán."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng kèm Nước sâm làm mỏng lời, không ẩn Nước cam, Sữa đậu nành."
+  },
+  {
+   "id": "D24_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Câu kết sáo 'Hy vọng...', thiếu mốc 0,45 phần/đơn và không xử lý Trân châu trắng."
+  },
+  {
+   "id": "D27_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Ẩn món chưa bán chỉ 'nếu không cải thiện' trong khi nên ẩn ngay."
+  },
+  {
+   "id": "D24_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Việc 3 (quảng bá, đo số khách hỏi) yếu và khó đo."
+  },
+  {
+   "id": "D24_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu 0,35 phần/đơn và mốc 0,45, bỏ sót Trân châu trắng chưa bán."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tuần 2 mơ hồ, không có combo giá cụ thể, không ẩn món chưa bán."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D27_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Combo Cơm sườn (giá vốn 48%) + Trà đá giảm giá làm mỏng lời, ưu đãi mua 5 tặng 1 chung chung, không nêu đồ uống chỉ ~7%."
+  },
+  {
+   "id": "D24_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Combo topping + topping và 'mua 2 tặng 1' lệch hướng, lý lẽ chung chung, không có con số mốc."
+  },
+  {
+   "id": "D24_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm 10% topping làm mỏng lời, việc làm chung chung, không mốc đo cụ thể."
+  },
+  {
+   "id": "D27_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 0
+   },
+   "loi": "Bịa 'Bún bò giá vốn thấp hơn' và đề xuất khuyến mãi món cả kỳ chưa bán — đúng điều cần tránh."
+  },
+  {
+   "id": "D27_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng kèm Nước chanh và combo với Trà đá 3.000đ ít tác dụng, không xử lý món chưa bán."
+  },
+  {
+   "id": "D24_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Tặng topping khi mua trà sữa là tặng miễn phí đại trà — điều cần tránh."
+  },
+  {
+   "id": "D27_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Quảng bá/tích điểm chung chung, combo với Trà đá giá trị thấp, không nêu đồ uống chỉ ~7%."
+  },
+  {
+   "id": "D24_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm 10% topping và 'món chính' không hợp quán trà sữa, không có con số mốc."
+  },
+  {
+   "id": "D27_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nêu đồ uống chỉ ~7% hay 0,55 phần/đơn, thiếu mốc đo bằng con số."
+  },
+  {
+   "id": "D24_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Giảm 10% topping, combo mơ hồ, không mốc đo cụ thể."
+  },
+  {
+   "id": "D24_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "'Mua 1 tặng 1' topping vào 14h–16h (15h không phải giờ vắng), đo số đơn lệch mục tiêu."
+  },
+  {
+   "id": "D27_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "'Mua 1 tặng 1' Nước sâm lúc 16–17h làm mỏng lời ở khung gần như không có khách."
+  }
+ ]
+}

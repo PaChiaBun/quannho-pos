@@ -1,4 +1,5 @@
 
+import '../modules/tinh_gio/tinh_gio_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -156,7 +157,20 @@ class ModulePickerScreen extends ConsumerWidget {
                           // Pass raw DB activate + pop as async callback
                           onTap: () async {
                             final repo = ref.read(moduleRepositoryProvider);
+                            // Tính giờ chạy trên màn Bàn → bật kèm module Bàn nếu quán chưa bật.
+                            if (d.id == 'tinh_gio' && !activeModuleIds.contains('table')) {
+                              await repo.activate('table');
+                            }
                             await repo.activate(d.id);
+                            // Vừa bật Tính giờ: hỏi loại hình để ô module mang đúng tên + biểu tượng ngành.
+                            if (d.id == 'tinh_gio' && navContext.mounted) {
+                              await showModalBottomSheet<void>(
+                                context: navContext,
+                                backgroundColor: Colors.transparent,
+                                isScrollControlled: true,
+                                builder: (_) => const TinhGioLoaiHinhSheet(),
+                              );
+                            }
                             if (navContext.mounted && Navigator.of(navContext).canPop()) {
                               Navigator.of(navContext).pop(d.id);
                             }
@@ -383,11 +397,9 @@ class _PickerCardState extends State<_PickerCard>
                             color: Colors.white.withValues(alpha: 0.20),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
-                            _isAdded ? Icons.check_rounded : d.icon,
-                            color: Colors.white,
-                            size: 22,
-                          ),
+                          child: _isAdded
+                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 22)
+                              : d.bieuTuong(size: 22, color: Colors.white),
                         ),
                       ),
                       Column(

@@ -50,7 +50,8 @@ void main() {
     lastRpcResult = null;
     lastRpcName = null;
     lastRpcParams = null;
-    currentHeaders = {'x-store-id': 's1', 'x-user-id': 'u1'};
+    // App không gửi x-user-id nữa (kế hoạch JWT Pha 2): chỉ x-store-id.
+    currentHeaders = {'x-store-id': 's1'};
   });
 
   group('Models Parsing', () {
@@ -86,7 +87,7 @@ void main() {
       'deny without calling transport when context mismatch (headers wrong)',
       () async {
         final repo = createRepo({'tinhluong.srm_settings'});
-        currentHeaders = {'x-store-id': 'wrong', 'x-user-id': 'u1'};
+        currentHeaders = {'x-store-id': 'wrong'};
 
         expect(
           () => repo.updateSettings(

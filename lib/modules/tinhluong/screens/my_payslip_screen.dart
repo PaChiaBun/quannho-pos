@@ -447,6 +447,7 @@ class _MyPayslipCardState extends ConsumerState<_MyPayslipCard> {
                                           id: record.id,
                                           staffName: record.staffName,
                                         );
+                                        if (!mounted) return;
                                         ref.invalidate(myPayslipsProvider);
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(
@@ -462,13 +463,15 @@ class _MyPayslipCardState extends ConsumerState<_MyPayslipCard> {
                                           );
                                         }
                                       } catch (e) {
+                                        if (!mounted) return;
+                                        ref.invalidate(myPayslipsProvider);
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                '❌ Có lỗi xảy ra, vui lòng thử lại',
+                                                '❌ ${TinhLuongRepository.friendlyError(e)}',
                                               ),
                                               behavior:
                                                   SnackBarBehavior.floating,

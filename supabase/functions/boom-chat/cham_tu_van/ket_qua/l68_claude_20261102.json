@@ -1,0 +1,118 @@
+{
+ "moi": [
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa số: ghi tháng trước 1150 phần xuống 620 phần (đúng là 1374 xuống 1150), lại khuyên giảm giá làm mỏng lời."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên giảm giá Cà phê sữa đá 2.000đ làm mỏng lời, không nhắm đúng giờ sáng đang mất khách."
+  },
+  {
+   "id": "D32_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề nghị tạo combo giá rẻ mà không biết quán đã có combo này (đang đắt hơn mua lẻ), cũng là giảm giá."
+  },
+  {
+   "id": "D32_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên giảm giá hoặc tặng kèm Cà phê sữa đá làm mỏng lời, không nhắm giờ 7h–8h."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc bán kèm còn chung chung, không nhắm giờ 7h–8h và bỏ sót combo đang đắt hơn mua lẻ 2.000đ."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc bán kèm còn chung chung, không nhắm giờ 7h–8h và bỏ sót combo đang đắt hơn mua lẻ 2.000đ."
+  },
+  {
+   "id": "D32_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên tăng giá hoặc giảm định lượng món đang mất khách, ngược hướng, và không nêu nguyên nhân số đơn giảm."
+  },
+  {
+   "id": "D32_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc lệch món: giảm giá Cà phê đen đá thay vì món giảm nhiều nhất, lại làm mỏng lời."
+  }
+ ]
+}

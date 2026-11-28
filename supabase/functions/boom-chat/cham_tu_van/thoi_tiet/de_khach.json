@@ -1,0 +1,10 @@
+[
+  {"id":"C01","quan":"a","troi":"mua_sang","loai":"khach","q":"may nay sang mua hoai, khach van phong quen co con ghe deu ko hay rot bot roi em"},
+  {"id":"C02","quan":"d","troi":"nang_nong","loai":"khach","q":"Khách quen quán chị dạo này có đang bỏ đi ăn chỗ khác không em, thấy ít mặt quen quá"},
+  {"id":"C03","quan":"b","troi":"mua_chieu","loai":"khach","q":"thang nay khach cu quay lai nhieu hay it, so voi khach moi thi sao, co dang mat khach ko"},
+  {"id":"C04","quan":"c","troi":"nang_nong","loai":"khach","q":"Ai là khách ruột của quán mình, chị muốn biết để để dành phần cho họ"},
+  {"id":"C05","quan":"a","troi":"nang_nong","loai":"khach","q":"muon nhan tin cho may khach lau ko ghe, viet giup c 1 tin ngan gon dc ko"},
+  {"id":"C06","quan":"d","troi":"mua_chieu","loai":"khach","q":"Có khách nào lâu rồi không ghé không em, chị tính gọi điện hỏi thăm mời quay lại"},
+  {"id":"C07","quan":"b","troi":"nang_nong","loai":"khach","q":"khach moi vo uong 1 lan roi thoi, lam sao giu ho quay lai lan 2 e"},
+  {"id":"C08","quan":"c","troi":"mua_sang","loai":"khach","q":"Muốn làm chương trình gì đó cho mấy anh công trình ăn thường xuyên, làm sao cho đỡ lỗ"}
+]

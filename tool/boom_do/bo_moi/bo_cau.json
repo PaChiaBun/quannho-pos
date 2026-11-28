@@ -1,0 +1,887 @@
+{
+ "note": "Bộ câu kiểm tra bộ tìm Boom, viết độc lập (2026-10-26). huong_dan.json hiện có 16 bài; mỗi bài 6–8 câu chia đều A/B; 16 câu lạc đề expect rỗng.",
+ "cases": [
+  {
+   "q": "khách đổi ý ko lấy nữa, xoá sạch mấy món trong giỏ sao z",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-xoa-gio-hang"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "dang tinh tien thi rot mang, ko biet khach chuyen khoan da vao chua, gio lam sao",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan",
+    "ban-hang#loi-ket-noi-mang-cham-hoac-khong-on-dinh"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "ghi chú ít đá ko đường cho từng ly",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "khách chê món dở đòi trả tiền lại, mà đơn đã thu tiền rồi thì làm sao em",
+   "expect": [
+    "ban-hang#loi-khach-muon-huy-hoan-tien-don-da-thanh-toan"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "tích điểm cho khách quen thì nhập sdt chỗ nào",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "chạm vô món nó báo hết hàng hoài",
+   "expect": [
+    "ban-hang#loi-mon-da-het-hang-khi-cham-mon",
+    "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "bấm tính tiền nó báo giá món đã đổi, cập nhật giỏ là sao",
+   "expect": [
+    "ban-hang#loi-loi-gia-mon-da-doi-cap-nhat-gio-hang-truoc-khi-thanh-toan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "khách kêu món lạ chưa có trong menu, thêm lẹ lúc đang bán đc hông",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-them-nhanh-mon-moi-vao-thuc-don"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "chuyển khách từ bàn 3 qua bàn 7",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "2 bàn đi chung 1 nhóm muốn tính chung 1 bill",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "gửi bếp 3 ly rồi khách chỉ lấy 2, kiếm hoài ko thấy nút trừ",
+   "expect": [
+    "quan-ly-ban#loi-khong-thay-nut-o-mon-da-gui-bep",
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "khach bo ve ma ban van dang mo, dong ban kieu gi",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách muốn coi trước tổng tiền chưa trả, in tờ tạm",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "mới xài app, tạo sơ đồ bàn khu trong nhà với ngoài sân sao",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "huỷ món nó đòi mã pin quản lý, nhập hoài báo sai",
+   "expect": [
+    "quan-ly-ban#loi-ma-pin-quan-ly-khong-dung",
+    "nhan-vien#cac-viec-thuong-lam-8-ma-pin-duyet-nhanh-chu-quan-quan-ly"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "pv bấm tính tiền bàn mà báo ko có quyền",
+   "expect": [
+    "quan-ly-ban#loi-ban-khong-co-quyen-thanh-toan"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "mới mua máy in bill cắm vô máy tính win, cài sao cho in đc",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bán trên trình duyệt web mà tính tiền xong hổng ra bill",
+   "expect": [
+    "in-hoa-don#loi-ban-tren-web-ma-khong-ra-bill",
+    "in-hoa-don#cac-viec-thuong-lam-7-may-chu-in-print-server"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nước uống mà toàn in ra máy bên bếp nóng",
+   "expect": [
+    "in-hoa-don#loi-do-uong-in-ra-may-bep-nong-thay-vi-bar",
+    "kho-hang#loi-phieu-bep-in-sai-tram"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bill in ra bị mất chữ 2 bên lề",
+   "expect": [
+    "in-hoa-don#loi-bill-bi-cut-mep-chu-qua-to"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "in tem dan ly tra sua",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "in bill xong két tiền ko tự bật ra, máy in cắm usb",
+   "expect": [
+    "in-hoa-don#loi-ket-khong-mo-voi-may-in-usb-tren-windows",
+    "in-hoa-don#cac-viec-thuong-lam-9-ket-tien"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "máy sunmi cài lại app xong hết in luôn",
+   "expect": [
+    "in-hoa-don#loi-sunmi-cai-lai-app-thi-khong-in-nua"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "muốn để logo quán với số tài khoản lên hoá đơn",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-8-thiet-ke-mau-in"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "thêm nv mới vô quán mà kiếm ko ra nút thêm",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nv quên mk đăng nhập ko đc",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch",
+    "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nhân viên nghỉ làm rồi, cho nó ra khỏi quán",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-3-xoa-nhan-vien-khoi-quan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nv nhập mã quán rồi mà vô app trống trơn ko có mục nào",
+   "expect": [
+    "nhan-vien#loi-nhan-vien-ket-noi-ma-quan-ma-khong-thay-module-nao"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cho con bé phục vụ lên làm thu ngân",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-1-gan-doi-vai-tro-cho-nhan-vien"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "tắt quyền giảm giá rồi mà tụi nó vẫn giảm được là sao",
+   "expect": [
+    "nhan-vien#loi-tat-quyen-roi-ma-nhan-vien-van-lam-duoc"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cài mã pin 6 số để tui duyệt huỷ món",
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-8-ma-pin-duyet-nhanh-chu-quan-quan-ly"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "mat khau tam qua 1 ngay roi dang nhap ko dc",
+   "expect": [
+    "nhan-vien#loi-mat-khau-tam-da-het-han-qua-24-gio"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "tạo mã giảm 10% cho khách dịp khai trương",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bao nhiêu tiền thì được 1 điểm, chỉnh lại đc ko",
+   "expect": [
+    "khach-hang#cach-tinh-diem-hang-vi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách gửi trước 500k để trừ dần mỗi lần uống",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nap 1tr tang them 10% thi tao o dau",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-3-tao-goi-nap-khuyen-khich-nap-vi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách đủ điểm muốn đổi ly cà phê free",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-5-phan-thuong-doi-diem"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nhập sđt khách quen mà nó nói ko có",
+   "expect": [
+    "khach-hang#loi-khong-tim-thay-khach-hang-khi-thanh-toan",
+    "ban-hang#loi-khong-tim-thay-khach-hang"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nhập voucher báo hết hạn mà mới tạo hôm qua",
+   "expect": [
+    "khach-hang#loi-ma-giam-gia-da-het-han-su-dung-chua-den-thoi-gian-ap-dung-da"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "đang nạp ví cho khách thì rớt wifi, hổng biết nạp vô chưa",
+   "expect": [
+    "khach-hang#loi-chua-ro-da-nap-hay-chua-do-mat-ket-noi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "mới về 2 thùng bia, nhập vô kho sao",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon",
+    "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "hôm nay hết bò kho, tạm ko bán món đó",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "gắn trân châu vô trà sữa làm topping",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-2-topping-tra-sua-com-them"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "ton kho bi am la sao",
+   "expect": [
+    "kho-hang#loi-ton-am"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "món bị mờ chữ Hết bấm không được",
+   "expect": [
+    "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "cho khách chọn mức cay, thêm mực thì cộng 15k",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-3-tuy-chon-mon-modifiers-va-ghi-chu-nhan"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "bể mấy cái ly, trừ bớt trong kho",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "coi lại sữa tươi nhập bao nhiêu lần, bán ra bao nhiêu",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-9-xem-lich-su-mot-mon"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "làm sao cho khách quét mã tự gọi món tại bàn",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "khách quét mã nó báo liên kết ko hợp lệ",
+   "expect": [
+    "qr-goi-mon#loi-khach-lien-ket-goi-mon-khong-hop-le"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách tự order trên đt thì nv nhận đơn ở đâu",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-3-nhan-don-moi-nhan-vien"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "don qr mang di thu tien roi gui bep sao",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-5-thu-tien-va-gui-bep-don-mang-di"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách đặt qua qr mà món đó hết rồi, không nhận đơn được",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-6-tu-choi-don"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "có đứa phá quét mã liên tục, giờ khách đặt ko được",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-7-khi-ma-qr-bi-khoa-bi-quet-pha",
+    "qr-goi-mon#loi-khach-quan-tam-ngung-nhan-don-qua-ma-qr-nay-do-co-luot-quet"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách xài wifi quán đặt món bị báo thao tác quá nhanh",
+   "expect": [
+    "qr-goi-mon#loi-khach-ban-thao-tac-qua-nhanh-vui-long-doi-mot-lat-roi-thu-la"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "khách chọn chuyển khoản thì báo chưa cấu hình vietqr",
+   "expect": [
+    "qr-goi-mon#loi-chua-cau-hinh-tai-khoan-vietqr-trong-muc-thiet-lap-cua-modul"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cuối tháng tính lương cho nv sao",
+   "expect": [
+    "luong#cac-viec-thuong-lam-2-tao-ky-luong",
+    "luong#cac-viec-thuong-lam-1-cau-hinh-luong-lam-truoc-khi-tao-ky"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "cài lương theo giờ cho mấy đứa phục vụ",
+   "expect": [
+    "luong#cac-viec-thuong-lam-1-cau-hinh-luong-lam-truoc-khi-tao-ky"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "đã trả lương rồi mà phiếu vẫn nằm chờ xác nhận",
+   "expect": [
+    "luong#loi-da-bam-tra-luong-ma-phieu-van-o-cho-xac-nhan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "lương con bé thu ngân tháng này ít bất thường",
+   "expect": [
+    "luong#loi-luong-it-bat-thuong",
+    "cham-cong#loi-ca-bi-tru-50"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nv muốn coi phiếu lương của mình ở đâu",
+   "expect": [
+    "luong#cac-viec-thuong-lam-6-nhan-vien-xem-phieu-xac-nhan-khieu-nai"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "ko gửi duyệt kỳ lương đc, báo còn vấn đề",
+   "expect": [
+    "luong#loi-khong-the-gui-duyet-ky-luong-chua-san-sang-do-con-cac-van-de"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "quan ly ko thay nut tra luong",
+   "expect": [
+    "luong#loi-khong-thay-nut-duyet-ky-tra-luong"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "lỡ duyệt kỳ rồi giờ muốn sửa lương 1 người",
+   "expect": [
+    "luong#loi-ky-luong-da-duyet-so-lieu-bi-khoa"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "coi doanh thu hôm qua ở đâu",
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "món nào bán chạy nhất tháng này",
+   "expect": [
+    "bao-cao#tung-tab-san-pham"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "khách xin in lại bill hôm kia",
+   "expect": [
+    "bao-cao#tung-tab-hoa-don",
+    "bao-cao#loi-khong-tim-thay-bill-cu-o-tab-hoa-don"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "thang nay quan loi hay lo",
+   "expect": [
+    "bao-cao#tung-tab-tai-chinh"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "ai huỷ món tối qua, ai duyệt",
+   "expect": [
+    "bao-cao#tung-tab-huy-duyet"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "lợi nhuận bên báo cáo với sổ thu chi lệch nhau",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "tui có 2 quán muốn coi doanh thu gộp chung",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "mở thêm chi nhánh 2 tạo quán mới sao",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "chip đỏ chip xanh cạnh tên quán nghĩa là gì",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-4-hieu-chip-tang-giam"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "sao tui ko thấy nút báo cáo chuỗi",
+   "expect": [
+    "bao-cao#loi-khong-thay-nut-bao-cao-chuoi"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "thêm quán vô chuỗi báo đã thuộc chuỗi khác",
+   "expect": [
+    "bao-cao-chuoi#loi-cua-hang-nay-da-thuoc-mot-chuoi-khac"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "quán quận 3 tuần này giảm mạnh mà chip lại màu xám",
+   "expect": [
+    "bao-cao-chuoi#loi-quan-giam-manh-ma-chip-xam"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "bếp ko nghe chuông khi có món mới",
+   "expect": [
+    "bep#loi-khong-nghe-chuong"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bếp làm xong món bấm sao cho phục vụ biết ra món",
+   "expect": [
+    "bep#cac-viec-thuong-lam-1-nhan-va-lam-phieu"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "món kem tráng miệng chạy qua màn bên pha chế",
+   "expect": [
+    "bep#loi-mon-nam-sai-tram-vd-mon-trang-mieng-co-chu-kem-vao-bep-nuoc"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "tinh tien o quay may tinh ma bep ko thay don",
+   "expect": [
+    "bep#loi-don-ban-o-quay-pc-khong-len-man-bep"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "lỡ bấm xong mà món còn thiếu, lấy phiếu lại",
+   "expect": [
+    "bep#cac-viec-thuong-lam-2-mo-lai-don-phieu"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "màn hình quầy nước chỉ hiện đồ uống thôi đc ko",
+   "expect": [
+    "bep#cac-viec-thuong-lam-5-loc-theo-tram"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nv chấm công vô ca sao",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-2-vao-ca-nhan-vien"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "quên bấm ra ca bị trừ nửa lương",
+   "expect": [
+    "cham-cong#loi-ca-bi-tru-50",
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cai dia diem quan de cham cong",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-1-cai-vi-tri-quan-chu-quan-quan-ly-lam-m"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nv làm quá giờ duyệt tăng ca sao",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-5-duyet-tang-ca-ot"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "đứng trong quán mà báo lệch vị trí",
+   "expect": [
+    "cham-cong#loi-dinh-vi-lech-pham-vi"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "quản lý mở chấm công chỉ thấy ca của mình, ko thấy người khác",
+   "expect": [
+    "cham-cong#loi-quan-ly-mo-cham-cong-chi-thay-ca-cua-minh"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "bán 1 ly thì tự trừ cà phê, sữa trong kho, cài sao",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-2-tao-cong-thuc-mon"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bán cả chục ly mà cà phê hạt trong kho ko giảm",
+   "expect": [
+    "kho-chuyen-nghiep#loi-ban-mon-ma-nguyen-lieu-khong-giam"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "gia von moi ly cao vot ca ngan lan",
+   "expect": [
+    "kho-chuyen-nghiep#loi-gia-von-phan-cao-bat-thuong-gap-1-000-lan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nấu nồi nước lèo rồi chia ra từng tô thì nhập kho kiểu gì",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-3-ban-thanh-pham-pha-cot-nau-nuoc-dung-l"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cuối tháng đếm lại hàng trong kho",
+   "expect": [
+    "kho-chuyen-nghiep#cac-viec-thuong-lam-4-kiem-ke-kho"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "sữa đặc mua theo lon mà công thức tính gram, nó hiện cảnh báo vàng",
+   "expect": [
+    "kho-chuyen-nghiep#loi-canh-bao-vang-lech-don-vi-trong-form-cong-thuc",
+    "kho-hang#cac-viec-thuong-lam-4-quy-cach-pha-che-mua-theo-lon-hop-tru"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "muốn coi ai huỷ bàn lúc 9h tối qua",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "gửi log lỗi cho bên hỗ trợ",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "log máy in tháng trước sao mất tiêu",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-4-may-chu-tu-don-log-cu"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "xoa nhat ky cho nhe may",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-3-xoa-nhat-ky"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "mở nhật ký ra trống trơn ko có dòng nào",
+   "expect": [
+    "nhat-ky-log#loi-vui-long-chon-bo-loc-va-nhan-nut-truy-xuat-log-de-tai-nhat-k",
+    "nhat-ky-log#loi-khong-tim-thay-ban-ghi-nhat-ky-nao"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "bấm sao chép log báo ko có gì để chép",
+   "expect": [
+    "nhat-ky-log#loi-khong-co-nhat-ky-de-sao-chep"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "ghi tiền điện tháng này",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "lỡ ghi sai 1 khoản chi, xoá sao",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham",
+    "thu-chi#loi-khong-xoa-duoc-mot-khoan"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "xuat so quy gui ke toan",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "thu ngân hổng vô được mục thu chi",
+   "expect": [
+    "thu-chi#loi-khong-vao-duoc-thu-chi-thu-ngan-phuc-vu"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "nhập hàng xong có cần ghi chi bằng tay nữa ko",
+   "expect": [
+    "thu-chi#khoan-thu-chi-tu-dong-khong-can-ghi-tay"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "lời trên app thấp hơn thực tế, sợ bị ghi trùng tiền nhập hàng",
+   "expect": [
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "giao việc dọn vệ sinh cho nv ca sáng mỗi ngày",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "nv nói ko thấy việc tui mới tạo",
+   "expect": [
+    "van-hanh#loi-nhan-vien-khong-thay-viec-da-tao"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "cuối ca dặn lại ca sau máy pha hư nút steam",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "có sẵn danh sách việc mẫu cho pha chế ko",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-2-quan-ly-nap-checklist-mau"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "coi hôm nay tụi nv làm xong bao nhiêu việc rồi",
+   "expect": [
+    "van-hanh#cac-viec-thuong-lam-6-quan-ly-theo-doi-trong-ngay"
+   ],
+   "nhom": "A"
+  },
+  {
+   "q": "tick xong việc mà báo lưu ảnh thất bại",
+   "expect": [
+    "van-hanh#loi-hoan-thanh-luu-anh-that-bai"
+   ],
+   "nhom": "B"
+  },
+  {
+   "q": "giá cà phê hạt robusta tháng này bao nhiêu",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "cach nau pho bo ngon",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "mở quán cà phê cần giấy phép gì",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "thuế hộ kinh doanh năm nay đóng bao nhiêu",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "hôm nay trời có mưa ko",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "tư vấn mặt bằng mở quán quận 7",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "công thức pha trà sữa trân châu đường đen",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "lam sao giu chan nhan vien gioi",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "kết quả bóng đá tối qua",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "nên vay ngân hàng hay vay người quen để mở quán",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "viết giúp bài đăng facebook khai trương quán",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "bao hiem xa hoi cho nv bat buoc ko",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "cách làm bánh flan",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "giá vàng hôm nay",
+   "expect": [],
+   "nhom": "B"
+  },
+  {
+   "q": "tuyển nv phục vụ đăng ở đâu cho nhanh",
+   "expect": [],
+   "nhom": "A"
+  },
+  {
+   "q": "ăn gì để giảm cân",
+   "expect": [],
+   "nhom": "B"
+  }
+ ]
+}

@@ -1,0 +1,780 @@
+{
+ "note": "Bộ Q — hội thoại 2 lượt (kín), 28/10/2026",
+ "cases": [
+  {
+   "q1": "tháng này quán mình lỗ hay lời vậy boom",
+   "q2": "lời đc mấy % trên tiền thu z",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "7 ngày vừa rồi bán buôn sao rồi",
+   "q2": "ngày nào thấp nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "days:7",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "food cost thang 9 co cao ko",
+   "q2": "vì sao cao, món nào kéo lên",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "month:2026-9",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hnay mấy giờ khách vô đông nhất",
+   "q2": "còn giờ vắng nhất?",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này nhập hàng tốn hết bn tiền",
+   "q2": "nhập nhiều nhất là món j",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "nhìn số cả năm nay thì quán có khá lên ko em",
+   "q2": "tháng nào tụt nhất z",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hqua thu vô đc nhiu",
+   "q2": "trong đó ck bn",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng rồi ly nào bán chạy nhất",
+   "q2": "top 5 luôn đi",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "quý 3 vừa rồi quán làm ăn ra sao",
+   "q2": "chi phí mục nào ăn nhiều nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "kho còn bao nhiêu kg trân châu đen",
+   "q2": "vậy đủ bán mấy ngày nữa",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "30 ngày qua mỗi bill tb bao nhiêu tiền",
+   "q2": "vậy có nên làm combo cho tăng lên ko",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "days:30",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng 7 hủy món nhiều ko",
+   "q2": "ai hủy nhiều nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "month:2026-7",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này bán đc bao nhiêu ly rồi",
+   "q2": "sao giảm so với tuần rồi z",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "biên lời tháng này mấy %",
+   "q2": "vậy là ổn hay tệ",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tiền điện nước tháng rồi hết bn",
+   "q2": "có cao quá so với tiền thu ko",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "lương nv tháng 9 tổng bao nhiêu",
+   "q2": "so với quán bình thường thì nhiều hay ít",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "month:2026-9",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm qua được mấy đơn",
+   "q2": "ít hơn mọi khi đúng ko, tại sao",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần trước thu bn",
+   "q2": "vậy tệ hơn tuần trước nữa ko, do đâu",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "giá vốn ly trà sữa trân châu bn",
+   "q2": "bán 30k vậy lời có đủ ko",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "năm nay tiền mặt bằng chiếm bao nhiêu phần",
+   "q2": "nhiu đó có nặng quá ko",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng này hao hụt hết bao nhiêu tiền",
+   "q2": "mức đó chấp nhận đc ko boom",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "30 ngày qua có bn khách quay lại",
+   "q2": "vậy là ít hay nhiều",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "days:30",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm nay chi nhánh Q1 bán sao rồi",
+   "q2": "còn cn 2?",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "khung trưa hnay đc bn",
+   "q2": "khung tối thì sao",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "ca sáng hqua thu nhiu",
+   "q2": "ca chiều?",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này quán Gò Vấp lời ko",
+   "q2": "bên Thủ Đức thì sao",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng rồi khung 6h-9h sáng bán đc mấy ly",
+   "q2": "sáng thấp vậy có nên mở muộn hơn ko",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "ca tối nay ai thu tiền nhiều nhất",
+   "q2": "ca sáng thì ai",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "today",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng này chi nhánh 1 với chi nhánh 2 bên nào lời hơn",
+   "q2": "sao cn 2 thấp vậy",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "cuối tuần rồi giờ trưa đông ko",
+   "q2": "con buoi chieu",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "phân tích giúp tháng này vì sao lời ít",
+   "q2": "nói lại ngắn gọn thôi",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần rồi chi phí tăng do đâu vậy",
+   "q2": "mỗi con số tổng thôi",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "dựa vào bán 7 ngày qua thì nên nhập thêm nguyên liệu gì",
+   "q2": "số lượng cụ thể bao nhiêu",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "days:7",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "food cost tháng 9 cao vậy nên giảm sao",
+   "q2": "giam kieu gi cu the",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "month:2026-9",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "đánh giá giúp nv nào bán tốt tháng rồi",
+   "q2": "chi tiết hơn chút đi",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm qua vắng hơn bình thường là sao",
+   "q2": "tóm lại 3 ý thôi",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "quý 3 có món nào nên bỏ khỏi menu ko",
+   "q2": "món đó bán đc bn ly cụ thể",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "năm nay quán đi lên hay đi xuống, phân tích giùm",
+   "q2": "viết gọn lại dùm, dài quá",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "year:2026",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm nay bán bn rồi",
+   "q2": "tháng 7 nhập hàng hết bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "month:2026-7",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này lời ko",
+   "q2": "trà đào cam sả bán 35k có hợp lý ko",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng này food cost bn",
+   "q2": "kinh nghiệm giữ chân thợ pha chế làm lâu",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hqua ca chiều thu bn",
+   "q2": "quý 3 món nào bán chạy nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "quarter:2026-3",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng rồi lời bao nhiêu",
+   "q2": "quán nhỏ có nên làm thẻ tích điểm ko",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "30 ngày qua chi phí bn",
+   "q2": "hôm nay có đơn nào bị hủy ko",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "today",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "năm nay tổng thu bn",
+   "q2": "mở thêm đồ ăn vặt buổi chiều có nên ko",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần trước bán mấy ly",
+   "q2": "kho hiện còn bao nhiêu sữa tươi",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng này khách mới nhiều ko",
+   "q2": "cơm tấm sườn bì chả bán 45k ở quận 7 có mắc ko",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hnay đông giờ nào",
+   "q2": "tuần trước ai đi làm trễ nhiều nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm nay bán đc bn",
+   "q2": "tối nay MU đá với ai z",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này lời ko",
+   "q2": "mai sg có mưa ko boom",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng rồi thu bn",
+   "q2": "app nào quản lý quán tốt hơn app này",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hqua mấy đơn",
+   "q2": "hay quá boom",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "food cost thang nay",
+   "q2": "cam on nha",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "chi phí tuần rồi bn",
+   "q2": "toi nay co da banh ko",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hnay thu bn rồi",
+   "q2": "boom ơi kể chuyện cười đi",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "lời tháng 9 bao nhiêu",
+   "q2": "so voi kiotviet thi app nay sao",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "giờ nào hôm qua đông nhất",
+   "q2": "giỏi ghê, cảm ơn em",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "nhập hàng tháng này hết bn",
+   "q2": "chào buổi sáng nha boom",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "Q"
+  },
+  {
+   "q1": "làm sao gộp 2 bàn lại 1",
+   "q2": "còn chuyển bàn thì sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "bật qr gọi món ở đâu",
+   "q2": "in mã ra dán bàn kiểu gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan",
+    "qr-goi-mon#man-hinh-ma-qr-goi-mon-chu-quan-quan-ly"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "cách xoá khoản chi ghi nhầm",
+   "q2": "sao khoản có chữ auto ko xoá đc",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "thu-chi#loi-khong-xoa-duoc-mot-khoan"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "sửa giá món ở đâu vậy",
+   "q2": "tiện đổi món đó sang in bên bar luôn thì sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu",
+    "ban-hang#cac-viec-thuong-lam-them-nhanh-mon-moi-vao-thuc-don",
+    "kho-hang#man-hinh-gom-nhung-gi"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "cho nv lên quản lý sao",
+   "q2": "quản lý có tự gán quản lý cho người khác đc ko",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "nhan-vien#loi-quan-ly-khong-duoc-phep-gan-vai-tro-quan-ly",
+    "nhan-vien#ai-dung-duoc"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "máy in ko in bill",
+   "q2": "in thử ở đâu",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-10-in-thu"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "khách đổi món sau khi in tạm tính rồi làm sao",
+   "q2": "phải có pin quản lý hả",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon",
+    "nhan-vien#cac-viec-thuong-lam-8-ma-pin-duyet-nhanh-chu-quan-quan-ly"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "xem ai huỷ món ở đâu",
+   "q2": "lọc theo từng nv đc ko",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tìm khách bằng sđt chỗ nào",
+   "q2": "gõ vô mà ko thấy khách luôn là sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "ban-hang#loi-khong-tim-thay-khach-hang",
+    "khach-hang#loi-khong-tim-thay-khach-hang-khi-thanh-toan"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "báo cáo lãi với sổ thu chi lệch nhau",
+   "q2": "phải chọn quỹ nào cho khớp",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "thêm bàn mới sao",
+   "q2": "đổi thứ tự khu vực kéo thả đc ko",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#man-hinh-gom-nhung-gi"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tắt qr mang đi sao",
+   "q2": "tắt rồi khách quét thì hiện gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#loi-khach-quan-tam-ngung-nhan-don-qua-qr-vui-long-goi-nhan-vien"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hôm nay bán bn",
+   "q2": "sơ đồ bàn muốn sửa tên hay xoá bàn thì chỗ nào",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tuần này lời ko",
+   "q2": "tạm tắt qr gọi món tại bàn sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#man-hinh-ma-qr-goi-mon-chu-quan-quan-ly",
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "tháng này huỷ nhiều ko",
+   "q2": "muốn biết ai xoá món trong bàn thì xem chỗ nào",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bao-cao#tung-tab-huy-duyet",
+    "nhat-ky-log#app-ghi-lai-nhung-gi-vi-du"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "giờ nào đông nhất",
+   "q2": "máy in báo in hoá đơn thất bại phải làm sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "ban-hang#loi-in-hoa-don-that-bai-kiem-tra-may-in-roi-bam-in-hoa-don"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "hqua bao nhiêu đơn",
+   "q2": "bàn 5 in tạm tính rồi mà khách đòi bớt 1 ly thì làm sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "chi phí tháng này",
+   "q2": "lỡ ghi chi 500k thành 5 triệu, sửa sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "lời tháng 9 bn",
+   "q2": "sao báo cáo lời với thu chi ra 2 số khác nhau",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi",
+    "thu-chi#loi-loi-nhuan-thap-hon-thuc-te"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "món nào bán chạy",
+   "q2": "tăng giá bạc xỉu lên 30k chỉnh ở đâu",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "kho-hang#man-hinh-gom-nhung-gi"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "khách quen tháng này",
+   "q2": "kiếm khách theo số đt chỗ nào",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "khach-hang#man-hinh-gom-nhung-gi",
+    "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem"
+   ],
+   "nhom": "Q"
+  },
+  {
+   "q1": "lương nv tháng rồi",
+   "q2": "cấp quyền quản lý cho bạn Tâm sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-1-gan-doi-vai-tro-cho-nhan-vien",
+    "nhan-vien#ai-dung-duoc"
+   ],
+   "nhom": "Q"
+  }
+ ]
+}

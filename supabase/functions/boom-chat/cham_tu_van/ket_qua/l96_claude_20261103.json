@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D04_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ hẳn hàng sắp hết (sữa đặc, cà phê, ly), phần 'vì sao' rỗng, việc làm chung chung."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nêu hao hụt trân châu 7 kg ≈ 315.000đ và cách nấu mẻ nhỏ; lặp ý 'xem số ly bán' hai lần."
+  },
+  {
+   "id": "D04_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Việc làm chung chung, không nêu hàng sắp hết, vẫn nói 'có thể cao hơn bình thường'."
+  },
+  {
+   "id": "D44_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Nhắc hao hụt 7 kg chỉ như một số trong công thức, không khuyên nấu mẻ nhỏ theo giờ; chưa nêu số sữa tươi cần nhập."
+  },
+  {
+   "id": "D53_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Thiếu lý lẽ và gợi ý đặt bánh theo lượng bán từng ngày."
+  },
+  {
+   "id": "D04_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói hao hụt 'cao nếu so với lượng nhập' không có căn cứ (600k/27,6tr chỉ ~2%), bỏ hàng sắp hết."
+  },
+  {
+   "id": "D53_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chưa chỉ rõ bánh mì là nguồn hao chính và cách đặt theo ngày; việc làm còn khá chung."
+  },
+  {
+   "id": "D44_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không nhấn ly 700ml đã hết cần nhập ngay, bỏ hao hụt trân châu 7 kg và cách nấu mẻ nhỏ."
+  },
+  {
+   "id": "D04_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Bỏ hàng sắp hết (sữa đặc 3/12, cà phê 2,5/5, ly 150/300); dòng đầu chưa trả lời thẳng."
+  },
+  {
+   "id": "D53_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc làm chỉ là 'kiểm tra bảo quản', chưa nói đặt bánh theo lượng bán từng ngày."
+  },
+  {
+   "id": "D53_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa chỉ rõ bánh mì là chỗ hao chính (~3,4 ổ/ngày) và ngày vắng đặt ít hơn."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Đưa nguyên khối 'Điểm cần chú ý' vào cuối mà không nối hao hụt trân châu với cách nấu mẻ nhỏ; công thức thiếu 'trừ hao hụt'."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D04_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Tự phán hao hụt 'khá cao so với giá trị tồn kho' trái chỉ dẫn khối, lý do 'bảo quản' là đoán, hàng sắp hết nêu không kèm số."
+  },
+  {
+   "id": "D44_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'nhập ít nhất 5 kg trân châu đủ dùng tháng 11' (khối chỉ cho 3,5 kg lên tối thiểu), bỏ hao hụt 7 kg nấu dư."
+  },
+  {
+   "id": "D04_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đoán 'quản lý kho chưa chặt' không có căn cứ, bỏ hàng sắp hết, việc làm chung chung."
+  },
+  {
+   "id": "D44_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'nhập 5 kg trân châu đủ dùng tháng 11', bỏ ly 700ml đã hết và hao hụt 7 kg."
+  },
+  {
+   "id": "D53_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không chỉ ra bánh mì là chỗ hao chính và cách đặt bánh theo ngày (~3,4 ổ/ngày bỏ đi); lý lẽ chung chung."
+  },
+  {
+   "id": "D04_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Tự phán 'khá cao so với tồn kho' trái chỉ dẫn, bỏ hàng sắp hết, việc làm chung chung."
+  },
+  {
+   "id": "D53_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chỉ khuyên 'kiểm tra bảo quản', không có việc cụ thể, không lý lẽ."
+  },
+  {
+   "id": "D44_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'nhập ít nhất 5 kg đủ dùng tháng 11', bỏ hao hụt trân châu."
+  },
+  {
+   "id": "D04_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Tự phán 'con số khá cao' trái chỉ dẫn, bỏ hàng sắp hết, lý lẽ chung chung."
+  },
+  {
+   "id": "D53_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Lý lẽ chung chung ('ảnh hưởng lợi nhuận'), 'cần xem lại báo cáo' mơ hồ."
+  },
+  {
+   "id": "D53_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc làm chung ('nhập đúng số lượng cần thiết'), không con số cụ thể."
+  },
+  {
+   "id": "D44_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa 'nhập 5 kg trân châu đủ dùng tháng 11', bỏ hao hụt 7 kg nấu dư."
+  }
+ ]
+}

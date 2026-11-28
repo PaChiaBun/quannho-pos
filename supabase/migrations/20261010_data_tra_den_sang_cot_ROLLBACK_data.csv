@@ -1,0 +1,4 @@
+id,recipe_id,ingredient_id,quantity,unit,yield_factor,name
+a380bc67-bfa4-4f77-84f1-eb01e1b6e3e1,29abdde6-497b-4f08-9e7d-3cb3f392e10b,d84a5280-2566-4849-8c7b-614ffff38e43,200,ml,0.95,Trà Sữa Hong Kong
+f3acb14d-49e8-4520-82b0-e2d48ea8d34c,22e6a3eb-0ff8-4087-9970-8c1f6c02ce2f,d84a5280-2566-4849-8c7b-614ffff38e43,100,ml,0.9,Trà Sữa Bơ Đậu Phộng
+f5a6393f-f7fe-4e2e-a1e5-d7f41da97159,ad8e2c8c-3918-4ac0-bb49-f77ee4a94103,d84a5280-2566-4849-8c7b-614ffff38e43,550,ml,0.9,Trà Tắc

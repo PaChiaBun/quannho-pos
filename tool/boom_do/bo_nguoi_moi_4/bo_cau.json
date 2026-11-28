@@ -1,0 +1,389 @@
+{
+ "note": "Lô 4 (04/11/2026): nhân viên mới, trà sữa, quán có bàn, chủ quán. Expect là đoạn đã đọc thấy trả lời đúng, dùng đo hồi quy.",
+ "cases": [
+  {
+   "q": "tui mới vô làm, chủ quán kêu tải app, vô quán kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "mã quán nhập ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "nhập mã quán rồi mà vô không thấy gì hết",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#loi-nhan-vien-ket-noi-ma-quan-ma-khong-thay-module-nao"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "sao mình không thấy nút báo cáo",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-khong-thay-nut-bao-cao-chuoi"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "bấm nhầm món vô giỏ thì bỏ sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "khách kêu đổi món sau khi đã gửi bếp",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-4-duyet-don-tai-ban"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "ghi chú ít đá cho ly này ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "bàn 3 gọi thêm món thì làm sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-3-goi-mon"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "in tạm tính cho khách coi trước",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "quên bấm vào ca sáng nay rồi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#loi-quen-bam-vao-ca-muon-sua-gio-vao-ca"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "xin đổi ca với bạn khác trên app được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "xem lương của mình ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "luong#loi-da-bam-tra-luong-ma-phieu-van-o-cho-xac-nhan"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "ban mang di co so thu tu goi khach khong",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "tem in ra bị lệch",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "tạo combo 2 ly giảm giá sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1b-tao-combo"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "giờ vàng tự động giảm giá được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "hết trân châu muốn khách quét mã không đặt được",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "máy in tem kết nối sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "khách mua 10 ly tặng 1 cài được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "nhap 1 thung sua 48 hop thi ghi sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-4-quy-cach-pha-che-mua-theo-lon-hop-tru"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "sửa tên bàn ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "xoá khu vực sân thượng sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "bếp coi món trên màn hình ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bep#man-hinh-gom-nhung-gi"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "phụ thu đêm với VAT 8% cài chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-8-thanh-toan-ca-ban"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "tính phí dịch vụ 5% trên bill được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-8-thanh-toan-ca-ban"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "khách đặt bàn trước có ghi được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "in 2 liên bill cho khách với quán giữ",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "đổi logo trên bill",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-6-doi-sua-ten-quan-ten-cua-hang-in-tren"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "xem món nào lời nhiều nhất ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-san-pham"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "nhân viên nào bán nhiều nhất coi ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-san-pham"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "ai huỷ món coi ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#tung-tab-huy-duyet"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "muốn tải dữ liệu về máy sao lưu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-14-sao-luu-tai-du-lieu-ve-may-bao-cao-th"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "xem ai đã sửa giá món",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "mất điện thoại thì làm sao để người ta không vô app quán mình",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-15-mat-dien-thoai-so-nguoi-khac-vao-app"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "mở chi nhánh thứ 2 thì tạo sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "nhập món hàng loạt bằng excel được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "chuyển quán cho người khác làm chủ được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-10-xoa-han-quan-xoa-tai-khoan-doi-so-die"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "báo cáo thuế hộ kinh doanh có không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-14-sao-luu-tai-du-lieu-ve-may-bao-cao-th"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "máy in wifi đổi mạng không in được",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-2-them-may-in-may-in-luat-in-tab-may-in"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "đơn QR tới có chuông không, sao không nghe",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#loi-don-qr-toi-khong-nghe-chuong"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "thêm món vào menu bấm vào đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-goi-mon"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "máy in kết nối sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "in-hoa-don#cac-viec-thuong-lam-ket-noi-cai-may-in-moi-mua-voi-app-chon"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "thêm nhân viên thế nào",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "tạo mã giảm giá ở đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "ghi tiền điện vào đâu",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "nhân viên chấm công kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-4-xem-chi-tiet-mot-ca-chu-quan-quan-ly"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "bán 1 đơn cho khách thì làm sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#cac-viec-thuong-lam-ban-1-don-cho-khach-tu-dau-den-cuoi"
+   ],
+   "chu_de": "lô 4 theo vai"
+  },
+  {
+   "q": "không có mạng thì bán được không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-3-mat-mang-co-ban-duoc-khong"
+   ],
+   "chu_de": "lô 4 theo vai"
+  }
+ ]
+}

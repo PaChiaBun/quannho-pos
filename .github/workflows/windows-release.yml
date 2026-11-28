@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows App (Release)
-        run: flutter build windows --release --no-tree-shake-icons
+        run: flutter build windows --release --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn
 
       - name: Build MSIX Package
         run: flutter pub run msix:create
