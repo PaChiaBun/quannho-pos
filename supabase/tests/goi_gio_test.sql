@@ -98,6 +98,11 @@ BEGIN
   INSERT INTO public.ban_gia_gio_cau_hinh (table_id, store_id, toi_thieu_phut) VALUES (T3, S, 180);
   PERFORM public._gg_ok((public._gg_tien(T3, '2026-11-30 14:00+07', 90, 120, 100000)->>'thanh_tien')::numeric = 160000,
     'G9 gói 120 + tối thiểu 180: 100.000 + 60 phút = 160.000');
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'qn_tinh_gio_tinh_tien_v3' AND prosrc LIKE '%thay cho "chơi tối%') THEN
+    PERFORM public._gg_ok((public._gg_tien(T3, '2026-11-30 14:00+07', 30, 50, 0)->>'thanh_tien')::numeric = 0
+      AND (public._gg_tien(T3, '2026-11-30 14:00+07', 70, 50, 0)->>'thanh_tien')::numeric = 20000,
+      'G9b phần gói còn lại (giá 0) thay tối thiểu 180: chơi 30 phút 0 đ, chơi 70 phút lố 20 = 20.000');
+  END IF;
 
   FOR i IN 1 .. 2000 LOOP
     v_phut := 1 + floor(random() * 3000)::int;

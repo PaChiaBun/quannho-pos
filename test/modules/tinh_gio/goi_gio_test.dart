@@ -39,6 +39,9 @@ void main() {
   test('G9 tối thiểu dài hơn gói thì tối thiểu thắng', () {
     expect(t(90, c: const GiaGioCaiDat(toiThieu: 180)), 160000);
     expect(t(200, goi: 80, gia: 0, c: const GiaGioCaiDat(toiThieu: 180)), 120000); // G13b
+    // G9b: phần gói còn lại (giá 0) thay tối thiểu: còn 50 phút, tối thiểu 180, chơi 30 → 0 đ (trước 28/11: 130.000)
+    expect(t(30, goi: 50, gia: 0, c: const GiaGioCaiDat(toiThieu: 180)), 0);
+    expect(t(70, goi: 50, gia: 0, c: const GiaGioCaiDat(toiThieu: 180)), 20000);
   });
 
   test('G10 hồi quy: không gói = như trước đợt 7', () {

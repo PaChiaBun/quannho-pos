@@ -93,7 +93,7 @@ Chọn gói cho khách đang chơi:
 
 Hoá đơn và phiếu tạm tính của bàn có cọc in thêm "Đã cọc (ví khách)" và "CÒN PHẢI TRẢ"; mã QR chuyển khoản trên đó lấy số còn phải trả.
 
-Tiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ "chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ". Ai có quyền thu tiền chọn gói được; **đổi hoặc bỏ** gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong "Đặt giá giờ" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ.
+Tiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ "chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ". Ai có quyền thu tiền chọn gói được; **đổi hoặc bỏ** gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong "Đặt giá giờ" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm, không áp "chơi tối thiểu" của bàn mới), hết phần còn mới tính theo giờ.
 
 ### Làm tròn theo block, chơi tối thiểu
 Quán muốn tính tròn mỗi 15 / 30 phút hoặc tối thiểu 1 giờ:

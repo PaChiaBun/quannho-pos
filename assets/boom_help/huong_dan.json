@@ -1,6 +1,6 @@
 {
- "version": 202611281239,
- "hash": "8fdaa24e40da9b5dc288bf6b657d8f78ce01c7dc9ab8cc6c365dce0dee0ccbbf",
+ "version": 202611281248,
+ "hash": "867c0260dcb32b6596cd31a040f852baeeea12e7fa69c1d0967bacec71f98d81",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3536,7 +3536,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Bán gói giờ (ví dụ 2 giờ 100.000 đ)",
-   "text": "Cài gói cho bàn:\n1. Giữ lâu vào bàn → \"Đặt giá giờ\" → bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Ở phần \"Gói giờ\" bấm \"Thêm gói giờ\", chọn thời gian (30 phút tới 5 giờ), gõ \"Giá trọn gói\", bấm \"Xong\". Mỗi bàn tối đa 6 gói, không trùng thời gian.\n3. Bấm \"Lưu\". Muốn mọi bàn của khu có cùng gói thì chọn \"Cả khu\" trước khi lưu.\n\nChọn gói cho khách đang chơi:\n1. Mở bàn đang tính giờ. Trong khối \"ĐANG TÍNH GIỜ\" bấm \"Chọn gói\", chọn gói khách mua.\n2. Gói tính từ lúc khách vào. Khối ghi \"Gói 2 giờ 100.000 đ · còn 25 phút\", thẻ bàn ghi \"gói còn 25'\"; hết gói thì ghi \"hết gói, lố 8'\".\n3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm \"Đã báo khách\".\n\nHoá đơn và phiếu tạm tính của bàn có cọc in thêm \"Đã cọc (ví khách)\" và \"CÒN PHẢI TRẢ\"; mã QR chuyển khoản trên đó lấy số còn phải trả.\n\nTiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ \"chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ\". Ai có quyền thu tiền chọn gói được; đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong \"Đặt giá giờ\" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ."
+   "text": "Cài gói cho bàn:\n1. Giữ lâu vào bàn → \"Đặt giá giờ\" → bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Ở phần \"Gói giờ\" bấm \"Thêm gói giờ\", chọn thời gian (30 phút tới 5 giờ), gõ \"Giá trọn gói\", bấm \"Xong\". Mỗi bàn tối đa 6 gói, không trùng thời gian.\n3. Bấm \"Lưu\". Muốn mọi bàn của khu có cùng gói thì chọn \"Cả khu\" trước khi lưu.\n\nChọn gói cho khách đang chơi:\n1. Mở bàn đang tính giờ. Trong khối \"ĐANG TÍNH GIỜ\" bấm \"Chọn gói\", chọn gói khách mua.\n2. Gói tính từ lúc khách vào. Khối ghi \"Gói 2 giờ 100.000 đ · còn 25 phút\", thẻ bàn ghi \"gói còn 25'\"; hết gói thì ghi \"hết gói, lố 8'\".\n3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm \"Đã báo khách\".\n\nHoá đơn và phiếu tạm tính của bàn có cọc in thêm \"Đã cọc (ví khách)\" và \"CÒN PHẢI TRẢ\"; mã QR chuyển khoản trên đó lấy số còn phải trả.\n\nTiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ \"chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ\". Ai có quyền thu tiền chọn gói được; đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong \"Đặt giá giờ\" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm, không áp \"chơi tối thiểu\" của bàn mới), hết phần còn mới tính theo giờ."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-lam-tron-theo-block-choi-toi-thieu",

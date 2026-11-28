@@ -251,7 +251,8 @@ TienGio tinhGioTien({
   final choi = phutChoi < 1 ? 1 : phutChoi;
   final goi = goiPhut == null || goiPhut < 0 ? 0 : goiPhut;
   final giaGoi = goi > 0 ? ((goiGia ?? 0) < 0 ? 0.0 : (goiGia ?? 0)) : 0.0;
-  final lamTron = tinhGioLamTron(choi, caiDat);
+  // Phần gói còn lại sau chuyển bàn (giá 0) thay cho "chơi tối thiểu" của bàn mới (28/11, như máy chủ).
+  final lamTron = tinhGioLamTron(choi, goi > 0 && (goiGia ?? 0) == 0 ? caiDat.copyWith(toiThieu: 0) : caiDat);
   final tinh = lamTron > goi ? lamTron : goi;
   final goc = giaGoc < 0 ? 0.0 : giaGoc;
   final doan = <DoanGia>[];
