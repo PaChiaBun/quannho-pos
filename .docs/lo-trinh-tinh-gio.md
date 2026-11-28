@@ -17,7 +17,7 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 | 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | App xong, chỉ đọc, không đổi máy chủ — `ke-hoach-bao-cao-tinh-gio.md` |
 | 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 1) — `ke-hoach-ngay-le-gia-gio.md` |
 | 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 6) — `ke-hoach-goi-gio.md` |
-| 8 | Mất mạng: đo xem quán bị chặn thanh toán bàn tính giờ bao nhiêu lần, rồi mới quyết có làm chế độ dự phòng | mọi quán | Có | Chưa — đo trước |
+| 8 | Mất mạng: đo xem quán bị chặn thanh toán bàn tính giờ bao nhiêu lần, rồi mới quyết có làm chế độ dự phòng | mọi quán | Có | Đã đo 30 ngày (28/11): lúc mạng chập chờn 496/497 phiên vẫn thanh toán xong → đề xuất chưa làm dự phòng, đo lại sau phát hành — `ke-hoach-mat-mang.md` |
 | — | Cân nhắc sau, chỉ làm khi có quán thật đòi: tạm dừng giờ, khách tự đặt qua mạng, màn hình phụ cho khách xem giờ | | | Chưa |
 
 ## Vì sao thứ tự này
@@ -49,3 +49,4 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 - 28/11: đợt 5 (báo cáo tính giờ, chỉ đọc) viết xong, thử máy ảo.
 - 28/11: đợt 6 (ngày lễ) Chủ Quán chốt khung Lễ luôn thắng + quán tự thêm ngày; máy chủ viết, bản sao đạt (chưa áp); app viết xong.
 - 28/11: đợt 7 (gói giờ) Chủ Quán chốt giá gói riêng + lố tính thêm, về sớm đủ gói, gói theo bàn có Cả khu; máy chủ viết, bản sao đạt (chưa áp); app viết xong.
+- 28/11: đợt 8 đo mất mạng 30 ngày trên quán thật (`tool/do_mat_mang.sh`, chỉ đọc): 496/497 phiên thanh toán lúc mạng chập chờn vẫn xong; đề xuất chưa làm chế độ dự phòng, chờ Chủ Quán quyết.
