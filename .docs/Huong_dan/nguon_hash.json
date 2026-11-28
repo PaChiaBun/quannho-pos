@@ -73,7 +73,7 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "db3edd0a7fbc91f3",
+      "lib/core/providers/app_providers.dart": "50be9aae681e677d",
       "lib/core/utils/quantity_formatter.dart": "2d36b37e9622aee8",
       "lib/modules/kho/repository/kho_repository.dart": "50e45fe6b23d3c9c",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "c14d5138282e39ff",
@@ -83,7 +83,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "72a6265d5055978e",
+      "lib/screens/ban_screen.dart": "0e0a00d241790176",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -135,7 +135,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "dcda581ac0384ca9",
-      "lib/screens/ban_screen.dart": "72a6265d5055978e",
+      "lib/screens/ban_screen.dart": "0e0a00d241790176",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"
@@ -210,7 +210,7 @@
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
       "lib/modules/tinh_gio/tinh_gio.dart": "f8a46efe36c9a243",
       "lib/modules/tinh_gio/tinh_gio_widgets.dart": "72456a8252c85499",
-      "lib/screens/ban_screen.dart": "72a6265d5055978e",
+      "lib/screens/ban_screen.dart": "0e0a00d241790176",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }

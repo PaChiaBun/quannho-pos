@@ -1,4 +1,5 @@
 import 'modules/tinh_gio/dat_truoc_ui.dart' show TinhGioNhacDatSan;
+import 'modules/tinh_gio/tinh_gio.dart' show kTinhGioModuleId;
 import 'core/utils/app_logger.dart';
 import 'core/services/app_heartbeat_service.dart';
 import 'dart:io';
@@ -91,6 +92,7 @@ const _kTabMeta = [
     icon: Icons.history_edu_rounded,
     label: 'Nhật ký',
   ), // 14 — Module Nhật ký Hệ thống
+  (icon: Icons.timer_rounded, label: 'Tính giờ'), // 15 — Các hoạt động tính giờ (Bàn ở chế độ tính giờ)
 ];
 
 // Brand colors từ Quán Nhỏ Identity Sheet
@@ -575,6 +577,8 @@ class _MainShellState extends ConsumerState<MainShell>
       session?.isOwner ?? false,
       actionPerms,
     );
+    final activeIds = ref.read(activeModulesProvider).value?.map((m) => m.id).toSet();
+    if (activeIds != null && !activeIds.contains(kTinhGioModuleId)) allowed.remove(15);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -678,6 +682,8 @@ class _MainShellState extends ConsumerState<MainShell>
     final isCustomNav = ref.read(navSlotsProvider.notifier).isCustom;
     final activeIds =
         ref.watch(activeModulesProvider).value?.map((m) => m.id).toSet();
+    // Tab Tính giờ chỉ có khi quán bật module (thanh bên máy tính bảng liệt kê mọi tab được phép).
+    if (activeIds != null && !activeIds.contains(kTinhGioModuleId)) navBarTabs.remove(15);
     // Tự ghim: chỉ mục được phép VÀ module đang bật (chưa tải xong thì chưa lọc).
     final autoTabs = navBarTabs
         .where((t) =>
@@ -766,6 +772,8 @@ class _MainShellState extends ConsumerState<MainShell>
     _TinhLuongRouteScreen(), // 12
     OpsScreen(), // 13
     const LogViewerScreen(), // 14
+    // 28/11: thành tab (trước mở đè lên nên mất thanh dưới để qua Trang chủ / phân hệ khác)
+    BanScreen(cheDoTinhGio: true), // 15
   ];
 
   Widget _buildBody(int idx) {

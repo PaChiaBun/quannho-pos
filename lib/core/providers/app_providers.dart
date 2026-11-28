@@ -194,7 +194,7 @@ Set<int> navTabsForRole(
 ]) {
   final canonical = StaffService.canonicalRole(role ?? '');
   if (isOwner || canonical == 'owner' || canonical == 'manager') {
-    return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   }
 
   // Map module ID → tab index
@@ -237,6 +237,7 @@ Set<int> navTabsForRole(
         if (canonical == 'cashier') {
           tabs.add(5); // Fail-safe: Thu ngân luôn có quyền xem báo cáo
         }
+        if (tabs.contains(7)) tabs.add(15); // ai dùng Bàn thì dùng được Các hoạt động tính giờ
         debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
         return tabs;
       }
@@ -266,6 +267,7 @@ Set<int> navTabsForRole(
     tabs.add(5);
   }
   tabs.add(13);
+  if (tabs.contains(7)) tabs.add(15); // ai dùng Bàn thì dùng được Các hoạt động tính giờ
   return tabs;
 }
 
@@ -275,14 +277,14 @@ Set<int> navTabsForRole(
 
 /// Máy chưa tự chọn thanh dưới: ghim 4 mục đầu tiên trong danh sách này mà vai trò được dùng
 /// (Trang chủ, Bán hàng, Bàn, Kho, Bếp, Thu Chi, Báo cáo…) — quán có Bàn thì có Bàn.
-const kAutoNavPriority = [0, 1, 7, 2, 8, 3, 5, 11, 4, 9, 10, 12, 13, 14, 6];
+const kAutoNavPriority = [0, 1, 7, 15, 2, 8, 3, 5, 11, 4, 9, 10, 12, 13, 14, 6];
 
 /// Mục thanh dưới → mã module ở Trang chủ ([activeModulesProvider]); Trang chủ (0) và Cài đặt (6)
 /// luôn có. Tự ghim chỉ lấy mục mà module đang bật (quán không bật Kho thì không ghim Kho).
 const kTabModuleIds = {
   1: 'pos', 2: 'kho', 3: 'finance', 4: 'loyalty', 5: 'report', 7: 'table',
   8: 'kitchen', 9: 'staff', 10: 'chamcong', 11: 'kho_pro', 12: 'tinhluong',
-  13: 'kay_ops', 14: 'log_viewer',
+  13: 'kay_ops', 14: 'log_viewer', 15: 'tinh_gio',
 };
 
 /// Đủ 4 ô thanh dưới: thêm mục trong [allowed] chưa có, rồi tới [fallback]; chỉ khi hết mục mới lặp

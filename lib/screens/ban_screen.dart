@@ -963,7 +963,6 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: _kNavy), // theme đặt màu trắng, nút quay lại chìm mất
-        titleSpacing: _tinhGio ? 0 : null,
         title: FittedBox(
           fit: BoxFit.scaleDown, // "Các hoạt động tính giờ" trên máy 360
           child: Text(
@@ -1241,7 +1240,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                   ),
                 ),
               ],
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: 96)), // chừa chỗ nút Boom giữa thanh dưới
           ],
         );
       },

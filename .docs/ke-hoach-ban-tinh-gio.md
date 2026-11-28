@@ -508,3 +508,11 @@ Chủ Quán chê màn ngoài "nhìn xấu quá", xem thiết kế trên khung v�
 - Test ảnh mẫu Lịch đặt dùng ngày 28/11/2026, đúng hôm nay nên màn ghi "Hôm nay" và hỏng: đổi sang 30/11/2030 (cùng Thứ 7), ảnh mẫu mới chỉ khác vùng ngày. test/modules/tinh_gio 40/40.
 - Chưa thử trên máy: khu trống (Demo không có, tạo khu là ghi dữ liệu).
 
+### 28/11 — Màn tính giờ thành tab, có thanh dưới
+
+Chủ Quán: "mất thanh bên dưới để di chuyển nhanh qua Home và các modules khác" (màn mở đè bằng Navigator.push từ 25/11).
+- `main.dart`: tab 15 = `BanScreen(cheDoTinhGio: true)`, `_kTabMeta` "Tính giờ" (Icons.timer_rounded); quán không bật module `tinh_gio` thì bỏ tab 15 khỏi thanh dưới, thanh bên, hộp chọn mục.
+- `navTabsForRole`: chủ / quản lý có 15; vai trò nào có Bàn (7) thì có 15. `kTabModuleIds[15] = 'tinh_gio'`; `kAutoNavPriority` đặt 15 ngay sau 7: máy chưa tự chọn thanh dưới và quán bật module thì thanh dưới thành Trang chủ, Bán hàng, Bàn, Tính giờ (Kho lùi ra; giữ lâu một mục để đổi).
+- Trang chủ: ô module chuyển tab 15 thay vì mở đè. AppBar bỏ `titleSpacing: 0` (không còn nút quay lại); cuối danh sách chừa 96 cho nút Boom.
+- Máy ảo: thanh dưới Trang chủ / Bán hàng / Bàn / Tính giờ, bấm qua lại đúng, nút quay lại Android về Trang chủ; dữ liệu Demo trước / sau giống hệt. Test tab 15 thêm vào tinh_gio_test.
+

@@ -247,4 +247,12 @@ void main() {
       expect(c.read(posProductsProvider).value?.map((p) => p.id), ['cafe']);
     });
   });
+
+  test('tab Tính giờ (15): có Bàn thì có, gắn với module tinh_gio', () {
+    expect(navTabsForRole(null, const [], true).contains(15), isTrue); // chủ quán
+    expect(navTabsForRole('waiter', const [], false).contains(15), isTrue); // phục vụ có Bàn
+    expect(navTabsForRole('kitchen', const [], false).contains(15), isFalse); // bếp không có Bàn
+    expect(kTabModuleIds[15], kTinhGioModuleId);
+    expect(kAutoNavPriority.indexOf(15), kAutoNavPriority.indexOf(7) + 1);
+  });
 }

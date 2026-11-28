@@ -2408,11 +2408,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       Navigator.push(context, _smoothRoute(const QrOrderScreen()));
       return;
     }
-    // tinh_gio → sơ đồ bàn ở chế độ tính giờ: tên theo ngành, chỉ bàn tính giờ (tab 7 là mọi bàn)
-    if (route == '/tinh_gio') {
-      Navigator.push(context, _smoothRoute(const BanScreen(cheDoTinhGio: true)));
-      return;
-    }
     // chain → push trực tiếp Báo cáo chuỗi (chỉ Chủ quán thấy ô này)
     if (route == '/chain') {
       Navigator.push(context, _smoothRoute(const ChainReportScreen()));
@@ -2434,6 +2429,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       '/kay_ops': 13, // Module Vận Hành — OpsScreen tại index 13
       '/log_viewer':
           14, // Module Nhật ký hệ thống — LogViewerScreen tại index 14
+      // sơ đồ bàn ở chế độ tính giờ (tên theo ngành, chỉ bàn tính giờ); là tab nên còn thanh dưới
+      '/tinh_gio': 15,
     };
     final idx = tabMap[route];
     if (idx != null) {
