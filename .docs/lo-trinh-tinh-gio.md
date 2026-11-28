@@ -10,8 +10,8 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 
 | Đợt | Việc | Cho ai | Đụng tiền thật | Trạng thái |
 |---|---|---|---|---|
-| 1 | Giá theo khung giờ / thứ + làm tròn block, tối thiểu, ân hạn | mọi ngành, nhất là karaoke, sân | Có (máy chủ tính) | Đang làm — `ke-hoach-gia-gio-khung-block.md` |
-| 2 | Lịch đặt dạng lưới "giờ × bàn / sân", chạm ô trống để đặt | sân, karaoke | Không | Chưa |
+| 1 | Giá theo khung giờ / thứ + làm tròn block, tối thiểu, ân hạn | mọi ngành, nhất là karaoke, sân | Có (máy chủ tính) | App xong (b9f95f1); máy chủ CHƯA ÁP — `ke-hoach-gia-gio-khung-block.md` |
+| 2 | Lịch đặt dạng lưới "giờ × bàn / sân", chạm ô trống để đặt | sân, karaoke | Không | Đã viết, thử máy ảo — `ke-hoach-lich-dat-luoi.md` |
 | 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | Chưa |
 | 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ | sân, karaoke đặt trước | Có | Chưa |
 | 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | Chưa |
@@ -41,3 +41,4 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 
 - 28/11: lập lộ trình; đợt 1 có kế hoạch chi tiết và 4 quyết định của Chủ Quán; bắt đầu đợt 1 giai đoạn A (máy chủ).
 - 28/11: đợt 1 giai đoạn A (máy chủ) viết xong, bản sao đạt (31/31 + bộ cũ), chờ Chủ Quán cho áp.
+- 28/11: đợt 2 (lịch dạng lưới) viết xong, thử máy ảo; chỉ app.

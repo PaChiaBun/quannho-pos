@@ -260,7 +260,13 @@ void main() {
   }
 
   // Màn Lịch đặt với dữ liệu mẫu, ngày cố định để ảnh không đổi theo ngày chạy test.
-  for (final (ten, co) in const [('360', Size(360, 800)), ('1024', Size(1024, 700))]) {
+  // Kiểu danh sách (lich_dat_*) và kiểu lưới giờ × sân (lich_luoi_*, đợt 2; "bây giờ" = 30/11/2030 16:40).
+  for (final (ten, co, luoi) in const [
+    ('360', Size(360, 800), false),
+    ('1024', Size(1024, 700), false),
+    ('luoi_360', Size(360, 800), true),
+    ('luoi_1024', Size(1024, 700), true),
+  ]) {
     testWidgets('màn Lịch đặt $ten', (tester) async {
       await _napPhong();
       tester.view.physicalSize = co;
@@ -292,14 +298,18 @@ void main() {
                   dat('d', 's2', 19, 120, 'CLB Cầu lông Q7', sdt: '0987654321'),
                 ])),
           ],
-          child: MaterialApp(debugShowCheckedModeBanner: false, home: LichDatScreen(ngay: ngay)),
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: LichDatScreen(ngay: ngay, luoi: luoi, lucLuoi: DateTime(2030, 11, 30, 16, 40)),
+          ),
         ));
         await tester.pumpAndSettle();
       }, (_, __) {});
+      expect(tester.takeException(), isNull);
       expect(find.text('Lịch đặt'), findsOneWidget);
       expect(find.textContaining('Chị Lan'), findsOneWidget);
-      expect(find.text('Chưa có lượt đặt'), findsOneWidget, reason: 'Sân 3 trống');
-      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/lich_dat_$ten.png'));
+      if (!luoi) expect(find.text('Chưa có lượt đặt'), findsOneWidget, reason: 'Sân 3 trống');
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/${luoi ? 'lich_$ten' : 'lich_dat_$ten'}.png'));
     });
   }
 }

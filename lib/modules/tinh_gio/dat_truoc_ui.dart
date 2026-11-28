@@ -15,6 +15,7 @@ import '../../core/utils/money_formatter.dart';
 import '../../core/utils/responsive.dart';
 import '../qr_order/services/qr_sound_service.dart';
 import 'dat_truoc.dart';
+import 'lich_luoi.dart';
 import 'tinh_gio_widgets.dart';
 
 const _kNavy = Color(0xFF1C2151);
@@ -66,8 +67,12 @@ Future<void> goiKhach(BuildContext context, String sdt) async {
 class LichDatScreen extends ConsumerStatefulWidget {
   /// Ngày mở đầu (mặc định hôm nay).
   final DateTime? ngay;
+  /// Mở ở kiểu lưới (mặc định) hay danh sách.
+  final bool luoi;
+  /// Giờ hiện tại cho lưới (ảnh mẫu trong test cố định); null = bây giờ.
+  final DateTime? lucLuoi;
 
-  const LichDatScreen({super.key, this.ngay});
+  const LichDatScreen({super.key, this.ngay, this.luoi = true, this.lucLuoi});
 
   @override
   ConsumerState<LichDatScreen> createState() => _LichDatScreenState();
@@ -75,6 +80,8 @@ class LichDatScreen extends ConsumerStatefulWidget {
 
 class _LichDatScreenState extends ConsumerState<LichDatScreen> {
   late DateTime _ngay = _dauNgay(widget.ngay ?? DateTime.now());
+  /// Lưới giờ × bàn (mặc định, đợt 2) hay danh sách theo bàn như trước.
+  late bool _luoi = widget.luoi;
 
   void _doiNgay(int soNgay) => setState(() => _ngay = _ngay.add(Duration(days: soNgay)));
 
@@ -88,12 +95,12 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
     if (d != null) setState(() => _ngay = _dauNgay(d));
   }
 
-  Future<void> _dat(BanTableModel ban, List<DatTruoc> trongNgay, {DatTruoc? sua}) async {
+  Future<void> _dat(BanTableModel ban, List<DatTruoc> trongNgay, {DatTruoc? sua, DateTime? tu}) async {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => DatTruocFormSheet(ban: ban, ngay: _ngay, trongNgay: trongNgay, sua: sua),
+      builder: (_) => DatTruocFormSheet(ban: ban, ngay: _ngay, trongNgay: trongNgay, sua: sua, tuMacDinh: tu),
     );
     if (ok == true && mounted) _thongBao(context, sua == null ? 'Đã đặt ${ban.label}' : 'Đã sửa lượt đặt');
   }
@@ -129,6 +136,15 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
     }
   }
 
+  /// Chạm ô trống trên lưới: nửa giờ đã qua thì báo, không mở hộp.
+  void _datO(BanTableModel ban, DateTime tu, List<DatTruoc> trongNgay) {
+    if (!tu.add(const Duration(minutes: 30)).isAfter(DateTime.now())) {
+      _thongBao(context, 'Giờ này đã qua, chọn giờ khác', loi: true);
+      return;
+    }
+    _dat(ban, trongNgay, tu: tu);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bansAsync = ref.watch(banDeDatProvider);
@@ -156,6 +172,16 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
       if (bans.isEmpty) {
         return Center(
           child: Text('Quán chưa có bàn nào. Thêm bàn ở màn Bàn trước.', style: _chu(14, FontWeight.w600)),
+        );
+      }
+      if (_luoi) {
+        return LichLuoi(
+          bans: bans,
+          dat: dat,
+          ngay: _ngay,
+          luc: widget.lucLuoi,
+          onDatO: (b, tu) => _datO(b, tu, dat),
+          onMo: (b, d) => _moLuot(b, d, dat),
         );
       }
       return LayoutBuilder(
@@ -194,6 +220,14 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
         // theme của app đặt biểu tượng thanh trên màu trắng: không ghi lại thì nút quay lại chìm vào nền kem
         iconTheme: const IconThemeData(color: _kNavy),
         title: Text('Lịch đặt', style: _chu(20, FontWeight.w800)),
+        actions: [
+          IconButton(
+            tooltip: _luoi ? 'Xem dạng danh sách' : 'Xem dạng lưới giờ',
+            onPressed: () => setState(() => _luoi = !_luoi),
+            icon: Icon(_luoi ? Icons.view_agenda_rounded : Icons.calendar_view_week_rounded, color: _kNavy),
+          ),
+          const SizedBox(width: 4),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
@@ -466,8 +500,17 @@ class DatTruocFormSheet extends ConsumerStatefulWidget {
   final DateTime ngay;
   final List<DatTruoc> trongNgay;
   final DatTruoc? sua;
+  /// Giờ bắt đầu điền sẵn (chạm ô trống trên lưới).
+  final DateTime? tuMacDinh;
 
-  const DatTruocFormSheet({super.key, required this.ban, required this.ngay, required this.trongNgay, this.sua});
+  const DatTruocFormSheet({
+    super.key,
+    required this.ban,
+    required this.ngay,
+    required this.trongNgay,
+    this.sua,
+    this.tuMacDinh,
+  });
 
   @override
   ConsumerState<DatTruocFormSheet> createState() => _DatTruocFormSheetState();
@@ -492,6 +535,9 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     if (s != null) {
       _tu = s.gioTu;
       _phut = s.gioDen.difference(s.gioTu).inMinutes;
+    } else if (widget.tuMacDinh != null) {
+      _tu = widget.tuMacDinh!;
+      _phut = 60;
     } else {
       // mặc định: đầu giờ kế tiếp nếu là hôm nay, không thì 18:00
       final luc = DateTime.now();
