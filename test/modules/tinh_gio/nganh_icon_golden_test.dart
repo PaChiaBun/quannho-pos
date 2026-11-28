@@ -13,6 +13,7 @@ import 'package:quannho_pos/modules/tinh_gio/bao_cao_tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/gia_gio_ui.dart';
+import 'package:quannho_pos/modules/tinh_gio/goi_gio_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
 import 'package:quannho_pos/modules/tinh_gio/ngay_le_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio.dart';
@@ -210,7 +211,7 @@ void main() {
   for (final (ten, coGia, coKhung) in const [('trong', false, false), ('da_co', true, false), ('co_khung', true, true)]) {
     testWidgets('hộp đặt giá giờ $ten', (tester) async {
       await _napPhong();
-      tester.view.physicalSize = Size(360, coKhung ? 1200 : 800);
+      tester.view.physicalSize = Size(360, coKhung ? 1500 : 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       ProductModel mon(String id, String ten, double gia, String dm) => ProductModel(
@@ -229,6 +230,9 @@ void main() {
                       KhungGia(thu: {1, 2, 3, 4, 5}, tuPhut: 17 * 60, denPhut: 23 * 60, gia: 80000),
                       KhungGia(thu: {6, 7}, tuPhut: 0, denPhut: 0, gia: 100000),
                       KhungGia(thu: {kThuNgayLe}, tuPhut: 0, denPhut: 0, gia: 120000),
+                    ], goi: [
+                      GoiGio(soPhut: 60, gia: 55000),
+                      GoiGio(soPhut: 120, gia: 100000),
                     ]),
                 }),
             ngayLeProvider.overrideWith((ref) async => [NgayLe(DateTime(2030, 12, 31), ''), NgayLe(DateTime(2031, 1, 1), '')]),
@@ -294,6 +298,60 @@ void main() {
       }, (_, _) {});
       expect(tester.takeException(), isNull, reason: 'hộp không được tràn trên máy 360');
       await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/gia_gio_$ten.png'));
+    });
+  }
+
+  // Đợt 7: hộp thêm gói, hộp chọn gói cho bàn đang chơi, dòng gói trong khối ĐANG TÍNH GIỜ (3 trạng thái).
+  final vaoMau = DateTime(2030, 12, 2, 18);
+  for (final (ten, hop, cao) in <(String, Widget, double)>[
+    ('them', const GoiGioSheet(daCo: {60}), 700),
+    ('chon', const ChonGoiSheet(tableId: 'p2', sessionId: 's1', goiPhut: 120, goiGia: 100000), 700),
+    (
+      'dong_ban',
+      Container(
+        color: const Color(0xFF2B2780),
+        padding: const EdgeInsets.all(16),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          GoiGioDongBan(tableId: 'p2', sessionId: 's1', goiPhut: null, goiGia: null, vao: vaoMau, luc: vaoMau),
+          GoiGioDongBan(tableId: 'p2', sessionId: 's1', goiPhut: 120, goiGia: 100000, vao: vaoMau,
+              luc: vaoMau.add(const Duration(minutes: 95))),
+          GoiGioDongBan(tableId: 'p2', sessionId: 's1', goiPhut: 120, goiGia: 100000, vao: vaoMau,
+              luc: vaoMau.add(const Duration(minutes: 113))),
+          GoiGioDongBan(tableId: 'p2', sessionId: 's1', goiPhut: 80, goiGia: 0, vao: vaoMau,
+              luc: vaoMau.add(const Duration(minutes: 88))),
+        ]),
+      ),
+      400
+    ),
+  ]) {
+    testWidgets('gói giờ $ten', (tester) async {
+      await _napPhong();
+      tester.view.physicalSize = Size(360, cao);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await runZonedGuarded(() async {
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            giaGioCaiDatProvider.overrideWith((ref) async => {
+                  'p2': const GiaGioCaiDat(goi: [
+                    GoiGio(id: 'g1', soPhut: 60, gia: 55000),
+                    GoiGio(id: 'g2', soPhut: 120, gia: 100000),
+                    GoiGio(id: 'g3', soPhut: 180, gia: 140000),
+                  ]),
+                }),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              backgroundColor: const Color(0xFF8E8A85),
+              body: Align(alignment: Alignment.bottomCenter, child: hop),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+      }, (_, _) {});
+      expect(tester.takeException(), isNull, reason: 'không được tràn trên máy 360');
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/goi_gio_$ten.png'));
     });
   }
 

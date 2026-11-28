@@ -74,6 +74,22 @@ final giaGioCaiDatProvider = FutureProvider.autoDispose<Map<String, GiaGioCaiDat
   final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
   if (storeId == null) return const {};
   final ngayLe = {for (final n in await ref.watch(ngayLeProvider.future)) soNgay(n.ngay)};
+  // Gói giờ (đợt 7) đọc riêng: máy chủ có khung giá mà chưa có bảng gói vẫn đọc được khung.
+  final goi = <String, List<GoiGio>>{};
+  try {
+    final rows = await Supabase.instance.client
+        .from('ban_goi_gio')
+        .select('id, table_id, so_phut, gia, thu_tu')
+        .eq('store_id', storeId)
+        .order('thu_tu', ascending: true)
+        .timeout(const Duration(seconds: 10));
+    for (final r in rows) {
+      final g = GoiGio.tuDong(r);
+      if (g != null) (goi[r['table_id'] as String] ??= []).add(g);
+    }
+  } catch (e) {
+    debugPrint('[giaGioCaiDat] chưa đọc được gói giờ (máy chủ chưa có hoặc lỗi mạng): $e');
+  }
   try {
     final db = Supabase.instance.client;
     final kq = await Future.wait([
@@ -99,15 +115,19 @@ final giaGioCaiDatProvider = FutureProvider.autoDispose<Map<String, GiaGioCaiDat
         anHan: (r['an_han_phut'] as num?)?.toInt() ?? 0,
         khung: khung[id] ?? const [],
         ngayLe: ngayLe,
+        goi: goi[id] ?? const [],
       );
     }
     for (final e in khung.entries) {
-      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(khung: e.value, ngayLe: ngayLe));
+      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(khung: e.value, ngayLe: ngayLe, goi: goi[e.key] ?? const []));
+    }
+    for (final e in goi.entries) {
+      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(ngayLe: ngayLe, goi: e.value));
     }
     return ketQua;
   } catch (e) {
     debugPrint('[giaGioCaiDat] chưa đọc được khung giá (máy chủ chưa có hoặc lỗi mạng): $e');
-    return const {};
+    return {for (final e in goi.entries) e.key: GiaGioCaiDat(goi: e.value)};
   }
 });
 
@@ -301,7 +321,7 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
       if (ds.hasValue) {
         _caiDatGoc = ds.value![widget.table.id] ?? GiaGioCaiDat.macDinh;
         _caiDat = _caiDatGoc!;
-        _moCaiThem = !_caiDat.laMacDinh;
+        _moCaiThem = !_caiDat.laMacDinh || _caiDat.goi.isNotEmpty;
       }
     }
     if (_daDienSan) return;
@@ -348,6 +368,25 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
           setState(() {
             _dangLuu = false;
             _loi = loiCd;
+          });
+          return;
+        }
+        ref.invalidate(giaGioCaiDatProvider);
+      }
+      // Gói giờ (đợt 7) lưu riêng; không đổi gì (và không chép cho cả khu) thì không gọi.
+      final goc = _caiDatGoc ?? GiaGioCaiDat.macDinh;
+      final canLuuGoi = !_caiDat.goiTrung(goc) ||
+          (_caKhu && (_caiDat.goi.isNotEmpty || ids.any((id) => (daCaiTrongKhu[id]?.goi ?? const []).isNotEmpty)));
+      if (canLuuGoi) {
+        final loiGoi = await ref
+            .read(banRepositoryProvider)
+            .luuGoiGio(ids, [for (final g in _caiDat.goi) g.toJson()]);
+        if (!mounted) return;
+        if (loiGoi != null) {
+          ref.invalidate(giaGioCaiDatProvider);
+          setState(() {
+            _dangLuu = false;
+            _loi = loiGoi;
           });
           return;
         }

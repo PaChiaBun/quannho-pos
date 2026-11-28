@@ -139,6 +139,8 @@ TinhGioTamTinh tinhGioTamTinhBan({
   required DateTime luc,
   DateTime? khungDatDen,
   GiaGioCaiDat caiDat = GiaGioCaiDat.macDinh,
+  int? goiPhut,
+  double? goiGia,
 }) {
   BanSessionItemModel? dongDoan;
   var tongMon = 0.0;
@@ -153,7 +155,8 @@ TinhGioTamTinh tinhGioTamTinhBan({
   final theoKhung = khungDatDen != null && khungDatDen.isAfter(luc);
   final vao = DateTime.fromMillisecondsSinceEpoch(gioBatDauMs);
   final soPhut = tinhGioSoPhut(vao, theoKhung ? khungDatDen : luc);
-  final tien = giaMotGio == null ? null : tinhGioTien(vao: vao, phutChoi: soPhut, giaGoc: giaMotGio, caiDat: caiDat);
+  final tien = giaMotGio == null ? null : tinhGioTien(
+          vao: vao, phutChoi: soPhut, giaGoc: giaMotGio, caiDat: caiDat, goiPhut: goiPhut, goiGia: goiGia);
   final tienGio = daHuy
       ? 0.0
       : tien == null

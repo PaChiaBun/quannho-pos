@@ -22,6 +22,11 @@ Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`. Bi da, karaoke, s
 
 Đợt 6. `ban_ngay_le` (quán, `ngay` date, `ten`): ngày lễ CỦA QUÁN, dùng chung mọi bàn; app đọc (đúng quán), ghi qua `ban_ngay_le_luu_v1(quán, thêm jsonb [{ngay, ten}], xoá date[])` — Chủ quán / Quản lý, ngày từ tuần trước tới 3 năm tới, tối đa 500 ngày. `ban_gia_gio_khung.thu` nhận thêm 8 = Ngày lễ. `qn_tinh_gio_tinh_tien_v2`: mỗi phút, nếu ngày đó (hoặc hôm trước, cho phần qua đêm) là ngày lễ thì xét khung Lễ TRƯỚC (khung Lễ luôn thắng), không khung Lễ nào chứa thì xét theo thứ như đợt 1. Không ngày lễ / không khung Lễ = đúng đợt 1. Test `supabase/tests/gia_gio_ngay_le_test.sql`; áp / hoàn tác `db-fix/gia_gio_ngay_le_ap_dung.sh`.
 
+## Gói giờ (migration `20261128_goi_gio.sql`, CHƯA ÁP production, áp sau đợt 6; kế hoạch `.docs/ke-hoach-goi-gio.md`)
+
+Đợt 7. `ban_goi_gio` (bàn, `so_phut` 15–720, `gia`, `thu_tu`; tối đa 6 / bàn, không trùng số phút): ghi qua `ban_goi_gio_luu_v1(quán, mảng bàn, gói jsonb)` — Chủ quán / Quản lý. `ban_sessions.goi_phut`, `goi_gia`: gói của ĐOẠN đang tính, chép giá lúc chọn; trigger `qn_tinh_gio_goi_khoa` giữ nguyên khi app (anon / authenticated) ghi thẳng. `ban_chon_goi_gio_v1(quán, phiên, mã gói | null)`: chọn lần đầu cần quyền thu tiền, đổi / bỏ cần Chủ quán / Quản lý. Tiền: `qn_tinh_gio_tinh_tien_v3(…, gói phút, gói giá)` — số phút tính = max(làm tròn, gói); tiền = giá gói + ceil(Σ giá từng phút sau gói / 60 / 1000) × 1000; `v2` thành vỏ gọi v3 không gói. `qn_tinh_gio_ghi_dong_v1` đọc gói của phiên, tên dòng "chơi … · gói 2 giờ 100.000 đ + …". `ban_chuyen_ban_tinh_gio_v1`: chuyển bàn → bàn mới `goi_phut` = phần còn, `goi_gia` = 0; gộp bàn → bỏ gói ở phiên nguồn (đã chốt). Test `supabase/tests/goi_gio_test.sql`; áp / hoàn tác `db-fix/goi_gio_ap_dung.sh`.
+
+
 
 ## Tiền cọc = ví khách (migration `20261128_tien_coc_vi_khach.sql`, CHƯA ÁP production, áp sau đợt 3; kế hoạch `.docs/ke-hoach-tien-coc.md`)
 

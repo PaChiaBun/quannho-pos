@@ -19,6 +19,7 @@ import '../../core/utils/responsive.dart';
 import '../qr_order/services/qr_sound_service.dart';
 import 'dat_truoc.dart';
 import 'gia_gio.dart' show thuChuCua;
+import 'goi_gio_ui.dart' show TinhGioNhacGoi;
 import 'lich_luoi.dart';
 import 'tinh_gio_widgets.dart';
 
@@ -1754,6 +1755,6 @@ class _TinhGioNhacDatSanState extends ConsumerState<TinhGioNhacDatSan> {
     // Quán không bật module thì không nghe gì, không tải bảng lượt đặt.
     if (!ref.watch(tinhGioModuleActiveProvider)) return const SizedBox.shrink();
     ref.listen(datTruocGanDayProvider, (truoc, sau) => _xet());
-    return const SizedBox.shrink();
+    return const TinhGioNhacGoi(); // nhắc còn 10 phút / hết gói giờ (đợt 7)
   }
 }

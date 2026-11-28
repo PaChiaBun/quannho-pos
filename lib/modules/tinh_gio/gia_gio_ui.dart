@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/utils/money_formatter.dart';
 import 'gia_gio.dart';
+import 'goi_gio_ui.dart';
 import 'ngay_le_ui.dart';
 import 'tinh_gio_widgets.dart' show ngayLeProvider;
 
@@ -29,8 +30,9 @@ String _phutChu(int p) => p == 0
 
 /// Tóm tắt một dòng: "Tính theo từng phút", "2 khung giá · làm tròn 30 phút · tối thiểu 1 giờ".
 String tomTatGiaGio(GiaGioCaiDat c) {
-  if (c.laMacDinh) return 'Chưa cài · tính theo từng phút, một giá';
+  if (c.laMacDinh && c.goi.isEmpty) return 'Chưa cài · tính theo từng phút, một giá';
   return [
+    if (c.goi.isNotEmpty) '${c.goi.length} gói giờ',
     if (c.khung.isNotEmpty) '${c.khung.length} khung giá',
     if (c.block > 1) 'làm tròn ${_phutChu(c.block)}${c.anHan > 0 ? ' (ân hạn ${c.anHan} phút)' : ''}',
     if (c.toiThieu > 0) 'tối thiểu ${_phutChu(c.toiThieu)}',
@@ -69,6 +71,27 @@ class GiaGioCaiThem extends StatelessWidget {
       ds[viTri] = kq;
     }
     onDoi(caiDat.copyWith(khung: ds));
+  }
+
+  Future<void> _suaGoi(BuildContext context, int? viTri) async {
+    final kq = await showModalBottomSheet<GoiGio>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => GoiGioSheet(
+        goi: viTri == null ? null : caiDat.goi[viTri],
+        daCo: {for (var i = 0; i < caiDat.goi.length; i++) if (i != viTri) caiDat.goi[i].soPhut},
+      ),
+    );
+    if (kq == null) return;
+    final ds = [...caiDat.goi];
+    if (viTri == null) {
+      ds.add(kq);
+    } else {
+      ds[viTri] = kq;
+    }
+    ds.sort((a, b) => a.soPhut.compareTo(b.soPhut));
+    onDoi(caiDat.copyWith(goi: ds));
   }
 
   @override
@@ -116,6 +139,61 @@ class GiaGioCaiThem extends StatelessWidget {
             Divider(height: 1, color: _nhat(0.08)),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+              child: Text('Gói giờ', style: _chu(13.5, FontWeight.w800)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: Text(
+                'Bán trọn gói, ví dụ 2 giờ 100.000 đ. Về sớm vẫn tính đủ gói; chơi lố tính thêm theo giá giờ.',
+                style: _chu(12, FontWeight.w500, _nhat(0.6)),
+              ),
+            ),
+            for (var i = 0; i < caiDat.goi.length; i++)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 8, 8),
+                child: Material(
+                  color: _kCream,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: khoa ? null : () => _suaGoi(context, i),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 0, 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.timer_outlined, size: 20, color: _kTeal),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(caiDat.goi[i].ten, style: _chu(13.5, FontWeight.w700))),
+                          Text(fmtVnd(caiDat.goi[i].gia), style: _chu(14, FontWeight.w800, _kTeal)),
+                          IconButton(
+                            tooltip: 'Xoá gói',
+                            onPressed: khoa ? null : () => onDoi(caiDat.copyWith(goi: [...caiDat.goi]..removeAt(i))),
+                            icon: const Icon(Icons.delete_outline_rounded, size: 20, color: _kRed),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: OutlinedButton.icon(
+                onPressed: khoa || caiDat.goi.length >= 6 ? null : () => _suaGoi(context, null),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Thêm gói giờ'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _kNavy,
+                  minimumSize: const Size(0, 44),
+                  side: BorderSide(color: _nhat(0.25)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: _chu(13.5, FontWeight.w700),
+                ),
+              ),
+            ),
+            Divider(height: 16, color: _nhat(0.08), indent: 14, endIndent: 14),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
               child: Text('Giá theo khung giờ', style: _chu(13.5, FontWeight.w800)),
             ),
             Padding(
@@ -521,7 +599,7 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
               TextField(
                 controller: _giaCtrl,
                 keyboardType: TextInputType.number,
-                inputFormatters: [_SoChamFormatter()],
+                inputFormatters: [SoChamFormatter()],
                 onChanged: (_) => setState(() => _loi = null),
                 style: _chu(22, FontWeight.w800),
                 decoration: InputDecoration(
@@ -589,7 +667,7 @@ class _DongNgayLe extends ConsumerWidget {
 }
 
 /// Chỉ nhận chữ số, tự chèn dấu chấm hàng nghìn.
-class _SoChamFormatter extends TextInputFormatter {
+class SoChamFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue cu, TextEditingValue moi) {
     final so = moi.text.replaceAll(RegExp(r'[^0-9]'), '');

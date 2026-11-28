@@ -63,6 +63,7 @@ import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvid
 import '../modules/tinh_gio/bao_cao_tinh_gio.dart';
 import '../modules/tinh_gio/dat_truoc.dart';
 import '../modules/tinh_gio/dat_truoc_ui.dart';
+import '../modules/tinh_gio/goi_gio_ui.dart';
 import '../modules/tinh_gio/loai_hinh.dart';
 import '../modules/tinh_gio/nganh_icon.dart' show NganhCumIcon;
 import '../modules/tinh_gio/tinh_gio.dart';
@@ -2625,6 +2626,8 @@ class _TomTatTinhGio extends ConsumerWidget {
         luc: luc,
         khungDatDen: khungDatCuaPhien(dsDat, s.id, t.id),
         caiDat: giaGioCuaBan(ref, t.id),
+        goiPhut: s.goiPhut,
+        goiGia: s.goiGia,
       ).tienGio;
     }
     final nhan = GoogleFonts.plusJakartaSans(
@@ -2730,6 +2733,8 @@ class _TheBanTinhGio extends ConsumerWidget {
             luc: luc,
             khungDatDen: khungDatCuaPhien(dsDat, s.id, table.id),
             caiDat: giaGioCuaBan(ref, table.id),
+            goiPhut: s.goiPhut,
+            goiGia: s.goiGia,
           )
         : null;
     final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
@@ -2763,6 +2768,11 @@ class _TheBanTinhGio extends ConsumerWidget {
       if (chayLau)
         nhanNho('Quá ${kTinhGioCanhBaoLau.inHours} giờ', const Color(0xFFFFE4E4), const Color(0xFFB42318),
             icon: Icons.warning_amber_rounded),
+      // Gói giờ (đợt 7): "gói còn 25'" / "hết gói, lố 8'"
+      if (goiNganChu(s?.goiPhut, gioVao, luc) case final g?)
+        g.startsWith('hết')
+            ? nhanNho(g, const Color(0xFFFFE4E4), const Color(0xFFB42318), icon: Icons.timer_off_rounded)
+            : nhanNho(g, const Color(0xFFDDF5F1), const Color(0xFF0F766E), icon: Icons.timer_outlined),
     ];
     Widget dongTen(Color mau, {Widget? sau}) => Row(
       children: [
@@ -3037,6 +3047,8 @@ class _TableCard extends ConsumerWidget {
             luc: luc,
             khungDatDen: khungDatCuaPhien(dsDat, session!.id, table.id),
             caiDat: giaGioCuaBan(ref, table.id),
+            goiPhut: session!.goiPhut,
+            goiGia: session!.goiGia,
           )
         : null;
     final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
@@ -3291,7 +3303,8 @@ zone.iconCode,
                                   ? 'Vào ${tinhGioGioVao(gioVao, luc)} • đã bỏ tiền giờ'
                                   : tamTinh.theoKhungDat
                                   ? 'Vào ${tinhGioGioVao(gioVao, luc)} • khung đặt ${fmtVnd(tamTinh.tienGio)}'
-                                  : 'Vào ${tinhGioGioVao(gioVao, luc)} • giờ ${fmtVnd(tamTinh.tienGio)}',
+                                  : 'Vào ${tinhGioGioVao(gioVao, luc)} • giờ ${fmtVnd(tamTinh.tienGio)}'
+                                      '${[goiNganChu(session?.goiPhut, gioVao, luc)].nonNulls.map((g) => ' • $g').join()}',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: infoFontSize,
                                 fontWeight: FontWeight.w700,
@@ -5527,8 +5540,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     List<BanSessionItemModel> items,
   ) {
     if (!widget.table.tinhGio && widget.session.gioBatDau == null) return null;
-    final moc = ref.watch(activeSessionsProvider).value?[widget.table.id]?.gioBatDau ??
-        widget.session.gioBatDau;
+    final song = ref.watch(activeSessionsProvider).value?[widget.table.id];
+    final moc = song?.gioBatDau ?? widget.session.gioBatDau;
     if (moc == null) return null;
     final khung = ref.watch(tinhGioModuleActiveProvider)
         ? khungDatCuaPhien(
@@ -5546,6 +5559,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       luc: luc,
       khungDatDen: khung,
       caiDat: giaGioCuaBan(ref, widget.table.id),
+      // gói (đợt 7): theo phiên đọc lại từ máy chủ, vì chọn / bỏ gói xảy ra khi màn đang mở
+      goiPhut: song != null ? song.goiPhut : widget.session.goiPhut,
+      goiGia: song != null ? song.goiGia : widget.session.goiGia,
     );
     return (t: t, khung: khung, vao: DateTime.fromMillisecondsSinceEpoch(moc), luc: luc, gia: gia);
   }
@@ -5751,6 +5767,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   color: Colors.white.withValues(alpha: 0.65),
                 ),
               ),
+              // Gói giờ (đợt 7): gói đang dùng, còn / lố bao nhiêu, nút chọn / đổi gói.
+              if (!t.daHuy)
+                Builder(builder: (_) {
+                  final song = ref.watch(activeSessionsProvider).value?[widget.table.id] ?? widget.session;
+                  return GoiGioDongBan(
+                    tableId: widget.table.id,
+                    sessionId: song.id,
+                    goiPhut: song.goiPhut,
+                    goiGia: song.goiGia,
+                    vao: vao,
+                    luc: luc,
+                  );
+                }),
               if (chayLau) ...[
                 const SizedBox(height: 10),
                 Container(

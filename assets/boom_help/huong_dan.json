@@ -1,6 +1,6 @@
 {
- "version": 202611281040,
- "hash": "cbdcf921ca0a943f17dfdc6088ad41138bc67dfc11457b7b897d8e4ddd0a8de1",
+ "version": 202611281058,
+ "hash": "1db68cd1b1d560fde506d47973f35355da8c5c80adf849036db4b2751e02d389",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3531,6 +3531,14 @@
    "text": "1. Mở hộp \"Đặt giá giờ\" → \"Giá theo giờ & làm tròn\" → \"Thêm khung giá\" (hoặc bấm vào khung có sẵn để sửa).\n2. Bật dòng \"Ngày lễ\". Muốn khung chỉ dùng cho ngày lễ thì bấm nút nhanh \"Chỉ ngày lễ\". Chọn giờ (hoặc \"Cả ngày\"), gõ giá, bấm \"Xong\", rồi \"Lưu\".\n3. Thêm các ngày lễ của quán: trong hộp khung giá bấm \"Thêm ngày lễ của quán\" (hoặc \"Sửa ngày lễ của quán\"). Ở hộp \"Ngày lễ của quán\":\n   • \"Thêm nhanh\": bấm 01/01, 30/04, 01/05, 02/09 (app lấy lần tới của mỗi ngày).\n   • Tết âm lịch và ngày khác: gõ tên (ví dụ \"Tết\", không bắt buộc), bấm \"Chọn ngày trên lịch\", chọn một ngày hoặc ngày đầu và ngày cuối (tối đa 15 ngày liền), bấm \"Thêm\".\n   • Bỏ một ngày: bấm dấu ✕ ở ngày đó.\n\nDanh sách ngày lễ dùng chung cho mọi bàn, mỗi lần thêm / bỏ là lưu ngay. Vào ngày lễ, khung có \"ngày lễ\" luôn được ưu tiên hơn khung thường, dù nằm trên hay dưới; giờ nào không có khung ngày lễ thì tính như ngày thường. Ví dụ khung lễ 22:00 – 02:00 bắt đầu tối 30/4 thì tính tới 02:00 sáng hôm sau. Năm sau nhớ thêm lại ngày Tết âm lịch (app không tự tính âm lịch). Bàn đang có khách mà vừa thêm ngày lễ hôm nay thì lúc thanh toán cũng tính theo giá lễ."
   },
   {
+   "id": "tinh-gio#cac-viec-thuong-lam-ban-goi-gio-vi-du-2-gio-100-000-d",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Bán gói giờ (ví dụ 2 giờ 100.000 đ)",
+   "text": "Cài gói cho bàn:\n1. Giữ lâu vào bàn → \"Đặt giá giờ\" → bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Ở phần \"Gói giờ\" bấm \"Thêm gói giờ\", chọn thời gian (30 phút tới 5 giờ), gõ \"Giá trọn gói\", bấm \"Xong\". Mỗi bàn tối đa 6 gói, không trùng thời gian.\n3. Bấm \"Lưu\". Muốn mọi bàn của khu có cùng gói thì chọn \"Cả khu\" trước khi lưu.\n\nChọn gói cho khách đang chơi:\n1. Mở bàn đang tính giờ. Trong khối \"ĐANG TÍNH GIỜ\" bấm \"Chọn gói\", chọn gói khách mua.\n2. Gói tính từ lúc khách vào. Khối ghi \"Gói 2 giờ 100.000 đ · còn 25 phút\", thẻ bàn ghi \"gói còn 25'\"; hết gói thì ghi \"hết gói, lố 8'\".\n3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm \"Đã báo khách\".\n\nTiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ \"chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ\". Ai có quyền thu tiền chọn gói được; đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong \"Đặt giá giờ\" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ."
+  },
+  {
    "id": "tinh-gio#cac-viec-thuong-lam-lam-tron-theo-block-choi-toi-thieu",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
@@ -3753,6 +3761,38 @@
    "section": "Lỗi thường gặp",
    "title": "\"Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.\"",
    "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần\nLàm gì: Báo chủ app; trong lúc chờ đặt từng buổi (tắt \"Lặp lại hàng tuần\")"
+  },
+  {
+   "id": "tinh-gio#loi-may-chu-chua-co-goi-gio-bao-chu-app-cap-nhat-may-chu",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ.\"",
+   "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần gói giờ\nLàm gì: Báo chủ app; trong lúc chờ tính theo giờ như thường"
+  },
+  {
+   "id": "tinh-gio#loi-doi-hoac-bo-goi-da-chon-can-chu-quan-quan-ly",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý\"",
+   "text": "Vì sao: Bàn đã có gói, tài khoản không phải Chủ quán hay Quản lý\nLàm gì: Nhờ Chủ quán hoặc Quản lý đổi gói"
+  },
+  {
+   "id": "tinh-gio#loi-goi-khong-con-o-ban-nay",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Gói không còn ở bàn này\"",
+   "text": "Vì sao: Gói vừa bị xoá hoặc sửa trong \"Đặt giá giờ\"\nLàm gì: Đóng hộp, bấm \"Chọn gói\" lại"
+  },
+  {
+   "id": "tinh-gio#loi-khong-thay-nut-chon-goi-trong-khoi-dang-tinh-gio",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Không thấy nút \"Chọn gói\" trong khối ĐANG TÍNH GIỜ",
+   "text": "Vì sao: Bàn chưa có gói nào\nLàm gì: Giữ lâu vào bàn → \"Đặt giá giờ\" → \"Gói giờ\" để thêm"
   },
   {
    "id": "tinh-gio#loi-may-chu-chua-co-ngay-le-bao-chu-app-cap-nhat-may-chu",

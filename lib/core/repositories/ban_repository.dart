@@ -128,6 +128,10 @@ class BanSessionModel {
   final String? waiterId;
   /// Bàn tính giờ: mốc bắt đầu đoạn đang tính (ms), máy chủ đặt. null = phiên không tính giờ.
   final int? gioBatDau;
+  /// Gói giờ của đoạn đang tính (đợt 7, máy chủ đặt): số phút và giá chép lúc chọn. null = không gói;
+  /// giá 0 = phần gói còn lại sau chuyển bàn.
+  final int? goiPhut;
+  final double? goiGia;
 
   const BanSessionModel({
     required this.id,
@@ -140,6 +144,8 @@ class BanSessionModel {
     required this.guestCount,
     this.waiterId,
     this.gioBatDau,
+    this.goiPhut,
+    this.goiGia,
   });
 
   factory BanSessionModel.fromMap(Map<String, dynamic> m) => BanSessionModel(
@@ -153,6 +159,8 @@ class BanSessionModel {
     guestCount: m['guest_count'] as int? ?? 1,
     waiterId: m['waiter_id'] as String?,
     gioBatDau: m['gio_bat_dau'] != null ? _toMs(m['gio_bat_dau']) : null,
+    goiPhut: (m['goi_phut'] as num?)?.toInt(),
+    goiGia: (m['goi_gia'] as num?)?.toDouble(),
   );
 }
 
@@ -1151,6 +1159,52 @@ class BanRepository {
         return 'Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ.';
       }
       return 'Chưa lưu được khung giá giờ. Kiểm tra mạng rồi thử lại.';
+    }
+  }
+
+  /// Gói giờ cho một hoặc nhiều bàn (`ban_goi_gio_luu_v1`, đợt 7). [goi]: [{"so_phut":120,"gia":100000}].
+  Future<String?> luuGoiGio(List<String> tableIds, List<Map<String, dynamic>> goi) async {
+    if (tableIds.isEmpty) return null;
+    final storeId = await _storeId();
+    if (storeId == null) return 'Chưa chọn quán';
+    try {
+      final r = await _sb.rpc('ban_goi_gio_luu_v1', params: {
+        'p_store_id': storeId,
+        'p_table_ids': tableIds,
+        'p_goi': goi,
+      }).timeout(const Duration(seconds: 15));
+      if (r is Map && r['success'] == true) return null;
+      return (r is Map ? r['message'] as String? : null) ?? 'Chưa lưu được gói giờ';
+    } catch (e) {
+      final s = '$e';
+      if (s.contains('PERMISSION_DENIED')) return 'Chỉ Chủ quán / Quản lý đặt được gói giờ';
+      if (s.contains('PGRST202') || s.contains('Could not find the function')) {
+        return 'Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ.';
+      }
+      return 'Chưa lưu được gói giờ. Kiểm tra mạng rồi thử lại.';
+    }
+  }
+
+  /// Chọn gói cho bàn đang chơi (`ban_chon_goi_gio_v1`); [goiId] null = bỏ gói. Trả null khi đã lưu.
+  Future<String?> chonGoiGio(String sessionId, String? goiId) async {
+    final storeId = await _storeId();
+    if (storeId == null) return 'Chưa chọn quán';
+    try {
+      final r = await _sb.rpc('ban_chon_goi_gio_v1', params: {
+        'p_store_id': storeId,
+        'p_session_id': sessionId,
+        'p_goi_id': goiId,
+      }).timeout(const Duration(seconds: 15));
+      if (r is Map && r['success'] == true) return null;
+      return (r is Map ? r['message'] as String? : null) ?? 'Chưa chọn được gói';
+    } catch (e) {
+      final s = '$e';
+      if (s.contains('manage permission')) return 'Đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý';
+      if (s.contains('PERMISSION_DENIED')) return 'Tài khoản không có quyền thu tiền, chưa chọn được gói';
+      if (s.contains('PGRST202') || s.contains('Could not find the function')) {
+        return 'Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ.';
+      }
+      return 'Chưa chọn được gói. Kiểm tra mạng rồi thử lại.';
     }
   }
 

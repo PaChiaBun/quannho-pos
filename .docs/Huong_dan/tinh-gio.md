@@ -12,6 +12,7 @@ nguon:
   - lib/modules/tinh_gio/bao_cao_tinh_gio.dart
   - lib/modules/tinh_gio/gia_gio_ui.dart
   - lib/modules/tinh_gio/ngay_le_ui.dart
+  - lib/modules/tinh_gio/goi_gio_ui.dart
   - lib/screens/ban_screen.dart
   - supabase/migrations/20261123_ban_tinh_gio_v1.sql
   - supabase/migrations/20261124_ban_dat_truoc_v1.sql
@@ -78,6 +79,19 @@ Khách chơi vắt qua hai khung thì mỗi phút tính theo giá của khung l�
    - Bỏ một ngày: bấm dấu ✕ ở ngày đó.
 
 Danh sách ngày lễ dùng chung cho mọi bàn, mỗi lần thêm / bỏ là lưu ngay. Vào ngày lễ, khung có "ngày lễ" **luôn được ưu tiên** hơn khung thường, dù nằm trên hay dưới; giờ nào không có khung ngày lễ thì tính như ngày thường. Ví dụ khung lễ 22:00 – 02:00 bắt đầu tối 30/4 thì tính tới 02:00 sáng hôm sau. Năm sau nhớ thêm lại ngày Tết âm lịch (app không tự tính âm lịch). Bàn đang có khách mà vừa thêm ngày lễ hôm nay thì lúc thanh toán cũng tính theo giá lễ.
+
+### Bán gói giờ (ví dụ 2 giờ 100.000 đ)
+Cài gói cho bàn:
+1. Giữ lâu vào bàn → **"Đặt giá giờ"** → bấm dòng **"Giá theo giờ & làm tròn"** để mở ra.
+2. Ở phần **"Gói giờ"** bấm **"Thêm gói giờ"**, chọn thời gian (30 phút tới 5 giờ), gõ **"Giá trọn gói"**, bấm **"Xong"**. Mỗi bàn tối đa 6 gói, không trùng thời gian.
+3. Bấm **"Lưu"**. Muốn mọi bàn của khu có cùng gói thì chọn **"Cả khu"** trước khi lưu.
+
+Chọn gói cho khách đang chơi:
+1. Mở bàn đang tính giờ. Trong khối **"ĐANG TÍNH GIỜ"** bấm **"Chọn gói"**, chọn gói khách mua.
+2. Gói tính từ lúc khách vào. Khối ghi **"Gói 2 giờ 100.000 đ · còn 25 phút"**, thẻ bàn ghi **"gói còn 25'"**; hết gói thì ghi **"hết gói, lố 8'"**.
+3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm **"Đã báo khách"**.
+
+Tiền: khách về sớm vẫn trả đủ giá gói; chơi lố thì phần lố tính theo giá giờ (có khung giá, ngày lễ, làm tròn). Dòng hoá đơn ghi ví dụ "chơi 2 giờ 17 phút · gói 2 giờ 100.000 đ + 17 phút × 60.000 đ/giờ". Ai có quyền thu tiền chọn gói được; **đổi hoặc bỏ** gói đã chọn cần Chủ quán / Quản lý. Sửa giá gói trong "Đặt giá giờ" không đổi gói của khách đang chơi. Chuyển bàn khi đang có gói: bàn cũ tính đủ giá gói, bàn mới dùng nốt phần gói còn lại (không tính tiền thêm), hết phần còn mới tính theo giờ.
 
 ### Làm tròn theo block, chơi tối thiểu
 Quán muốn tính tròn mỗi 15 / 30 phút hoặc tối thiểu 1 giờ:
@@ -202,6 +216,10 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | "Bàn này có tiền cọc trong ví khách. Cập nhật app để thanh toán …" | Máy đó chưa cập nhật app, chưa biết trừ cọc | Cập nhật app rồi thanh toán, hoặc thanh toán ở máy đã cập nhật |
 | "Còn buổi chờ khách: huỷ lượt đặt trước rồi mới xử lý cọc" | Lịch cố định còn buổi chưa tới | Cọc giữ cho các buổi sau; huỷ hết các buổi còn lại rồi xử lý cọc |
 | "Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần | Báo chủ app; trong lúc chờ đặt từng buổi (tắt "Lặp lại hàng tuần") |
+| "Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần gói giờ | Báo chủ app; trong lúc chờ tính theo giờ như thường |
+| "Đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý" | Bàn đã có gói, tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đổi gói |
+| "Gói không còn ở bàn này" | Gói vừa bị xoá hoặc sửa trong "Đặt giá giờ" | Đóng hộp, bấm "Chọn gói" lại |
+| Không thấy nút "Chọn gói" trong khối ĐANG TÍNH GIỜ | Bàn chưa có gói nào | Giữ lâu vào bàn → "Đặt giá giờ" → "Gói giờ" để thêm |
 | "Máy chủ chưa có ngày lễ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần ngày lễ | Báo chủ app; trong lúc chờ không dùng khung "Ngày lễ" |
 | Khung ngày lễ không áp, dòng "Quán chưa có ngày lễ nào" màu đỏ | Chưa thêm ngày lễ cho quán | Bấm "Thêm" / "Thêm ngày lễ của quán" rồi thêm ngày |
 | "Mỗi lần chọn tối đa 15 ngày liền." | Chọn khoảng ngày quá dài trên lịch | Chọn ngắn hơn, thêm nhiều lần |
@@ -232,7 +250,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 1. Bài viết theo mã ở nhánh `feature/ai-bum-ui` ngày 24/11/2026, **chưa phát hành**. Chỉ đăng bài này cho Boom khi bản app có module này đã tới tay quán, nếu không Boom sẽ chỉ khách dùng thứ họ chưa có.
 2. Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`.
-3. Chưa có: khách tự đặt qua mạng, thông báo đẩy khi app tắt. Ngày lễ (đợt 6) cần máy chủ `20261128_gia_gio_ngay_le.sql` (CHƯA ÁP, phải áp sau đợt 1 `20261128_gia_gio_khung_block.sql`). Tiền cọc vào ví khách (đợt 4) cần máy chủ `20261128_tien_coc_vi_khach.sql` (CHƯA ÁP, phải áp sau đợt 3); bill in chưa ghi dòng trừ cọc.
+3. Chưa có: khách tự đặt qua mạng, thông báo đẩy khi app tắt. Ngày lễ (đợt 6) cần máy chủ `20261128_gia_gio_ngay_le.sql` (CHƯA ÁP, phải áp sau đợt 1 `20261128_gia_gio_khung_block.sql`). Gói giờ (đợt 7) cần `20261128_goi_gio.sql` (CHƯA ÁP, áp sau đợt 6); nhắc hết gói theo từng máy, máy nào mở app cũng nhắc. Tiền cọc vào ví khách (đợt 4) cần máy chủ `20261128_tien_coc_vi_khach.sql` (CHƯA ÁP, phải áp sau đợt 3); bill in chưa ghi dòng trừ cọc.
 4. Cách gọi "bàn / phòng / sân" theo loại hình mới lưu trong `loai_hinh.dart`, chữ trên màn Bàn vẫn ghi "bàn".
 5. Chưa kiểm trên app: gộp bàn có tính giờ, in bill 58mm với dòng tiền giờ, màn Bếp. Bài mô tả theo mã và test máy chủ; sửa lại nếu thử thật ra khác.
 6. Máy chủ: `ban_chot_gio_v1`, `ban_chuyen_ban_tinh_gio_v1`, bảng `ban_dat_truoc` và 4 hàm `ban_dat_truoc_*`.

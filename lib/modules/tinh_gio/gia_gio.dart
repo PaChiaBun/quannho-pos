@@ -76,6 +76,32 @@ class KhungGia {
   }
 }
 
+/// Một gói giờ của bàn (bảng ban_goi_gio, đợt 7): chơi [soPhut] phút giá [gia]; lố tính thêm theo giá giờ.
+class GoiGio {
+  final String? id;
+  final int soPhut;
+  final double gia;
+  const GoiGio({this.id, required this.soPhut, required this.gia});
+
+  /// "Gói 2 giờ".
+  String get ten => 'Gói ${thoiLuongChu(soPhut)}';
+
+  Map<String, dynamic> toJson() => {'so_phut': soPhut, 'gia': gia.round()};
+
+  static GoiGio? tuDong(Map<String, dynamic> m) {
+    final p = (m['so_phut'] as num?)?.toInt(), g = (m['gia'] as num?)?.toDouble();
+    if (p == null || g == null) return null;
+    return GoiGio(id: m['id'] as String?, soPhut: p, gia: g);
+  }
+}
+
+/// "45 phút", "2 giờ", "1 giờ 30 phút" (như qn_tinh_gio_thoi_luong_v1 ở máy chủ).
+String thoiLuongChu(int p) => p < 60
+    ? '$p phút'
+    : p % 60 == 0
+        ? '${p ~/ 60} giờ'
+        : '${p ~/ 60} giờ ${p % 60} phút';
+
 /// Một ngày lễ của quán (bảng ban_ngay_le).
 class NgayLe {
   final DateTime ngay;
@@ -111,7 +137,20 @@ class GiaGioCaiDat {
   final List<KhungGia> khung;
   /// Ngày lễ CỦA QUÁN ([soNgay]), dùng chung mọi bàn; không phải cài đặt của bàn (không so trong [trung]).
   final Set<int> ngayLe;
-  const GiaGioCaiDat({this.block = 1, this.toiThieu = 0, this.anHan = 0, this.khung = const [], this.ngayLe = const {}});
+  /// Gói giờ của bàn (đợt 7), lưu riêng (ban_goi_gio_luu_v1): không tính trong [laMacDinh] / [trung], so bằng [goiTrung].
+  final List<GoiGio> goi;
+  const GiaGioCaiDat({
+    this.block = 1,
+    this.toiThieu = 0,
+    this.anHan = 0,
+    this.khung = const [],
+    this.ngayLe = const {},
+    this.goi = const [],
+  });
+
+  bool goiTrung(GiaGioCaiDat o) =>
+      goi.length == o.goi.length &&
+      [for (var i = 0; i < goi.length; i++) '${goi[i].toJson()}' == '${o.goi[i].toJson()}'].every((x) => x);
 
   static const macDinh = GiaGioCaiDat();
 
@@ -125,12 +164,15 @@ class GiaGioCaiDat {
       khung.length == o.khung.length &&
       [for (var i = 0; i < khung.length; i++) '${khung[i].toJson()}' == '${o.khung[i].toJson()}'].every((x) => x);
 
-  GiaGioCaiDat copyWith({int? block, int? toiThieu, int? anHan, List<KhungGia>? khung, Set<int>? ngayLe}) => GiaGioCaiDat(
+  GiaGioCaiDat copyWith(
+          {int? block, int? toiThieu, int? anHan, List<KhungGia>? khung, Set<int>? ngayLe, List<GoiGio>? goi}) =>
+      GiaGioCaiDat(
         block: block ?? this.block,
         toiThieu: toiThieu ?? this.toiThieu,
         anHan: anHan ?? this.anHan,
         khung: khung ?? this.khung,
         ngayLe: ngayLe ?? this.ngayLe,
+        goi: goi ?? this.goi,
       );
 }
 
@@ -196,26 +238,32 @@ KhungGia? tinhGioKhungLuc(DateTime luc, GiaGioCaiDat c) {
 }
 
 /// Tiền giờ cho lượt bắt đầu [vao], chơi [phutChoi] phút (đã gồm phần kéo tới hết khung đặt trước).
-/// Tính bằng số nguyên (phần trăm đồng) để khớp máy chủ (numeric) từng đồng.
+/// Tính bằng số nguyên (phần trăm đồng) để khớp máy chủ (numeric) từng đồng. Chép qn_tinh_gio_tinh_tien_v3:
+/// có gói ([goiPhut] > 0) thì về sớm vẫn tính đủ gói, tiền = [goiGia] + phần lố theo giá giờ; [doan] chỉ gồm phần lố.
 TienGio tinhGioTien({
   required DateTime vao,
   required int phutChoi,
   required double giaGoc,
   GiaGioCaiDat caiDat = GiaGioCaiDat.macDinh,
+  int? goiPhut,
+  double? goiGia,
 }) {
   final choi = phutChoi < 1 ? 1 : phutChoi;
-  final tinh = tinhGioLamTron(choi, caiDat);
+  final goi = goiPhut == null || goiPhut < 0 ? 0 : goiPhut;
+  final giaGoi = goi > 0 ? ((goiGia ?? 0) < 0 ? 0.0 : (goiGia ?? 0)) : 0.0;
+  final lamTron = tinhGioLamTron(choi, caiDat);
+  final tinh = lamTron > goi ? lamTron : goi;
   final goc = giaGoc < 0 ? 0.0 : giaGoc;
   final doan = <DoanGia>[];
   var tongXu = 0;
   if (caiDat.khung.isEmpty) {
-    doan.add(DoanGia(vao, tinh, goc));
-    tongXu = tinh * (goc * 100).round();
+    if (tinh > goi) doan.add(DoanGia(vao.add(Duration(minutes: goi)), tinh - goi, goc));
+    tongXu = (tinh - goi) * (goc * 100).round();
   } else {
     DateTime? dTu;
     var dPhut = 0;
     double dGia = 0;
-    for (var i = 0; i < tinh; i++) {
+    for (var i = goi; i < tinh; i++) {
       final luc = vao.add(Duration(minutes: i));
       final gia = tinhGioGiaLuc(luc, goc, caiDat);
       if (dPhut > 0 && gia == dGia) {
@@ -230,7 +278,7 @@ TienGio tinhGioTien({
     }
     if (dPhut > 0) doan.add(DoanGia(dTu!, dPhut, dGia));
   }
-  return TienGio(choi, tinh, tienTuTongXu(tongXu), doan);
+  return TienGio(choi, tinh, giaGoi + tienTuTongXu(tongXu), doan);
 }
 
 /// ceil(Σ giá theo phút / 60 / 1000) × 1000, với Σ tính bằng phần trăm đồng.
