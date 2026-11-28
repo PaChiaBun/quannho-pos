@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
+import '../modules/tinh_gio/dat_truoc_ui.dart' show LuotDatCuaKhach;
+import '../modules/tinh_gio/tinh_gio_widgets.dart' show tinhGioModuleActiveProvider;
 import '../modules/pos/screens/discount_management_screen.dart';
 import '../core/utils/app_logger.dart';
 import '../core/utils/responsive.dart';
@@ -28,6 +30,12 @@ final _loyaltyRepoProvider = Provider<LoyaltyRepository>((ref) {
 final _customerTxProvider = StreamProvider.autoDispose
     .family<List<LoyaltyTransactionModel>, String>((ref, customerId) {
   return ref.watch(_loyaltyRepoProvider).watchTransactions(customerId);
+});
+
+/// Lịch sử ví tiền thật của khách (nạp ví, cọc đặt sân, trả bằng ví).
+final _customerBalanceTxProvider = StreamProvider.autoDispose
+    .family<List<BalanceTransactionModel>, String>((ref, customerId) {
+  return ref.watch(_loyaltyRepoProvider).watchBalanceTransactions(customerId);
 });
 
 final _topCustomersProvider = StreamProvider.autoDispose<List<LoyaltyCustomerModel>>((ref) {
@@ -1315,10 +1323,18 @@ class _CustomerDetailSheet extends ConsumerWidget {
                   value: '${customer.loyaltyPts.toStringAsFixed(0)}',
                   icon: Icons.stars_rounded,
                 ),
+                _InfoTile(
+                  label: 'Ví',
+                  value: _fmtShort(customer.realBalance),
+                  icon: Icons.account_balance_wallet_rounded,
+                ),
               ],
             ),
           ),
           const Divider(height: 1, color: _kBorder),
+          // Lượt đặt sân và tiền cọc của khách (module Tính giờ, đợt 4)
+          if (ref.watch(tinhGioModuleActiveProvider)) LuotDatCuaKhach(customerId: customer.id),
+          _LichSuVi(txs: ref.watch(_customerBalanceTxProvider(customer.id)).value ?? const []),
 
           // Transaction history
           const Padding(
@@ -1387,6 +1403,41 @@ class _CustomerDetailSheet extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LichSuVi extends StatelessWidget {
+  final List<BalanceTransactionModel> txs;
+  const _LichSuVi({required this.txs});
+
+  @override
+  Widget build(BuildContext context) {
+    if (txs.isEmpty) return const SizedBox.shrink();
+    return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      leading: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0D9488)),
+      title: Text('Lịch sử ví · ${txs.length} lần',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+      children: [
+        for (final t in txs.take(10))
+          Builder(builder: (_) {
+            final cong = t.type.startsWith('topup') || t.type == 'refund';
+            final dt = parseServerTime(t.createdAt) ?? DateTime.now();
+            return ListTile(
+              dense: true,
+              title: Text(t.note ?? (cong ? 'Nạp ví' : 'Trả bằng ví'), style: const TextStyle(fontSize: 13)),
+              subtitle: Text(
+                '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9E9085))),
+              trailing: Text('${cong ? '+' : '−'}${fmtVnd(t.amount)}',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: cong ? const Color(0xFF15803D) : const Color(0xFFB42318))),
+            );
+          }),
+      ],
     );
   }
 }

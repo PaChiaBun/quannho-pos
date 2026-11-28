@@ -50,3 +50,26 @@ Nếu cọc vào Thu Chi lúc nhận VÀ thanh toán vẫn ghi thu đủ tổng 
 - C. Tài liệu. D. Thử máy ảo + Demo (hỏi trước khi bấm Thanh toán thật).
 
 ## Nhật ký
+
+### 28/11 — Giai đoạn A (máy chủ): viết xong, bản sao đạt, CHƯA ÁP, CHƯA commit
+- `supabase/migrations/20261128_tien_coc_vi_khach.sql` (+ `_ROLLBACK`: v5 nguyên văn production 28/11). Cần đợt 3 áp trước (preflight kiểm `chuoi_id`).
+- Cột `ban_dat_truoc.customer_id`, `coc_trang_thai`, `coc_quy`, `coc_finance_id`, `coc_settlement_id`, `coc_khoa`; `payment_settlements.vi_da_tru`.
+- Hàm: `ban_dat_truoc_gan_khach_v1` (cả lịch cố định; đã có cọc thì không đổi khách), `ban_dat_truoc_nhan_coc_v1` (ví thật + lịch sử "Cọc đặt Sân 1 · dd/mm hh:mm", phiếu thu "Cọc đặt sân: …" đúng quỹ, chống trùng theo mã, một cọc mỗi lượt / lịch), `ban_dat_truoc_xu_ly_coc_v1` (trong_vi / quan_giu / hoan — hoan cần Quản lý, phiếu chi; chỉ khi không còn buổi chờ khách), `qn_coc_cua_phien_v1`, `settle_ban_session_v6`.
+- **Thiết kế v6 ít rủi ro:** không chép 841 dòng của v5; v6 gọi NGUYÊN v5 (đơn hàng, kho, điểm, phiếu thu như cũ) với khách của lượt đặt, rồi trừ ví (`spend_real`, gắn đơn), giảm phiếu thu lúc thanh toán đúng phần ví (về 0 thì xoá), thêm phiếu quỹ `wallet` (Thu Chi không tính quỹ ví — `kCashBookAllFundsFilter`), ghi `vi_da_tru`, cọc `da_tru`. Gửi lại cùng mã: v5 trả kết quả cũ, v6 đọc `vi_da_tru`, không trừ ví lần hai. v5 thêm một đoạn đầu hàm: phiên có cọc mà không đi qua v6 (`qn.settle_v6`) → `COC_CAN_CAP_NHAT_APP`.
+- Test `supabase/tests/tien_coc_vi_khach_test.sql` 20 điểm: hồi quy v6 = v5 khi không cọc; nhận cọc (cần khách, ví +, không thưởng, Thu Chi ngay, gửi lại, một lần, không đổi khách); v5 máy cũ bị chặn; khách khác bị chặn; v6 trừ cọc (đơn đủ, phiếu thu 280k, ví 200k quỹ wallet, Thu Chi tiền mặt tổng 480k không đếm hai lần); gửi lại; huỷ (còn chờ khách thì chưa, phục vụ không hoàn, quán giữ, hoàn có phiếu chi); lịch cố định trừ ở buổi đầu; trả thêm bằng ví.
+- Bản sao (đợt 3 + 4): 20/20; tính giờ 50, đặt trước 40, lịch cố định 18, giao ca 15, chặn đóng phiên 15, nạp ví an toàn, kho topping PASS. `settlement_v5_production_schema_test` ("duplicate or missing side effect") và `settle_v5_concurrency_test` (thiếu `store_code`) lỗi GIỐNG HỆT khi đã gỡ đợt 4 → lỗi cũ của bộ test, chưa sửa. Hoàn tác chạy được. Bản sao đã xoá.
+- Script `db-fix/tien_coc_vi_khach_ap_dung.sh` (chưa chạy).
+- Còn: giai đoạn B (app: hộp đặt chọn / tạo khách + nhận cọc, hộp lượt đặt cọc / huỷ 3 cách, màn thu tiền bàn gọi v6 + dòng cọc / ví + QR theo số còn lại, hồ sơ khách), C (tài liệu), D (thử).
+
+### 28/11 — Giai đoạn B–D (app): Chủ Quán duyệt thiết kế ("Duyệt, làm vào app"), viết xong, CHƯA commit, máy chủ CHƯA ÁP
+- Thiết kế trên bảng Design (5 bảng: dòng tiền, hộp đặt, thu tiền, huỷ, hồ sơ khách).
+- `dat_truoc.dart`: `DatTruoc.customerId / cocTrangThai / cocQuy / coCocCho`; `ganKhach`, `nhanCoc` (mã chống trùng mỗi hộp), `xuLyCoc`, `docCocCuaPhien` (chép `qn_coc_cua_phien_v1`), `docCuaKhach`; `tienTraBangVi` (chép v6).
+- Hộp đặt: ô "Chọn khách hàng" (`_ChonKhachSheet`: tìm tên / SĐT, "Khách mới"), ô "Tiền cọc" + Tiền mặt / Chuyển khoản; lưu = `luu_v1` (tiền cọc 0) → `gan_khach` → `nhan_coc`; cọc mà chưa chọn khách thì tìm theo SĐT, chưa có thì tạo. Lỗi sau khi lưu: hộp giữ, bấm lại chỉ làm phần cọc. Lịch cố định: cọc gắn buổi đầu còn chờ. Lượt đã có cọc: ô cọc chỉ xem, không đổi khách.
+- Huỷ / không đến lượt lẻ có cọc → `XuLyCocSheet` (không đến chọn sẵn "Quán giữ cọc", huỷ chọn sẵn "Để trong ví", Hoàn khoá với không phải Chủ / Quản lý); huỷ chuỗi hết buổi chờ thì hỏi; lượt huỷ còn cọc có nút "Xử lý tiền cọc".
+- Thu tiền bàn: đọc cọc trước khi mở (lỗi thì dừng, tránh thu đủ tổng); có cọc thì khoá khách = khách đặt; khối "Tổng hoá đơn / Đã cọc (ví …) / KHÁCH TRẢ THÊM"; QR + tiền khách đưa theo số còn lại; công tắc "Trả bằng ví khách"; màn thành công ghi "Đã trừ ví khách …". `settleBanSession` gọi v6, thiếu v6 (PGRST202) thì gọi v5 (trừ khi chọn trả ví).
+- Hồ sơ khách (loyalty_screen): ô "Ví", mục "Đặt sân · N lượt" (`LuotDatCuaKhach`), "Lịch sử ví".
+- Tài liệu: tinh-gio.md (3 mục mới + 6 dòng lỗi), khach-hang.md, thu-chi.md, kien-truc-data.md.
+- Test: `tien_coc_test.dart` 5; ảnh mẫu `xu_ly_coc_360.png`, `dat_coc_360.png`, `dat_lap_360.png` dựng lại (hộp có thêm ô khách). test/modules/tinh_gio 74/74; settlement client, qr_order v4, chặn đóng phiên PASS.
+- Máy ảo + Demo: hộp đặt có ô khách, tìm khách, gõ cọc hiện Tiền mặt / Chuyển khoản + "Đặt · nhận cọc 200.000 đ"; KHÔNG bấm Đặt. Dữ liệu Demo (thêm đếm lượt đặt, khách, Thu Chi) trước / sau giống hệt.
+- Chưa: bill in chưa ghi dòng trừ cọc; chưa thử thanh toán thật có cọc (cần áp máy chủ đợt 3 + 4, rồi hỏi Chủ Quán trước khi bấm Thanh toán trên Demo).
+

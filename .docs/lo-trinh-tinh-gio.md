@@ -13,7 +13,7 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 | 1 | Giá theo khung giờ / thứ + làm tròn block, tối thiểu, ân hạn | mọi ngành, nhất là karaoke, sân | Có (máy chủ tính) | App xong (b9f95f1); máy chủ CHƯA ÁP — `ke-hoach-gia-gio-khung-block.md` |
 | 2 | Lịch đặt dạng lưới "giờ × bàn / sân", chạm ô trống để đặt | sân, karaoke | Không | Xong (c0750be), chỉ app — `ke-hoach-lich-dat-luoi.md` |
 | 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | App xong (0cc4764); máy chủ CHƯA ÁP — `ke-hoach-lich-co-dinh.md` |
-| 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | Kế hoạch đã chốt — `ke-hoach-tien-coc.md` |
+| 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 3) — `ke-hoach-tien-coc.md` |
 | 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | Chưa |
 | 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | Chưa |
 | 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | Chưa |
@@ -44,3 +44,5 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 - 28/11: đợt 2 (lịch dạng lưới) viết xong, thử máy ảo; chỉ app.
 - 28/11: đợt 3 (lịch cố định) máy chủ viết + bản sao đạt (chưa áp), app viết xong, thử máy ảo.
 - 28/11: đợt 4 (tiền cọc) lập kế hoạch, Chủ Quán chốt làm chung ví khách + 4 quyết định.
+- 28/11: đợt 4 giai đoạn A (máy chủ cọc = ví khách, thanh toán bàn v6) viết xong, bản sao đạt.
+- 28/11: đợt 4 giai đoạn B–D (app: hộp đặt khách + cọc, xử lý cọc, thu tiền bàn trừ cọc, hồ sơ khách) viết xong, thử máy ảo; Chủ Quán duyệt thiết kế, bảo commit, chưa áp.

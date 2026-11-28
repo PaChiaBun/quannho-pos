@@ -1,6 +1,6 @@
 {
- "version": 202611280633,
- "hash": "637dfe965610b0afd207e38e256001506c9dc129b35e1f9e5e75a81316557c76",
+ "version": 202611280724,
+ "hash": "ca5c2ae65f4a991f4dc6710bb3a131b89b920380d493e9fc2fbac1949d615602",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -1736,7 +1736,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "",
    "title": "Cách tính điểm, hạng, ví",
-   "text": "• Tích điểm (điểm tích luỹ): mỗi đơn thanh toán có gắn khách được cộng tổng tiền ÷ mức tích điểm (làm tròn xuống). Mặc định 10.000đ = 1 điểm; đổi ở Cài đặt → \"Cài đặt điểm thưởng\" (\"đ = 1 điểm\") → \"Lưu cài đặt\".\n• Dùng điểm khi thanh toán: mỗi điểm trừ 1.000đ (mặc định, hiện chưa có chỗ đổi trong app).\n• Mỗi lần thanh toán có gắn khách còn cộng tổng chi và số lần ghé.\n• Hạng (chỉ để hiển thị, chưa có ưu đãi tự động): Đồng 🥉 < 50 điểm, Bạc 🥈 từ 50, Vàng ⭐ từ 200, VIP 💎 từ 500.\n• Ví: gồm tiền thật khách đã nạp và bonus được tặng. Khi trả bằng ví ở Bán hàng: bonus chỉ dùng tối đa 15% giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. Quản lý Bàn chưa trả được bằng ví."
+   "text": "• Tích điểm (điểm tích luỹ): mỗi đơn thanh toán có gắn khách được cộng tổng tiền ÷ mức tích điểm (làm tròn xuống). Mặc định 10.000đ = 1 điểm; đổi ở Cài đặt → \"Cài đặt điểm thưởng\" (\"đ = 1 điểm\") → \"Lưu cài đặt\".\n• Dùng điểm khi thanh toán: mỗi điểm trừ 1.000đ (mặc định, hiện chưa có chỗ đổi trong app).\n• Mỗi lần thanh toán có gắn khách còn cộng tổng chi và số lần ghé.\n• Hạng (chỉ để hiển thị, chưa có ưu đãi tự động): Đồng 🥉 < 50 điểm, Bạc 🥈 từ 50, Vàng ⭐ từ 200, VIP 💎 từ 500.\n• Ví: gồm tiền thật khách đã nạp và bonus được tặng. Khi trả bằng ví ở Bán hàng: bonus chỉ dùng tối đa 15% giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. Ở Quản lý Bàn (màn Thu tiền) trả được bằng ví tiền thật: bật \"Trả bằng ví khách (số dư …)\" sau khi tìm khách (cần máy chủ có tiền cọc vào ví khách).\n• Tiền cọc đặt sân (module Các hoạt động tính giờ): cọc nằm trong ví tiền thật của khách, không có bonus; thanh toán bàn của lượt đặt tự trừ. Xem bài Các hoạt động tính giờ."
   },
   {
    "id": "khach-hang#cac-viec-thuong-lam-1-them-khach",
@@ -1752,7 +1752,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "Các việc thường làm",
    "title": "2. Xem chi tiết khách",
-   "text": "• Chạm khách: điểm hiện có, \"Tổng chi\", \"Số lần\", \"Điểm tích\", \"Lịch sử điểm\" (+ tích / − đổi, theo thời gian)."
+   "text": "• Chạm khách: điểm hiện có, \"Tổng chi\", \"Số lần\", \"Điểm tích\", \"Ví\" (tiền thật trong ví), \"Lịch sử điểm\" (+ tích / − đổi, theo thời gian).\n• Khách có giao dịch ví thì có mục \"Lịch sử ví\" (nạp, cọc đặt sân, trả bằng ví, mất / hoàn cọc). Quán bật Các hoạt động tính giờ thì có mục \"Đặt sân · … lượt\" (cọc đang giữ và từng lượt đặt)."
   },
   {
    "id": "khach-hang#cac-viec-thuong-lam-3-tao-goi-nap-khuyen-khich-nap-vi",
@@ -3336,7 +3336,7 @@
    "module_name": "Thu Chi",
    "section": "",
    "title": "Khoản thu/chi tự động (không cần ghi tay)",
-   "text": "• Thanh toán ở Bán hàng — Ghi: Thu — Mô tả trên sổ: \"Bán hàng #QN-…\"\n• Thanh toán ở Quản lý Bàn — Ghi: Thu — Mô tả trên sổ: \"Thanh toán bàn …\"\n• Thu tiền đơn QR mang đi — Ghi: Thu — Mô tả trên sổ: \"Bán hàng mang đi #QR-… (#Qxx)\"\n• Nạp ví khách hàng — Ghi: Thu — Mô tả trên sổ: \"Nạp ví: …\" — vào quỹ Tiền mặt hoặc Tiền gửi theo cách thu thu ngân chọn lúc nạp (Tiền mặt / Chuyển khoản)\n• Nhập hàng ở Kho hàng — Ghi: Chi — Mô tả trên sổ: \"Nhập hàng: …\" / \"Nhập hàng <số phiếu> — <NCC>\"\n• Nhập nhanh nguyên liệu ở Kho Chuyên Nghiệp — Ghi: Chi — Mô tả trên sổ: \"Nhập nhanh: …\"\n• Huỷ phiếu nhập ở Kho hàng — Ghi: Thu (hoàn) — Mô tả trên sổ: \"Huỷ nhập hàng <số phiếu> — <lý do>\"\n\n• Bán bằng tiền mặt → quỹ Tiền mặt; chuyển khoản / thẻ → quỹ Tiền gửi; bán quầy trả bằng ví → quỹ riêng \"ví\" — không tính vào sổ Thu Chi (tiền đã ghi thu lúc nạp ví); xem đơn trả bằng ví ở Báo cáo → Hóa đơn.\n• Huỷ món ở Quản lý Bàn không ghi khoản nào vào Thu Chi — chỉ trừ kho nguyên liệu (hao hụt) khi bếp đang làm hoặc đã xong.\n• Khoản tự động không xoá tay được. Chạm vào để xem: khoản bán hàng mở chi tiết đơn (món — món giống nhau gộp một dòng, kèm topping —, phương thức, người bán); khoản khác hiện \"Tự động từ: … Không thể xóa thủ công.\""
+   "text": "• Thanh toán ở Bán hàng — Ghi: Thu — Mô tả trên sổ: \"Bán hàng #QN-…\"\n• Thanh toán ở Quản lý Bàn — Ghi: Thu — Mô tả trên sổ: \"Thanh toán bàn …\"\n• Thu tiền đơn QR mang đi — Ghi: Thu — Mô tả trên sổ: \"Bán hàng mang đi #QR-… (#Qxx)\"\n• Nạp ví khách hàng — Ghi: Thu — Mô tả trên sổ: \"Nạp ví: …\" — vào quỹ Tiền mặt hoặc Tiền gửi theo cách thu thu ngân chọn lúc nạp (Tiền mặt / Chuyển khoản)\n• Nhận cọc đặt sân (Các hoạt động tính giờ) — Ghi: Thu — Mô tả trên sổ: \"Cọc đặt sân: tên khách · Sân … · ngày giờ\" — quỹ theo cách nhận cọc; tiền vào ví khách. Lúc thanh toán bàn phần cọc ghi quỹ \"ví\" (không tính lại), phiếu thu thanh toán chỉ còn phần khách trả thêm\n• Hoàn cọc đặt sân — Ghi: Chi — Mô tả trên sổ: \"Hoàn cọc đặt sân: tên khách\" (chỉ Chủ quán / Quản lý)\n• Nhập hàng ở Kho hàng — Ghi: Chi — Mô tả trên sổ: \"Nhập hàng: …\" / \"Nhập hàng <số phiếu> — <NCC>\"\n• Nhập nhanh nguyên liệu ở Kho Chuyên Nghiệp — Ghi: Chi — Mô tả trên sổ: \"Nhập nhanh: …\"\n• Huỷ phiếu nhập ở Kho hàng — Ghi: Thu (hoàn) — Mô tả trên sổ: \"Huỷ nhập hàng <số phiếu> — <lý do>\"\n\n• Bán bằng tiền mặt → quỹ Tiền mặt; chuyển khoản / thẻ → quỹ Tiền gửi; bán quầy trả bằng ví → quỹ riêng \"ví\" — không tính vào sổ Thu Chi (tiền đã ghi thu lúc nạp ví); xem đơn trả bằng ví ở Báo cáo → Hóa đơn.\n• Huỷ món ở Quản lý Bàn không ghi khoản nào vào Thu Chi — chỉ trừ kho nguyên liệu (hao hụt) khi bếp đang làm hoặc đã xong.\n• Khoản tự động không xoá tay được. Chạm vào để xem: khoản bán hàng mở chi tiết đơn (món — món giống nhau gộp một dòng, kèm topping —, phương thức, người bán); khoản khác hiện \"Tự động từ: … Không thể xóa thủ công.\""
   },
   {
    "id": "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th",
@@ -3608,7 +3608,31 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt trước sân, bàn, phòng",
-   "text": "Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:\n1. Ở màn Các hoạt động tính giờ bấm nút \"Lịch đặt\" (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).\n2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.\n3. Lịch mở dạng lưới: cột bên trái là giờ, mỗi bàn / sân / phòng một cột, lượt đặt là khối màu (xanh đậm = đã đặt, xanh lá = khách đã đến, xám gạch ngang = huỷ hoặc không đến); hôm nay có vạch đỏ ở giờ hiện tại. Chạm vào ô trống ở đúng bàn và giờ muốn đặt (làm tròn theo nửa giờ): app mở hộp đặt đã điền sẵn bàn và giờ. Nhiều bàn hơn bề ngang màn thì vuốt ngang để xem.\n4. Nhập tên khách, số điện thoại, đổi giờ bắt đầu nếu cần (bấm vào dòng giờ), chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm \"Đặt\".\n\nMuốn xem kiểu cũ (mỗi bàn một thẻ, có nút \"Đặt\") thì bấm nút ở góc trên bên phải (\"Xem dạng danh sách\"); bấm lại để về lưới. Chạm ô giờ đã qua thì app báo \"Giờ này đã qua\".\n\nHai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn."
+   "text": "Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:\n1. Ở màn Các hoạt động tính giờ bấm nút \"Lịch đặt\" (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).\n2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.\n3. Lịch mở dạng lưới: cột bên trái là giờ, mỗi bàn / sân / phòng một cột, lượt đặt là khối màu (xanh đậm = đã đặt, xanh lá = khách đã đến, xám gạch ngang = huỷ hoặc không đến); hôm nay có vạch đỏ ở giờ hiện tại. Chạm vào ô trống ở đúng bàn và giờ muốn đặt (làm tròn theo nửa giờ): app mở hộp đặt đã điền sẵn bàn và giờ. Nhiều bàn hơn bề ngang màn thì vuốt ngang để xem.\n4. Nhập tên khách, số điện thoại, đổi giờ bắt đầu nếu cần (bấm vào dòng giờ), chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm \"Đặt\".\n\nMuốn xem kiểu cũ (mỗi bàn một thẻ, có nút \"Đặt\") thì bấm nút ở góc trên bên phải (\"Xem dạng danh sách\"); bấm lại để về lưới. Chạm ô giờ đã qua thì app báo \"Giờ này đã qua\".\n\nHai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn."
+  },
+  {
+   "id": "tinh-gio#cac-viec-thuong-lam-nhan-tien-coc-khi-khach-dat",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Nhận tiền cọc khi khách đặt",
+   "text": "Tiền cọc nằm trong ví của khách (module Khách hàng), vào Thu Chi ngay lúc nhận, và tự trừ khi thanh toán bàn.\n1. Trong hộp đặt bấm \"Chọn khách hàng (để nhận cọc, tích điểm)\": gõ số điện thoại hoặc tên để tìm khách có sẵn, hoặc bấm \"Khách mới (tên + số điện thoại)\". Không chọn mà có nhập số điện thoại thì app tự tìm khách theo số đó, chưa có thì tạo khách mới.\n2. Gõ số ở ô \"Tiền cọc\", chọn \"Tiền mặt\" hoặc \"Chuyển khoản\".\n3. Bấm \"Đặt · nhận cọc …\". Ví khách cộng số cọc (không tặng thưởng như gói nạp ví), lịch sử ví ghi \"Cọc đặt Sân 1 · 03/12 18:00\", Thu Chi có phiếu thu \"Cọc đặt sân: tên khách\" đúng quỹ tiền mặt hoặc ngân hàng.\n\nKhông lấy cọc thì để trống ô Tiền cọc, không cần chọn khách. Lịch cố định chỉ cọc một lần cho cả lịch, trừ vào buổi đầu tiên khách đến. Lượt đã có cọc thì không đổi số cọc và không đổi khách được nữa."
+  },
+  {
+   "id": "tinh-gio#cac-viec-thuong-lam-thanh-toan-ban-cua-khach-da-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Thanh toán bàn của khách đã cọc",
+   "text": "Khách đặt đã đến và bàn đã nhận lượt đặt: bấm Thanh toán như thường. Màn Thu tiền tự điền khách đã đặt (không đổi được), ghi \"Tổng hoá đơn\", \"Đã cọc (ví tên khách) −…\" và số to \"KHÁCH TRẢ THÊM\". Mã QR chuyển khoản và ô tiền khách đưa tính theo số khách trả thêm.\n\nVí dụ cọc 200.000 đ, bàn 480.000 đ: khách trả thêm 280.000 đ. Đơn hàng và báo cáo doanh thu ghi đủ 480.000 đ. Thu Chi có 200.000 đ lúc nhận cọc và 280.000 đ lúc thanh toán, cọc không bị tính hai lần. Màn thanh toán xong ghi \"Đã trừ ví khách 200.000 đ · khách trả thêm 280.000 đ\".\n\nKhách còn tiền trong ví (nạp ví trước) thì bật \"Trả bằng ví khách (số dư …)\" ở ô khách hàng để trả nốt phần còn lại bằng ví."
+  },
+  {
+   "id": "tinh-gio#cac-viec-thuong-lam-khach-huy-hoac-khong-den-khi-da-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Khách huỷ hoặc không đến khi đã cọc",
+   "text": "Bấm \"Huỷ lượt đặt\" hoặc \"Khách không đến\" ở lượt có cọc, app hỏi \"Tiền cọc … xử lý thế nào?\":\n• \"Để trong ví khách\": tiền nằm lại trong ví, lần sau khách trả bằng ví. Chọn sẵn khi khách báo huỷ.\n• \"Quán giữ cọc\": trừ ví, lịch sử ví ghi mất cọc; Thu Chi không đổi vì tiền đã thu lúc đặt. Chọn sẵn khi khách không đến.\n• \"Hoàn cọc\": trừ ví và ghi phiếu chi \"Hoàn cọc đặt sân\" đúng quỹ đã nhận. Chỉ Chủ quán hoặc Quản lý chọn được.\n\nBấm \"Để sau\" thì cọc vẫn trong ví; lúc khác chạm lượt đặt đó chọn \"Xử lý tiền cọc …\". Lịch cố định: huỷ riêng một buổi thì cọc giữ cho các buổi sau; huỷ hết các buổi còn lại thì app mới hỏi xử lý cọc.\n\nHồ sơ khách (module Khách hàng) có thêm \"Ví\", mục \"Đặt sân · … lượt\" (cọc đang giữ, từng lượt đặt và cọc đã trừ / giữ / hoàn) và \"Lịch sử ví\"."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-lich-co-dinh-hang-tuan-cho-khach-que",
@@ -3649,6 +3673,54 @@
    "section": "Các việc thường làm",
    "title": "Nhắc gọi khách trước giờ đặt",
    "text": "Còn 30 phút tới giờ đặt, app bật hộp \"Sắp tới giờ đặt\" kèm chuông, ghi bàn, giờ, tên và số điện thoại khách. Bấm \"Gọi khách\" để gọi, rồi bấm \"Đã nhắc\". Một người bấm \"Đã nhắc\" thì máy khác không nhắc nữa, và lịch ghi giờ đã nhắc. Hộp nhắc chỉ hiện khi app đang mở; app đang tắt thì không có thông báo. Lượt đặt khi còn dưới 30 phút tới giờ thì không nhắc."
+  },
+  {
+   "id": "tinh-gio#loi-da-luu-luot-dat-nhung-chua-nhan-duoc-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Đã lưu lượt đặt, nhưng chưa nhận được cọc: …\"",
+   "text": "Vì sao: Lượt đặt đã ghi nhưng bước nhận cọc lỗi (mất mạng, máy chủ chưa có tiền cọc vào ví khách)\nLàm gì: Bấm lại nút đặt trong hộp đó (chỉ làm phần cọc); hoặc chạm lượt đặt → \"Sửa lượt đặt\" để nhập cọc"
+  },
+  {
+   "id": "tinh-gio#loi-may-chu-chua-co-tien-coc-vao-vi-khach-bao-chu-app-cap-nhat-m",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Máy chủ chưa có tiền cọc vào ví khách. Báo chủ app cập nhật máy chủ.\"",
+   "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần cọc\nLàm gì: Báo chủ app; trong lúc chờ đặt không cọc"
+  },
+  {
+   "id": "tinh-gio#loi-nhan-coc-can-khach-hang-chon-khach-hoac-nhap-so-dien-thoai",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại\"",
+   "text": "Vì sao: Có tiền cọc mà chưa có khách\nLàm gì: Chọn khách hoặc nhập số điện thoại"
+  },
+  {
+   "id": "tinh-gio#loi-chua-doc-duoc-tien-coc-cua-ban-kiem-tra-mang-roi-bam-thanh-t",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Chưa đọc được tiền cọc của bàn. Kiểm tra mạng rồi bấm Thanh toán lại.\"",
+   "text": "Vì sao: Mất mạng lúc mở màn Thu tiền\nLàm gì: Kiểm tra mạng rồi bấm Thanh toán lại"
+  },
+  {
+   "id": "tinh-gio#loi-ban-nay-co-tien-coc-trong-vi-khach-cap-nhat-app-de-thanh-toa",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Bàn này có tiền cọc trong ví khách. Cập nhật app để thanh toán …\"",
+   "text": "Vì sao: Máy đó chưa cập nhật app, chưa biết trừ cọc\nLàm gì: Cập nhật app rồi thanh toán, hoặc thanh toán ở máy đã cập nhật"
+  },
+  {
+   "id": "tinh-gio#loi-con-buoi-cho-khach-huy-luot-dat-truoc-roi-moi-xu-ly-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Còn buổi chờ khách: huỷ lượt đặt trước rồi mới xử lý cọc\"",
+   "text": "Vì sao: Lịch cố định còn buổi chưa tới\nLàm gì: Cọc giữ cho các buổi sau; huỷ hết các buổi còn lại rồi xử lý cọc"
   },
   {
    "id": "tinh-gio#loi-may-chu-chua-co-lich-co-dinh-bao-chu-app-cap-nhat-may-chu",

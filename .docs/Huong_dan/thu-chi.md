@@ -34,6 +34,8 @@ nguon:
 | Thanh toán ở **Quản lý Bàn** | Thu | "Thanh toán bàn …" |
 | Thu tiền đơn **QR mang đi** | Thu | "Bán hàng mang đi #QR-… (#Qxx)" |
 | **Nạp ví** khách hàng | Thu | "Nạp ví: …" — vào quỹ **Tiền mặt** hoặc **Tiền gửi** theo cách thu thu ngân chọn lúc nạp (Tiền mặt / Chuyển khoản) |
+| **Nhận cọc đặt sân** (Các hoạt động tính giờ) | Thu | "Cọc đặt sân: tên khách · Sân … · ngày giờ" — quỹ theo cách nhận cọc; tiền vào ví khách. Lúc thanh toán bàn phần cọc ghi quỹ "ví" (không tính lại), phiếu thu thanh toán chỉ còn phần khách trả thêm |
+| **Hoàn cọc đặt sân** | Chi | "Hoàn cọc đặt sân: tên khách" (chỉ Chủ quán / Quản lý) |
 | **Nhập hàng** ở Kho hàng | Chi | "Nhập hàng: …" / "Nhập hàng <số phiếu> — <NCC>" |
 | **Nhập nhanh** nguyên liệu ở Kho Chuyên Nghiệp | Chi | "Nhập nhanh: …" |
 | **Huỷ phiếu nhập** ở Kho hàng | Thu (hoàn) | "Huỷ nhập hàng <số phiếu> — <lý do>" |

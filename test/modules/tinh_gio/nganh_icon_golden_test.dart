@@ -392,5 +392,85 @@ void main() {
     expect(find.text('Huỷ riêng buổi này'), findsOneWidget);
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/luot_dat_chuoi_360.png'));
   });
-}
 
+  // Đợt 4: khách không đến, lượt có cọc 200.000 → hỏi ba cách, chọn sẵn "Quán giữ cọc"; phục vụ không hoàn được.
+  testWidgets('hộp xử lý cọc khi khách không đến', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final d = DatTruoc(
+      id: 'a',
+      tableId: 's1',
+      tenKhach: 'Anh Nam',
+      gioTu: DateTime(2030, 12, 3, 18),
+      gioDen: DateTime(2030, 12, 3, 20),
+      trangThai: 'khong_den',
+      createdAt: DateTime(2030, 11, 29),
+      tienCoc: 200000,
+      customerId: 'k1',
+      cocTrangThai: 'da_thu',
+      cocQuy: 'cash',
+    );
+    var khiHoan = '', khiTrongVi = '';
+    String nut() => tester.widget<Text>(find.textContaining('Xác nhận ·')).data!;
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: const Color(0xFF6B6A8A),
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: XuLyCocSheet(dat: d, tenBan: 'Sân 1', khongDen: true, laQuanLy: false),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hoàn cọc'));
+      await tester.pump();
+      khiHoan = nut();
+      await tester.tap(find.text('Để trong ví khách'));
+      await tester.pump();
+      khiTrongVi = nut();
+      await tester.tap(find.text('Quán giữ cọc'));
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(khiHoan, 'Xác nhận · quán giữ 200.000 đ', reason: 'phục vụ không chọn được Hoàn cọc');
+    expect(khiTrongVi, 'Xác nhận · để 200.000 đ trong ví');
+    expect(nut(), 'Xác nhận · quán giữ 200.000 đ');
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/xu_ly_coc_360.png'));
+  });
+
+  // Đợt 4: hộp đặt có ô khách hàng + tiền cọc; gõ cọc thì hiện Tiền mặt / Chuyển khoản, nút "Đặt · nhận cọc".
+  testWidgets('hộp đặt có tiền cọc', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final ban = BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(ProviderScope(
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: DatTruocFormSheet(ban: ban, ngay: DateTime(2030, 12, 3), trongNgay: const [], tuMacDinh: DateTime(2030, 12, 3, 18)),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Tên khách'), 'Anh Nam');
+      await tester.enterText(find.widgetWithText(TextField, 'Số điện thoại (để gọi nhắc)'), '0901111222');
+      await tester.enterText(find.widgetWithText(TextField, 'Tiền cọc (không có thì để trống)'), '200000');
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(find.text('Chọn khách hàng (để nhận cọc, tích điểm)'), findsOneWidget);
+    expect(find.text('Chuyển khoản'), findsOneWidget);
+    expect(find.text('Đặt · nhận cọc 200.000 đ'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_coc_360.png'));
+  });
+}

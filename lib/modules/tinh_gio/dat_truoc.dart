@@ -31,6 +31,12 @@ class DatTruoc {
   final DateTime createdAt;
   /// Mã lịch cố định (đặt lặp hàng tuần, đợt 3); null = lượt lẻ.
   final String? chuoiId;
+  /// Đợt 4: khách hàng của lượt đặt và tiền cọc trong ví khách.
+  final String? customerId;
+  /// null (không cọc) | 'da_thu' (đang trong ví, chờ trừ) | 'da_tru' | 'trong_vi' | 'quan_giu' | 'da_hoan'
+  final String? cocTrangThai;
+  /// Quỹ nhận cọc: 'cash' | 'bank'.
+  final String? cocQuy;
 
   const DatTruoc({
     required this.id,
@@ -48,7 +54,13 @@ class DatTruoc {
     this.nhacBoi,
     this.nguoiTaoTen,
     this.chuoiId,
+    this.customerId,
+    this.cocTrangThai,
+    this.cocQuy,
   });
+
+  /// Cọc đã nhận vào ví khách, chưa trừ / chưa xử lý.
+  bool get coCocCho => cocTrangThai == 'da_thu' && tienCoc > 0;
 
   bool get choKhach => trangThai == 'da_dat';
   bool get conHieuLuc => trangThai == 'da_dat' || trangThai == 'da_nhan';
@@ -71,6 +83,9 @@ class DatTruoc {
         nguoiTaoTen: m['nguoi_tao_ten'] as String?,
         createdAt: m['created_at'] != null ? _gio(m['created_at']) : DateTime.fromMillisecondsSinceEpoch(0),
         chuoiId: m['chuoi_id'] as String?,
+        customerId: m['customer_id'] as String?,
+        cocTrangThai: m['coc_trang_thai'] as String?,
+        cocQuy: m['coc_quy'] as String?,
       );
 }
 
@@ -185,7 +200,9 @@ class DatTruocRepository {
         'message': s.contains('PERMISSION_DENIED')
             ? 'Bạn không có quyền làm việc này'
             : s.contains('PGRST202') || s.contains('Could not find the function')
-                ? 'Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.'
+                ? (fn.contains('lap') || fn.contains('chuoi')
+                    ? 'Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.'
+                    : 'Máy chủ chưa có tiền cọc vào ví khách. Báo chủ app cập nhật máy chủ.')
                 : 'Chưa làm được, kiểm tra mạng rồi thử lại',
       };
     }
@@ -267,9 +284,100 @@ class DatTruocRepository {
       _rpc('ban_dat_truoc_nhan_v1', {'p_id': id, 'p_session_id': sessionId});
 
   Future<Map<String, dynamic>> daNhac(String id) => _rpc('ban_dat_truoc_da_nhac_v1', {'p_id': id});
+
+  /// Gắn khách hàng cho lượt đặt (cả các buổi còn chờ của lịch cố định).
+  Future<Map<String, dynamic>> ganKhach(String id, String? customerId) =>
+      _rpc('ban_dat_truoc_gan_khach_v1', {'p_id': id, 'p_customer_id': customerId});
+
+  /// Nhận cọc: cộng ví thật của khách + phiếu thu Thu Chi ngay. [quy]: 'cash' | 'bank'.
+  Future<Map<String, dynamic>> nhanCoc(String id, double soTien, String quy, String khoa) => _rpc(
+        'ban_dat_truoc_nhan_coc_v1',
+        {'p_id': id, 'p_so_tien': soTien, 'p_quy': quy, 'p_idempotency_key': khoa},
+      );
+
+  /// Lượt huỷ / không đến có cọc. [cach]: 'trong_vi' | 'quan_giu' | 'hoan' (chỉ Quản lý, phiếu chi quỹ [quy]).
+  Future<Map<String, dynamic>> xuLyCoc(String id, String cach, String quy) =>
+      _rpc('ban_dat_truoc_xu_ly_coc_v1', {'p_id': id, 'p_cach': cach, 'p_quy': quy});
+
+  /// Cọc chưa trừ của phiên bàn (chép qn_coc_cua_phien_v1): lượt đã nhận vào phiên + cả lịch cố định của nó.
+  /// Máy chủ chưa có cột cọc → không có cọc.
+  Future<CocCuaPhien?> docCocCuaPhien(String sessionId) async {
+    final storeId = await _storeId();
+    if (storeId == null) return null;
+    final nhan = await _sb
+        .from('ban_dat_truoc')
+        .select()
+        .eq('store_id', storeId)
+        .eq('session_id', sessionId)
+        .eq('trang_thai', 'da_nhan')
+        .timeout(const Duration(seconds: 10));
+    final dsNhan = nhan.map(DatTruoc.fromMap).toList();
+    if (dsNhan.isEmpty) return null;
+    final chuoi = {for (final d in dsNhan) if (d.chuoiId != null) d.chuoiId!};
+    final cung = chuoi.isEmpty
+        ? const <DatTruoc>[]
+        : (await _sb.from('ban_dat_truoc').select().eq('store_id', storeId).inFilter('chuoi_id', chuoi.toList()))
+            .map(DatTruoc.fromMap)
+            .toList();
+    final coc = {for (final d in [...dsNhan, ...cung]) if (d.coCocCho) d.id: d}.values.toList();
+    final khachId = (coc.isNotEmpty ? coc : dsNhan).map((d) => d.customerId).whereType<String>().firstOrNull;
+    if (khachId == null) return null;
+    final k = await _sb
+        .from('customers')
+        .select('id, name, phone, real_balance')
+        .eq('id', khachId)
+        .maybeSingle()
+        .timeout(const Duration(seconds: 10));
+    if (k == null) return null;
+    return CocCuaPhien(
+      tien: coc.fold<double>(0, (s, d) => s + d.tienCoc),
+      customerId: khachId,
+      tenKhach: (k['name'] as String?) ?? '',
+      sdt: k['phone'] as String?,
+      soDuVi: (k['real_balance'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  /// Lượt đặt của một khách (hồ sơ khách), mới nhất trước.
+  Future<List<DatTruoc>> docCuaKhach(String customerId) async {
+    final storeId = await _storeId();
+    if (storeId == null) return const [];
+    final rows = await _sb
+        .from('ban_dat_truoc')
+        .select()
+        .eq('store_id', storeId)
+        .eq('customer_id', customerId)
+        .order('gio_tu', ascending: false)
+        .limit(30)
+        .timeout(const Duration(seconds: 10));
+    return rows.map(DatTruoc.fromMap).toList();
+  }
+}
+
+/// Khách của lượt đặt mà phiên bàn đã nhận và tiền cọc còn trong ví (màn thu tiền bàn).
+class CocCuaPhien {
+  final double tien;
+  final String customerId;
+  final String tenKhach;
+  final String? sdt;
+  final double soDuVi;
+  const CocCuaPhien({required this.tien, required this.customerId, required this.tenKhach, this.sdt, required this.soDuVi});
+}
+
+/// Phần trả bằng ví khi thanh toán bàn (chép settle_ban_session_v6): tối đa tổng, cọc + phần chọn trả thêm,
+/// và số dư ví thật.
+double tienTraBangVi({required double tong, required double coc, double traThem = 0, required double soDu}) {
+  if (tong <= 0) return 0;
+  final v = [tong, coc + traThem, soDu < 0 ? 0.0 : soDu].reduce((a, b) => a < b ? a : b);
+  return v < 0 ? 0 : v;
 }
 
 final datTruocRepositoryProvider = Provider<DatTruocRepository>((ref) => DatTruocRepository());
+
+/// Lượt đặt của một khách hàng (hồ sơ khách).
+final luotDatCuaKhachProvider = FutureProvider.autoDispose.family<List<DatTruoc>, String>((ref, customerId) {
+  return ref.read(datTruocRepositoryProvider).docCuaKhach(customerId);
+});
 
 /// Các buổi của một lịch cố định (hộp lượt đặt ghi "buổi 3/8", hộp huỷ đếm số buổi sẽ huỷ).
 final chuoiDatProvider = FutureProvider.autoDispose.family<List<DatTruoc>, String>((ref, chuoiId) {

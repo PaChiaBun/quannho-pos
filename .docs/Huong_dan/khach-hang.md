@@ -35,7 +35,8 @@ nguon:
 - **Dùng điểm** khi thanh toán: mỗi điểm trừ **1.000đ** (mặc định, hiện chưa có chỗ đổi trong app).
 - Mỗi lần thanh toán có gắn khách còn cộng **tổng chi** và **số lần** ghé.
 - **Hạng** (chỉ để hiển thị, chưa có ưu đãi tự động): **Đồng 🥉** < 50 điểm, **Bạc 🥈** từ 50, **Vàng ⭐** từ 200, **VIP 💎** từ 500.
-- **Ví**: gồm **tiền thật** khách đã nạp và **bonus** được tặng. Khi trả bằng ví ở **Bán hàng**: bonus chỉ dùng tối đa **15%** giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. **Quản lý Bàn chưa trả được bằng ví.**
+- **Ví**: gồm **tiền thật** khách đã nạp và **bonus** được tặng. Khi trả bằng ví ở **Bán hàng**: bonus chỉ dùng tối đa **15%** giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. Ở **Quản lý Bàn** (màn Thu tiền) trả được bằng ví tiền thật: bật **"Trả bằng ví khách (số dư …)"** sau khi tìm khách (cần máy chủ có tiền cọc vào ví khách).
+- **Tiền cọc đặt sân** (module Các hoạt động tính giờ): cọc nằm trong ví tiền thật của khách, không có bonus; thanh toán bàn của lượt đặt tự trừ. Xem bài Các hoạt động tính giờ.
 
 ## Các việc thường làm
 
@@ -47,7 +48,8 @@ nguon:
 > Khi thanh toán, nhân viên gõ đúng số điện thoại đã lưu để gắn khách (Bán hàng: ô "SĐT khách hàng (tích điểm)..."; Bàn: "Khách hàng (tích điểm)").
 
 ### 2. Xem chi tiết khách
-- Chạm khách: điểm hiện có, **"Tổng chi"**, **"Số lần"**, **"Điểm tích"**, **"Lịch sử điểm"** (+ tích / − đổi, theo thời gian).
+- Chạm khách: điểm hiện có, **"Tổng chi"**, **"Số lần"**, **"Điểm tích"**, **"Ví"** (tiền thật trong ví), **"Lịch sử điểm"** (+ tích / − đổi, theo thời gian).
+- Khách có giao dịch ví thì có mục **"Lịch sử ví"** (nạp, cọc đặt sân, trả bằng ví, mất / hoàn cọc). Quán bật Các hoạt động tính giờ thì có mục **"Đặt sân · … lượt"** (cọc đang giữ và từng lượt đặt).
 
 ### 3. Tạo gói nạp (khuyến khích nạp ví)
 1. Tab **"Gói nạp"** → **"Thêm gói"** (hoặc **"Tải gói mặc định"** khi chưa có).
@@ -110,7 +112,8 @@ Mã chỉ có **"Hạn dùng"** (ngày giờ hết hạn), chưa giới hạn th
 | "Gói nạp vừa thay đổi…" | Chủ quán vừa sửa gói nạp | Đóng và mở lại màn nạp |
 
 ## Liên quan module khác
-- **Bán hàng / Quản lý Bàn**: gắn khách, tích/dùng điểm, voucher; trả bằng ví (chỉ Bán hàng).
+- **Bán hàng / Quản lý Bàn**: gắn khách, tích/dùng điểm, voucher; trả bằng ví.
+- **Các hoạt động tính giờ**: lượt đặt sân gắn khách, tiền cọc vào ví khách.
 - **Thu Chi**: nạp ví ghi thu; bán bằng ví ghi quỹ "ví" (xem lưu ý tính hai lần ở bài Thu Chi).
 - **Cài đặt**: mức tích điểm.
 - **Báo cáo → Voucher**: thống kê mã đã dùng.

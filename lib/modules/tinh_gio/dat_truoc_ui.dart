@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/permission_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../core/repositories/ban_repository.dart';
+import '../../core/repositories/core_customer_repository.dart';
+import '../../core/services/staff_service.dart';
 import '../../core/utils/money_formatter.dart';
 import '../../core/utils/responsive.dart';
 import '../qr_order/services/qr_sound_service.dart';
@@ -97,13 +100,15 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
   }
 
   Future<void> _dat(BanTableModel ban, List<DatTruoc> trongNgay, {DatTruoc? sua, DateTime? tu}) async {
-    final ok = await showModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<Object>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => DatTruocFormSheet(ban: ban, ngay: _ngay, trongNgay: trongNgay, sua: sua, tuMacDinh: tu),
     );
-    if (ok == true && mounted) _thongBao(context, sua == null ? 'Đã đặt ${ban.label}' : 'Đã sửa lượt đặt');
+    if (!mounted) return;
+    if (ok == true) _thongBao(context, sua == null ? 'Đã đặt ${ban.label}' : 'Đã sửa lượt đặt');
+    if (ok is String) _thongBao(context, ok, loi: true);
   }
 
   Future<void> _moLuot(BanTableModel ban, DatTruoc d, List<DatTruoc> trongNgay) async {
@@ -161,6 +166,11 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
             loi: r['success'] != true,
           );
         }
+        // Cọc của lịch: chỉ xử lý khi không còn buổi nào chờ khách (các buổi trước mốc huỷ đã qua / đã nhận).
+        final cocLich = chuoi.where((c) => c.coCocCho).firstOrNull;
+        if (r['success'] == true && cocLich != null && !chuoi.any((c) => c.choKhach && c.gioTu.isBefore(d.gioTu))) {
+          await _hoiXuLyCoc(ban, cocLich, khongDen: false);
+        }
       case 'huy' || 'khong_den':
         final r = await repo.doiTrangThai(d.id, viec);
         if (mounted) {
@@ -172,7 +182,40 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
             loi: r['success'] != true,
           );
         }
+        // Lượt lẻ có cọc: hỏi ngay. Buổi của lịch cố định: cọc giữ cho các buổi sau.
+        if (r['success'] == true && d.coCocCho && d.chuoiId == null) {
+          await _hoiXuLyCoc(ban, d, khongDen: viec == 'khong_den');
+        }
+      case 'xu_ly_coc':
+        await _hoiXuLyCoc(ban, d, khongDen: d.trangThai == 'khong_den');
     }
+  }
+
+  Future<void> _hoiXuLyCoc(BanTableModel ban, DatTruoc d, {required bool khongDen}) async {
+    if (!mounted) return;
+    final phien = ref.read(sessionProvider);
+    final vaiTro = StaffService.canonicalRole(phien?.role ?? '');
+    final laQuanLy = phien?.isOwner == true || vaiTro == 'owner' || vaiTro == 'manager';
+    final cach = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => XuLyCocSheet(dat: d, tenBan: ban.label, khongDen: khongDen, laQuanLy: laQuanLy),
+    );
+    if (cach == null || !mounted) return;
+    final r = await ref.read(datTruocRepositoryProvider).xuLyCoc(d.id, cach, d.cocQuy ?? 'cash');
+    if (!mounted) return;
+    _thongBao(
+      context,
+      r['success'] == true
+          ? switch (cach) {
+              'trong_vi' => 'Đã để ${fmtVnd(d.tienCoc)} trong ví ${d.tenKhach}',
+              'quan_giu' => 'Quán giữ cọc ${fmtVnd(d.tienCoc)}',
+              _ => 'Đã hoàn cọc ${fmtVnd(d.tienCoc)} (phiếu chi Thu Chi)',
+            }
+          : (r['message'] as String? ?? 'Chưa làm được'),
+      loi: r['success'] != true,
+    );
   }
 
   /// Chạm ô trống trên lưới: nửa giờ đã qua thì báo, không mở hộp.
@@ -466,7 +509,15 @@ class _LuotDatSheet extends ConsumerWidget {
         );
     final phu = [
       if ((dat.sdt ?? '').isNotEmpty) dat.sdt!,
-      if (dat.tienCoc > 0) 'đã cọc ${fmtVnd(dat.tienCoc)}',
+      if (dat.tienCoc > 0)
+        switch (dat.cocTrangThai) {
+          'da_thu' => 'cọc ${fmtVnd(dat.tienCoc)} trong ví khách',
+          'da_tru' => 'cọc ${fmtVnd(dat.tienCoc)} đã trừ',
+          'trong_vi' => 'cọc ${fmtVnd(dat.tienCoc)} để trong ví',
+          'quan_giu' => 'quán giữ cọc ${fmtVnd(dat.tienCoc)}',
+          'da_hoan' => 'đã hoàn cọc ${fmtVnd(dat.tienCoc)}',
+          _ => 'đã cọc ${fmtVnd(dat.tienCoc)}',
+        },
       if ((dat.nguoiTaoTen ?? '').isNotEmpty) 'đặt bởi ${dat.nguoiTaoTen}',
       if (dat.nhacLuc != null) 'đã nhắc ${gioPhut(dat.nhacLuc!)}${dat.nhacBoi != null ? ' · ${dat.nhacBoi}' : ''}',
       if (dat.chuoiId != null && dongChuoi == null) 'lịch cố định hàng tuần',
@@ -529,6 +580,9 @@ class _LuotDatSheet extends ConsumerWidget {
             if (dat.chuoiId != null)
               viec('huy_chuoi', Icons.event_busy_rounded, 'Huỷ buổi này và các buổi sau', mau: _kRed),
           ],
+          // đã huỷ / không đến mà cọc chưa xử lý (đóng hộp hỏi lúc trước)
+          if (!dat.conHieuLuc && dat.coCocCho)
+            viec('xu_ly_coc', Icons.savings_rounded, 'Xử lý tiền cọc ${fmtVnd(dat.tienCoc)}', mau: _kOrange),
         ],
       ),
     );
@@ -597,9 +651,17 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   late final _ten = TextEditingController(text: widget.sua?.tenKhach ?? '');
   late final _sdt = TextEditingController(text: widget.sua?.sdt ?? '');
   late final _ghiChu = TextEditingController(text: widget.sua?.ghiChu ?? '');
-  late final _coc = TextEditingController(
-    text: (widget.sua?.tienCoc ?? 0) > 0 ? widget.sua!.tienCoc.toInt().toString() : '',
-  );
+  late final _coc = TextEditingController();
+  /// Đợt 4: khách hàng của lượt đặt (cọc vào ví khách này), quỹ nhận cọc, mã chống nhận cọc trùng.
+  CustomerModel? _khach;
+  String _quyCoc = 'cash';
+  final _khoaCoc = const Uuid().v4();
+  /// Lượt đã lưu trong hộp này (lưu xong mà nhận cọc lỗi, bấm lại thì không đặt thêm lượt mới).
+  String? _idDaLuu;
+
+  /// Lượt đang sửa đã có cọc trong hệ thống (đã thu / đã trừ / đã xử lý) → ô cọc chỉ để xem.
+  bool get _cocDaKhoa => widget.sua?.cocTrangThai != null;
+  double get _soCoc => double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   late DateTime _tu;
   late int _phut;
   bool _dangLuu = false;
@@ -619,6 +681,11 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     if (s != null) {
       _tu = s.gioTu;
       _phut = s.gioDen.difference(s.gioTu).inMinutes;
+      if (s.customerId != null) {
+        CoreCustomerRepository().getById(s.customerId!).then((k) {
+          if (mounted && k != null) setState(() => _khach = k);
+        }).catchError((_) {});
+      }
     } else if (widget.tuMacDinh != null) {
       _tu = widget.tuMacDinh!;
       _phut = 60;
@@ -669,7 +736,6 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
           thu: _thuLap,
           denNgay: _denNgay!,
           ghiChu: _ghiChu.text,
-          tienCoc: double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
           boQuaTrung: boQua,
         );
     var r = await gui(false);
@@ -709,13 +775,89 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
       if (!mounted) return;
     }
     if (r['success'] == true) {
-      Navigator.pop(context, true);
+      // cọc của lịch cố định: một lần, gắn vào buổi đầu
+      final chuoiId = (r['data'] as Map?)?['chuoi_id'] as String?;
+      String? dau;
+      if (chuoiId != null && (_khach != null || _soCoc > 0)) {
+        try {
+          dau = (await repo.docChuoi(chuoiId)).where((d) => d.choKhach).firstOrNull?.id;
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      await _xongLuot(dau, buoi: true);
     } else {
       setState(() {
         _dangLuu = false;
         _loi = r['message'] as String? ?? 'Chưa lưu được';
       });
     }
+  }
+
+  /// Lượt đã lưu: gắn khách, nhận cọc vào ví khách. Lỗi ở bước này thì lượt vẫn giữ, hộp báo lỗi và
+  /// bấm lại chỉ làm phần còn thiếu ([_idDaLuu]).
+  Future<void> _xongLuot(String? id, {bool buoi = false}) async {
+    final repo = ref.read(datTruocRepositoryProvider);
+    if (id == null) {
+      if (_khach != null || (_soCoc > 0 && !_cocDaKhoa)) {
+        if (mounted) Navigator.pop(context, 'Đã đặt, nhưng chưa tìm được buổi để gắn khách / nhận cọc');
+      } else if (mounted) {
+        Navigator.pop(context, true);
+      }
+      return;
+    }
+    _idDaLuu = id;
+    if (_khach != null && _khach!.id != widget.sua?.customerId) {
+      final g = await repo.ganKhach(id, _khach!.id);
+      if (!mounted) return;
+      if (g['success'] != true) return _loiSauLuu(g['message'] as String?);
+    }
+    if (_soCoc > 0 && !_cocDaKhoa) {
+      final c = await repo.nhanCoc(id, _soCoc, _quyCoc, _khoaCoc);
+      if (!mounted) return;
+      if (c['success'] != true) return _loiSauLuu(c['message'] as String?);
+    }
+    Navigator.pop(context, true);
+  }
+
+  void _loiSauLuu(String? m) => setState(() {
+        _dangLuu = false;
+        _loi = 'Đã lưu lượt đặt, nhưng chưa nhận được cọc: ${m ?? 'lỗi mạng'}. Bấm lại để thử.';
+      });
+
+  /// Cọc phải có khách hàng (tiền nằm trong ví khách): chưa chọn thì tìm theo số điện thoại, không có thì tạo.
+  Future<String?> _damBaoKhach() async {
+    if (_khach != null || _soCoc <= 0 || _cocDaKhoa) return null;
+    final sdt = _sdt.text.trim();
+    if (sdt.length < 9) return 'Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại';
+    try {
+      final repo = CoreCustomerRepository();
+      var k = await repo.getByPhone(sdt);
+      if (k == null) {
+        await repo.create(name: _ten.text.trim(), phone: sdt);
+        k = await repo.getByPhone(sdt);
+      }
+      if (k == null) return 'Chưa tạo được khách hàng';
+      setState(() => _khach = k);
+      return null;
+    } catch (_) {
+      return 'Chưa tìm / tạo được khách hàng, kiểm tra mạng rồi thử lại';
+    }
+  }
+
+  Future<void> _chonKhach() async {
+    final k = await showModalBottomSheet<CustomerModel>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ChonKhachSheet(tenMoi: _ten.text.trim(), sdtMoi: _sdt.text.trim()),
+    );
+    if (k == null || !mounted) return;
+    setState(() {
+      _khach = k;
+      _ten.text = k.name;
+      if ((k.phone ?? '').isNotEmpty) _sdt.text = k.phone!;
+      _loi = null;
+    });
   }
 
   Future<void> _luu() async {
@@ -732,6 +874,16 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
       _dangLuu = true;
       _loi = null;
     });
+    final loiKhach = await _damBaoKhach();
+    if (!mounted) return;
+    if (loiKhach != null) {
+      setState(() {
+        _dangLuu = false;
+        _loi = loiKhach;
+      });
+      return;
+    }
+    if (_idDaLuu != null) return _xongLuot(_idDaLuu);
     if (_lap) return _luuLap();
     final r = await ref.read(datTruocRepositoryProvider).luu(
           id: widget.sua?.id,
@@ -741,11 +893,12 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
           gioTu: _tu,
           gioDen: _den,
           ghiChu: _ghiChu.text,
-          tienCoc: double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+          // cọc thật đi qua nhận cọc (ví khách); lượt đã có cọc giữ nguyên số
+          tienCoc: _cocDaKhoa ? widget.sua!.tienCoc : 0,
         );
     if (!mounted) return;
     if (r['success'] == true) {
-      Navigator.pop(context, true);
+      await _xongLuot(((r['data'] as Map?)?['id'] as String?) ?? widget.sua?.id);
     } else {
       setState(() {
         _dangLuu = false;
@@ -902,6 +1055,105 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     );
   }
 
+  /// Khách hàng của lượt đặt (module Khách hàng): chọn khách có sẵn hoặc tạo mới.
+  Widget _theKhach() {
+    final k = _khach;
+    final khoa = widget.sua?.coCocCho == true; // cọc đang trong ví khách này: không đổi khách
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: k != null ? _kNavy : _kNavy.withValues(alpha: 0.2), width: k != null ? 1.5 : 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: khoa ? null : _chonKhach,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+          child: Row(
+            children: [
+              Icon(k != null ? Icons.account_circle_rounded : Icons.person_search_rounded, color: _kNavy, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: k == null
+                    ? Text('Chọn khách hàng (để nhận cọc, tích điểm)', style: _chu(14, FontWeight.w600, _kNavy.withValues(alpha: 0.7)))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(k.name, style: _chu(14.5, FontWeight.w800)),
+                          Text(
+                            [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
+                            style: _chu(12.5, FontWeight.w600, const Color(0xFF0D9488)),
+                          ),
+                        ],
+                      ),
+              ),
+              if (k != null && !khoa)
+                IconButton(
+                  tooltip: 'Bỏ chọn khách',
+                  onPressed: () => setState(() => _khach = null),
+                  icon: Icon(Icons.close_rounded, color: _kNavy.withValues(alpha: 0.5), size: 20),
+                )
+              else if (!khoa)
+                const Icon(Icons.chevron_right_rounded, color: _kNavy),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tiền cọc: vào ví khách + Thu Chi ngay, thanh toán bàn tự trừ.
+  Widget _phanCoc() {
+    final s = widget.sua;
+    if (_cocDaKhoa) {
+      final trangThai = switch (s!.cocTrangThai) {
+        'da_thu' => 'đang trong ví khách, thanh toán bàn tự trừ',
+        'da_tru' => 'đã trừ khi thanh toán',
+        'trong_vi' => 'để trong ví khách',
+        'quan_giu' => 'quán giữ cọc',
+        'da_hoan' => 'đã hoàn cọc',
+        _ => '',
+      };
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+        child: Text('Đã cọc ${fmtVnd(s.tienCoc)} · $trangThai', style: _chu(13.5, FontWeight.w700, const Color(0xFF0D9488))),
+      );
+    }
+    Widget quy(String ma, String nhan) => ChoiceChip(
+          label: Text(nhan, style: _chu(13, FontWeight.w700, _quyCoc == ma ? Colors.white : _kNavy)),
+          selected: _quyCoc == ma,
+          selectedColor: _kNavy,
+          backgroundColor: Colors.white,
+          showCheckmark: false,
+          onSelected: (_) => setState(() => _quyCoc = ma),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _coc,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (_) => setState(() {}),
+          style: _chu(15, FontWeight.w700),
+          decoration: _o('Tiền cọc (không có thì để trống)', icon: Icons.savings_rounded, goiY: '0'),
+        ),
+        if (_soCoc > 0) ...[
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, children: [quy('cash', 'Tiền mặt'), quy('bank', 'Chuyển khoản')]),
+          const SizedBox(height: 4),
+          Text(
+            'Cọc vào ví ${_khach?.name ?? 'khách'} và ghi phiếu thu ngay. Thanh toán bàn sẽ tự trừ'
+            '${_lap ? ' (lịch cố định: một lần cọc, trừ ở buổi đầu khách đến)' : ''}.',
+            style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+          ),
+        ],
+      ],
+    );
+  }
+
   InputDecoration _o(String nhan, {IconData? icon, String? goiY}) => InputDecoration(
         labelText: nhan,
         hintText: goiY,
@@ -947,6 +1199,8 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
               const SizedBox(height: 4),
               Text(_ngayChu(_tu), textAlign: TextAlign.center, style: _chu(13.5, FontWeight.w700, _kOrange)),
               const SizedBox(height: 14),
+              _theKhach(),
+              const SizedBox(height: 10),
               TextField(controller: _ten, textCapitalization: TextCapitalization.words, style: _chu(15, FontWeight.w600), decoration: _o('Tên khách', icon: Icons.person_rounded)),
               const SizedBox(height: 10),
               TextField(
@@ -1000,12 +1254,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
               const SizedBox(height: 10),
               TextField(controller: _ghiChu, style: _chu(14, FontWeight.w500), decoration: _o('Ghi chú')),
               const SizedBox(height: 10),
-              TextField(
-                controller: _coc,
-                keyboardType: TextInputType.number,
-                style: _chu(14, FontWeight.w500),
-                decoration: _o('Tiền đã cọc (chỉ ghi nhớ)', goiY: '0'),
-              ),
+              _phanCoc(),
               if (_loi != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
@@ -1025,11 +1274,14 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                   child: _dangLuu
                       ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                       : Text(
-                          widget.sua != null
-                              ? 'Lưu'
-                              : _lap
-                                  ? 'Đặt ${_buoi.length} buổi'
-                                  : 'Đặt',
+                          [
+                            widget.sua != null
+                                ? 'Lưu'
+                                : _lap
+                                    ? 'Đặt ${_buoi.length} buổi'
+                                    : 'Đặt',
+                            if (_soCoc > 0 && !_cocDaKhoa) 'nhận cọc ${fmtVnd(_soCoc)}',
+                          ].join(' · '),
                           style: _chu(15.5, FontWeight.w800, Colors.white),
                         ),
                 ),
@@ -1038,6 +1290,343 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHỌN KHÁCH HÀNG CHO LƯỢT ĐẶT
+// ─────────────────────────────────────────────────────────────────────────────
+class _ChonKhachSheet extends StatefulWidget {
+  final String tenMoi;
+  final String sdtMoi;
+  const _ChonKhachSheet({required this.tenMoi, required this.sdtMoi});
+
+  @override
+  State<_ChonKhachSheet> createState() => _ChonKhachSheetState();
+}
+
+class _ChonKhachSheetState extends State<_ChonKhachSheet> {
+  late final _tim = TextEditingController(text: widget.sdtMoi.isNotEmpty ? widget.sdtMoi : widget.tenMoi);
+  late final _ten = TextEditingController(text: widget.tenMoi);
+  late final _sdt = TextEditingController(text: widget.sdtMoi);
+  final _repo = CoreCustomerRepository();
+  List<CustomerModel> _ds = const [];
+  bool _dangTim = false;
+  bool _taoMoi = false;
+  String? _loi;
+  Timer? _cho;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_tim.text.trim().length >= 2) _timKhach();
+  }
+
+  @override
+  void dispose() {
+    _cho?.cancel();
+    _tim.dispose();
+    _ten.dispose();
+    _sdt.dispose();
+    super.dispose();
+  }
+
+  Future<void> _timKhach() async {
+    final q = _tim.text.trim();
+    if (q.length < 2) return setState(() => _ds = const []);
+    setState(() => _dangTim = true);
+    try {
+      final ds = await _repo.searchByNameOrPhone(q);
+      if (mounted && _tim.text.trim() == q) setState(() => _ds = ds);
+    } catch (_) {
+      if (mounted) setState(() => _loi = 'Chưa tìm được, kiểm tra mạng');
+    }
+    if (mounted) setState(() => _dangTim = false);
+  }
+
+  Future<void> _tao() async {
+    final ten = _ten.text.trim();
+    final sdt = _sdt.text.trim();
+    if (ten.isEmpty || sdt.length < 9) return setState(() => _loi = 'Nhập tên và số điện thoại');
+    setState(() {
+      _dangTim = true;
+      _loi = null;
+    });
+    try {
+      final co = await _repo.getByPhone(sdt);
+      if (co != null) {
+        if (mounted) Navigator.pop(context, co); // số đã có khách: dùng luôn, không tạo trùng
+        return;
+      }
+      final id = await _repo.create(name: ten, phone: sdt);
+      final k = await _repo.getById(id);
+      if (mounted) Navigator.pop(context, k);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _dangTim = false;
+          _loi = 'Chưa tạo được khách, kiểm tra mạng rồi thử lại';
+        });
+      }
+    }
+  }
+
+  InputDecoration _o(String nhan, IconData icon) => InputDecoration(
+        labelText: nhan,
+        prefixIcon: Icon(icon, color: _kNavy, size: 20),
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
+        decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(_taoMoi ? 'Khách mới' : 'Chọn khách hàng', textAlign: TextAlign.center, style: _chu(18, FontWeight.w800)),
+            const SizedBox(height: 12),
+            if (!_taoMoi) ...[
+              TextField(
+                controller: _tim,
+                autofocus: _tim.text.isEmpty,
+                style: _chu(15, FontWeight.w600),
+                decoration: _o('Tìm số điện thoại hoặc tên', Icons.search_rounded),
+                onChanged: (_) {
+                  _cho?.cancel();
+                  _cho = Timer(const Duration(milliseconds: 350), _timKhach);
+                },
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: _dangTim && _ds.isEmpty
+                    ? const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))
+                    : ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final k in _ds)
+                            ListTile(
+                              minTileHeight: 52,
+                              leading: const Icon(Icons.account_circle_rounded, color: _kNavy),
+                              title: Text(k.name, style: _chu(15, FontWeight.w700)),
+                              subtitle: Text(
+                                [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
+                                style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+                              ),
+                              onTap: () => Navigator.pop(context, k),
+                            ),
+                          if (!_dangTim && _ds.isEmpty && _tim.text.trim().length >= 2)
+                            Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text('Không có khách nào khớp', textAlign: TextAlign.center, style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
+                            ),
+                        ],
+                      ),
+              ),
+              TextButton.icon(
+                onPressed: () => setState(() {
+                  _taoMoi = true;
+                  _loi = null;
+                }),
+                icon: const Icon(Icons.person_add_alt_1_rounded),
+                label: Text('Khách mới (tên + số điện thoại)', style: _chu(14, FontWeight.w800)),
+              ),
+            ] else ...[
+              TextField(controller: _ten, textCapitalization: TextCapitalization.words, style: _chu(15, FontWeight.w600), decoration: _o('Tên khách', Icons.person_rounded)),
+              const SizedBox(height: 10),
+              TextField(controller: _sdt, keyboardType: TextInputType.phone, style: _chu(15, FontWeight.w600), decoration: _o('Số điện thoại', Icons.call_rounded)),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _dangTim ? null : _tao,
+                  style: ElevatedButton.styleFrom(backgroundColor: _kNavy, foregroundColor: Colors.white, elevation: 0),
+                  child: Text('Tạo khách', style: _chu(15, FontWeight.w800, Colors.white)),
+                ),
+              ),
+              TextButton(onPressed: () => setState(() => _taoMoi = false), child: Text('Quay lại tìm', style: _chu(14, FontWeight.w700))),
+            ],
+            if (_loi != null) Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HUỶ / KHÔNG ĐẾN: TIỀN CỌC XỬ LÝ THẾ NÀO
+// ─────────────────────────────────────────────────────────────────────────────
+/// Trả 'trong_vi' | 'quan_giu' | 'hoan', null = để sau (hộp lượt đặt còn nút "Xử lý tiền cọc").
+class XuLyCocSheet extends StatefulWidget {
+  final DatTruoc dat;
+  final String tenBan;
+  final bool khongDen;
+  final bool laQuanLy;
+  const XuLyCocSheet({super.key, required this.dat, required this.tenBan, required this.khongDen, required this.laQuanLy});
+
+  @override
+  State<XuLyCocSheet> createState() => _XuLyCocSheetState();
+}
+
+class _XuLyCocSheetState extends State<XuLyCocSheet> {
+  // Chủ Quán chốt: không đến → chọn sẵn "Quán giữ cọc"; khách báo huỷ → "Để trong ví".
+  late String _cach = widget.khongDen ? 'quan_giu' : 'trong_vi';
+
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.dat;
+    final tien = fmtVnd(d.tienCoc);
+    final quy = d.cocQuy == 'bank' ? 'chuyển khoản' : 'tiền mặt';
+    Widget lc(String ma, String tieuDe, String phu, {bool khoa = false}) {
+      final chon = _cach == ma;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Opacity(
+          opacity: khoa ? 0.5 : 1,
+          child: Material(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: chon ? _kNavy : _kNavy.withValues(alpha: 0.15), width: chon ? 2 : 1),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: khoa ? null : () => setState(() => _cach = ma),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(chon ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded, color: _kNavy),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(child: Text(tieuDe, style: _chu(15, FontWeight.w800))),
+                              if (khoa) ...[const SizedBox(width: 4), const Icon(Icons.lock_rounded, size: 15, color: _kNavy)],
+                            ],
+                          ),
+                          Text(phu, style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.7))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('${widget.khongDen ? 'Khách không đến' : 'Đã huỷ'} · ${widget.tenBan}', textAlign: TextAlign.center, style: _chu(18, FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('${d.tenKhach} · ${_ngayChu(d.gioTu)} ${gioPhut(d.gioTu)} · đã cọc $tien $quy',
+              textAlign: TextAlign.center, style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.7))),
+          const SizedBox(height: 12),
+          Text('TIỀN CỌC $tien XỬ LÝ THẾ NÀO?', style: _chu(12.5, FontWeight.w800, _kNavy.withValues(alpha: 0.6))),
+          const SizedBox(height: 8),
+          lc('trong_vi', 'Để trong ví khách', 'Lần sau ${d.tenKhach} đến trả bằng ví. Thu Chi không đổi.'),
+          lc('quan_giu', 'Quán giữ cọc', 'Trừ ví, lịch sử ví ghi "Mất cọc". Thu Chi không đổi vì đã thu lúc đặt.'),
+          lc('hoan', 'Hoàn cọc', 'Trừ ví + phiếu chi $tien $quy. Chỉ Chủ quán / Quản lý.', khoa: !widget.laQuanLy),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, _cach),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Text(
+                switch (_cach) {
+                  'trong_vi' => 'Xác nhận · để $tien trong ví',
+                  'quan_giu' => 'Xác nhận · quán giữ $tien',
+                  _ => 'Xác nhận · hoàn $tien',
+                },
+                style: _chu(15.5, FontWeight.w800, Colors.white),
+              ),
+            ),
+          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Để sau', style: _chu(14, FontWeight.w700))),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HỒ SƠ KHÁCH: LƯỢT ĐẶT SÂN + CỌC (module Khách hàng gọi)
+// ─────────────────────────────────────────────────────────────────────────────
+class LuotDatCuaKhach extends ConsumerWidget {
+  final String customerId;
+  const LuotDatCuaKhach({super.key, required this.customerId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ds = ref.watch(luotDatCuaKhachProvider(customerId)).value ?? const <DatTruoc>[];
+    if (ds.isEmpty) return const SizedBox.shrink();
+    final dangGiu = ds.where((d) => d.coCocCho).fold<double>(0, (s, d) => s + d.tienCoc);
+    final bans = {for (final b in ref.watch(banDeDatProvider).value ?? const <BanTableModel>[]) b.id: b.label};
+    String dong(DatTruoc d) {
+      final trangThai = switch (d.trangThai) {
+        'da_nhan' => 'Đã đến',
+        'huy' => 'Đã huỷ',
+        'khong_den' => 'Không đến',
+        _ => 'Chờ khách',
+      };
+      final coc = switch (d.cocTrangThai) {
+        'da_thu' => 'cọc ${fmtVnd(d.tienCoc)} trong ví',
+        'da_tru' => 'cọc đã trừ',
+        'trong_vi' => 'cọc để trong ví',
+        'quan_giu' => 'quán giữ cọc',
+        'da_hoan' => 'đã hoàn cọc',
+        _ => null,
+      };
+      return [trangThai, if (coc != null) coc].join(' · ');
+    }
+
+    return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      leading: const Icon(Icons.event_available_rounded, color: _kNavy),
+      title: Text('Đặt sân · ${ds.length} lượt', style: _chu(14, FontWeight.w800)),
+      subtitle: dangGiu > 0 ? Text('Cọc đang giữ ${fmtVnd(dangGiu)}', style: _chu(12.5, FontWeight.w700, const Color(0xFF0D9488))) : null,
+      children: [
+        for (final d in ds.take(10))
+          ListTile(
+            dense: true,
+            leading: Icon(d.chuoiId != null ? Icons.repeat_rounded : Icons.event_rounded, size: 18, color: _kNavy),
+            title: Text(
+              '${bans[d.tableId] ?? 'Bàn'} · ${_ngayChu(d.gioTu)} ${gioPhut(d.gioTu)}–${gioPhut(d.gioDen)}',
+              style: _chu(13, FontWeight.w700),
+            ),
+            subtitle: Text(dong(d), style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.65))),
+          ),
+      ],
     );
   }
 }

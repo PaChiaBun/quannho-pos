@@ -157,6 +157,8 @@ class CustomerModel {
   final int visitCount;
   final String? note;
   final bool isDeleted;
+  /// Ví tiền thật (nạp ví, tiền cọc đặt sân).
+  final double realBalance;
 
   const CustomerModel({
     required this.id,
@@ -169,6 +171,7 @@ class CustomerModel {
     required this.visitCount,
     this.note,
     required this.isDeleted,
+    this.realBalance = 0,
   });
 
   factory CustomerModel.fromMap(Map<String, dynamic> m) => CustomerModel(
@@ -182,5 +185,6 @@ class CustomerModel {
         visitCount:  (m['visit_count'] as num?)?.toInt() ?? 0,
         note:        m['note'] as String?,
         isDeleted:   m['is_deleted'] as bool? ?? false,
+        realBalance: (m['real_balance'] as num?)?.toDouble() ?? 0,
       );
 }

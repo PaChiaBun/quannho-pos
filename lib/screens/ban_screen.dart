@@ -4788,6 +4788,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
+    double traVi = 0,
     bool allowQuoteReconfirmation = true,
   }) async {
     final banRepo = ref.read(banRepositoryProvider);
@@ -4820,6 +4821,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         discount: discount,
         couponCode: couponCode,
         surcharge: surcharge,
+        traVi: traVi,
       );
 
       if (response['success'] != true) {
@@ -4869,6 +4871,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               discount: quote.discount,
               couponCode: couponCode,
               surcharge: quote.surcharge,
+              traVi: traVi,
               allowQuoteReconfirmation: false,
             );
           }
@@ -4914,6 +4917,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
       final isReplay = data['is_replay'] == true;
       final finalTotal = ((data['total_amount'] as num?) ?? 0).toDouble();
+      // đợt 4: phần đã trừ ví khách (cọc + trả thêm bằng ví); v5 không trả trường này = 0
+      final viDaTru = ((data['vi_da_tru'] as num?) ?? 0).toDouble();
       final serverSubtotal = ((data['subtotal'] as num?) ?? 0).toDouble();
       final serverDiscount = ((data['discount'] as num?) ?? 0).toDouble();
       final clientItemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
@@ -5239,6 +5244,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                           letterSpacing: -0.5,
                         ),
                       ),
+                      if (viDaTru > 0)
+                        Text(
+                          'Đã trừ ví khách ${fmtVnd(viDaTru)} · khách trả thêm ${fmtVnd(finalTotal - viDaTru)}',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0D9488),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -5844,6 +5859,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
+      // Đợt 4: cọc của lượt đặt nằm trong ví khách, máy chủ tự trừ → màn thu phải biết để không thu thừa.
+      // Không đọc được thì dừng (thà bấm lại còn hơn thu đủ tổng mà máy chủ đã trừ cọc).
+      CocCuaPhien? coc;
+      try {
+        coc = await ref.read(datTruocRepositoryProvider).docCocCuaPhien(widget.session.id);
+      } catch (e) {
+        AppLogger.warning('checkout', 'Không đọc được cọc của phiên ${widget.session.id}: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chưa đọc được tiền cọc của bàn. Kiểm tra mạng rồi bấm Thanh toán lại.'),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
       final result = await showModalBottomSheet<Map<String, dynamic?>>(
         context: context,
         backgroundColor: Colors.transparent,
@@ -5853,6 +5886,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           items: items,
           tableName: widget.table.label,
           zone: widget.zone,
+          coc: coc,
         ),
       );
       if (result == null) return;
@@ -5873,6 +5907,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         discount: discount,
         couponCode: couponCode,
         surcharge: surcharge,
+        traVi: ((result['traVi'] as num?) ?? 0).toDouble(),
       );
     } finally {
       _isCheckingOut = false;
@@ -8250,12 +8285,15 @@ class _CheckoutSheet extends ConsumerStatefulWidget {
   final List<BanSessionItemModel> items;
   final String tableName;
   final BanZoneModel zone;
+  /// Cọc của lượt đặt (trong ví khách): khách hoá đơn khoá theo khách đã đặt, máy chủ tự trừ.
+  final CocCuaPhien? coc;
 
   const _CheckoutSheet({
     required this.total,
     required this.items,
     required this.tableName,
     required this.zone,
+    this.coc,
   });
 
   @override
@@ -8278,6 +8316,29 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   double _shippingFee = 0;
   bool _searchingCustomer = false;
   bool _isSubmitting = false;
+  /// Số dư ví tiền thật của khách đang chọn; [_traThemVi] = trả phần còn lại bằng ví.
+  double _soDuVi = 0;
+  bool _traThemVi = false;
+
+  double get _cocTien => widget.coc?.tien ?? 0;
+  /// Có cọc trong ví khách đã đặt → khách hoá đơn phải là khách đó (máy chủ chặn khách khác).
+  bool get _khoaKhach => _cocTien > 0;
+  double _viTru(double tong) =>
+      _customerId == null ? 0 : tienTraBangVi(tong: tong, coc: _cocTien, traThem: _traThemVi ? tong : 0, soDu: _soDuVi);
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.coc;
+    if (c != null) {
+      _customerId = c.customerId;
+      _customerName = c.tenKhach;
+      _soDuVi = c.soDuVi;
+      _phoneCtrl.text = c.sdt ?? '';
+      // nạp điểm / tem của khách như khi tìm bằng số điện thoại
+      WidgetsBinding.instance.addPostFrameCallback((_) => _lookupCustomer());
+    }
+  }
 
   CouponModel? _appliedCoupon;
   double _couponDiscount = 0;
@@ -8310,7 +8371,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
   Future<void> _lookupCustomer() async {
     final phone = _phoneCtrl.text.trim();
-    if (phone.length < 9) return;
+    // khách của lượt đặt: đọc theo mã khi bàn có cọc hoặc số chưa bị sửa
+    final coc = widget.coc != null && (_khoaKhach || phone == (widget.coc!.sdt ?? '')) ? widget.coc : null;
+    if (phone.length < 9 && coc == null) return;
     setState(() {
       _searchingCustomer = true;
       _customerId = null;
@@ -8324,13 +8387,13 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       if (storeId == null) return;
 
       // ── Fetch customer ───────────────────────────────────────────────
-      final res = await sb
+      // Bàn có cọc: khách hoá đơn là khách đã đặt (máy chủ chặn khách khác) → đọc theo mã khách.
+      final q = sb
           .from('customers')
-          .select('id, name, loyalty_pts, stamp_count')
+          .select('id, name, loyalty_pts, stamp_count, real_balance')
           .eq('store_id', storeId)
-          .eq('phone', phone)
-          .eq('is_deleted', false)
-          .maybeSingle();
+          .eq('is_deleted', false);
+      final res = await (coc != null ? q.eq('id', coc.customerId) : q.eq('phone', phone)).maybeSingle();
 
       // ── Fetch settings (redeem rate + stamp threshold) ───────────────
       if (storeId != null) {
@@ -8358,6 +8421,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           _customerName = res['name'] as String? ?? phone;
           _customerPts = ((res['loyalty_pts'] as num?)?.toInt()) ?? 0;
           _stampCount = ((res['stamp_count'] as num?)?.toInt()) ?? 0;
+          _soDuVi = ((res['real_balance'] as num?)?.toDouble()) ?? 0;
           _usePts = 0; // reset khi tìm khách mới
         });
       } else if (mounted) {
@@ -8366,6 +8430,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           _customerName = null;
           _customerPts = 0;
           _stampCount = 0;
+          _soDuVi = 0;
+          _traThemVi = false;
           _usePts = 0;
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -8499,6 +8565,45 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   }
 
   Widget _buildTotalDue(double finalTotal) {
+    final viTru = _viTru(finalTotal);
+    if (viTru <= 0) return _hopTongTien('TỔNG TIỀN CẦN THU', finalTotal);
+    final cocTru = viTru < _cocTien ? viTru : _cocTien;
+    Widget dong(String nhan, String so, {Color? mau}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(nhan, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: mau ?? _kNavy)),
+              ),
+              Text(so, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: mau ?? _kNavy)),
+            ],
+          ),
+        );
+    const xanhVi = Color(0xFF0D9488);
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: xanhVi.withValues(alpha: 0.5), width: 1.5),
+          ),
+          child: Column(
+            children: [
+              dong('Tổng hoá đơn', fmtVnd(finalTotal)),
+              if (cocTru > 0) dong('Đã cọc (ví ${_customerName ?? 'khách'})', '−${fmtVnd(cocTru)}', mau: xanhVi),
+              if (viTru > cocTru) dong('Trả bằng ví khách', '−${fmtVnd(viTru - cocTru)}', mau: xanhVi),
+            ],
+          ),
+        ),
+        _hopTongTien('KHÁCH TRẢ THÊM', finalTotal - viTru),
+      ],
+    );
+  }
+
+  Widget _hopTongTien(String nhan, double finalTotal) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -8533,7 +8638,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TỔNG TIỀN CẦN THU',
+                  nhan,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -8628,7 +8733,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Khách hàng (tích điểm)',
+          widget.coc != null ? 'Khách hàng (khách đã đặt)' : 'Khách hàng (tích điểm)',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -8643,6 +8748,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 height: 44,
                 child: TextField(
                   controller: _phoneCtrl,
+                  // bàn có cọc: khách là khách đã đặt, không đổi được (máy chủ cũng chặn)
+                  enabled: !_khoaKhach,
                   keyboardType: TextInputType.phone,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
@@ -8680,7 +8787,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               height: 44,
               width: 54,
               child: ElevatedButton(
-                onPressed: _searchingCustomer ? null : _lookupCustomer,
+                onPressed: _searchingCustomer || _khoaKhach ? null : _lookupCustomer,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kNavy,
                   foregroundColor: Colors.white,
@@ -8814,6 +8921,24 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     ),
                   ],
                 ),
+                // Ví tiền thật còn sau phần cọc: cho trả nốt bằng ví (bán ở quầy đã có, đợt 4 thêm cho bàn).
+                if (_soDuVi > _cocTien)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: _traThemVi,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: _kNavy,
+                    onChanged: _isSubmitting ? null : (v) => setState(() => _traThemVi = v),
+                    title: Text(
+                      'Trả bằng ví khách (số dư ${fmtVnd(_soDuVi - _cocTien)})',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -9192,6 +9317,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       'discount': (_usePts * _redeemRate) + _couponDiscount,
                       'couponCode': _appliedCoupon?.code,
                       'surcharge': _shippingFee,
+                      'traVi': _traThemVi ? 1000000000 : 0, // máy chủ tự giới hạn theo tổng và số dư ví
                     });
                   },
             style: ElevatedButton.styleFrom(
@@ -9358,7 +9484,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _buildPayMethodPicker(),
-                                  _buildPaymentDetailsPanel(finalTotal),
+                                  _buildPaymentDetailsPanel(finalTotal - _viTru(finalTotal)),
                                 ],
                               ),
                             ),
@@ -9374,7 +9500,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         _buildVoucherField(),
                         const SizedBox(height: 16),
                         _buildPayMethodPicker(),
-                        _buildPaymentDetailsPanel(finalTotal),
+                        _buildPaymentDetailsPanel(finalTotal - _viTru(finalTotal)),
                       ],
 
                     ],

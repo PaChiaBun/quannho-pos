@@ -118,7 +118,32 @@ Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước
 
 Muốn xem kiểu cũ (mỗi bàn một thẻ, có nút **"Đặt"**) thì bấm nút ở góc trên bên phải (**"Xem dạng danh sách"**); bấm lại để về lưới. Chạm ô giờ đã qua thì app báo "Giờ này đã qua".
 
-Hai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn.
+Hai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn.
+
+### Nhận tiền cọc khi khách đặt
+Tiền cọc nằm trong **ví của khách** (module Khách hàng), vào Thu Chi ngay lúc nhận, và tự trừ khi thanh toán bàn.
+1. Trong hộp đặt bấm **"Chọn khách hàng (để nhận cọc, tích điểm)"**: gõ số điện thoại hoặc tên để tìm khách có sẵn, hoặc bấm **"Khách mới (tên + số điện thoại)"**. Không chọn mà có nhập số điện thoại thì app tự tìm khách theo số đó, chưa có thì tạo khách mới.
+2. Gõ số ở ô **"Tiền cọc"**, chọn **"Tiền mặt"** hoặc **"Chuyển khoản"**.
+3. Bấm **"Đặt · nhận cọc …"**. Ví khách cộng số cọc (không tặng thưởng như gói nạp ví), lịch sử ví ghi "Cọc đặt Sân 1 · 03/12 18:00", Thu Chi có phiếu thu "Cọc đặt sân: tên khách" đúng quỹ tiền mặt hoặc ngân hàng.
+
+Không lấy cọc thì để trống ô Tiền cọc, không cần chọn khách. Lịch cố định chỉ cọc một lần cho cả lịch, trừ vào buổi đầu tiên khách đến. Lượt đã có cọc thì không đổi số cọc và không đổi khách được nữa.
+
+### Thanh toán bàn của khách đã cọc
+Khách đặt đã đến và bàn đã nhận lượt đặt: bấm Thanh toán như thường. Màn Thu tiền tự điền khách đã đặt (không đổi được), ghi **"Tổng hoá đơn"**, **"Đã cọc (ví tên khách) −…"** và số to **"KHÁCH TRẢ THÊM"**. Mã QR chuyển khoản và ô tiền khách đưa tính theo số khách trả thêm.
+
+Ví dụ cọc 200.000 đ, bàn 480.000 đ: khách trả thêm 280.000 đ. Đơn hàng và báo cáo doanh thu ghi đủ 480.000 đ. Thu Chi có 200.000 đ lúc nhận cọc và 280.000 đ lúc thanh toán, cọc không bị tính hai lần. Màn thanh toán xong ghi "Đã trừ ví khách 200.000 đ · khách trả thêm 280.000 đ".
+
+Khách còn tiền trong ví (nạp ví trước) thì bật **"Trả bằng ví khách (số dư …)"** ở ô khách hàng để trả nốt phần còn lại bằng ví.
+
+### Khách huỷ hoặc không đến khi đã cọc
+Bấm **"Huỷ lượt đặt"** hoặc **"Khách không đến"** ở lượt có cọc, app hỏi **"Tiền cọc … xử lý thế nào?"**:
+- **"Để trong ví khách"**: tiền nằm lại trong ví, lần sau khách trả bằng ví. Chọn sẵn khi khách báo huỷ.
+- **"Quán giữ cọc"**: trừ ví, lịch sử ví ghi mất cọc; Thu Chi không đổi vì tiền đã thu lúc đặt. Chọn sẵn khi khách không đến.
+- **"Hoàn cọc"**: trừ ví và ghi phiếu chi "Hoàn cọc đặt sân" đúng quỹ đã nhận. Chỉ Chủ quán hoặc Quản lý chọn được.
+
+Bấm **"Để sau"** thì cọc vẫn trong ví; lúc khác chạm lượt đặt đó chọn **"Xử lý tiền cọc …"**. Lịch cố định: huỷ riêng một buổi thì cọc giữ cho các buổi sau; huỷ hết các buổi còn lại thì app mới hỏi xử lý cọc.
+
+Hồ sơ khách (module Khách hàng) có thêm **"Ví"**, mục **"Đặt sân · … lượt"** (cọc đang giữ, từng lượt đặt và cọc đã trừ / giữ / hoàn) và **"Lịch sử ví"**.
 
 ### Đặt lịch cố định hàng tuần cho khách quen
 Khách thuê sân cố định, ví dụ thứ 3 và thứ 5 từ 18 giờ đến 20 giờ cả tháng:
@@ -147,6 +172,12 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| "Đã lưu lượt đặt, nhưng chưa nhận được cọc: …" | Lượt đặt đã ghi nhưng bước nhận cọc lỗi (mất mạng, máy chủ chưa có tiền cọc vào ví khách) | Bấm lại nút đặt trong hộp đó (chỉ làm phần cọc); hoặc chạm lượt đặt → "Sửa lượt đặt" để nhập cọc |
+| "Máy chủ chưa có tiền cọc vào ví khách. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần cọc | Báo chủ app; trong lúc chờ đặt không cọc |
+| "Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại" | Có tiền cọc mà chưa có khách | Chọn khách hoặc nhập số điện thoại |
+| "Chưa đọc được tiền cọc của bàn. Kiểm tra mạng rồi bấm Thanh toán lại." | Mất mạng lúc mở màn Thu tiền | Kiểm tra mạng rồi bấm Thanh toán lại |
+| "Bàn này có tiền cọc trong ví khách. Cập nhật app để thanh toán …" | Máy đó chưa cập nhật app, chưa biết trừ cọc | Cập nhật app rồi thanh toán, hoặc thanh toán ở máy đã cập nhật |
+| "Còn buổi chờ khách: huỷ lượt đặt trước rồi mới xử lý cọc" | Lịch cố định còn buổi chưa tới | Cọc giữ cho các buổi sau; huỷ hết các buổi còn lại rồi xử lý cọc |
 | "Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần | Báo chủ app; trong lúc chờ đặt từng buổi (tắt "Lặp lại hàng tuần") |
 | "Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần khung giá / làm tròn | Báo chủ app; trong lúc chờ vẫn đặt được giá một giờ như cũ (để phần "Giá theo giờ & làm tròn" ở mặc định) |
 | Giữ lâu vào bàn không thấy "Đặt giá giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
@@ -174,7 +205,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 1. Bài viết theo mã ở nhánh `feature/ai-bum-ui` ngày 24/11/2026, **chưa phát hành**. Chỉ đăng bài này cho Boom khi bản app có module này đã tới tay quán, nếu không Boom sẽ chỉ khách dùng thứ họ chưa có.
 2. Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`.
-3. Chưa có: giá theo khung giờ, lịch cố định lặp hàng tuần, khách tự đặt qua mạng, thông báo đẩy khi app tắt, tiền cọc vào Thu Chi, lưới giờ × sân trong Lịch đặt.
+3. Chưa có: khách tự đặt qua mạng, thông báo đẩy khi app tắt. Tiền cọc vào ví khách (đợt 4) cần máy chủ `20261128_tien_coc_vi_khach.sql` (CHƯA ÁP, phải áp sau đợt 3); bill in chưa ghi dòng trừ cọc.
 4. Cách gọi "bàn / phòng / sân" theo loại hình mới lưu trong `loai_hinh.dart`, chữ trên màn Bàn vẫn ghi "bàn".
 5. Chưa kiểm trên app: gộp bàn có tính giờ, in bill 58mm với dòng tiền giờ, màn Bếp. Bài mô tả theo mã và test máy chủ; sửa lại nếu thử thật ra khác.
 6. Máy chủ: `ban_chot_gio_v1`, `ban_chuyen_ban_tinh_gio_v1`, bảng `ban_dat_truoc` và 4 hàm `ban_dat_truoc_*`.

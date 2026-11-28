@@ -1309,6 +1309,7 @@ class BanRepository {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
+    double traVi = 0,
   }) {
     final flightScope = '$storeId:$sessionId';
     final existing = _settlementFlights[flightScope];
@@ -1331,6 +1332,7 @@ class BanRepository {
       discount: discount,
       couponCode: couponCode,
       surcharge: surcharge,
+      traVi: traVi,
     );
     _settlementFlights[flightScope] = flight;
     _settlementFlightKeys[flightScope] = idempotencyKey;
@@ -1352,26 +1354,41 @@ class BanRepository {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
+    double traVi = 0,
   }) async {
     try {
       try {
         _sb.rest.headers['x-store-id'] = storeId;
       } catch (_) {}
 
-      final res = await _sb.rpc(
-        'settle_ban_session_v5',
-        params: {
-          'p_session_id': sessionId,
-          'p_store_id': storeId,
-          'p_payment_method': paymentMethod,
-          'p_idempotency_key': idempotencyKey,
-          'p_customer_id': customerId,
-          'p_points_used': pointsUsed,
-          'p_discount': discount,
-          'p_coupon_code': couponCode,
-          'p_surcharge': surcharge,
-        },
-      );
+      final params = {
+        'p_session_id': sessionId,
+        'p_store_id': storeId,
+        'p_payment_method': paymentMethod,
+        'p_idempotency_key': idempotencyKey,
+        'p_customer_id': customerId,
+        'p_points_used': pointsUsed,
+        'p_discount': discount,
+        'p_coupon_code': couponCode,
+        'p_surcharge': surcharge,
+      };
+      // v6 (đợt 4) = v5 + trừ cọc / ví khách. Máy chủ chưa có v6 (chưa áp) thì chưa ghi gì → gọi v5 như cũ,
+      // trừ khi thu ngân chọn trả bằng ví (v5 không làm được).
+      dynamic res;
+      try {
+        res = await _sb.rpc('settle_ban_session_v6', params: {...params, 'p_tra_vi': traVi});
+      } on PostgrestException catch (e) {
+        final thieuV6 = e.code == 'PGRST202' && '${e.message}'.contains('settle_ban_session_v6');
+        if (!thieuV6) rethrow;
+        if (traVi > 0) {
+          return {
+            'success': false,
+            'error_code': 'SERVER_SCHEMA_OUTDATED',
+            'message': 'Máy chủ chưa hỗ trợ trả bằng ví khách ở bàn. Chưa ghi nhận thanh toán; bỏ chọn ví rồi thu lại.',
+          };
+        }
+        res = await _sb.rpc('settle_ban_session_v5', params: params);
+      }
 
       if (res is Map) {
         return Map<String, dynamic>.from(res);
