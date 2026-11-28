@@ -73,3 +73,6 @@ Nếu cọc vào Thu Chi lúc nhận VÀ thanh toán vẫn ghi thu đủ tổng 
 - Máy ảo + Demo: hộp đặt có ô khách, tìm khách, gõ cọc hiện Tiền mặt / Chuyển khoản + "Đặt · nhận cọc 200.000 đ"; KHÔNG bấm Đặt. Dữ liệu Demo (thêm đếm lượt đặt, khách, Thu Chi) trước / sau giống hệt.
 - Chưa: bill in chưa ghi dòng trừ cọc; chưa thử thanh toán thật có cọc (cần áp máy chủ đợt 3 + 4, rồi hỏi Chủ Quán trước khi bấm Thanh toán trên Demo).
 
+### 28/11 18:19 — ĐÃ ÁP production
+
+Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/tien_coc_vi_khach_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/tien_coc_vi_khach_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181909.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/tien_coc_vi_khach_ap_dung.sh`.

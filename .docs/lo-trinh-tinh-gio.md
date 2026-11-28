@@ -10,13 +10,13 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 
 | Đợt | Việc | Cho ai | Đụng tiền thật | Trạng thái |
 |---|---|---|---|---|
-| 1 | Giá theo khung giờ / thứ + làm tròn block, tối thiểu, ân hạn | mọi ngành, nhất là karaoke, sân | Có (máy chủ tính) | App xong (b9f95f1); máy chủ CHƯA ÁP — `ke-hoach-gia-gio-khung-block.md` |
+| 1 | Giá theo khung giờ / thứ + làm tròn block, tối thiểu, ân hạn | mọi ngành, nhất là karaoke, sân | Có (máy chủ tính) | App xong (b9f95f1); máy chủ ĐÃ ÁP 28/11 18:14 (mốc 20261128_181424) — `ke-hoach-gia-gio-khung-block.md` |
 | 2 | Lịch đặt dạng lưới "giờ × bàn / sân", chạm ô trống để đặt | sân, karaoke | Không | Xong (c0750be), chỉ app — `ke-hoach-lich-dat-luoi.md` |
-| 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | App xong (0cc4764); máy chủ CHƯA ÁP — `ke-hoach-lich-co-dinh.md` |
-| 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 3) — `ke-hoach-tien-coc.md` |
+| 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | App xong (0cc4764); máy chủ ĐÃ ÁP 28/11 18:18 (mốc 20261128_181842) — `ke-hoach-lich-co-dinh.md` |
+| 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | App xong; máy chủ ĐÃ ÁP 28/11 18:19 (mốc 20261128_181909) — `ke-hoach-tien-coc.md` |
 | 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | App xong, chỉ đọc, không đổi máy chủ — `ke-hoach-bao-cao-tinh-gio.md` |
-| 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 1) — `ke-hoach-ngay-le-gia-gio.md` |
-| 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 6) — `ke-hoach-goi-gio.md` |
+| 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | App xong; máy chủ ĐÃ ÁP 28/11 18:15 (mốc 20261128_181507) — `ke-hoach-ngay-le-gia-gio.md` |
+| 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | App xong; máy chủ ĐÃ ÁP 28/11 18:17 (mốc 20261128_181658) — `ke-hoach-goi-gio.md` |
 | 8 | Mất mạng: đo xem quán bị chặn thanh toán bàn tính giờ bao nhiêu lần, rồi mới quyết có làm chế độ dự phòng | mọi quán | Có | Đã đo 30 ngày (28/11): lúc mạng chập chờn 496/497 phiên vẫn thanh toán xong → đề xuất chưa làm dự phòng, đo lại sau phát hành — `ke-hoach-mat-mang.md` |
 | — | Cân nhắc sau, chỉ làm khi có quán thật đòi: tạm dừng giờ, khách tự đặt qua mạng, màn hình phụ cho khách xem giờ | | | Chưa |
 
@@ -50,3 +50,4 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 - 28/11: đợt 6 (ngày lễ) Chủ Quán chốt khung Lễ luôn thắng + quán tự thêm ngày; máy chủ viết, bản sao đạt (chưa áp); app viết xong.
 - 28/11: đợt 7 (gói giờ) Chủ Quán chốt giá gói riêng + lố tính thêm, về sớm đủ gói, gói theo bàn có Cả khu; máy chủ viết, bản sao đạt (chưa áp); app viết xong.
 - 28/11: đợt 8 đo mất mạng 30 ngày trên quán thật (`tool/do_mat_mang.sh`, chỉ đọc): 496/497 phiên thanh toán lúc mạng chập chờn vẫn xong; đề xuất chưa làm chế độ dự phòng, chờ Chủ Quán quyết.
+- 28/11 18:14–18:19: Chủ Quán bảo "Áp cả 5 đợt ngay". Áp máy chủ theo thứ tự 1 → 6 → 7 → 3 → 4, mỗi đợt chạy thử trên máy chủ thật (tự huỷ) rồi sao lưu → áp → test, tất cả PASS; bộ tính giờ v1, đặt trước v1, tên dòng chạy lại PASS. Trước khi áp đã so `settle_ban_session_v5` và `qn_tinh_gio_ghi_dong_v1` trên máy chủ trùng bản đã chép (md5). App vẫn chưa phát hành; chỉ quán Demo có bàn tính giờ.

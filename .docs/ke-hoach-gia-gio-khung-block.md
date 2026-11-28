@@ -121,3 +121,6 @@ Chủ Quán: "Làm tiếp đi chưa áp".
 - Máy ảo + Demo: mở hộp, thêm khung T2–T6 17:00–23:00 80.000, chọn mỗi 30 phút, ân hạn 5: tóm tắt và ví dụ đúng; bấm Lưu → "Máy chủ chưa có khung giá giờ…" hiện trên nút Lưu, giá A 1 không đổi. Dữ liệu Demo trước / sau giống hệt. Chưa thử: lưu thật (chờ áp máy chủ), khối đang chạy giờ với khung, máy tính bảng.
 - Hướng dẫn `tinh-gio.md`: hai mục mới "Giá theo khung giờ", "Làm tròn theo block, chơi tối thiểu", một dòng lỗi; sửa câu ví dụ dưới ô giá.
 
+### 28/11 18:14 — ĐÃ ÁP production
+
+Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/gia_gio_khung_block_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/gia_gio_khung_block_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181424.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/gia_gio_khung_block_ap_dung.sh`.

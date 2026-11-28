@@ -65,3 +65,7 @@ Giá gốc 60.000, gói 120 phút = 100.000, ngày thường (30/11/2026 Thứ H
 - Test `test/modules/tinh_gio/goi_gio_test.dart` (bộ ca chung + hồi quy 2.000 lượt). Ảnh mẫu `goi_gio_them.png`, `goi_gio_chon.png`, `goi_gio_dong_ban.png`; `gia_gio_co_khung.png` dựng lại. test/modules/tinh_gio 99/99.
 - Hướng dẫn `tinh-gio.md`: mục "Bán gói giờ", 4 dòng lỗi; xuất lại `huong_dan.json`.
 - Máy ảo + Demo (bản release): hộp Đặt giá giờ A 1 có phần "Gói giờ", thêm gói 2 giờ 100.000 → "1 gói giờ"; bấm Lưu → "Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ." (máy chủ chưa áp), giá một giờ không đổi. Dữ liệu Demo trước / sau giống hệt. Chưa thử: chọn gói cho bàn đang chơi, nhắc 10 phút / hết gói, chuyển bàn có gói, thanh toán (chờ áp máy chủ; hỏi trước khi bấm Thanh toán trên Demo).
+
+### 28/11 18:17 — ĐÃ ÁP production
+
+Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/goi_gio_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/goi_gio_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181658.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/goi_gio_ap_dung.sh`.

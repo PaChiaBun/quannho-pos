@@ -60,3 +60,7 @@ App:
 - Ảnh mẫu `gia_gio_khung_le.png`, `gia_gio_ngay_le.png`; `gia_gio_co_khung.png` dựng lại (thêm khung Ngày lễ). test/modules/tinh_gio 89/89.
 - Hướng dẫn `tinh-gio.md`: mục "Giá ngày lễ", 4 dòng lỗi; xuất lại `huong_dan.json`.
 - Máy ảo + Demo (bản release): hộp khung giá có dòng Ngày lễ, "Chỉ ngày lễ" bật đúng, báo đỏ "Quán chưa có ngày lễ nào"; hộp Ngày lễ của quán mở, thêm nhanh 01/01/2027 → "Máy chủ chưa có ngày lễ. Báo chủ app cập nhật máy chủ." (máy chủ chưa áp); lịch chọn ngày mở được. Không bấm Lưu giá giờ. Dữ liệu Demo trước / sau giống hệt. Chưa thử: lưu thật, khối đang chạy giờ vào ngày lễ (chờ áp máy chủ).
+
+### 28/11 18:15 — ĐÃ ÁP production
+
+Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/gia_gio_ngay_le_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/gia_gio_ngay_le_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181507.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/gia_gio_ngay_le_ap_dung.sh`.

@@ -36,3 +36,6 @@
 - Kiểu danh sách: biểu tượng lặp cạnh dòng lượt đặt.
 - Ảnh mẫu mới `luot_dat_chuoi_360.png`, `dat_lap_360.png` dựng lại; test/modules/tinh_gio 67/67. Máy ảo: có hai nút hết tháng, đếm buổi đúng; dữ liệu Demo trước / sau giống hệt.
 
+### 28/11 18:18 — ĐÃ ÁP production
+
+Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181842.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh`.

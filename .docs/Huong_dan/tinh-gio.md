@@ -250,7 +250,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 1. Bài viết theo mã ở nhánh `feature/ai-bum-ui` ngày 24/11/2026, **chưa phát hành**. Chỉ đăng bài này cho Boom khi bản app có module này đã tới tay quán, nếu không Boom sẽ chỉ khách dùng thứ họ chưa có.
 2. Kế hoạch và nhật ký: `.docs/ke-hoach-ban-tinh-gio.md`.
-3. Chưa có: khách tự đặt qua mạng, thông báo đẩy khi app tắt. Ngày lễ (đợt 6) cần máy chủ `20261128_gia_gio_ngay_le.sql` (CHƯA ÁP, phải áp sau đợt 1 `20261128_gia_gio_khung_block.sql`). Gói giờ (đợt 7) cần `20261128_goi_gio.sql` (CHƯA ÁP, áp sau đợt 6); nhắc hết gói theo từng máy, máy nào mở app cũng nhắc. Tiền cọc vào ví khách (đợt 4) cần máy chủ `20261128_tien_coc_vi_khach.sql` (CHƯA ÁP, phải áp sau đợt 3); bill in chưa ghi dòng trừ cọc.
+3. Chưa có: khách tự đặt qua mạng, thông báo đẩy khi app tắt. Máy chủ đợt 1, 3, 4, 6, 7 (khung giá, lịch cố định, tiền cọc, ngày lễ, gói giờ) ĐÃ ÁP 28/11. Nhắc hết gói theo từng máy, máy nào mở app cũng nhắc. Bill in chưa ghi dòng trừ cọc.
 4. Cách gọi "bàn / phòng / sân" theo loại hình mới lưu trong `loai_hinh.dart`, chữ trên màn Bàn vẫn ghi "bàn".
 5. Chưa kiểm trên app: gộp bàn có tính giờ, in bill 58mm với dòng tiền giờ, màn Bếp. Bài mô tả theo mã và test máy chủ; sửa lại nếu thử thật ra khác.
 6. Máy chủ: `ban_chot_gio_v1`, `ban_chuyen_ban_tinh_gio_v1`, bảng `ban_dat_truoc` và 4 hàm `ban_dat_truoc_*`.
