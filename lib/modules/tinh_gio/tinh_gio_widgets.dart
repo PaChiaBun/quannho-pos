@@ -521,6 +521,7 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                     const SizedBox(height: 16),
                     GiaGioCaiThem(
                       caiDat: _caiDat,
+                      giaGoc: _gia > 0 ? _gia.toDouble() : null,
                       mo: _moCaiThem,
                       khoa: _dangLuu || _caiDatGoc == null,
                       onMo: () => setState(() => _moCaiThem = !_moCaiThem),

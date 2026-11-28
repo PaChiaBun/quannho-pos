@@ -5804,6 +5804,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     goiGia: song.goiGia,
                     vao: vao,
                     luc: luc,
+                    tenBan: widget.table.label,
+                    giaGoc: gia,
                   );
                 }),
               if (chayLau) ...[

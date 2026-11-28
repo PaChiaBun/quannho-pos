@@ -46,6 +46,8 @@ class GiaGioCaiThem extends StatelessWidget {
   final bool khoa;
   final VoidCallback onMo;
   final ValueChanged<GiaGioCaiDat> onDoi;
+  /// Giá một giờ đang gõ ở hộp Đặt giá giờ (để so giá khung / gói với giá thường). null = chưa có.
+  final double? giaGoc;
 
   const GiaGioCaiThem({
     super.key,
@@ -54,6 +56,7 @@ class GiaGioCaiThem extends StatelessWidget {
     required this.khoa,
     required this.onMo,
     required this.onDoi,
+    this.giaGoc,
   });
 
   Future<void> _suaKhung(BuildContext context, int? viTri) async {
@@ -61,7 +64,7 @@ class GiaGioCaiThem extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => KhungGiaSheet(khung: viTri == null ? null : caiDat.khung[viTri]),
+      builder: (_) => KhungGiaSheet(khung: viTri == null ? null : caiDat.khung[viTri], giaGoc: giaGoc),
     );
     if (kq == null) return;
     final ds = [...caiDat.khung];
@@ -79,6 +82,7 @@ class GiaGioCaiThem extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => GoiGioSheet(
+        giaGoc: giaGoc,
         goi: viTri == null ? null : caiDat.goi[viTri],
         daCo: {for (var i = 0; i < caiDat.goi.length; i++) if (i != viTri) caiDat.goi[i].soPhut},
       ),
@@ -343,7 +347,9 @@ class GiaGioCaiThem extends StatelessWidget {
 /// Hộp thêm / sửa một khung giá. Trả về khung mới (null = huỷ).
 class KhungGiaSheet extends ConsumerStatefulWidget {
   final KhungGia? khung;
-  const KhungGiaSheet({super.key, this.khung});
+  /// Giá một giờ thường của bàn (so "khung này +50%"). null = không hiện dòng so.
+  final double? giaGoc;
+  const KhungGiaSheet({super.key, this.khung, this.giaGoc});
 
   @override
   ConsumerState<KhungGiaSheet> createState() => _KhungGiaSheetState();
@@ -450,52 +456,113 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
         ),
       );
 
-  /// Dòng bật "Ngày lễ" (thứ 8) + các ngày lễ sắp tới của quán.
-  Widget _oNgayLe() {
-    final bat = _thu.contains(kThuNgayLe);
+  /// Ô một ngày trong hàng chọn ngày (T2…CN, và ô "Lễ" màu cam).
+  Widget _oNgay(int d) {
+    final le = d == kThuNgayLe;
+    final chon = _thu.contains(d);
+    const cam = Color(0xFFE8590C);
+    return Semantics(
+      button: true,
+      selected: chon,
+      label: le ? 'Ngày lễ' : _tenThu[d],
+      child: GestureDetector(
+        onTap: () => setState(() {
+          chon ? _thu.remove(d) : _thu.add(d);
+          _loi = null;
+        }),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: chon ? (le ? cam : _kNavy) : (le ? const Color(0xFFFFF4EE) : Colors.white),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: chon ? (le ? cam : _kNavy) : (le ? const Color(0xFFF4B9A1) : _nhat(0.16)),
+              width: 1.5,
+            ),
+            boxShadow: chon && le ? [BoxShadow(color: cam.withValues(alpha: 0.28), blurRadius: 12, offset: const Offset(0, 5))] : null,
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(le ? 'Lễ' : _tenThu[d]!,
+                style: _chu(13.5, FontWeight.w800, chon ? Colors.white : (le ? const Color(0xFFC2410C) : _kNavy))),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Ô lịch nhỏ: ngày to, tháng nhỏ ("31" / "T12").
+  Widget _toLich(DateTime d) => Container(
+        width: 44,
+        height: 48,
+        margin: const EdgeInsets.only(right: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4EE),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: const Color(0xFFF8D3C2)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(d.day.toString().padLeft(2, '0'), style: _chu(16, FontWeight.w800, const Color(0xFFC2410C))),
+            Text('T${d.month}', style: _chu(10.5, FontWeight.w700, const Color(0xFF9A3412))),
+          ],
+        ),
+      );
+
+  /// Khi bật Lễ: các ngày lễ sắp tới của quán dạng ô lịch + "Sửa ›".
+  Widget _hopNgayLe() {
     final sapToi = ngayLeSapToi(ref.watch(ngayLeProvider).value ?? const [], DateTime.now());
-    final tomTat = sapToi.isEmpty
-        ? 'Quán chưa có ngày lễ nào'
-        : 'Sắp tới: ${sapToi.take(4).map((n) => ngayLeNgan(n.ngay)).join(', ')}'
-            '${sapToi.length > 4 ? ' +${sapToi.length - 4}' : ''}';
     return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: bat ? _kNavy : _nhat(0.14), width: bat ? 1.5 : 1),
+        color: const Color(0xFFFFFBF8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: sapToi.isEmpty ? _kRed.withValues(alpha: 0.5) : const Color(0xFFF4B9A1), width: 1.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SwitchListTile(
-            value: bat,
-            onChanged: (v) => setState(() {
-              v ? _thu.add(kThuNgayLe) : _thu.remove(kThuNgayLe);
-              _loi = null;
-            }),
-            activeTrackColor: _kTeal,
-            contentPadding: const EdgeInsets.fromLTRB(12, 0, 6, 0),
-            secondary: Icon(Icons.celebration_rounded, color: bat ? _kTeal : _nhat(0.5)),
-            title: Text('Ngày lễ', style: _chu(14, FontWeight.w800)),
-            subtitle: Text(bat ? tomTat : 'Bật để khung này áp cả ngày lễ, và thắng khung thường',
-                style: _chu(12, FontWeight.w600, sapToi.isEmpty && bat ? _kRed : _nhat(0.6))),
-          ),
-          if (bat)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                child: TextButton.icon(
-                  onPressed: () => moNgayLeSheet(context),
-                  icon: const Icon(Icons.edit_calendar_rounded, size: 18),
-                  label: Text(sapToi.isEmpty ? 'Thêm ngày lễ của quán' : 'Sửa ngày lễ của quán'),
-                  style: TextButton.styleFrom(foregroundColor: _kNavy, textStyle: _chu(13, FontWeight.w700)),
-                ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(sapToi.isEmpty ? 'Quán chưa có ngày lễ nào' : 'Ngày lễ sắp tới của quán',
+                    style: _chu(13, FontWeight.w800, sapToi.isEmpty ? _kRed : const Color(0xFF9A3412))),
               ),
+              TextButton(
+                onPressed: () => moNgayLeSheet(context),
+                style: TextButton.styleFrom(foregroundColor: _kNavy, textStyle: _chu(13, FontWeight.w800), minimumSize: const Size(48, 36)),
+                child: Text(sapToi.isEmpty ? 'Thêm ›' : 'Sửa ›'),
+              ),
+            ],
+          ),
+          if (sapToi.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                for (final n in sapToi.take(4)) _toLich(n.ngay),
+                if (sapToi.length > 4)
+                  Text('+${sapToi.length - 4} ngày', style: _chu(12.5, FontWeight.w700, const Color(0xFF9A3412))),
+              ],
             ),
+          ],
+          const SizedBox(height: 6),
+          Text('Vào ngày lễ, khung này luôn được ưu tiên hơn khung thường.',
+              style: _chu(12, FontWeight.w500, const Color(0xFF7C5A4A))),
         ],
       ),
     );
+  }
+
+  /// "Giá thường 60.000 đ · khung này +50%" (null khi chưa đủ số để so).
+  String? _soGiaThuong() {
+    final goc = widget.giaGoc, gia = _gia;
+    if (goc == null || goc <= 0 || gia == null) return null;
+    final pt = ((gia - goc) / goc * 100).round();
+    final ten = _thu.length == 1 && _thu.contains(kThuNgayLe) ? 'ngày lễ' : 'khung này';
+    return 'Giá thường ${fmtVnd(goc)} · $ten ${pt == 0 ? 'bằng giá thường' : pt > 0 ? '+$pt%' : '$pt%'}';
   }
 
   @override
@@ -522,34 +589,14 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
               const SizedBox(height: 12),
               Text(widget.khung == null ? 'Thêm khung giá' : 'Sửa khung giá', style: _chu(18, FontWeight.w800)),
               const SizedBox(height: 12),
-              Text('Áp dụng các ngày', style: _chu(12.5, FontWeight.w800, _nhat(0.65))),
-              const SizedBox(height: 6),
+              Text('ÁP DỤNG', style: _chu(12, FontWeight.w800, _nhat(0.55))),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  for (final d in _tenThu.keys)
+                  for (final d in [..._tenThu.keys, kThuNgayLe])
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Semantics(
-                          button: true,
-                          selected: _thu.contains(d),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(22),
-                            onTap: () => setState(() => _thu.contains(d) ? _thu.remove(d) : _thu.add(d)),
-                            child: Container(
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _thu.contains(d) ? _kNavy : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: _thu.contains(d) ? _kNavy : _nhat(0.18)),
-                              ),
-                              child: Text(_tenThu[d]!,
-                                  style: _chu(12.5, FontWeight.w800, _thu.contains(d) ? Colors.white : _kNavy)),
-                            ),
-                          ),
-                        ),
-                      ),
+                      flex: d == kThuNgayLe ? 5 : 4,
+                      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2.5), child: _oNgay(d)),
                     ),
                 ],
               ),
@@ -563,8 +610,10 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
                   _nutNhanh('Chỉ ngày lễ', const {}),
                 ],
               ),
-              const SizedBox(height: 8),
-              _oNgayLe(),
+              if (_thu.contains(kThuNgayLe)) ...[
+                const SizedBox(height: 6),
+                _hopNgayLe(),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -594,7 +643,8 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
                     style: _chu(12, FontWeight.w600, _kTeal)),
               ],
               const SizedBox(height: 12),
-              Text('Giá một giờ trong khung', style: _chu(12.5, FontWeight.w800, _nhat(0.65))),
+              Text(_thu.length == 1 && _thu.contains(kThuNgayLe) ? 'GIÁ MỘT GIỜ NGÀY LỄ' : 'GIÁ MỘT GIỜ TRONG KHUNG',
+                  style: _chu(12, FontWeight.w800, _nhat(0.55))),
               const SizedBox(height: 6),
               TextField(
                 controller: _giaCtrl,
@@ -614,6 +664,10 @@ class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
                       OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kNavy)),
                 ),
               ),
+              if (_soGiaThuong() case final so?) ...[
+                const SizedBox(height: 6),
+                Text(so, style: _chu(12.5, FontWeight.w600, _nhat(0.6))),
+              ],
               if (_loi != null) ...[
                 const SizedBox(height: 8),
                 Text(_loi!, style: _chu(13, FontWeight.w700, _kRed)),

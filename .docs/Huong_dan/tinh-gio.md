@@ -72,24 +72,25 @@ Khách chơi vắt qua hai khung thì mỗi phút tính theo giá của khung l�
 
 ### Giá ngày lễ (Tết, 30/4, 2/9…)
 1. Mở hộp **"Đặt giá giờ"** → **"Giá theo giờ & làm tròn"** → **"Thêm khung giá"** (hoặc bấm vào khung có sẵn để sửa).
-2. Bật dòng **"Ngày lễ"**. Muốn khung chỉ dùng cho ngày lễ thì bấm nút nhanh **"Chỉ ngày lễ"**. Chọn giờ (hoặc **"Cả ngày"**), gõ giá, bấm **"Xong"**, rồi **"Lưu"**.
-3. Thêm các ngày lễ của quán: trong hộp khung giá bấm **"Thêm ngày lễ của quán"** (hoặc **"Sửa ngày lễ của quán"**). Ở hộp **"Ngày lễ của quán"**:
+2. Ở hàng **"ÁP DỤNG"** bấm ô **"Lễ"** (ô màu cam cuối hàng T2…CN). Muốn khung chỉ dùng cho ngày lễ thì bấm nút nhanh **"Chỉ ngày lễ"**. Bật Lễ thì hiện các ngày lễ sắp tới của quán; chưa có ngày nào thì bấm **"Thêm ›"**. Chọn giờ (hoặc **"Cả ngày"**), gõ giá (dưới ô giá có dòng so với giá thường, ví dụ "+50%"), bấm **"Xong"**, rồi **"Lưu"**.
+3. Thêm các ngày lễ của quán: trong hộp khung giá bấm **"Thêm ›"** (hoặc **"Sửa ›"**). Hộp **"Ngày lễ của quán"** xếp ngày lễ theo tháng; kỳ nghỉ nhiều ngày liền cùng tên gộp thành một dòng:
    - **"Thêm nhanh"**: bấm 01/01, 30/04, 01/05, 02/09 (app lấy lần tới của mỗi ngày).
-   - Tết âm lịch và ngày khác: gõ tên (ví dụ "Tết", không bắt buộc), bấm **"Chọn ngày trên lịch"**, chọn một ngày hoặc ngày đầu và ngày cuối (tối đa 15 ngày liền), bấm **"Thêm"**.
-   - Bỏ một ngày: bấm dấu ✕ ở ngày đó.
+   - Tết âm lịch và ngày khác: gõ tên (ví dụ "Tết", không bắt buộc), bấm **"Chọn ngày"**, chọn một ngày hoặc ngày đầu và ngày cuối (tối đa 15 ngày liền), bấm **"Thêm"**.
+   - Bỏ một ngày (hoặc cả kỳ nghỉ): bấm dấu ✕ ở dòng đó.
 
 Danh sách ngày lễ dùng chung cho mọi bàn, mỗi lần thêm / bỏ là lưu ngay. Vào ngày lễ, khung có "ngày lễ" **luôn được ưu tiên** hơn khung thường, dù nằm trên hay dưới; giờ nào không có khung ngày lễ thì tính như ngày thường. Ví dụ khung lễ 22:00 – 02:00 bắt đầu tối 30/4 thì tính tới 02:00 sáng hôm sau. Năm sau nhớ thêm lại ngày Tết âm lịch (app không tự tính âm lịch). Bàn đang có khách mà vừa thêm ngày lễ hôm nay thì lúc thanh toán cũng tính theo giá lễ.
 
 ### Bán gói giờ (ví dụ 2 giờ 100.000 đ)
 Cài gói cho bàn:
 1. Giữ lâu vào bàn → **"Đặt giá giờ"** → bấm dòng **"Giá theo giờ & làm tròn"** để mở ra.
-2. Ở phần **"Gói giờ"** bấm **"Thêm gói giờ"**, chọn thời gian (30 phút tới 5 giờ), gõ **"Giá trọn gói"**, bấm **"Xong"**. Mỗi bàn tối đa 6 gói, không trùng thời gian.
+2. Ở phần **"Gói giờ"** bấm **"Thêm gói giờ"**, chọn ô thời gian (30 phút tới 6 giờ), gõ **"Giá trọn gói"** (app báo gói rẻ hơn tính giờ bao nhiêu), bấm nút **"Thêm gói …"**. Mỗi bàn tối đa 6 gói, không trùng thời gian.
 3. Bấm **"Lưu"**. Muốn mọi bàn của khu có cùng gói thì chọn **"Cả khu"** trước khi lưu.
 
 Chọn gói cho khách đang chơi:
-1. Mở bàn đang tính giờ. Trong khối **"ĐANG TÍNH GIỜ"** bấm **"Chọn gói"**, chọn gói khách mua.
+1. Mở bàn đang tính giờ. Trong khối **"ĐANG TÍNH GIỜ"** bấm **"Chọn gói"**, chạm thẻ gói khách mua (mỗi thẻ ghi giá, rẻ hơn tính giờ bao nhiêu, giờ hết gói) rồi bấm nút **"Dùng gói …"** để xác nhận.
 2. Gói tính từ lúc khách vào. Khối ghi **"Gói 2 giờ 100.000 đ · còn 25 phút"**, thẻ bàn ghi **"gói còn 25'"**; hết gói thì ghi **"hết gói, lố 8'"**.
-3. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc; báo khách xong bấm **"Đã báo khách"**.
+3. Khối ghi thêm thanh còn lại: xanh khi còn nhiều, vàng khi còn 10 phút, cam đỏ khi đã lố.
+4. Còn 10 phút và khi hết gói, máy đang mở app hiện hộp nhắc có vòng đếm ngược; báo khách xong bấm **"Đã báo khách"**, khách gia hạn thì bấm **"Đổi / thêm gói"**.
 
 Hoá đơn và phiếu tạm tính của bàn có cọc in thêm "Đã cọc (ví khách)" và "CÒN PHẢI TRẢ"; mã QR chuyển khoản trên đó lấy số còn phải trả.
 

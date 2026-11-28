@@ -275,7 +275,7 @@ void main() {
     for (var i = 0; i < 5; i++) NgayLe(DateTime(2031, 1, 22 + i), 'Tết'),
   ];
   for (final (ten, hop) in [
-    ('khung_le', const KhungGiaSheet(khung: KhungGia(thu: {6, 7, kThuNgayLe}, tuPhut: 0, denPhut: 0, gia: 120000))),
+    ('khung_le', const KhungGiaSheet(khung: KhungGia(thu: {kThuNgayLe}, tuPhut: 0, denPhut: 0, gia: 90000), giaGoc: 60000)),
     ('ngay_le', NgayLeSheet(homNay: DateTime(2030, 12, 2))),
   ]) {
     testWidgets('hộp $ten', (tester) async {
@@ -304,8 +304,33 @@ void main() {
   // Đợt 7: hộp thêm gói, hộp chọn gói cho bàn đang chơi, dòng gói trong khối ĐANG TÍNH GIỜ (3 trạng thái).
   final vaoMau = DateTime(2030, 12, 2, 18);
   for (final (ten, hop, cao) in <(String, Widget, double)>[
-    ('them', const GoiGioSheet(daCo: {60}), 700),
-    ('chon', const ChonGoiSheet(tableId: 'p2', sessionId: 's1', goiPhut: 120, goiGia: 100000), 700),
+    ('them', const GoiGioSheet(daCo: {60}, goi: GoiGio(soPhut: 120, gia: 100000), giaGoc: 60000), 820),
+    ('chon', ChonGoiSheet(tableId: 'p2', sessionId: 's1', tenBan: 'Phòng 2', vao: DateTime(2099, 1, 1, 18, 5), giaGoc: 60000), 820),
+    ('doi', const ChonGoiSheet(tableId: 'p2', sessionId: 's1', goiPhut: 120, goiGia: 100000, tenBan: 'Phòng 2', giaGoc: 60000), 820),
+    (
+      'nhac',
+      Column(mainAxisSize: MainAxisSize.min, children: [
+        for (final daHet in [false, true])
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Material(
+              color: const Color(0xFFFFF8F0),
+              borderRadius: BorderRadius.circular(24),
+              child: HopNhacGoi(
+                tenBan: 'Phòng 2',
+                goiPhut: 120,
+                goiGia: 100000,
+                het: vaoMau.add(const Duration(hours: 2)),
+                daHet: daHet,
+                nay: vaoMau.add(Duration(minutes: daHet ? 125 : 110)),
+                onDoiGoi: () {},
+                onDaBao: () {},
+              ),
+            ),
+          ),
+      ]),
+      780
+    ),
     (
       'dong_ban',
       Container(
@@ -321,7 +346,7 @@ void main() {
               luc: vaoMau.add(const Duration(minutes: 88))),
         ]),
       ),
-      400
+      560
     ),
   ]) {
     testWidgets('gói giờ $ten', (tester) async {

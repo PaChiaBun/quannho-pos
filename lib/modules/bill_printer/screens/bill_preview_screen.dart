@@ -649,11 +649,17 @@ class BillPdfGenerator {
                     pw.Text('-${_money(bill.daTruVi)}', style: pw.TextStyle(font: font, fontSize: fs)),
                   ],
                 ),
-                _fitRow(
-                  'CÒN PHẢI TRẢ:',
-                  _money(bill.conPhaiTra),
-                  pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
-                  pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
+                // Khung đậm: số khách còn phải trả (thiết kế duyệt 28/11), mã QR bên dưới lấy đúng số này.
+                pw.Container(
+                  margin: const pw.EdgeInsets.only(top: 4),
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  decoration: pw.BoxDecoration(border: pw.Border.all(width: 1.5)),
+                  child: _fitRow(
+                    'CÒN PHẢI TRẢ:',
+                    _money(bill.conPhaiTra),
+                    pw.TextStyle(font: fontBold, fontSize: tfs),
+                    pw.TextStyle(font: fontBold, fontSize: tfs),
+                  ),
                 ),
               ],
             ],
