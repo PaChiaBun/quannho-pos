@@ -4,7 +4,8 @@ ten: Báo cáo
 phien_ban: 1.0.5+20
 cap_nhat: 2026-10-31
 nguon:
-  - lib/screens/report_screen.dart (8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn)
+  - lib/screens/report_screen.dart (8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn; thêm tab Tính giờ khi bật module Các hoạt động tính giờ)
+  - lib/modules/tinh_gio/bao_cao_tinh_gio.dart (tab Tính giờ)
   - lib/core/repositories/dashboard_repository.dart (get_report_stats/daily_revenue/top_products_for_range_v1)
   - lib/screens/einvoice_report_tab.dart, lib/screens/bill_lookup_section.dart (tab Hóa đơn)
   - supabase/migrations/20261104_topping_bao_cao_v1.sql (Top sản phẩm / danh mục đã bán tách topping chọn kèm món)
@@ -22,7 +23,7 @@ nguon:
 ## Màn hình gồm những gì
 - Đầu trang **"Báo cáo"** + ngày; hai thẻ lớn **"Hôm nay"** (doanh thu, số đơn) và **"Tháng N"** (doanh thu lũy kế); dòng **Chi phí**, **Lợi nhuận**, **TB/đơn**.
 - Nút **"Báo cáo chuỗi cửa hàng"** (Chủ quán) và làm mới.
-- 8 tab: **Doanh thu**, **Sản phẩm**, **Tài chính**, **Kho**, **Huỷ/Duyệt**, **Nhân viên**, **Voucher**, **Hóa đơn**.
+- 8 tab: **Doanh thu**, **Sản phẩm**, **Tài chính**, **Kho**, **Huỷ/Duyệt**, **Nhân viên**, **Voucher**, **Hóa đơn**. Quán bật module **Các hoạt động tính giờ** có thêm tab **Tính giờ** ở cuối (lượt chơi, giờ chơi, tiền giờ, giờ đông khách, theo bàn — xem bài Các hoạt động tính giờ).
 - Mỗi tab chọn kỳ **"Hôm nay" / "Tuần này" / "Tháng này"** và nút ‹ › để lùi/tiến (hôm qua, tuần trước…), hoặc chạm nhãn kỳ để chọn ngày/tuần/tháng.
 - Máy tính bảng / PC: cột phải **"KPI hôm nay"** (Doanh thu, Số đơn, TB/đơn, Chi phí, Lợi nhuận, Biên LN), **"Huỷ Bàn / Huỷ Bill"** (lượt, tiền huỷ), **"Tháng N"** (doanh thu lũy kế).
 

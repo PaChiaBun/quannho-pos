@@ -140,7 +140,7 @@ Mở nhầm bàn: huỷ trong 5 phút đầu thì chỉ cần chọn lý do. Bà
 Tiền giờ nằm trong doanh thu như mọi món. Muốn tách tiền giờ với đồ ăn uống: Báo cáo, tab **Sản phẩm**, lọc danh mục của món giá giờ (ví dụ "Tiền giờ").
 
 ### Báo cáo tính giờ (giờ đông khách, theo bàn)
-Ở màn Các hoạt động tính giờ bấm nút biểu đồ cạnh **"Lịch đặt"** (Chủ quán, Quản lý, Thu ngân và người có quyền xem báo cáo mới thấy nút này). Chọn **"Hôm nay"**, **"7 ngày"**, **"30 ngày"** hoặc **"Tháng này"**:
+Mở module **Báo cáo** → tab **"Tính giờ"** (tab cuối, kéo hàng tab sang trái nếu không thấy; chỉ có khi quán bật module Các hoạt động tính giờ, ai xem được Báo cáo thì xem được tab này). Chọn **"Hôm nay"**, **"7 ngày"**, **"30 ngày"** hoặc **"Tháng này"**:
 - **"Lượt chơi"**, **"Giờ chơi"**, **"Tiền giờ"**, **"Món kèm"** (đồ ăn uống gọi thêm trong các lượt đó), kèm trung bình mỗi lượt và tiền giờ chiếm bao nhiêu phần trăm.
 - **"Giờ đông khách"**: mỗi cột là một giờ trong ngày, cột cao là nhiều bàn có khách; dòng trên ghi giờ đông nhất và trung bình bao nhiêu phần trăm số bàn có khách giờ đó. Dùng để chọn giờ đặt giá cao / khuyến mãi giờ vắng.
 - **"Theo ngày"**: tiền giờ (vàng) và món kèm (xanh) từng ngày.

@@ -184,10 +184,13 @@ TextStyle _chu(double size, FontWeight w, [Color? c]) =>
 
 String _gioPhut(double phut) => tinhGioThoiLuongDai(phut.round());
 
+/// Báo cáo tính giờ. Từ 28/11 nằm trong module Báo cáo (tab "Tính giờ", [laTab] = true: chỉ nội dung, không thanh
+/// trên — Chủ Quán chuyển từ màn Tính giờ sang).
 class BaoCaoTinhGioScreen extends ConsumerStatefulWidget {
   /// Ngày "hôm nay" (ảnh mẫu trong test cố định); null = bây giờ.
   final DateTime? homNay;
-  const BaoCaoTinhGioScreen({super.key, this.homNay});
+  final bool laTab;
+  const BaoCaoTinhGioScreen({super.key, this.homNay, this.laTab = false});
 
   @override
   ConsumerState<BaoCaoTinhGioScreen> createState() => _BaoCaoTinhGioScreenState();
@@ -213,22 +216,11 @@ class _BaoCaoTinhGioScreenState extends ConsumerState<BaoCaoTinhGioScreen> {
     final luot = ref.watch(luotChoiProvider(k));
     final ban = ref.watch(banBaoCaoTinhGioProvider).value ?? const <BanTableModel>[];
     final tenBan = {for (final b in ban) b.id: b.label};
-    return Scaffold(
-      backgroundColor: _kCream,
-      appBar: AppBar(
-        backgroundColor: _kCream,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: _kNavy,
-        // theme của app đặt biểu tượng thanh trên màu trắng: không ghi lại thì nút quay lại chìm vào nền kem
-        iconTheme: const IconThemeData(color: _kNavy),
-        title: Text('Báo cáo tính giờ', style: _chu(20, FontWeight.w800)),
-      ),
-      body: Center(
+    final noiDung = Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+            padding: EdgeInsets.fromLTRB(16, widget.laTab ? 16 : 4, 16, widget.laTab ? 80 : 32),
             children: [
               Wrap(
                 spacing: 8,
@@ -290,7 +282,20 @@ class _BaoCaoTinhGioScreenState extends ConsumerState<BaoCaoTinhGioScreen> {
             ],
           ),
         ),
+      );
+    if (widget.laTab) return noiDung;
+    return Scaffold(
+      backgroundColor: _kCream,
+      appBar: AppBar(
+        backgroundColor: _kCream,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: _kNavy,
+        // theme của app đặt biểu tượng thanh trên màu trắng: không ghi lại thì nút quay lại chìm vào nền kem
+        iconTheme: const IconThemeData(color: _kNavy),
+        title: Text('Báo cáo tính giờ', style: _chu(20, FontWeight.w800)),
       ),
+      body: noiDung,
     );
   }
 

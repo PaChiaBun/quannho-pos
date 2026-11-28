@@ -1,6 +1,6 @@
 {
- "version": 202611281307,
- "hash": "110095f62a7936e1e2b841586f67f444bb862763755f8b8fc652c02736772e19",
+ "version": 202611281316,
+ "hash": "0daee8f05926e0156c62c8e9ce1909764cebd2e59bd23b60b32a296f33a4e789",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -488,7 +488,7 @@
    "module_name": "Báo cáo",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang \"Báo cáo\" + ngày; hai thẻ lớn \"Hôm nay\" (doanh thu, số đơn) và \"Tháng N\" (doanh thu lũy kế); dòng Chi phí, Lợi nhuận, TB/đơn.\n• Nút \"Báo cáo chuỗi cửa hàng\" (Chủ quán) và làm mới.\n• 8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn.\n• Mỗi tab chọn kỳ \"Hôm nay\" / \"Tuần này\" / \"Tháng này\" và nút ‹ › để lùi/tiến (hôm qua, tuần trước…), hoặc chạm nhãn kỳ để chọn ngày/tuần/tháng.\n• Máy tính bảng / PC: cột phải \"KPI hôm nay\" (Doanh thu, Số đơn, TB/đơn, Chi phí, Lợi nhuận, Biên LN), \"Huỷ Bàn / Huỷ Bill\" (lượt, tiền huỷ), \"Tháng N\" (doanh thu lũy kế)."
+   "text": "• Đầu trang \"Báo cáo\" + ngày; hai thẻ lớn \"Hôm nay\" (doanh thu, số đơn) và \"Tháng N\" (doanh thu lũy kế); dòng Chi phí, Lợi nhuận, TB/đơn.\n• Nút \"Báo cáo chuỗi cửa hàng\" (Chủ quán) và làm mới.\n• 8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn. Quán bật module Các hoạt động tính giờ có thêm tab Tính giờ ở cuối (lượt chơi, giờ chơi, tiền giờ, giờ đông khách, theo bàn — xem bài Các hoạt động tính giờ).\n• Mỗi tab chọn kỳ \"Hôm nay\" / \"Tuần này\" / \"Tháng này\" và nút ‹ › để lùi/tiến (hôm qua, tuần trước…), hoặc chạm nhãn kỳ để chọn ngày/tuần/tháng.\n• Máy tính bảng / PC: cột phải \"KPI hôm nay\" (Doanh thu, Số đơn, TB/đơn, Chi phí, Lợi nhuận, Biên LN), \"Huỷ Bàn / Huỷ Bill\" (lượt, tiền huỷ), \"Tháng N\" (doanh thu lũy kế)."
   },
   {
    "id": "bao-cao#tung-tab-doanh-thu",
@@ -3624,7 +3624,7 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Báo cáo tính giờ (giờ đông khách, theo bàn)",
-   "text": "Ở màn Các hoạt động tính giờ bấm nút biểu đồ cạnh \"Lịch đặt\" (Chủ quán, Quản lý, Thu ngân và người có quyền xem báo cáo mới thấy nút này). Chọn \"Hôm nay\", \"7 ngày\", \"30 ngày\" hoặc \"Tháng này\":\n• \"Lượt chơi\", \"Giờ chơi\", \"Tiền giờ\", \"Món kèm\" (đồ ăn uống gọi thêm trong các lượt đó), kèm trung bình mỗi lượt và tiền giờ chiếm bao nhiêu phần trăm.\n• \"Giờ đông khách\": mỗi cột là một giờ trong ngày, cột cao là nhiều bàn có khách; dòng trên ghi giờ đông nhất và trung bình bao nhiêu phần trăm số bàn có khách giờ đó. Dùng để chọn giờ đặt giá cao / khuyến mãi giờ vắng.\n• \"Theo ngày\": tiền giờ (vàng) và món kèm (xanh) từng ngày.\n• \"Theo bàn\": số lượt, giờ chơi, giờ chơi trung bình mỗi ngày, tiền giờ, tiền món của từng bàn / sân / phòng.\n\nChỉ tính lượt đã thanh toán, theo ngày thanh toán; bàn huỷ không tính. Số tiền là trước giảm giá và phụ thu của hoá đơn, nên có thể lệch nhẹ với doanh thu ở màn Báo cáo."
+   "text": "Mở module Báo cáo → tab \"Tính giờ\" (tab cuối, kéo hàng tab sang trái nếu không thấy; chỉ có khi quán bật module Các hoạt động tính giờ, ai xem được Báo cáo thì xem được tab này). Chọn \"Hôm nay\", \"7 ngày\", \"30 ngày\" hoặc \"Tháng này\":\n• \"Lượt chơi\", \"Giờ chơi\", \"Tiền giờ\", \"Món kèm\" (đồ ăn uống gọi thêm trong các lượt đó), kèm trung bình mỗi lượt và tiền giờ chiếm bao nhiêu phần trăm.\n• \"Giờ đông khách\": mỗi cột là một giờ trong ngày, cột cao là nhiều bàn có khách; dòng trên ghi giờ đông nhất và trung bình bao nhiêu phần trăm số bàn có khách giờ đó. Dùng để chọn giờ đặt giá cao / khuyến mãi giờ vắng.\n• \"Theo ngày\": tiền giờ (vàng) và món kèm (xanh) từng ngày.\n• \"Theo bàn\": số lượt, giờ chơi, giờ chơi trung bình mỗi ngày, tiền giờ, tiền món của từng bàn / sân / phòng.\n\nChỉ tính lượt đã thanh toán, theo ngày thanh toán; bàn huỷ không tính. Số tiền là trước giảm giá và phụ thu của hoá đơn, nên có thể lệch nhẹ với doanh thu ở màn Báo cáo."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-dat-truoc-san-ban-phong",

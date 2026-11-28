@@ -26,6 +26,8 @@ import '../core/repositories/module_repository.dart';
 import '../core/widgets/order_detail_dialog.dart';
 import '../core/utils/app_logger.dart';
 import 'einvoice_report_tab.dart';
+import '../modules/tinh_gio/bao_cao_tinh_gio.dart' show BaoCaoTinhGioScreen;
+import '../modules/tinh_gio/tinh_gio_widgets.dart' show tinhGioModuleActiveProvider;
 import '../core/utils/stagger.dart';
 import 'chain_report_screen.dart';
 import '../core/providers/session_provider.dart';
@@ -126,15 +128,18 @@ class _ReportBillsDay extends Notifier<DateTime?> {
 final reportBillsDayProvider = NotifierProvider<_ReportBillsDay, DateTime?>(_ReportBillsDay.new);
 
 class _ReportScreenState extends ConsumerState<ReportScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tab;
   DateTime? _billsDay;
+  /// Tab "Tính giờ" (cuối hàng, chỉ khi quán bật module Các hoạt động tính giờ — 28/11 chuyển từ màn Tính giờ sang).
+  bool _coTinhGio = false;
 
   @override
   void initState() {
     super.initState();
     _billsDay = ref.read(reportBillsDayProvider);
-    _tab = TabController(length: 8, vsync: this, initialIndex: _billsDay == null ? 0 : 7); // 7 = Hóa đơn
+    _coTinhGio = ref.read(tinhGioModuleActiveProvider);
+    _tab = TabController(length: _coTinhGio ? 9 : 8, vsync: this, initialIndex: _billsDay == null ? 0 : 7); // 7 = Hóa đơn
     if (_billsDay != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) ref.read(reportBillsDayProvider.notifier).open(null);
@@ -144,8 +149,20 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
 
+  /// Module tính giờ bật / tắt khi màn đang mở (danh sách module tải xong sau): dựng lại thanh tab, giữ tab đang xem.
+  void _doiSoTab(bool coTinhGio) {
+    if (coTinhGio == _coTinhGio || !mounted) return;
+    final cu = _tab;
+    setState(() {
+      _coTinhGio = coTinhGio;
+      _tab = TabController(length: coTinhGio ? 9 : 8, vsync: this, initialIndex: cu.index.clamp(0, coTinhGio ? 8 : 7));
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => cu.dispose());
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(tinhGioModuleActiveProvider, (_, co) => _doiSoTab(co));
     final todayStats = ref.watch(todayStatsProvider);
     final todayFin   = ref.watch(todayFinanceStatsProvider);
     final monthRev   = ref.watch(_monthRevProvider);
@@ -175,15 +192,16 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
                 labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: isMobile ? 12.5 : 13),
                 unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: isMobile ? 11.5 : 12),
                 padding: isMobile ? const EdgeInsets.symmetric(horizontal: 8) : EdgeInsets.zero,
-                tabs: const [
-                  Tab(text: 'Doanh thu'),
-                  Tab(text: 'Sản phẩm'),
-                  Tab(text: 'Tài chính'),
-                  Tab(text: 'Kho'),
-                  Tab(text: 'Huỷ/Duyệt'),
-                  Tab(text: 'Nhân viên'),
-                  Tab(text: 'Voucher'),
-                  Tab(text: 'Hóa đơn'),
+                tabs: [
+                  const Tab(text: 'Doanh thu'),
+                  const Tab(text: 'Sản phẩm'),
+                  const Tab(text: 'Tài chính'),
+                  const Tab(text: 'Kho'),
+                  const Tab(text: 'Huỷ/Duyệt'),
+                  const Tab(text: 'Nhân viên'),
+                  const Tab(text: 'Voucher'),
+                  const Tab(text: 'Hóa đơn'),
+                  if (_coTinhGio) const Tab(text: 'Tính giờ'),
                 ],
               ),
             ),
@@ -200,6 +218,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
             const _StaffAttendanceTab(),
             const _VoucherTab(),
             EinvoiceReportTab(initialDay: _billsDay),
+            if (_coTinhGio) const BaoCaoTinhGioScreen(laTab: true),
           ],
         ),
       ))),

@@ -60,7 +60,6 @@ import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
     show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
-import '../modules/tinh_gio/bao_cao_tinh_gio.dart';
 import '../modules/tinh_gio/dat_truoc.dart';
 import '../modules/tinh_gio/dat_truoc_ui.dart';
 import '../modules/tinh_gio/goi_gio_ui.dart';
@@ -1264,13 +1263,6 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   /// Nút Lịch đặt + bộ lọc ba ô có kèm số bàn.
-  bool get _xemBaoCaoTinhGio {
-    final phien = ref.watch(sessionProvider);
-    final vaiTro = StaffService.canonicalRole(phien?.role ?? '');
-    return phien?.isOwner == true ||
-        const {'owner', 'manager', 'cashier'}.contains(vaiTro) ||
-        (ref.watch(userActionPermsProvider).value?.contains('report.view') ?? false);
-  }
 
   Widget _hangLocTinhGio(int tong, int choi) {
     Widget o(String nhan, String gt, int flex) {
@@ -1333,31 +1325,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             ),
           ),
         ),
-        // Báo cáo tính giờ (đợt 5): có tiền → cùng quyền với tab Báo cáo
-        if (_xemBaoCaoTinhGio) ...[
-          const SizedBox(width: 8),
-          Material(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: Color(0xFFE6DDD0)),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BaoCaoTinhGioScreen()),
-              ),
-              child: const Tooltip(
-                message: 'Báo cáo tính giờ',
-                child: SizedBox(
-                  height: 48,
-                  width: 48,
-                  child: Icon(Icons.insights_rounded, color: _kNavy, size: 22),
-                ),
-              ),
-            ),
-          ),
-        ],
+        // Báo cáo tính giờ: 28/11 Chủ Quán chuyển sang module Báo cáo (tab "Tính giờ"), bỏ nút ở đây.
         const SizedBox(width: 8),
         Expanded(
           child: Container(
