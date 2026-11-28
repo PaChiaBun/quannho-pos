@@ -34,7 +34,10 @@ DECLARE
   P0 uuid := gen_random_uuid(); P1 uuid := gen_random_uuid(); P2 uuid := gen_random_uuid();
   P3 uuid := gen_random_uuid(); P4 uuid := gen_random_uuid(); P5 uuid := gen_random_uuid();
   D1 uuid; D2 uuid; D3a uuid; D3b uuid; D4 uuid; D6 uuid; D7 uuid; P6 uuid := gen_random_uuid(); P7 uuid := gen_random_uuid();
-  K3 uuid := gen_random_uuid(); j jsonb; v_set uuid; v_vi numeric; v_chuoi uuid := gen_random_uuid();
+  K3 uuid := gen_random_uuid(); j jsonb;
+  T6 text := gen_random_uuid()::text; T7 text := gen_random_uuid()::text; T8 text := gen_random_uuid()::text;
+  T9 text := gen_random_uuid()::text; P8 uuid := gen_random_uuid(); P9 uuid := gen_random_uuid();
+  P10 uuid := gen_random_uuid(); P11 uuid := gen_random_uuid(); D8 uuid; D10 uuid; D11 uuid; v_set uuid; v_vi numeric; v_chuoi uuid := gen_random_uuid();
 BEGIN
   RAISE NOTICE '>>> TIỀN CỌC = VÍ KHÁCH: BẮT ĐẦU <<<';
   INSERT INTO public.user_accounts (id, phone, password_hash, display_name) VALUES
@@ -198,6 +201,54 @@ BEGIN
     (S, T5, 'Khach da xoa', now() - interval '1 hour', now() + interval '1 hour', K3, 'da_nhan', P7) RETURNING id INTO D7;
   j := public.settle_ban_session_v6(P7, S, 'cash', 'tc-key-p7-0001', NULL, 0, 0, NULL, 0, 0);
   PERFORM public._tc_ok((j->>'success')::boolean, 'Q3 khách của lượt đặt (không cọc) đã xoá: vẫn thanh toán được — ' || left(j::text, 160));
+
+  -- ── Gộp bàn mang cọc sang (20261128_gop_ban_mang_coc.sql) ─────────────────────────────────────
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'ban_chuyen_ban_tinh_gio_v1' AND prosrc LIKE '%coc_mang%') THEN
+    PERFORM public._tc_la(A);
+    INSERT INTO public.ban_dining_tables (id, store_id, zone_id, name, label, is_active) VALUES
+      (T6, S, Z, 'San 6', 'Sân 6', true), (T7, S, Z, 'San 7', 'Sân 7', true),
+      (T8, S, Z, 'San 8', 'Sân 8', true), (T9, S, Z, 'San 9', 'Sân 9', true);
+    UPDATE public.customers SET real_balance = 0 WHERE id IN (K, K2);
+    -- M1: bàn nguồn có cọc của Anh Nam, bàn đích chưa có cọc → mang sang
+    INSERT INTO public.ban_sessions (id, store_id, table_id, status, waiter_id, total_amount) VALUES
+      (P8, S, T6::uuid, 'open', A::text, 0), (P9, S, T7::uuid, 'open', A::text, 100000);
+    INSERT INTO public.ban_session_items (store_id, session_id, product_id, product_name, unit_price, quantity, subtotal, kitchen_status, modifiers_json)
+      VALUES (S, P9, PF, 'Nuoc', 100000, 1, 100000, 'da_gui', '[]');
+    INSERT INTO public.ban_dat_truoc (store_id, table_id, ten_khach, gio_tu, gio_den, customer_id) VALUES
+      (S, T6, 'Anh Nam', now() + interval '4 day', now() + interval '4 day 1 hour', K) RETURNING id INTO D8;
+    j := public._tc_rpc(format($q$SELECT public.ban_dat_truoc_nhan_coc_v1(%L, %L, 30000, 'cash', 'tc-coc-d8-0001')$q$, S, D8));
+    UPDATE public.ban_dat_truoc SET trang_thai = 'da_nhan', session_id = P8 WHERE id = D8;
+    j := public._tc_rpc(format($q$SELECT public.ban_chuyen_ban_tinh_gio_v1(%L, %L, %L)$q$, P8, S, T7));
+    PERFORM public._tc_ok((j->>'success')::boolean AND j->'data'->>'kieu' = 'gop' AND (j->'data'->>'coc_mang')::boolean
+      AND (SELECT session_id FROM public.ban_dat_truoc WHERE id = D8) = P9
+      AND (SELECT sum(tien) FROM public.qn_coc_cua_phien_v1(S, P9)) = 30000,
+      'M1 gộp bàn có cọc sang bàn chưa có cọc: cọc 30.000 theo sang phiên đích — ' || left(j::text, 160));
+    -- M3: thanh toán bàn đích trừ cọc đã mang sang
+    j := public.settle_ban_session_v6(P9, S, 'cash', 'tc-key-p9-0001', NULL, 0, 0, NULL, 0, 0);
+    PERFORM public._tc_ok((j->>'success')::boolean AND (j->'data'->>'vi_da_tru')::numeric = 30000
+      AND (j->'data'->>'khach_tra_them')::numeric = 70000
+      AND (SELECT coc_trang_thai FROM public.ban_dat_truoc WHERE id = D8) = 'da_tru',
+      'M3 thanh toán bàn đích: trừ ví 30.000 cọc đã mang sang, khách trả thêm 70.000 — ' || left(j::text, 160));
+    -- M2: bàn đích đã có cọc của khách khác → không mang, cọc nguồn xử lý tay được
+    INSERT INTO public.ban_sessions (id, store_id, table_id, status, waiter_id, total_amount) VALUES
+      (P10, S, T8::uuid, 'open', A::text, 0), (P11, S, T9::uuid, 'open', A::text, 0);
+    INSERT INTO public.ban_dat_truoc (store_id, table_id, ten_khach, gio_tu, gio_den, customer_id) VALUES
+      (S, T8, 'Anh Nam', now() + interval '5 day', now() + interval '5 day 1 hour', K) RETURNING id INTO D10;
+    INSERT INTO public.ban_dat_truoc (store_id, table_id, ten_khach, gio_tu, gio_den, customer_id) VALUES
+      (S, T9, 'Chi Lan', now() + interval '5 day', now() + interval '5 day 1 hour', K2) RETURNING id INTO D11;
+    j := public._tc_rpc(format($q$SELECT public.ban_dat_truoc_nhan_coc_v1(%L, %L, 10000, 'cash', 'tc-coc-d10-001')$q$, S, D10));
+    j := public._tc_rpc(format($q$SELECT public.ban_dat_truoc_nhan_coc_v1(%L, %L, 20000, 'cash', 'tc-coc-d11-001')$q$, S, D11));
+    UPDATE public.ban_dat_truoc SET trang_thai = 'da_nhan', session_id = P10 WHERE id = D10;
+    UPDATE public.ban_dat_truoc SET trang_thai = 'da_nhan', session_id = P11 WHERE id = D11;
+    j := public._tc_rpc(format($q$SELECT public.ban_chuyen_ban_tinh_gio_v1(%L, %L, %L)$q$, P10, S, T9));
+    PERFORM public._tc_ok((j->>'success')::boolean AND NOT (j->'data'->>'coc_mang')::boolean
+      AND (j->'data'->>'coc_tien')::numeric = 10000
+      AND (SELECT session_id FROM public.ban_dat_truoc WHERE id = D10) = P10
+      AND (SELECT sum(tien) FROM public.qn_coc_cua_phien_v1(S, P11)) = 20000,
+      'M2 bàn đích có cọc khách khác: không mang (không trừ nhầm ví), báo coc_mang=false — ' || left(j::text, 160));
+    j := public._tc_rpc(format($q$SELECT public.ban_dat_truoc_xu_ly_coc_v1(%L, %L, 'trong_vi')$q$, S, D10));
+    PERFORM public._tc_ok((j->>'success')::boolean, 'M2b cọc không mang sang xử lý tay được (phiên nguồn đã đóng)');
+  END IF;
 
   RAISE NOTICE '>>> TIỀN CỌC = VÍ KHÁCH: TẤT CẢ PASS <<<';
 END

@@ -1,6 +1,6 @@
 {
- "version": 202611281228,
- "hash": "c7e1df28fd297f57626235bec761d67407d16e40e8942b41c9e17133d26259e0",
+ "version": 202611281239,
+ "hash": "8fdaa24e40da9b5dc288bf6b657d8f78ce01c7dc9ab8cc6c365dce0dee0ccbbf",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3651,6 +3651,14 @@
    "text": "Khách đặt đã đến và bàn đã nhận lượt đặt: bấm Thanh toán như thường. Màn Thu tiền tự điền khách đã đặt (không đổi được), ghi \"Tổng hoá đơn\", \"Đã cọc (ví tên khách) −…\" và số to \"KHÁCH TRẢ THÊM\". Mã QR chuyển khoản và ô tiền khách đưa tính theo số khách trả thêm.\n\nVí dụ cọc 200.000 đ, bàn 480.000 đ: khách trả thêm 280.000 đ. Đơn hàng và báo cáo doanh thu ghi đủ 480.000 đ. Thu Chi có 200.000 đ lúc nhận cọc và 280.000 đ lúc thanh toán, cọc không bị tính hai lần. Màn thanh toán xong ghi \"Đã trừ ví khách 200.000 đ · khách trả thêm 280.000 đ\".\n\nKhách còn tiền trong ví (nạp ví trước) thì bật \"Trả bằng ví khách (số dư …)\" ở ô khách hàng để trả nốt phần còn lại bằng ví."
   },
   {
+   "id": "tinh-gio#cac-viec-thuong-lam-gop-ban-khi-ban-co-coc",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Gộp bàn khi bàn có cọc",
+   "text": "Gộp bàn của khách đã cọc vào bàn khác: cọc tự theo sang bàn mới, app báo \"Đã mang cọc … sang bàn mới\", thanh toán bàn mới sẽ tự trừ cọc. Nếu bàn mới đã có cọc của một khách khác thì cọc không mang sang (tránh trừ nhầm ví); xử lý cọc đó trong Lịch đặt → lượt đặt → \"Xử lý tiền cọc\"."
+  },
+  {
    "id": "tinh-gio#cac-viec-thuong-lam-khach-huy-hoac-khong-den-khi-da-coc",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
@@ -3763,12 +3771,20 @@
    "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần\nLàm gì: Báo chủ app; trong lúc chờ đặt từng buổi (tắt \"Lặp lại hàng tuần\")"
   },
   {
-   "id": "tinh-gio#loi-gop-ban-hoac-huy-ban-da-nhan-khach-co-coc-coc-khong-tru-o-ba",
+   "id": "tinh-gio#loi-ban-moi-da-co-coc-cua-khach-khac-nen-coc-chua-mang-sang-khi",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
    "section": "Lỗi thường gặp",
-   "title": "Gộp bàn (hoặc huỷ bàn) đã nhận khách có cọc, cọc không trừ ở bàn đích",
-   "text": "Vì sao: Cọc gắn với lượt đặt của bàn cũ\nLàm gì: Vào Lịch đặt → chạm lượt đó → \"Xử lý tiền cọc\" (để trong ví / quán giữ / hoàn)"
+   "title": "\"Bàn mới đã có cọc của khách khác nên cọc … chưa mang sang…\" khi gộp bàn",
+   "text": "Vì sao: Gộp bàn có cọc thường tự mang cọc sang bàn mới; bàn mới đã có cọc của khách khác thì không mang để khỏi trừ nhầm ví\nLàm gì: Vào Lịch đặt → chạm lượt đặt của bàn cũ → \"Xử lý tiền cọc\" (để trong ví / quán giữ / hoàn)"
+  },
+  {
+   "id": "tinh-gio#loi-huy-ban-da-nhan-khach-co-coc-coc-chua-tru",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Huỷ bàn đã nhận khách có cọc, cọc chưa trừ",
+   "text": "Vì sao: Cọc gắn với lượt đặt của bàn đã huỷ\nLàm gì: Vào Lịch đặt → chạm lượt đó → \"Xử lý tiền cọc\""
   },
   {
    "id": "tinh-gio#loi-ban-cua-luot-nay-dang-mo-thanh-toan-ban-se-tu-tru-coc",

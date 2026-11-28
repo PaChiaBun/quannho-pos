@@ -214,7 +214,7 @@
       "lib/modules/tinh_gio/ngay_le_ui.dart": "11024880ff66605b",
       "lib/modules/tinh_gio/tinh_gio.dart": "15ba669234240f78",
       "lib/modules/tinh_gio/tinh_gio_widgets.dart": "d5fcf19cb39a134a",
-      "lib/screens/ban_screen.dart": "ac29512616130a77",
+      "lib/screens/ban_screen.dart": "51e7a147c1c6fa30",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }

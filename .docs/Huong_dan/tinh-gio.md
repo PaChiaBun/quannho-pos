@@ -173,6 +173,9 @@ Ví dụ cọc 200.000 đ, bàn 480.000 đ: khách trả thêm 280.000 đ. Đơn
 
 Khách còn tiền trong ví (nạp ví trước) thì bật **"Trả bằng ví khách (số dư …)"** ở ô khách hàng để trả nốt phần còn lại bằng ví.
 
+### Gộp bàn khi bàn có cọc
+Gộp bàn của khách đã cọc vào bàn khác: cọc tự theo sang bàn mới, app báo "Đã mang cọc … sang bàn mới", thanh toán bàn mới sẽ tự trừ cọc. Nếu bàn mới đã có cọc của một khách khác thì cọc không mang sang (tránh trừ nhầm ví); xử lý cọc đó trong **Lịch đặt** → lượt đặt → **"Xử lý tiền cọc"**.
+
 ### Khách huỷ hoặc không đến khi đã cọc
 Bấm **"Huỷ lượt đặt"** hoặc **"Khách không đến"** ở lượt có cọc, app hỏi **"Tiền cọc … xử lý thế nào?"**:
 - **"Để trong ví khách"**: tiền nằm lại trong ví, lần sau khách trả bằng ví. Chọn sẵn khi khách báo huỷ.
@@ -218,7 +221,8 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 | "Bàn này có tiền cọc trong ví khách. Cập nhật app để thanh toán …" | Máy đó chưa cập nhật app, chưa biết trừ cọc | Cập nhật app rồi thanh toán, hoặc thanh toán ở máy đã cập nhật |
 | "Còn buổi chờ khách: huỷ lượt đặt trước rồi mới xử lý cọc" | Lịch cố định còn buổi chưa tới | Cọc giữ cho các buổi sau; huỷ hết các buổi còn lại rồi xử lý cọc |
 | "Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần | Báo chủ app; trong lúc chờ đặt từng buổi (tắt "Lặp lại hàng tuần") |
-| Gộp bàn (hoặc huỷ bàn) đã nhận khách có cọc, cọc không trừ ở bàn đích | Cọc gắn với lượt đặt của bàn cũ | Vào **Lịch đặt** → chạm lượt đó → **"Xử lý tiền cọc"** (để trong ví / quán giữ / hoàn) |
+| "Bàn mới đã có cọc của khách khác nên cọc … chưa mang sang…" khi gộp bàn | Gộp bàn có cọc thường tự mang cọc sang bàn mới; bàn mới đã có cọc của khách khác thì không mang để khỏi trừ nhầm ví | Vào **Lịch đặt** → chạm lượt đặt của bàn cũ → **"Xử lý tiền cọc"** (để trong ví / quán giữ / hoàn) |
+| Huỷ bàn đã nhận khách có cọc, cọc chưa trừ | Cọc gắn với lượt đặt của bàn đã huỷ | Vào **Lịch đặt** → chạm lượt đó → **"Xử lý tiền cọc"** |
 | "Bàn của lượt này đang mở: thanh toán bàn sẽ tự trừ cọc" | Bấm xử lý cọc khi bàn vẫn đang có khách | Không cần làm gì: thanh toán bàn đó sẽ trừ cọc |
 | "Máy chủ chưa có gói giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần gói giờ | Báo chủ app; trong lúc chờ tính theo giờ như thường |
 | "Đổi hoặc bỏ gói đã chọn cần Chủ quán / Quản lý" | Bàn đã có gói, tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đổi gói |

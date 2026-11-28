@@ -7032,7 +7032,27 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   Future<String?> _chuyenHoacGop(String banDichId, {String? phienDichId, required bool gop}) async {
     Future<String?> quaMayChu() async {
       final r = await _banRepo.chuyenBanTinhGio(widget.session.id, banDichId);
-      return r['success'] == true ? null : (r['message'] as String? ?? 'Chưa chuyển được bàn');
+      if (r['success'] != true) return r['message'] as String? ?? 'Chưa chuyển được bàn';
+      // Gộp bàn có cọc: máy chủ mang cọc sang bàn đích; bàn đích đã có cọc của khách khác thì không mang (tránh trừ
+      // nhầm ví) → báo thu ngân xử lý cọc trong Lịch đặt.
+      final d = r['data'] as Map?;
+      final cocTien = (d?['coc_tien'] as num?)?.toDouble() ?? 0;
+      if (mounted && cocTien > 0) {
+        final mang = d?['coc_mang'] == true;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            mang
+                ? 'Đã mang cọc ${fmtVnd(cocTien)} sang bàn mới: thanh toán bàn đó sẽ tự trừ cọc.'
+                : 'Bàn mới đã có cọc của khách khác nên cọc ${fmtVnd(cocTien)} chưa mang sang. '
+                    'Vào Lịch đặt, chạm lượt đặt đó, chọn "Xử lý tiền cọc".',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: mang ? const Color(0xFF0D9488) : const Color(0xFFF97316),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: mang ? 4 : 10),
+        ));
+      }
+      return null;
     }
 
     final banDich = (ref.read(allBanTablesProvider).value ?? const <BanTableModel>[])
