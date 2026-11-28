@@ -149,6 +149,21 @@ List<DateTime> cacBuoiLap(DateTime tu, Set<int> thu, DateTime denNgay, int phut,
   return ra;
 }
 
+/// Khách đặt gần đây từ [ds] (mới nhất trước): mỗi khách một lần, theo khách hàng / số điện thoại / tên.
+List<DatTruoc> khachQuenTu(List<DatTruoc> ds, {int toiDa = 4}) {
+  final thay = <String>{};
+  final ra = <DatTruoc>[];
+  for (final d in ds) {
+    final ten = d.tenKhach.trim();
+    if (ten.isEmpty) continue;
+    final sdt = d.sdt?.trim() ?? '';
+    if (!thay.add(d.customerId ?? (sdt.isNotEmpty ? sdt : ten.toLowerCase()))) continue;
+    ra.add(d);
+    if (ra.length == toiDa) break;
+  }
+  return ra;
+}
+
 class DatTruocRepository {
   SupabaseClient get _sb => Supabase.instance.client;
 
@@ -347,6 +362,20 @@ class DatTruocRepository {
       sdt: k['phone'] as String?,
       soDuVi: (k['real_balance'] as num?)?.toDouble() ?? 0,
     );
+  }
+
+  /// 40 lượt đặt mới tạo gần nhất của quán (chip "khách quen" ở hộp đặt).
+  Future<List<DatTruoc>> docGanDay() async {
+    final storeId = await _storeId();
+    if (storeId == null) return const [];
+    final rows = await _sb
+        .from('ban_dat_truoc')
+        .select()
+        .eq('store_id', storeId)
+        .order('created_at', ascending: false)
+        .limit(40)
+        .timeout(const Duration(seconds: 8));
+    return rows.map(DatTruoc.fromMap).toList();
   }
 
   /// Lượt đặt của một khách (hồ sơ khách), mới nhất trước.

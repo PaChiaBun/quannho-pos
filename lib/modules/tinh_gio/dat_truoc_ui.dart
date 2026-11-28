@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +19,8 @@ import '../../core/utils/money_formatter.dart';
 import '../../core/utils/responsive.dart';
 import '../qr_order/services/qr_sound_service.dart';
 import 'dat_truoc.dart';
-import 'gia_gio.dart' show thuChuCua;
+import 'gia_gio.dart' show thuChuCua, tinhGioGiaLuc, tinhGioTien;
+import 'gia_gio_ui.dart' show SoChamFormatter;
 import 'goi_gio_ui.dart' show TinhGioNhacGoi;
 import 'lich_luoi.dart';
 import 'tinh_gio_widgets.dart';
@@ -105,6 +107,8 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      // bàn phím bật thì hộp cao hết màn: chừa thanh trạng thái (máy ảo 28/11 đầu hộp đè giờ, sóng)
+      useSafeArea: true,
       builder: (_) => DatTruocFormSheet(ban: ban, ngay: _ngay, trongNgay: trongNgay, sua: sua, tuMacDinh: tu),
     );
     if (!mounted) return;
@@ -737,8 +741,10 @@ class DatTruocFormSheet extends ConsumerStatefulWidget {
 }
 
 class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
-  late final _ten = TextEditingController(text: widget.sua?.tenKhach ?? '');
-  late final _sdt = TextEditingController(text: widget.sua?.sdt ?? '');
+  /// Ô tìm khách (28/11): gõ tên hoặc số điện thoại; không chọn khách có sẵn thì chữ gõ là khách mới.
+  late final _tim = TextEditingController(text: widget.sua?.tenKhach ?? '');
+  /// Ô phụ của khách mới: số điện thoại (ô tìm là tên) hoặc tên (ô tìm là số).
+  late final _phu = TextEditingController(text: widget.sua?.sdt ?? '');
   late final _ghiChu = TextEditingController(text: widget.sua?.ghiChu ?? '');
   late final _coc = TextEditingController();
   /// Đợt 4: khách hàng của lượt đặt (cọc vào ví khách này), quỹ nhận cọc, mã chống nhận cọc trùng.
@@ -747,10 +753,19 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   final _khoaCoc = const Uuid().v4();
   /// Lượt đã lưu trong hộp này (lưu xong mà nhận cọc lỗi, bấm lại thì không đặt thêm lượt mới).
   String? _idDaLuu;
+  /// Khách có sẵn khớp chữ đang gõ.
+  List<CustomerModel> _goiY = const [];
+  Timer? _cho;
+  bool _moCoc = false;
+  late bool _moGhiChu = _ghiChu.text.isNotEmpty;
+  bool _ghiChuMoTay = false;
 
   /// Lượt đang sửa đã có cọc trong hệ thống (đã thu / đã trừ / đã xử lý) → ô cọc chỉ để xem.
   bool get _cocDaKhoa => widget.sua?.cocTrangThai != null;
   double get _soCoc => double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  bool get _timLaSo => RegExp(r'^[0-9+][0-9 .]{2,}$').hasMatch(_tim.text.trim());
+  String get _tenLuu => (_khach?.name ?? (_timLaSo ? _phu.text : _tim.text)).trim();
+  String get _sdtLuu => (_khach != null ? (_khach!.phone ?? '') : (_timLaSo ? _tim.text : _phu.text)).trim();
   late DateTime _tu;
   late int _phut;
   bool _dangLuu = false;
@@ -789,8 +804,9 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
 
   @override
   void dispose() {
-    _ten.dispose();
-    _sdt.dispose();
+    _cho?.cancel();
+    _tim.dispose();
+    _phu.dispose();
     _ghiChu.dispose();
     _coc.dispose();
     super.dispose();
@@ -798,18 +814,81 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
 
   DateTime get _den => _tu.add(Duration(minutes: _phut));
 
+  Future<TimeOfDay?> _hoiGio(DateTime luc) => showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(luc),
+        // Giờ kiểu 24: không ép thì ô gõ số báo "13" là giờ không hợp lệ (thử trên Android 24/11).
+        builder: (ctx, child) => MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        ),
+      );
+
   Future<void> _chonGio() async {
-    final t = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_tu),
-      // Giờ kiểu 24: không ép thì ô gõ số báo "13" là giờ không hợp lệ (thử trên Android 24/11).
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      ),
-    );
+    final t = await _hoiGio(_tu);
     if (t != null) setState(() => _tu = DateTime(_tu.year, _tu.month, _tu.day, t.hour, t.minute));
   }
+
+  /// Chọn giờ kết thúc: sớm hơn giờ bắt đầu thì hiểu là qua nửa đêm.
+  Future<void> _chonGioDen() async {
+    final t = await _hoiGio(_den);
+    if (t == null) return;
+    var den = DateTime(_tu.year, _tu.month, _tu.day, t.hour, t.minute);
+    if (!den.isAfter(_tu)) den = den.add(const Duration(days: 1));
+    setState(() => _phut = den.difference(_tu).inMinutes);
+  }
+
+  /// −/+ giờ bắt đầu, giữ thời lượng, không nhảy sang ngày khác.
+  void _doiTu(int phut) {
+    final t = _tu.add(Duration(minutes: phut));
+    if (_dauNgay(t) == _dauNgay(_tu)) setState(() => _tu = t);
+  }
+
+  void _doiPhut(int them) {
+    final p = _phut + them;
+    if (p >= 15 && p <= 24 * 60) setState(() => _phut = p);
+  }
+
+  void _goTim(String _) {
+    _cho?.cancel();
+    final q = _tim.text.trim();
+    setState(() {
+      _loi = null;
+      if (q.length < 2) _goiY = const [];
+    });
+    if (q.length < 2) return;
+    _cho = Timer(const Duration(milliseconds: 300), () async {
+      try {
+        final ds = await CoreCustomerRepository().searchByNameOrPhone(q);
+        if (mounted && _tim.text.trim() == q) setState(() => _goiY = ds.take(4).toList());
+      } catch (_) {}
+    });
+  }
+
+  void _chonKhach(CustomerModel k) => setState(() {
+        _cho?.cancel();
+        _khach = k;
+        _goiY = const [];
+        _loi = null;
+        _tim.text = k.name;
+        _phu.text = k.phone ?? '';
+      });
+
+  void _chonQuen(KhachQuen q) {
+    if (q.khach != null) return _chonKhach(q.khach!);
+    setState(() {
+      _tim.text = q.ten;
+      _phu.text = q.sdt ?? '';
+      _loi = null;
+    });
+  }
+
+  void _batLap(bool v) => setState(() {
+        _lap = v;
+        _loi = null;
+        if (v && _thuLap.isEmpty) _thuLap = {_tu.weekday};
+        if (v && _denNgay == null) _denNgay = DateTime(_tu.year, _tu.month, _tu.day + 27);
+      });
 
   String _ngayNgan(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
 
@@ -818,8 +897,8 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     final repo = ref.read(datTruocRepositoryProvider);
     Future<Map<String, dynamic>> gui(bool boQua) => repo.datLap(
           tableId: widget.ban.id,
-          tenKhach: _ten.text,
-          sdt: _sdt.text,
+          tenKhach: _tenLuu,
+          sdt: _sdtLuu,
           gioTu: _tu,
           phut: _phut,
           thu: _thuLap,
@@ -916,13 +995,13 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   /// Cọc phải có khách hàng (tiền nằm trong ví khách): chưa chọn thì tìm theo số điện thoại, không có thì tạo.
   Future<String?> _damBaoKhach() async {
     if (_khach != null || _soCoc <= 0 || _cocDaKhoa) return null;
-    final sdt = _sdt.text.trim();
+    final sdt = _sdtLuu;
     if (sdt.length < 9) return 'Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại';
     try {
       final repo = CoreCustomerRepository();
       var k = await repo.getByPhone(sdt);
       if (k == null) {
-        await repo.create(name: _ten.text.trim(), phone: sdt);
+        await repo.create(name: _tenLuu, phone: sdt);
         k = await repo.getByPhone(sdt);
       }
       if (k == null) return 'Chưa tạo được khách hàng';
@@ -933,25 +1012,9 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     }
   }
 
-  Future<void> _chonKhach() async {
-    final k = await showModalBottomSheet<CustomerModel>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _ChonKhachSheet(tenMoi: _ten.text.trim(), sdtMoi: _sdt.text.trim()),
-    );
-    if (k == null || !mounted) return;
-    setState(() {
-      _khach = k;
-      _ten.text = k.name;
-      if ((k.phone ?? '').isNotEmpty) _sdt.text = k.phone!;
-      _loi = null;
-    });
-  }
-
   Future<void> _luu() async {
     if (_dangLuu) return;
-    if (_ten.text.trim().isEmpty) {
+    if (_tenLuu.isEmpty) {
       setState(() => _loi = 'Nhập tên khách');
       return;
     }
@@ -977,8 +1040,8 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     final r = await ref.read(datTruocRepositoryProvider).luu(
           id: widget.sua?.id,
           tableId: widget.ban.id,
-          tenKhach: _ten.text,
-          sdt: _sdt.text,
+          tenKhach: _tenLuu,
+          sdt: _sdtLuu,
           gioTu: _tu,
           gioDen: _den,
           ghiChu: _ghiChu.text,
@@ -994,6 +1057,359 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
         _loi = r['message'] as String? ?? 'Chưa lưu được';
       });
     }
+  }
+
+  // ── Các phần của hộp ──────────────────────────────────────────────────────
+
+  Widget _nhanMuc(String s) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(s, style: _chu(12, FontWeight.w800, _kNavy.withValues(alpha: 0.55)).copyWith(letterSpacing: 0.5)),
+      );
+
+  Widget _anh(String ten, double co, Color mau) => Container(
+        width: co,
+        height: co,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: mau, shape: BoxShape.circle),
+        child: Text(_chuDau(ten), style: _chu(co * 0.45, FontWeight.w800, Colors.white)),
+      );
+
+  /// Khách: thẻ khách đã chọn, hoặc ô tìm + khách khớp + khách quen + ô phụ của khách mới.
+  Widget _phanKhach(List<KhachQuen> quen) {
+    final k = _khach;
+    if (k != null) {
+      final khoa = widget.sua?.coCocCho == true; // cọc đang trong ví khách này: không đổi khách
+      return Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _kNavy, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            _anh(k.name, 40, _kNavy),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(k.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(15.5, FontWeight.w800)),
+                  Text(
+                    [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
+                    style: _chu(12.5, FontWeight.w600, _kTeal),
+                  ),
+                ],
+              ),
+            ),
+            if (!khoa)
+              TextButton(
+                onPressed: () => setState(() => _khach = null),
+                child: Text('Đổi', style: _chu(13.5, FontWeight.w800, _kNavy.withValues(alpha: 0.6))),
+              ),
+          ],
+        ),
+      );
+    }
+    final q = _tim.text.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _tim,
+          textCapitalization: TextCapitalization.words,
+          onChanged: _goTim,
+          style: _chu(15, FontWeight.w600),
+          decoration: _o(null, icon: Icons.search_rounded, goiY: 'Tìm tên, SĐT hoặc gõ khách mới'),
+        ),
+        for (final g in _goiY)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _chonKhach(g),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Row(
+                    children: [
+                      _anh(g.name, 30, _kNavy),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(14, FontWeight.w700)),
+                            Text(
+                              [if ((g.phone ?? '').isNotEmpty) g.phone!, 'ví ${fmtVnd(g.realBalance)}'].join(' · '),
+                              style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.6)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.add_circle_outline_rounded, color: _kNavy, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (q.isEmpty && quen.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final (i, kq) in quen.indexed)
+                  Material(
+                    color: Colors.white,
+                    shape: StadiumBorder(side: BorderSide(color: _kNavy.withValues(alpha: 0.12))),
+                    child: InkWell(
+                      customBorder: const StadiumBorder(),
+                      onTap: () => _chonQuen(kq),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(5, 5, 11, 5),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _anh(kq.ten, 22, _kMauAnh[i % _kMauAnh.length]),
+                            const SizedBox(width: 6),
+                            Text(kq.ten, style: _chu(13, FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        if (q.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: _phu,
+            keyboardType: _timLaSo ? TextInputType.name : TextInputType.phone,
+            textCapitalization: _timLaSo ? TextCapitalization.words : TextCapitalization.none,
+            onChanged: (_) => setState(() => _loi = null),
+            style: _chu(15, FontWeight.w600),
+            decoration: _timLaSo
+                ? _o('Tên khách mới', icon: Icons.person_rounded)
+                : _o('Số điện thoại (để gọi nhắc)', icon: Icons.call_rounded),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _nutCongTru(IconData icon, String nhan, VoidCallback onTap) => Semantics(
+        button: true,
+        label: nhan,
+        child: Material(
+          color: _kNavy.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            child: SizedBox.square(dimension: 32, child: Icon(icon, size: 18, color: _kNavy)),
+          ),
+        ),
+      );
+
+  Widget _oGio(String nhan, DateTime gio, {required VoidCallback tru, required VoidCallback cong, required VoidCallback chon}) =>
+      Expanded(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _kNavy.withValues(alpha: 0.12), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(nhan, style: _chu(12, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  _nutCongTru(Icons.remove_rounded, '$nhan sớm 30 phút', tru),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: chon,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(gioPhut(gio), style: _chu(23, FontWeight.w800)),
+                      ),
+                    ),
+                  ),
+                  _nutCongTru(Icons.add_rounded, '$nhan muộn 30 phút', cong),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _chonThoiLuong() => Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(14)),
+        child: Row(
+          children: [
+            for (final (phut, nhan) in const [(30, "30'"), (60, '1 giờ'), (90, '1g30'), (120, '2 giờ'), (180, '3 giờ')])
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  selected: _phut == phut,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _phut = phut),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _phut == phut ? _kNavy : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        nhan,
+                        style: _chu(13, FontWeight.w800, _phut == phut ? Colors.white : _kNavy.withValues(alpha: 0.7)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+
+  /// Một dòng "Thêm": đầu dòng (chạm để mở) + phần mở ra.
+  Widget _dongThem({
+    required IconData icon,
+    required Color nen,
+    required String tieuDe,
+    required String phu,
+    bool mo = false,
+    VoidCallback? onTap,
+    Widget? sau,
+    List<Widget> noiDung = const [],
+  }) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Material(
+          color: Colors.white,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: mo ? _kNavy : _kNavy.withValues(alpha: 0.1), width: mo ? 1.5 : 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(color: nen, borderRadius: BorderRadius.circular(11)),
+                        child: Icon(icon, size: 18, color: _kNavy),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(tieuDe, style: _chu(14.5, FontWeight.w800)),
+                            if (phu.isNotEmpty)
+                              Text(phu, maxLines: 2, overflow: TextOverflow.ellipsis, style: _chu(12, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
+                          ],
+                        ),
+                      ),
+                      sau ?? (onTap == null ? const SizedBox.shrink() : Icon(mo ? Icons.expand_less_rounded : Icons.chevron_right_rounded, color: _kNavy.withValues(alpha: 0.4))),
+                    ],
+                  ),
+                ),
+              ),
+              if (mo && noiDung.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: noiDung),
+                ),
+            ],
+          ),
+        ),
+      );
+
+  /// Tiền cọc: vào ví khách + Thu Chi ngay, thanh toán bàn tự trừ.
+  Widget _phanCoc() {
+    final s = widget.sua;
+    if (_cocDaKhoa) {
+      final trangThai = switch (s!.cocTrangThai) {
+        'da_thu' => 'đang trong ví khách, thanh toán bàn tự trừ',
+        'da_tru' => 'đã trừ khi thanh toán',
+        'trong_vi' => 'để trong ví khách',
+        'quan_giu' => 'quán giữ cọc',
+        'da_hoan' => 'đã hoàn cọc',
+        _ => '',
+      };
+      return _dongThem(icon: Icons.savings_rounded, nen: const Color(0xFFFFF3D6), tieuDe: 'Tiền cọc', phu: 'Đã cọc ${fmtVnd(s.tienCoc)} · $trangThai');
+    }
+    Widget chip(String nhan, bool chon, VoidCallback bam) => ChoiceChip(
+          label: Text(nhan, style: _chu(13, FontWeight.w700, chon ? Colors.white : _kNavy)),
+          selected: chon,
+          selectedColor: _kNavy,
+          backgroundColor: Colors.white,
+          showCheckmark: false,
+          onSelected: (_) => bam(),
+        );
+    return _dongThem(
+      icon: Icons.savings_rounded,
+      nen: const Color(0xFFFFF3D6),
+      tieuDe: 'Tiền cọc',
+      phu: _soCoc > 0 ? '${fmtVnd(_soCoc)} · ${_quyCoc == 'cash' ? 'tiền mặt' : 'chuyển khoản'}' : 'Không cọc',
+      mo: _moCoc,
+      onTap: () => setState(() => _moCoc = !_moCoc),
+      noiDung: [
+        TextField(
+          controller: _coc,
+          keyboardType: TextInputType.number,
+          inputFormatters: [SoChamFormatter()],
+          onChanged: (_) => setState(() {}),
+          style: _chu(16, FontWeight.w800),
+          decoration: _o('Số tiền cọc', goiY: '0', duoi: 'đ'),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final v in const [100000, 200000, 500000])
+              chip(fmtVnd(v).replaceAll(' đ', ''), _soCoc == v, () => setState(() => _coc.text = fmtVnd(v).replaceAll(' đ', ''))),
+          ],
+        ),
+        if (_soCoc > 0) ...[
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, children: [
+            chip('Tiền mặt', _quyCoc == 'cash', () => setState(() => _quyCoc = 'cash')),
+            chip('Chuyển khoản', _quyCoc == 'bank', () => setState(() => _quyCoc = 'bank')),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+            'Cọc vào ví ${_khach?.name ?? 'khách'} và ghi phiếu thu ngay. Thanh toán bàn sẽ tự trừ'
+            '${_lap ? ' (lịch cố định: một lần cọc, trừ ở buổi đầu khách đến)' : ''}.',
+            style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
+          ),
+        ],
+      ],
+    );
   }
 
   // "Lặp lại hàng tuần": thứ, ngày kết thúc, dòng đếm buổi.
@@ -1012,543 +1428,466 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 4, 8, 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kNavy.withValues(alpha: 0.12)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return _dongThem(
+      icon: Icons.repeat_rounded,
+      nen: const Color(0xFFEEF0FF),
+      tieuDe: 'Lặp lại hàng tuần',
+      phu: _lap ? 'Khách quen, mỗi tuần ${thuChuCua(_thuLap)}' : 'Chỉ một lần',
+      mo: _lap,
+      onTap: () => _batLap(!_lap),
+      sau: Switch(
+        value: _lap,
+        activeThumbColor: Colors.white,
+        activeTrackColor: _kTeal,
+        onChanged: _batLap,
+      ),
+      noiDung: [
+        Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.repeat_rounded, color: _kNavy, size: 20),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Lặp lại hàng tuần (khách quen)', style: _chu(14, FontWeight.w700))),
-                Switch(
-                  value: _lap,
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: _kNavy,
-                  onChanged: (v) => setState(() {
-                    _lap = v;
-                    _loi = null;
-                    if (v && _thuLap.isEmpty) _thuLap = {_tu.weekday};
-                    if (v && _denNgay == null) _denNgay = DateTime(_tu.year, _tu.month, _tu.day + 27);
-                  }),
-                ),
-              ],
-            ),
-            if (_lap) ...[
-              Text('Các thứ', style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  for (final d in tenThu.keys)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Semantics(
-                          button: true,
-                          selected: _thuLap.contains(d),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(22),
-                            onTap: () => setState(() => _thuLap.contains(d) ? _thuLap.remove(d) : _thuLap.add(d)),
-                            child: Container(
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _thuLap.contains(d) ? _kNavy : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: _thuLap.contains(d) ? _kNavy : _kNavy.withValues(alpha: 0.2)),
-                              ),
-                              child: Text(tenThu[d]!, style: _chu(12, FontWeight.w800, _thuLap.contains(d) ? Colors.white : _kNavy)),
-                            ),
-                          ),
+            for (final d in tenThu.keys)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Semantics(
+                    button: true,
+                    selected: _thuLap.contains(d),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () => setState(() => _thuLap.contains(d) ? _thuLap.remove(d) : _thuLap.add(d)),
+                      child: Container(
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _thuLap.contains(d) ? _kNavy : Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _thuLap.contains(d) ? _kNavy : _kNavy.withValues(alpha: 0.2)),
                         ),
+                        child: Text(tenThu[d]!, style: _chu(12, FontWeight.w800, _thuLap.contains(d) ? Colors.white : _kNavy)),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text('Đến ngày', style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  nutDen('4 tuần', DateTime(_tu.year, _tu.month, _tu.day + 27)),
-                  nutDen('8 tuần', DateTime(_tu.year, _tu.month, _tu.day + 55)),
-                  // thuê "cả tháng": tới ngày cuối tháng (ngày 0 của tháng kế = ngày cuối tháng này)
-                  nutDen('Hết tháng này', DateTime(_tu.year, _tu.month + 1, 0)),
-                  nutDen('Hết tháng sau', DateTime(_tu.year, _tu.month + 2, 0)),
-                  nutDen('3 tháng', DateTime(_tu.year, _tu.month, _tu.day + 90)),
-                  ActionChip(
-                    avatar: const Icon(Icons.event_rounded, size: 16, color: _kNavy),
-                    label: Text(_denNgay == null ? 'Chọn ngày' : '${_ngayNgan(_denNgay!)}/${_denNgay!.year}',
-                        style: _chu(12.5, FontWeight.w700)),
-                    backgroundColor: Colors.white,
-                    onPressed: () async {
-                      final d = await showDatePicker(
-                        context: context,
-                        initialDate: _denNgay ?? _tu,
-                        firstDate: DateTime(_tu.year, _tu.month, _tu.day),
-                        lastDate: DateTime(_tu.year, _tu.month, _tu.day + 366),
-                      );
-                      if (d != null) setState(() => _denNgay = d);
-                    },
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                buoi.isEmpty
-                    ? 'Chưa có buổi nào: chọn thứ và ngày kết thúc'
-                    : '${buoi.length} buổi · ${thuChuCua(_thuLap)} · ${gioPhut(_tu)}–${gioPhut(_den)} · '
-                        '${_ngayNgan(buoi.first)} → ${_ngayNgan(buoi.last)}',
-                style: _chu(13, FontWeight.w700, buoi.isEmpty || buoi.length > 120 ? _kRed : _kGreen),
-              ),
-              if (buoi.length > 120) Text('Tối đa 120 buổi một lần', style: _chu(12, FontWeight.w600, _kRed)),
-              // xem trước các buổi đầu: "T3 03/12", "T5 05/12"…
-              if (buoi.isNotEmpty && buoi.length <= 120) ...[
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    for (final b in buoi.take(6))
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _kNavy.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text('${tenThu[b.weekday]} ${_ngayNgan(b)}', style: _chu(11.5, FontWeight.w700)),
-                      ),
-                    if (buoi.length > 6)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Text('+${buoi.length - 6} buổi', style: _chu(11.5, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
-                      ),
-                  ],
                 ),
-              ],
-            ],
+              ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Khách hàng của lượt đặt (module Khách hàng): chọn khách có sẵn hoặc tạo mới.
-  Widget _theKhach() {
-    final k = _khach;
-    final khoa = widget.sua?.coCocCho == true; // cọc đang trong ví khách này: không đổi khách
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: k != null ? _kNavy : _kNavy.withValues(alpha: 0.2), width: k != null ? 1.5 : 1),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: khoa ? null : _chonKhach,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
-          child: Row(
+        const SizedBox(height: 10),
+        Text('Đến ngày', style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            nutDen('4 tuần', DateTime(_tu.year, _tu.month, _tu.day + 27)),
+            nutDen('8 tuần', DateTime(_tu.year, _tu.month, _tu.day + 55)),
+            // thuê "cả tháng": tới ngày cuối tháng (ngày 0 của tháng kế = ngày cuối tháng này)
+            nutDen('Hết tháng này', DateTime(_tu.year, _tu.month + 1, 0)),
+            nutDen('Hết tháng sau', DateTime(_tu.year, _tu.month + 2, 0)),
+            nutDen('3 tháng', DateTime(_tu.year, _tu.month, _tu.day + 90)),
+            ActionChip(
+              avatar: const Icon(Icons.event_rounded, size: 16, color: _kNavy),
+              label: Text(_denNgay == null ? 'Chọn ngày' : '${_ngayNgan(_denNgay!)}/${_denNgay!.year}',
+                  style: _chu(12.5, FontWeight.w700)),
+              backgroundColor: Colors.white,
+              onPressed: () async {
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: _denNgay ?? _tu,
+                  firstDate: DateTime(_tu.year, _tu.month, _tu.day),
+                  lastDate: DateTime(_tu.year, _tu.month, _tu.day + 366),
+                );
+                if (d != null) setState(() => _denNgay = d);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          buoi.isEmpty
+              ? 'Chưa có buổi nào: chọn thứ và ngày kết thúc'
+              : '${buoi.length} buổi · ${thuChuCua(_thuLap)} · ${gioPhut(_tu)}–${gioPhut(_den)} · '
+                  '${_ngayNgan(buoi.first)} → ${_ngayNgan(buoi.last)}',
+          style: _chu(13, FontWeight.w700, buoi.isEmpty || buoi.length > 120 ? _kRed : _kTealDam),
+        ),
+        if (buoi.length > 120) Text('Tối đa 120 buổi một lần', style: _chu(12, FontWeight.w600, _kRed)),
+        // xem trước các buổi đầu: "T3 03/12", "T5 05/12"…
+        if (buoi.isNotEmpty && buoi.length <= 120) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
             children: [
-              Icon(k != null ? Icons.account_circle_rounded : Icons.person_search_rounded, color: _kNavy, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: k == null
-                    ? Text('Chọn khách hàng (để nhận cọc, tích điểm)', style: _chu(14, FontWeight.w600, _kNavy.withValues(alpha: 0.7)))
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(k.name, style: _chu(14.5, FontWeight.w800)),
-                          Text(
-                            [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
-                            style: _chu(12.5, FontWeight.w600, const Color(0xFF0D9488)),
-                          ),
-                        ],
-                      ),
-              ),
-              if (k != null && !khoa)
-                IconButton(
-                  tooltip: 'Bỏ chọn khách',
-                  onPressed: () => setState(() => _khach = null),
-                  icon: Icon(Icons.close_rounded, color: _kNavy.withValues(alpha: 0.5), size: 20),
-                )
-              else if (!khoa)
-                const Icon(Icons.chevron_right_rounded, color: _kNavy),
+              for (final b in buoi.take(6))
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _kNavy.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('${tenThu[b.weekday]} ${_ngayNgan(b)}', style: _chu(11.5, FontWeight.w700)),
+                ),
+              if (buoi.length > 6)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  child: Text('+${buoi.length - 6} buổi', style: _chu(11.5, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
+                ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Tiền cọc: vào ví khách + Thu Chi ngay, thanh toán bàn tự trừ.
-  Widget _phanCoc() {
-    final s = widget.sua;
-    if (_cocDaKhoa) {
-      final trangThai = switch (s!.cocTrangThai) {
-        'da_thu' => 'đang trong ví khách, thanh toán bàn tự trừ',
-        'da_tru' => 'đã trừ khi thanh toán',
-        'trong_vi' => 'để trong ví khách',
-        'quan_giu' => 'quán giữ cọc',
-        'da_hoan' => 'đã hoàn cọc',
-        _ => '',
-      };
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: Text('Đã cọc ${fmtVnd(s.tienCoc)} · $trangThai', style: _chu(13.5, FontWeight.w700, const Color(0xFF0D9488))),
-      );
-    }
-    Widget quy(String ma, String nhan) => ChoiceChip(
-          label: Text(nhan, style: _chu(13, FontWeight.w700, _quyCoc == ma ? Colors.white : _kNavy)),
-          selected: _quyCoc == ma,
-          selectedColor: _kNavy,
-          backgroundColor: Colors.white,
-          showCheckmark: false,
-          onSelected: (_) => setState(() => _quyCoc = ma),
-        );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: _coc,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => setState(() {}),
-          style: _chu(15, FontWeight.w700),
-          decoration: _o('Tiền cọc (không có thì để trống)', icon: Icons.savings_rounded, goiY: '0'),
-        ),
-        if (_soCoc > 0) ...[
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, children: [quy('cash', 'Tiền mặt'), quy('bank', 'Chuyển khoản')]),
-          const SizedBox(height: 4),
-          Text(
-            'Cọc vào ví ${_khach?.name ?? 'khách'} và ghi phiếu thu ngay. Thanh toán bàn sẽ tự trừ'
-            '${_lap ? ' (lịch cố định: một lần cọc, trừ ở buổi đầu khách đến)' : ''}.',
-            style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
           ),
         ],
       ],
     );
   }
 
-  InputDecoration _o(String nhan, {IconData? icon, String? goiY}) => InputDecoration(
+  Widget _phanGhiChu() => _dongThem(
+        icon: Icons.sticky_note_2_rounded,
+        nen: const Color(0xFFF1EEE6),
+        tieuDe: 'Ghi chú',
+        phu: _moGhiChu ? '' : (_ghiChu.text.trim().isEmpty ? 'Ví dụ: 7 người, cần bóng mới' : _ghiChu.text.trim()),
+        mo: _moGhiChu,
+        onTap: () => setState(() {
+          _moGhiChu = !_moGhiChu;
+          _ghiChuMoTay = true;
+        }),
+        noiDung: [
+          TextField(
+            controller: _ghiChu,
+            autofocus: _ghiChuMoTay,
+            minLines: 1,
+            maxLines: 3,
+            style: _chu(14, FontWeight.w500),
+            decoration: _o(null, goiY: 'Ví dụ: 7 người, cần bóng mới'),
+          ),
+        ],
+      );
+
+  InputDecoration _o(String? nhan, {IconData? icon, String? goiY, String? duoi}) => InputDecoration(
         labelText: nhan,
         hintText: goiY,
+        suffixText: duoi,
+        hintStyle: _chu(14, FontWeight.w500, _kNavy.withValues(alpha: 0.45)),
         labelStyle: _chu(13.5, FontWeight.w500, _kNavy.withValues(alpha: 0.6)),
-        prefixIcon: icon == null ? null : Icon(icon, color: _kNavy, size: 20),
+        prefixIcon: icon == null ? null : Icon(icon, color: _kNavy.withValues(alpha: 0.7), size: 20),
         filled: true,
         fillColor: Colors.white,
         isDense: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.12), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _kNavy, width: 1.5),
         ),
       );
 
   @override
   Widget build(BuildContext context) {
-    final trung = luotDatTrung(widget.trongNgay, widget.ban.id, _tu, _den, boQuaId: widget.sua?.id);
+    final ban = widget.ban;
+    final trung = luotDatTrung(widget.trongNgay, ban.id, _tu, _den, boQuaId: widget.sua?.id);
+    final gia = ref.watch(tinhGioGiaTheoMonProvider)[ban.giaGioProductId]?.sellPrice ?? 0;
+    final caiDat = giaGioCuaBan(ref, ban.id);
+    double tienBuoi(DateTime vao) => tinhGioTien(vao: vao, phutChoi: _phut, giaGoc: gia, caiDat: caiDat).thanhTien;
+    final tien = gia > 0 ? tienBuoi(_tu) : null;
+    final quen = widget.sua == null ? (ref.watch(khachQuenDatProvider).value ?? const <KhachQuen>[]) : const <KhachQuen>[];
+    final khac = [
+      for (final d in widget.trongNgay)
+        if (d.tableId == ban.id && d.conHieuLuc && d.id != widget.sua?.id) d,
+    ];
+    final coc = _soCoc > 0 && !_cocDaKhoa;
+    final buoi = _buoi;
+    final tomTat = [
+      if (_lap && buoi.isNotEmpty && tien != null) 'Tạm tính ${buoi.length} buổi · ${fmtVnd(buoi.fold<double>(0, (s, b) => s + tienBuoi(b)))}',
+      if (!_lap && coc && tien != null) 'Tạm tính ${fmtVnd(tien)}',
+      if (coc) 'cọc ${fmtVnd(_soCoc)}',
+    ].join(' · ');
+    final nhanNut = [
+      widget.sua != null
+          ? 'Lưu'
+          : _lap
+              ? 'Đặt ${buoi.length} buổi'
+              : coc
+                  ? 'Đặt ${ban.label}'
+                  : 'Đặt ${ban.label} · ${gioPhut(_tu)} – ${gioPhut(_den)}',
+      if (coc) 'nhận cọc ${fmtVnd(_soCoc)}',
+    ].join(' · ');
+
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
-        decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2)),
+        margin: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
+        decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(26)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(14)),
+                  child: Text(_viTatBan(ban.label), style: _chu(14, FontWeight.w800, Colors.white)),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                '${widget.sua == null ? 'Đặt' : 'Sửa lượt đặt'} · ${widget.ban.label}',
-                textAlign: TextAlign.center,
-                style: _chu(18, FontWeight.w800),
-              ),
-              const SizedBox(height: 4),
-              Text(_ngayChu(_tu), textAlign: TextAlign.center, style: _chu(13.5, FontWeight.w700, _kOrange)),
-              const SizedBox(height: 14),
-              _theKhach(),
-              const SizedBox(height: 10),
-              TextField(controller: _ten, textCapitalization: TextCapitalization.words, style: _chu(15, FontWeight.w600), decoration: _o('Tên khách', icon: Icons.person_rounded)),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _sdt,
-                keyboardType: TextInputType.phone,
-                style: _chu(15, FontWeight.w600),
-                decoration: _o('Số điện thoại (để gọi nhắc)', icon: Icons.call_rounded),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: _chonGio,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kNavy,
-                    backgroundColor: Colors.white,
-                    side: BorderSide(color: _kNavy.withValues(alpha: 0.2)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.sua == null ? 'Đặt ${ban.label}' : 'Sửa lượt đặt · ${ban.label}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _chu(19, FontWeight.w800),
+                      ),
+                      Text(
+                        [_ngayChu(_tu), if (gia > 0) '${fmtVnd(tinhGioGiaLuc(_tu, gia, caiDat))}/giờ'].join(' · '),
+                        style: _chu(13, FontWeight.w700, _kOrange),
+                      ),
+                    ],
                   ),
-                  icon: const Icon(Icons.schedule_rounded, size: 20),
-                  label: Text('Từ ${gioPhut(_tu)} đến ${gioPhut(_den)}', style: _chu(16, FontWeight.w800)),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [
-                  for (final (phut, nhan) in const [(30, '30 phút'), (60, '1 giờ'), (90, '1 giờ 30'), (120, '2 giờ'), (180, '3 giờ')])
-                    ChoiceChip(
-                      label: Text(nhan, style: _chu(13, FontWeight.w700, _phut == phut ? Colors.white : _kNavy)),
-                      selected: _phut == phut,
-                      selectedColor: _kNavy,
-                      backgroundColor: Colors.white,
-                      showCheckmark: false,
-                      onSelected: (_) => setState(() => _phut = phut),
+                IconButton(
+                  tooltip: 'Đóng',
+                  onPressed: () => Navigator.pop(context),
+                  style: IconButton.styleFrom(backgroundColor: _kNavy.withValues(alpha: 0.06)),
+                  icon: Icon(Icons.close_rounded, color: _kNavy.withValues(alpha: 0.6)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _nhanMuc('KHÁCH'),
+                    _phanKhach(quen),
+                    const SizedBox(height: 18),
+                    _nhanMuc('GIỜ'),
+                    Row(
+                      children: [
+                        _oGio('Bắt đầu', _tu, tru: () => _doiTu(-30), cong: () => _doiTu(30), chon: _chonGio),
+                        const SizedBox(width: 10),
+                        _oGio('Kết thúc', _den, tru: () => _doiPhut(-30), cong: () => _doiPhut(30), chon: _chonGioDen),
+                      ],
                     ),
-                ],
-              ),
-              if (trung != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Trùng giờ với ${trung.tenKhach} (${gioPhut(trung.gioTu)}–${gioPhut(trung.gioDen)})',
-                    textAlign: TextAlign.center,
-                    style: _chu(13, FontWeight.w700, _kRed),
-                  ),
-                ),
-              if (widget.sua == null) _phanLap(),
-              const SizedBox(height: 10),
-              TextField(controller: _ghiChu, style: _chu(14, FontWeight.w500), decoration: _o('Ghi chú')),
-              const SizedBox(height: 10),
-              _phanCoc(),
-              if (_loi != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13.5, FontWeight.w700, _kRed)),
-                ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _dangLuu ? null : _luu,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kNavy,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: _dangLuu
-                      ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                      : Text(
-                          [
-                            widget.sua != null
-                                ? 'Lưu'
-                                : _lap
-                                    ? 'Đặt ${_buoi.length} buổi'
-                                    : 'Đặt',
-                            if (_soCoc > 0 && !_cocDaKhoa) 'nhận cọc ${fmtVnd(_soCoc)}',
-                          ].join(' · '),
-                          style: _chu(15.5, FontWeight.w800, Colors.white),
+                    const SizedBox(height: 10),
+                    _chonThoiLuong(),
+                    const SizedBox(height: 12),
+                    _DaiLichBan(ds: khac, tu: _tu, den: _den, trung: trung != null),
+                    const SizedBox(height: 8),
+                    if (trung != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(color: const Color(0xFFFDECEC), borderRadius: BorderRadius.circular(10)),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFB42318)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Trùng ${trung.tenKhach} ${gioPhut(trung.gioTu)}–${gioPhut(trung.gioDen)} · đổi giờ hoặc chọn bàn khác',
+                                style: _chu(12.5, FontWeight.w700, const Color(0xFFB42318)),
+                              ),
+                            ),
+                          ],
                         ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, size: 16, color: _kTealDam),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(children: [
+                                const TextSpan(text: 'Trống, không trùng lượt nào'),
+                                if (tien != null) ...[
+                                  const TextSpan(text: ' · tạm tính '),
+                                  TextSpan(text: fmtVnd(tien), style: _chu(12.5, FontWeight.w800)),
+                                ],
+                              ]),
+                              style: _chu(12.5, FontWeight.w700, _kTealDam),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 18),
+                    _nhanMuc('THÊM (KHÔNG BẮT BUỘC)'),
+                    _phanCoc(),
+                    if (widget.sua == null) _phanLap(),
+                    _phanGhiChu(),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            if (_loi != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13.5, FontWeight.w700, _kRed)),
+              ),
+            if (tomTat.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(tomTat, textAlign: TextAlign.center, style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+              ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _dangLuu ? null : _luu,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kNavy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: _dangLuu
+                    ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(nhanNut, style: _chu(15.5, FontWeight.w800, Colors.white)),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CHỌN KHÁCH HÀNG CHO LƯỢT ĐẶT
-// ─────────────────────────────────────────────────────────────────────────────
-class _ChonKhachSheet extends StatefulWidget {
-  final String tenMoi;
-  final String sdtMoi;
-  const _ChonKhachSheet({required this.tenMoi, required this.sdtMoi});
+const _kTeal = Color(0xFF0D9488);
+const _kTealDam = Color(0xFF0F766E);
+const _kMauAnh = [_kNavy, _kTeal, _kOrange, Color(0xFF7C3AED)];
 
-  @override
-  State<_ChonKhachSheet> createState() => _ChonKhachSheetState();
+String _chuDau(String s) {
+  final t = s.trim();
+  return t.isEmpty ? '?' : t.characters.first.toUpperCase();
 }
 
-class _ChonKhachSheetState extends State<_ChonKhachSheet> {
-  late final _tim = TextEditingController(text: widget.sdtMoi.isNotEmpty ? widget.sdtMoi : widget.tenMoi);
-  late final _ten = TextEditingController(text: widget.tenMoi);
-  late final _sdt = TextEditingController(text: widget.sdtMoi);
-  final _repo = CoreCustomerRepository();
-  List<CustomerModel> _ds = const [];
-  bool _dangTim = false;
-  bool _taoMoi = false;
-  String? _loi;
-  Timer? _cho;
+/// "A 2" → "A2", "Sân 10" → "S10", "VIP" → "VIP".
+String _viTatBan(String nhan) {
+  final tu = nhan.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+  if (tu.length <= 1) return nhan.trim().characters.take(3).toString();
+  return tu.map((w) => RegExp(r'^\d+$').hasMatch(w) ? w : w.characters.first.toUpperCase()).join().characters.take(4).toString();
+}
 
-  @override
-  void initState() {
-    super.initState();
-    if (_tim.text.trim().length >= 2) _timKhach();
-  }
+/// Khách đặt gần đây cho chip chọn nhanh: [khach] là khách hàng có sẵn (chạm là chọn luôn), null = chỉ tên + số.
+typedef KhachQuen = ({String ten, String? sdt, CustomerModel? khach});
 
-  @override
-  void dispose() {
-    _cho?.cancel();
-    _tim.dispose();
-    _ten.dispose();
-    _sdt.dispose();
-    super.dispose();
-  }
-
-  Future<void> _timKhach() async {
-    final q = _tim.text.trim();
-    if (q.length < 2) return setState(() => _ds = const []);
-    setState(() => _dangTim = true);
-    try {
-      final ds = await _repo.searchByNameOrPhone(q);
-      if (mounted && _tim.text.trim() == q) setState(() => _ds = ds);
-    } catch (_) {
-      if (mounted) setState(() => _loi = 'Chưa tìm được, kiểm tra mạng');
-    }
-    if (mounted) setState(() => _dangTim = false);
-  }
-
-  Future<void> _tao() async {
-    final ten = _ten.text.trim();
-    final sdt = _sdt.text.trim();
-    if (ten.isEmpty || sdt.length < 9) return setState(() => _loi = 'Nhập tên và số điện thoại');
-    setState(() {
-      _dangTim = true;
-      _loi = null;
-    });
-    try {
-      final co = await _repo.getByPhone(sdt);
-      if (co != null) {
-        if (mounted) Navigator.pop(context, co); // số đã có khách: dùng luôn, không tạo trùng
-        return;
-      }
-      final id = await _repo.create(name: ten, phone: sdt);
-      final k = await _repo.getById(id);
-      if (mounted) Navigator.pop(context, k);
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _dangTim = false;
-          _loi = 'Chưa tạo được khách, kiểm tra mạng rồi thử lại';
-        });
+final khachQuenDatProvider = FutureProvider.autoDispose<List<KhachQuen>>((ref) async {
+  ref.watch(sessionProvider);
+  try {
+    final ds = khachQuenTu(await ref.read(datTruocRepositoryProvider).docGanDay());
+    final ids = ds.map((d) => d.customerId).whereType<String>().toList();
+    final khach = <String, CustomerModel>{};
+    if (ids.isNotEmpty) {
+      final rows = await Supabase.instance.client.from('customers').select().inFilter('id', ids).timeout(const Duration(seconds: 8));
+      for (final r in rows) {
+        final k = CustomerModel.fromMap(r);
+        if (!k.isDeleted) khach[k.id] = k;
       }
     }
+    return [for (final d in ds) (ten: khach[d.customerId]?.name ?? d.tenKhach, sdt: d.sdt, khach: khach[d.customerId])];
+  } catch (_) {
+    return const [];
   }
+});
 
-  InputDecoration _o(String nhan, IconData icon) => InputDecoration(
-        labelText: nhan,
-        prefixIcon: Icon(icon, color: _kNavy, size: 20),
-        filled: true,
-        fillColor: Colors.white,
-        isDense: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      );
+/// Dải lịch trong ngày của bàn: các lượt đã đặt + khung đang chọn (đỏ khi trùng).
+class _DaiLichBan extends StatelessWidget {
+  final List<DatTruoc> ds;
+  final DateTime tu;
+  final DateTime den;
+  final bool trung;
+  const _DaiLichBan({required this.ds, required this.tu, required this.den, required this.trung});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
-        decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(24)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final ngay = _dauNgay(tu);
+    double gio(DateTime d) => (d.difference(ngay).inMinutes / 60).clamp(0, 24).toDouble();
+    var lo = gio(tu).floor();
+    var hi = gio(den).ceil();
+    for (final d in ds) {
+      lo = math.min(lo, gio(d.gioTu).floor());
+      hi = math.max(hi, gio(d.gioDen).ceil());
+    }
+    final khoang = math.min(24, math.max(6, ((hi - lo) / 3).ceil() * 3));
+    if (lo + khoang > 24) lo = 24 - khoang;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(_taoMoi ? 'Khách mới' : 'Chọn khách hàng', textAlign: TextAlign.center, style: _chu(18, FontWeight.w800)),
-            const SizedBox(height: 12),
-            if (!_taoMoi) ...[
-              TextField(
-                controller: _tim,
-                autofocus: _tim.text.isEmpty,
-                style: _chu(15, FontWeight.w600),
-                decoration: _o('Tìm số điện thoại hoặc tên', Icons.search_rounded),
-                onChanged: (_) {
-                  _cho?.cancel();
-                  _cho = Timer(const Duration(milliseconds: 350), _timKhach);
-                },
-              ),
-              const SizedBox(height: 8),
-              Flexible(
-                child: _dangTim && _ds.isEmpty
-                    ? const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))
-                    : ListView(
-                        shrinkWrap: true,
-                        children: [
-                          for (final k in _ds)
-                            ListTile(
-                              minTileHeight: 52,
-                              leading: const Icon(Icons.account_circle_rounded, color: _kNavy),
-                              title: Text(k.name, style: _chu(15, FontWeight.w700)),
-                              subtitle: Text(
-                                [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
-                                style: _chu(12.5, FontWeight.w500, _kNavy.withValues(alpha: 0.65)),
-                              ),
-                              onTap: () => Navigator.pop(context, k),
-                            ),
-                          if (!_dangTim && _ds.isEmpty && _tim.text.trim().length >= 2)
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('Không có khách nào khớp', textAlign: TextAlign.center, style: _chu(13, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
-                            ),
-                        ],
-                      ),
-              ),
-              TextButton.icon(
-                onPressed: () => setState(() {
-                  _taoMoi = true;
-                  _loi = null;
-                }),
-                icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: Text('Khách mới (tên + số điện thoại)', style: _chu(14, FontWeight.w800)),
-              ),
-            ] else ...[
-              TextField(controller: _ten, textCapitalization: TextCapitalization.words, style: _chu(15, FontWeight.w600), decoration: _o('Tên khách', Icons.person_rounded)),
-              const SizedBox(height: 10),
-              TextField(controller: _sdt, keyboardType: TextInputType.phone, style: _chu(15, FontWeight.w600), decoration: _o('Số điện thoại', Icons.call_rounded)),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _dangTim ? null : _tao,
-                  style: ElevatedButton.styleFrom(backgroundColor: _kNavy, foregroundColor: Colors.white, elevation: 0),
-                  child: Text('Tạo khách', style: _chu(15, FontWeight.w800, Colors.white)),
-                ),
-              ),
-              TextButton(onPressed: () => setState(() => _taoMoi = false), child: Text('Quay lại tìm', style: _chu(14, FontWeight.w700))),
-            ],
-            if (_loi != null) Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
+            for (var i = 0; i <= 3; i++)
+              Text('${(lo + khoang * i ~/ 3).toString().padLeft(2, '0')}:00',
+                  style: _chu(11, FontWeight.w700, _kNavy.withValues(alpha: 0.45))),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        Container(
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _kNavy.withValues(alpha: 0.1)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: LayoutBuilder(builder: (context, c) {
+              final w = c.maxWidth;
+              double x(DateTime d) => ((gio(d) - lo) / khoang * w).clamp(0, w).toDouble();
+              Widget khoi(DateTime a, DateTime b, String nhan, Color mau, {bool noi = false}) {
+                final l = x(a), r = x(b);
+                if (r - l < 1) return const SizedBox.shrink();
+                return Positioned(
+                  left: l,
+                  width: r - l,
+                  top: 4,
+                  bottom: 4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    alignment: Alignment.centerLeft,
+                    decoration: BoxDecoration(
+                      color: mau,
+                      borderRadius: BorderRadius.circular(7),
+                      border: noi ? Border.all(color: Colors.white, width: 1.5) : null,
+                      boxShadow: noi ? [BoxShadow(color: mau.withValues(alpha: 0.35), blurRadius: 6)] : null,
+                    ),
+                    child: noi
+                        ? FittedBox(fit: BoxFit.scaleDown, child: Text(nhan, style: _chu(10.5, FontWeight.w800, Colors.white)))
+                        : Text(nhan, maxLines: 1, softWrap: false, overflow: TextOverflow.clip, style: _chu(10.5, FontWeight.w800, Colors.white)),
+                  ),
+                );
+              }
+
+              return Stack(
+                children: [
+                  for (var i = 1; i < khoang; i++)
+                    Positioned(left: w * i / khoang, top: 0, bottom: 0, child: Container(width: 1, color: _kNavy.withValues(alpha: 0.06))),
+                  for (final d in ds)
+                    khoi(d.gioTu, d.gioDen, d.tenKhach, d.trangThai == 'da_nhan' ? const Color(0xFF15803D) : _kNavy.withValues(alpha: 0.85)),
+                  khoi(tu, den, 'Lượt này', trung ? _kRed : _kTeal, noi: true),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 }

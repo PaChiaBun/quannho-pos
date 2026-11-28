@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quannho_pos/core/models/product_model.dart';
 import 'package:quannho_pos/core/providers/app_providers.dart';
 import 'package:quannho_pos/core/repositories/ban_repository.dart';
+import 'package:quannho_pos/core/repositories/core_customer_repository.dart';
 import 'package:quannho_pos/modules/tinh_gio/bao_cao_tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
@@ -563,36 +564,95 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/xu_ly_coc_360.png'));
   });
 
-  // Đợt 4: hộp đặt có ô khách hàng + tiền cọc; gõ cọc thì hiện Tiền mặt / Chuyển khoản, nút "Đặt · nhận cọc".
-  testWidgets('hộp đặt có tiền cọc', (tester) async {
-    await _napPhong();
-    tester.view.physicalSize = const Size(360, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final ban = BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
-    await runZonedGuarded(() async {
-      await tester.pumpWidget(ProviderScope(
+  // 28/11 hộp đặt mới: một ô tìm khách + khách quen, ô giờ to, dải lịch trong ngày, tạm tính, các dòng "Thêm".
+  ProductModel monGio(double gia) => ProductModel(
+      id: 'p', storeId: 's', name: 'Tiền giờ', category: 'Tiền giờ', unit: 'giờ', productType: 'finished', stockQty: 0,
+      minStock: 0, sellPrice: gia, costPrice: 0, stationCode: 'nong', isAvailable: true, isActive: true, isDeleted: false);
+  DatTruoc luot(String id, String ten, int tu, int den, String tt) => DatTruoc(
+      id: id, tableId: 's1', tenKhach: ten, gioTu: DateTime(2030, 12, 4, tu), gioDen: DateTime(2030, 12, 4, den),
+      trangThai: tt, createdAt: DateTime(2030, 11, 29));
+  const nam = CustomerModel(
+      id: 'k1', storeId: 's', name: 'Anh Nam', phone: '0901111222', loyaltyPts: 0, totalSpent: 0, visitCount: 3,
+      isDeleted: false, realBalance: 0);
+  final quen = <KhachQuen>[
+    (ten: 'Anh Nam', sdt: '0901111222', khach: nam),
+    (ten: 'Chị Lan', sdt: '0912345678', khach: null),
+    (ten: 'CLB Cầu lông', sdt: null, khach: null),
+  ];
+  Future<void> moHop(WidgetTester tester, {required int gio}) => tester.pumpWidget(ProviderScope(
+        overrides: [
+          khachQuenDatProvider.overrideWith((ref) async => quen),
+          giaGioCaiDatProvider.overrideWith((ref) async => const {}),
+          allProductsProvider.overrideWith((ref) => Stream.value([monGio(200000)])),
+        ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           home: Scaffold(
+            backgroundColor: const Color(0xFF6B6A8A),
             body: Align(
               alignment: Alignment.bottomCenter,
-              child: DatTruocFormSheet(ban: ban, ngay: DateTime(2030, 12, 3), trongNgay: const [], tuMacDinh: DateTime(2030, 12, 3, 18)),
+              child: DatTruocFormSheet(
+                ban: BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p'),
+                ngay: DateTime(2030, 12, 4),
+                trongNgay: [luot('a', 'Anh Hùng', 17, 18, 'da_nhan'), luot('b', 'Chị Lan', 19, 20, 'da_dat')],
+                tuMacDinh: DateTime(2030, 12, 4, gio),
+              ),
             ),
           ),
         ),
       ));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.widgetWithText(TextField, 'Tên khách'), 'Anh Nam');
-      await tester.enterText(find.widgetWithText(TextField, 'Số điện thoại (để gọi nhắc)'), '0901111222');
-      await tester.enterText(find.widgetWithText(TextField, 'Tiền cọc (không có thì để trống)'), '200000');
+
+  testWidgets('hộp đặt mới mở', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await runZonedGuarded(() async {
+      await moHop(tester, gio: 21);
       await tester.pumpAndSettle();
     }, (_, __) {});
     expect(tester.takeException(), isNull);
-    expect(find.text('Chọn khách hàng (để nhận cọc, tích điểm)'), findsOneWidget);
-    expect(find.text('Chuyển khoản'), findsOneWidget);
-    expect(find.text('Đặt · nhận cọc 200.000 đ'), findsOneWidget);
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_coc_360.png'));
+    expect(find.text('Thứ 4, 04/12 · 200.000 đ/giờ'), findsOneWidget);
+    expect(find.text('CLB Cầu lông'), findsOneWidget);
+    expect(find.textContaining('Trống, không trùng lượt nào · tạm tính 200.000 đ'), findsOneWidget);
+    expect(find.text('Đặt Sân 1 · 21:00 – 22:00'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_moi_360.png'));
+  });
+
+  testWidgets('hộp đặt đã điền: khách quen, trùng giờ, cọc, lặp tuần', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    var trung = '';
+    await runZonedGuarded(() async {
+      await moHop(tester, gio: 18);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Anh Nam'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2 giờ'));
+      await tester.pumpAndSettle();
+      trung = tester.widget<Text>(find.textContaining('Trùng ')).data!;
+      await tester.tap(find.text('Tiền cọc'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('200.000'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      // bỏ giờ trùng: lùi về 20:00–22:00
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.byIcon(Icons.add_rounded).first); // + của ô Bắt đầu
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(trung, 'Trùng Chị Lan 19:00–20:00 · đổi giờ hoặc chọn bàn khác');
+    expect(find.text('0901111222 · ví 0 đ'), findsOneWidget);
+    expect(find.textContaining('4 buổi · T4 · 20:00–22:00'), findsOneWidget);
+    expect(find.text('Tạm tính 4 buổi · 1.600.000 đ · cọc 200.000 đ'), findsOneWidget);
+    expect(find.text('Đặt 4 buổi · nhận cọc 200.000 đ'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_dien_360.png'));
   });
 
   // Đợt 5: màn Báo cáo tính giờ 7 ngày (dữ liệu giả).

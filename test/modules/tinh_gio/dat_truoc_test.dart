@@ -105,4 +105,22 @@ void main() {
     expect(khungDatCuaPhien(ds, 'p3', 'b1'), isNull, reason: 'lượt chưa nhận');
     expect(khungDatCuaPhien(ds, 'px', 'b1'), isNull);
   });
+
+  test('khachQuenTu: mỗi khách một lần, mới nhất trước, tối đa 4', () {
+    DatTruoc d(String id, String ten, {String? sdt, String? kh}) => DatTruoc(
+        id: id, tableId: 'b1', tenKhach: ten, sdt: sdt, customerId: kh, gioTu: DateTime(2030), gioDen: DateTime(2030),
+        trangThai: 'da_dat', createdAt: DateTime(2030));
+    final ds = [
+      d('1', 'Anh Nam', kh: 'k1'),
+      d('2', 'Nam', sdt: '0901', kh: 'k1'), // cùng khách hàng
+      d('3', 'Chị Lan', sdt: '0912'),
+      d('4', 'Lan', sdt: '0912'), // cùng số
+      d('5', '  '), // không tên
+      d('6', 'CLB'),
+      d('7', 'clb'), // cùng tên
+      d('8', 'Hùng'),
+      d('9', 'Tư'),
+    ];
+    expect(khachQuenTu(ds).map((x) => x.id), ['1', '3', '6', '8']);
+  });
 }

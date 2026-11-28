@@ -153,7 +153,10 @@ Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước
 1. Ở màn Các hoạt động tính giờ bấm nút **"Lịch đặt"** (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).
 2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.
 3. Lịch mở dạng **lưới**: cột bên trái là giờ, mỗi bàn / sân / phòng một cột, lượt đặt là khối màu (xanh đậm = đã đặt, xanh lá = khách đã đến; lượt đã huỷ hoặc không đến không chiếm ô, trừ khi còn cọc chưa xử lý); hôm nay có vạch đỏ ở giờ hiện tại. Trên lưới có dòng gợi ý. Chạm vào **ô trống** ở đúng bàn và giờ muốn đặt (làm tròn theo nửa giờ): app mở hộp đặt đã điền sẵn bàn và giờ. Hoặc bấm nút **"+ Đặt lịch"** ở góc dưới, chọn bàn / sân: app mở hộp đặt ở nửa giờ kế tiếp (ngày khác hôm nay thì 18:00), sửa giờ trong hộp. Nhiều bàn hơn bề ngang màn thì vuốt ngang để xem.
-4. Nhập tên khách, số điện thoại, đổi giờ bắt đầu nếu cần (bấm vào dòng giờ), chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm **"Đặt"**.
+4. Hộp đặt ghi tên bàn, ngày và giá giờ, ví dụ "Đặt A 2 · Thứ 7, 28/11 · 60.000 đ/giờ". Mục **Khách**: gõ tên hoặc số điện thoại vào ô **"Tìm tên, SĐT hoặc gõ khách mới"**. Khách có sẵn hiện ngay bên dưới, chạm để chọn. Khách chưa có thì cứ gõ tên, app hiện thêm ô **"Số điện thoại (để gọi nhắc)"** (gõ số trước thì app hỏi **"Tên khách mới"**). Ô tìm còn trống thì có vài khách đặt gần đây, chạm là điền luôn. Đã chọn khách thì bấm **"Đổi"** để chọn lại.
+5. Mục **Giờ**: hai ô **"Bắt đầu"** và **"Kết thúc"**, bấm **−** / **+** để lùi hoặc thêm 30 phút, bấm vào số giờ để chọn giờ khác. Hàng **30'**, **1 giờ**, **1g30**, **2 giờ**, **3 giờ** chọn nhanh thời lượng.
+6. Dải lịch dưới phần giờ hiện các lượt đã đặt của bàn trong ngày (xanh đậm = đã đặt, xanh lá = khách đã đến) và khung **"Lượt này"**. Trống thì ghi "Trống, không trùng lượt nào · tạm tính 60.000 đ" (tiền giờ tạm tính theo giá của bàn, gồm khung giá, ngày lễ). Trùng thì khung chuyển đỏ và ghi ví dụ "Trùng Chị Lan 19:00–20:00 · đổi giờ hoặc chọn bàn khác".
+7. Mục **Thêm (không bắt buộc)**: **Tiền cọc**, **Lặp lại hàng tuần**, **Ghi chú**, chạm dòng nào thì dòng đó mở ra. Bấm nút dưới cùng, ví dụ **"Đặt A 2 · 21:00 – 22:00"**; bấm **✕** ở góc trên để đóng không đặt.
 
 Muốn xem kiểu cũ (mỗi bàn một thẻ, có nút **"Đặt"**) thì bấm nút ở góc trên bên phải (**"Xem dạng danh sách"**); bấm lại để về lưới. Chạm ô giờ đã qua thì app báo "Giờ này đã qua".
 
@@ -161,11 +164,11 @@ Hai lượt đặt không được trùng giờ trên cùng một bàn; đặt s
 
 ### Nhận tiền cọc khi khách đặt
 Tiền cọc nằm trong **ví của khách** (module Khách hàng), vào Thu Chi ngay lúc nhận, và tự trừ khi thanh toán bàn.
-1. Trong hộp đặt bấm **"Chọn khách hàng (để nhận cọc, tích điểm)"**: gõ số điện thoại hoặc tên để tìm khách có sẵn, hoặc bấm **"Khách mới (tên + số điện thoại)"**. Không chọn mà có nhập số điện thoại thì app tự tìm khách theo số đó, chưa có thì tạo khách mới.
-2. Gõ số ở ô **"Tiền cọc"**, chọn **"Tiền mặt"** hoặc **"Chuyển khoản"**.
-3. Bấm **"Đặt · nhận cọc …"**. Ví khách cộng số cọc (không tặng thưởng như gói nạp ví), lịch sử ví ghi "Cọc đặt Sân 1 · 03/12 18:00", Thu Chi có phiếu thu "Cọc đặt sân: tên khách" đúng quỹ tiền mặt hoặc ngân hàng.
+1. Trong hộp đặt chọn khách ở mục **Khách** (gõ tìm hoặc chạm khách đặt gần đây). Khách mới thì gõ tên và số điện thoại: lúc đặt app tự tìm khách theo số đó, chưa có thì tạo khách mới.
+2. Chạm dòng **"Tiền cọc"**, gõ số ở ô **"Số tiền cọc"** hoặc chạm nhanh **100.000**, **200.000**, **500.000**; chọn **"Tiền mặt"** hoặc **"Chuyển khoản"**. Trên nút hiện dòng tạm tính, ví dụ "Tạm tính 60.000 đ · cọc 200.000 đ".
+3. Bấm **"Đặt A 2 · nhận cọc …"**. Ví khách cộng số cọc (không tặng thưởng như gói nạp ví), lịch sử ví ghi "Cọc đặt Sân 1 · 03/12 18:00", Thu Chi có phiếu thu "Cọc đặt sân: tên khách" đúng quỹ tiền mặt hoặc ngân hàng.
 
-Không lấy cọc thì để trống ô Tiền cọc, không cần chọn khách. Lịch cố định chỉ cọc một lần cho cả lịch, trừ vào buổi đầu tiên khách đến. Lượt đã có cọc thì không đổi số cọc và không đổi khách được nữa.
+Không lấy cọc thì để dòng Tiền cọc ghi "Không cọc", không cần chọn khách. Lịch cố định chỉ cọc một lần cho cả lịch, trừ vào buổi đầu tiên khách đến. Lượt đã có cọc thì không đổi số cọc và không đổi khách được nữa.
 
 ### Thanh toán bàn của khách đã cọc
 Khách đặt đã đến và bàn đã nhận lượt đặt: bấm Thanh toán như thường. Màn Thu tiền tự điền khách đã đặt (không đổi được), ghi **"Tổng hoá đơn"**, **"Đã cọc (ví tên khách) −…"** và số to **"KHÁCH TRẢ THÊM"**. Mã QR chuyển khoản và ô tiền khách đưa tính theo số khách trả thêm.
@@ -189,10 +192,10 @@ Hồ sơ khách (module Khách hàng) có thêm **"Ví"**, mục **"Đặt sân 
 
 ### Đặt lịch cố định hàng tuần cho khách quen
 Khách thuê sân cố định, ví dụ thứ 3 và thứ 5 từ 18 giờ đến 20 giờ cả tháng:
-1. Mở hộp đặt như mục trên (chạm ô trống trên lưới Lịch đặt), nhập tên khách, số điện thoại, giờ bắt đầu và thời lượng của một buổi.
-2. Bật **"Lặp lại hàng tuần (khách quen)"**.
-3. Chọn **"Các thứ"** (bấm T2 … CN), chọn **"Đến ngày"**: **"4 tuần"**, **"8 tuần"**, **"Hết tháng này"**, **"Hết tháng sau"**, **"3 tháng"** hoặc bấm ngày để chọn trên lịch.
-4. Xem dòng đếm, ví dụ "8 buổi · T3, T5 · 18:00–20:00 · 03/12 → 26/12", và các buổi đầu bên dưới ("T3 03/12", "T5 05/12"…), rồi bấm **"Đặt 8 buổi"**.
+1. Mở hộp đặt như mục trên (chạm ô trống trên lưới Lịch đặt), chọn khách, giờ bắt đầu và thời lượng của một buổi.
+2. Bật công tắc ở dòng **"Lặp lại hàng tuần"**.
+3. Chọn các thứ (bấm T2 … CN), chọn **"Đến ngày"**: **"4 tuần"**, **"8 tuần"**, **"Hết tháng này"**, **"Hết tháng sau"**, **"3 tháng"** hoặc bấm ngày để chọn trên lịch.
+4. Xem dòng đếm, ví dụ "8 buổi · T3, T5 · 18:00–20:00 · 03/12 → 26/12", và các buổi đầu bên dưới ("T3 03/12", "T5 05/12"…), rồi bấm **"Đặt 8 buổi"**. Có giá giờ thì trên nút ghi tạm tính cả lịch, ví dụ "Tạm tính 8 buổi · 960.000 đ".
 
 Có buổi trùng giờ với lượt đặt khác thì app hiện danh sách buổi trùng (ngày, giờ, trùng với khách nào): bấm **"Bỏ qua, đặt … buổi còn lại"** để đặt các buổi không trùng, hoặc **"Chọn lại"** để sửa. Tối đa 120 buổi một lần, trong vòng một năm. Trên lưới, buổi thuộc lịch cố định có biểu tượng hai mũi tên vòng.
 
