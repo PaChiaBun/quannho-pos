@@ -29,6 +29,8 @@ class DatTruoc {
   final String? nhacBoi;
   final String? nguoiTaoTen;
   final DateTime createdAt;
+  /// Mã lịch cố định (đặt lặp hàng tuần, đợt 3); null = lượt lẻ.
+  final String? chuoiId;
 
   const DatTruoc({
     required this.id,
@@ -45,6 +47,7 @@ class DatTruoc {
     this.nhacLuc,
     this.nhacBoi,
     this.nguoiTaoTen,
+    this.chuoiId,
   });
 
   bool get choKhach => trangThai == 'da_dat';
@@ -67,6 +70,7 @@ class DatTruoc {
         nhacBoi: m['nhac_boi'] as String?,
         nguoiTaoTen: m['nguoi_tao_ten'] as String?,
         createdAt: m['created_at'] != null ? _gio(m['created_at']) : DateTime.fromMillisecondsSinceEpoch(0),
+        chuoiId: m['chuoi_id'] as String?,
       );
 }
 
@@ -115,6 +119,19 @@ DatTruoc? luotDatTrung(Iterable<DatTruoc> ds, String tableId, DateTime tu, DateT
     }
   }
   return null;
+}
+
+/// Các buổi của lịch cố định (đợt 3), chép đúng ban_dat_truoc_lap_v1: từ ngày của [tu] tới [denNgay] (tính cả
+/// ngày đó), đúng các [thu] (1 = T2 … 7 = CN), cùng giờ đồng hồ của [tu]; bỏ buổi đã kết thúc trước [luc].
+List<DateTime> cacBuoiLap(DateTime tu, Set<int> thu, DateTime denNgay, int phut, DateTime luc) {
+  final ra = <DateTime>[];
+  final cuoi = DateTime(denNgay.year, denNgay.month, denNgay.day);
+  for (var d = DateTime(tu.year, tu.month, tu.day); !d.isAfter(cuoi); d = DateTime(d.year, d.month, d.day + 1)) {
+    if (!thu.contains(d.weekday)) continue;
+    final b = DateTime(d.year, d.month, d.day, tu.hour, tu.minute);
+    if (b.add(Duration(minutes: phut)).isAfter(luc)) ra.add(b);
+  }
+  return ra;
 }
 
 class DatTruocRepository {
@@ -167,7 +184,9 @@ class DatTruocRepository {
         'error_code': 'RPC_ERROR',
         'message': s.contains('PERMISSION_DENIED')
             ? 'Bạn không có quyền làm việc này'
-            : 'Chưa làm được, kiểm tra mạng rồi thử lại',
+            : s.contains('PGRST202') || s.contains('Could not find the function')
+                ? 'Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.'
+                : 'Chưa làm được, kiểm tra mạng rồi thử lại',
       };
     }
   }
@@ -193,6 +212,52 @@ class DatTruocRepository {
         'p_tien_coc': tienCoc,
       });
 
+  /// Đặt lặp hàng tuần (lịch cố định). Có buổi trùng mà [boQuaTrung] = false: không ghi gì, trả error_code
+  /// TRUNG_GIO kèm 'trung' (danh sách buổi) và 'so_buoi_ghi_duoc'.
+  Future<Map<String, dynamic>> datLap({
+    required String tableId,
+    required String tenKhach,
+    String? sdt,
+    required DateTime gioTu,
+    required int phut,
+    required Set<int> thu,
+    required DateTime denNgay,
+    String? ghiChu,
+    double tienCoc = 0,
+    bool boQuaTrung = false,
+  }) =>
+      _rpc('ban_dat_truoc_lap_v1', {
+        'p_table_id': tableId,
+        'p_ten_khach': tenKhach,
+        'p_sdt': sdt,
+        'p_gio_tu': gioTu.toUtc().toIso8601String(),
+        'p_phut': phut,
+        'p_thu': (thu.toList()..sort()),
+        'p_den_ngay':
+            '${denNgay.year}-${denNgay.month.toString().padLeft(2, '0')}-${denNgay.day.toString().padLeft(2, '0')}',
+        'p_ghi_chu': ghiChu,
+        'p_tien_coc': tienCoc,
+        'p_bo_qua_trung': boQuaTrung,
+      });
+
+  /// Mọi buổi của lịch cố định [chuoiId] (kể cả đã huỷ), theo giờ.
+  Future<List<DatTruoc>> docChuoi(String chuoiId) async {
+    final storeId = await _storeId();
+    if (storeId == null) return const [];
+    final rows = await _sb
+        .from('ban_dat_truoc')
+        .select()
+        .eq('store_id', storeId)
+        .eq('chuoi_id', chuoiId)
+        .order('gio_tu', ascending: true)
+        .timeout(const Duration(seconds: 10));
+    return rows.map(DatTruoc.fromMap).toList();
+  }
+
+  /// Huỷ các buổi còn chờ khách của lịch cố định [chuoiId] từ [tu] trở đi.
+  Future<Map<String, dynamic>> huyChuoi(String chuoiId, DateTime tu) =>
+      _rpc('ban_dat_truoc_huy_chuoi_v1', {'p_chuoi_id': chuoiId, 'p_tu': tu.toUtc().toIso8601String()});
+
   /// [trangThai]: 'huy' hoặc 'khong_den'.
   Future<Map<String, dynamic>> doiTrangThai(String id, String trangThai) =>
       _rpc('ban_dat_truoc_doi_trang_thai_v1', {'p_id': id, 'p_trang_thai': trangThai});
@@ -205,6 +270,11 @@ class DatTruocRepository {
 }
 
 final datTruocRepositoryProvider = Provider<DatTruocRepository>((ref) => DatTruocRepository());
+
+/// Các buổi của một lịch cố định (hộp lượt đặt ghi "buổi 3/8", hộp huỷ đếm số buổi sẽ huỷ).
+final chuoiDatProvider = FutureProvider.autoDispose.family<List<DatTruoc>, String>((ref, chuoiId) {
+  return ref.read(datTruocRepositoryProvider).docChuoi(chuoiId);
+});
 
 /// Lượt đặt của một ngày (khoá = ngày, giờ 00:00 theo máy).
 final datTruocTheoNgayProvider = StreamProvider.autoDispose.family<List<DatTruoc>, DateTime>((ref, ngay) {

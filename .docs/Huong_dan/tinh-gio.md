@@ -120,6 +120,17 @@ Muốn xem kiểu cũ (mỗi bàn một thẻ, có nút **"Đặt"**) thì bấm
 
 Hai lượt đặt không được trùng giờ trên cùng một bàn; đặt sát giờ nhau thì được. Lịch đặt hiện các bàn có giá giờ; quán chưa đặt giá giờ cho bàn nào thì hiện mọi bàn. Tiền cọc chỉ là ô ghi nhớ, không vào Thu Chi và không tự trừ vào hoá đơn.
 
+### Đặt lịch cố định hàng tuần cho khách quen
+Khách thuê sân cố định, ví dụ thứ 3 và thứ 5 từ 18 giờ đến 20 giờ cả tháng:
+1. Mở hộp đặt như mục trên (chạm ô trống trên lưới Lịch đặt), nhập tên khách, số điện thoại, giờ bắt đầu và thời lượng của một buổi.
+2. Bật **"Lặp lại hàng tuần (khách quen)"**.
+3. Chọn **"Các thứ"** (bấm T2 … CN), chọn **"Đến ngày"**: **"4 tuần"**, **"8 tuần"**, **"Hết tháng này"**, **"Hết tháng sau"**, **"3 tháng"** hoặc bấm ngày để chọn trên lịch.
+4. Xem dòng đếm, ví dụ "8 buổi · T3, T5 · 18:00–20:00 · 03/12 → 26/12", và các buổi đầu bên dưới ("T3 03/12", "T5 05/12"…), rồi bấm **"Đặt 8 buổi"**.
+
+Có buổi trùng giờ với lượt đặt khác thì app hiện danh sách buổi trùng (ngày, giờ, trùng với khách nào): bấm **"Bỏ qua, đặt … buổi còn lại"** để đặt các buổi không trùng, hoặc **"Chọn lại"** để sửa. Tối đa 120 buổi một lần, trong vòng một năm. Trên lưới, buổi thuộc lịch cố định có biểu tượng hai mũi tên vòng.
+
+Chạm một buổi thuộc lịch cố định, hộp ghi ví dụ "Lịch cố định · buổi 2/8 · T3, T5 · tới 26/12". Huỷ: **"Huỷ riêng buổi này"**, hoặc **"Huỷ buổi này và các buổi sau"** — app hỏi lại kèm số buổi sẽ huỷ và từ ngày nào tới ngày nào; buổi khách đã đến và các buổi trước giữ nguyên. Sửa giờ một buổi: chạm buổi đó → **"Sửa lượt đặt"**.
+
 ### Khách đặt trước đã đến
 Cách 1: trong Lịch đặt bấm vào lượt đặt, chọn **"Khách đã đến: nhận …"**. App mở bàn và đồng hồ chạy.
 Cách 2: ở sơ đồ bàn bấm vào bàn có dòng "Đặt 18:00 • tên khách". App hỏi ai đang nhận bàn: chọn tên khách đặt nếu khách đặt đã đến, hoặc **"Khách khác"**.
@@ -136,6 +147,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| "Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần | Báo chủ app; trong lúc chờ đặt từng buổi (tắt "Lặp lại hàng tuần") |
 | "Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần khung giá / làm tròn | Báo chủ app; trong lúc chờ vẫn đặt được giá một giờ như cũ (để phần "Giá theo giờ & làm tròn" ở mặc định) |
 | Giữ lâu vào bàn không thấy "Đặt giá giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
 | "Chỉ Chủ quán / Quản lý đặt được giá giờ" | Tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đặt giá giờ |

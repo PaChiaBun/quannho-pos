@@ -205,8 +205,8 @@
       "lib/screens/kitchen_screen.dart": "d788ded3865f290d"
     },
     "tinh-gio.md": {
-      "lib/modules/tinh_gio/dat_truoc.dart": "5905c43fef80126d",
-      "lib/modules/tinh_gio/dat_truoc_ui.dart": "c0ff491c553bd9ed",
+      "lib/modules/tinh_gio/dat_truoc.dart": "5dee940b1bc5eb07",
+      "lib/modules/tinh_gio/dat_truoc_ui.dart": "b47439d36e35e1e4",
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
       "lib/modules/tinh_gio/tinh_gio.dart": "24608675ba1de1fc",
       "lib/modules/tinh_gio/tinh_gio_widgets.dart": "b354065a61ea3cb9",

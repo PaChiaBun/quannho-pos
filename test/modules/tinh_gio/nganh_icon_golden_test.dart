@@ -312,4 +312,85 @@ void main() {
       await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/${luoi ? 'lich_$ten' : 'lich_dat_$ten'}.png'));
     });
   }
+
+  // Hộp đặt với "Lặp lại hàng tuần" bật (đợt 3): T3, T5 từ 03/12/2030 18:00, 4 tuần.
+  testWidgets('hộp đặt lịch cố định', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final ban = BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(ProviderScope(
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: const Color(0xFF8E8A85),
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: DatTruocFormSheet(
+                ban: ban,
+                ngay: DateTime(2030, 12, 3),
+                trongNgay: const [],
+                tuMacDinh: DateTime(2030, 12, 3, 18),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('T5'));
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('8 buổi · T3, T5'), findsOneWidget);
+    expect(find.text('Đặt 8 buổi'), findsOneWidget);
+    await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/dat_lap_360.png'));
+  });
+
+  // Hộp lượt đặt thuộc lịch cố định (đợt 3): "Lịch cố định · buổi 2/4", hai cách huỷ.
+  testWidgets('hộp lượt đặt lịch cố định', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final ban = BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
+    DatTruoc buoi(String id, int ngay) => DatTruoc(
+          id: id,
+          tableId: 's1',
+          tenKhach: 'CLB Cầu lông Q7',
+          sdt: '0987654321',
+          gioTu: DateTime(2030, 12, ngay, 18),
+          gioDen: DateTime(2030, 12, ngay, 20),
+          trangThai: 'da_dat',
+          createdAt: DateTime(2030, 11, 29),
+          chuoiId: 'c1',
+          tienCoc: 200000,
+        );
+    final chuoi = [buoi('a', 3), buoi('b', 5), buoi('c', 10), buoi('d', 12)];
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          banDeDatProvider.overrideWith((ref) async => [ban]),
+          datTruocTheoNgayProvider.overrideWith((ref, n) => Stream.value([chuoi[1]])),
+          chuoiDatProvider.overrideWith((ref, id) async => chuoi),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: LichDatScreen(ngay: DateTime(2030, 12, 5), lucLuoi: DateTime(2030, 12, 5, 12)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CLB Cầu lông Q7'));
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(find.text('Lịch cố định · buổi 2/4 · T3, T5 · tới 12/12'), findsOneWidget);
+    expect(find.text('Huỷ buổi này và các buổi sau'), findsOneWidget);
+    expect(find.text('Huỷ riêng buổi này'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/luot_dat_chuoi_360.png'));
+  });
 }
+

@@ -15,6 +15,7 @@ import '../../core/utils/money_formatter.dart';
 import '../../core/utils/responsive.dart';
 import '../qr_order/services/qr_sound_service.dart';
 import 'dat_truoc.dart';
+import 'gia_gio.dart' show thuChuCua;
 import 'lich_luoi.dart';
 import 'tinh_gio_widgets.dart';
 
@@ -122,6 +123,44 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
       case 'nhan':
         final loi = await nhanSanTuLuotDat(context, ref, d, ban.label);
         if (mounted) _thongBao(context, loi ?? 'Đã nhận ${ban.label} cho ${d.tenKhach}', loi: loi != null);
+      case 'huy_chuoi':
+        List<DatTruoc> chuoi = const [];
+        try {
+          chuoi = await ref.read(chuoiDatProvider(d.chuoiId!).future);
+        } catch (_) {}
+        if (!mounted) return;
+        final seHuy = chuoi.where((c) => c.choKhach && !c.gioTu.isBefore(d.gioTu)).toList();
+        final dongY = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: Text(seHuy.isEmpty ? 'Huỷ lịch cố định?' : 'Huỷ ${seHuy.length} buổi?'),
+            content: Text(
+              seHuy.isEmpty
+                  ? 'Huỷ buổi ${_ngayChu(d.gioTu)} và mọi buổi sau còn chờ khách của ${d.tenKhach} ở ${ban.label}. '
+                      'Buổi khách đã đến giữ nguyên.'
+                  : 'Huỷ ${seHuy.length} buổi chờ khách của ${d.tenKhach} ở ${ban.label}, từ ${_ngayChu(seHuy.first.gioTu)} '
+                      'tới ${_ngayChu(seHuy.last.gioTu)}. Buổi khách đã đến và các buổi trước giữ nguyên.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Không')),
+              TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: const Text('Huỷ các buổi', style: TextStyle(color: _kRed)),
+              ),
+            ],
+          ),
+        );
+        if (dongY != true || !mounted) return;
+        final r = await repo.huyChuoi(d.chuoiId!, d.gioTu);
+        ref.invalidate(chuoiDatProvider(d.chuoiId!));
+        if (mounted) {
+          final so = (r['data'] as Map?)?['so_buoi_huy'];
+          _thongBao(
+            context,
+            r['success'] == true ? 'Đã huỷ $so buổi' : (r['message'] as String? ?? 'Chưa làm được'),
+            loi: r['success'] != true,
+          );
+        }
       case 'huy' || 'khong_den':
         final r = await repo.doiTrangThai(d.id, viec);
         if (mounted) {
@@ -332,13 +371,26 @@ class _TheBanLich extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '${gioPhut(d.gioTu)}–${gioPhut(d.gioDen)} · ${d.tenKhach}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: _chu(14.5, FontWeight.w700).copyWith(
-                                    decoration: d.conHieuLuc ? null : TextDecoration.lineThrough,
-                                  ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        '${gioPhut(d.gioTu)}–${gioPhut(d.gioDen)} · ${d.tenKhach}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: _chu(14.5, FontWeight.w700).copyWith(
+                                          decoration: d.conHieuLuc ? null : TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                    ),
+                                    if (d.chuoiId != null) ...[
+                                      const SizedBox(width: 4),
+                                      Tooltip(
+                                        message: 'Lịch cố định',
+                                        child: Icon(Icons.repeat_rounded, size: 15, color: _kNavy.withValues(alpha: 0.7)),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 if ((d.sdt ?? '').isNotEmpty || d.nhacLuc != null)
                                   Text(
@@ -389,13 +441,23 @@ class _NhanTrangThai extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // HỘP VIỆC CỦA MỘT LƯỢT ĐẶT
 // ─────────────────────────────────────────────────────────────────────────────
-class _LuotDatSheet extends StatelessWidget {
+class _LuotDatSheet extends ConsumerWidget {
   final BanTableModel ban;
   final DatTruoc dat;
   const _LuotDatSheet({required this.ban, required this.dat});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Lịch cố định: "buổi 3/8 · T3, T5 · tới 26/12"
+    final chuoi = dat.chuoiId == null ? null : ref.watch(chuoiDatProvider(dat.chuoiId!)).value;
+    String? dongChuoi;
+    if (chuoi != null && chuoi.isNotEmpty) {
+      final thu = {for (final c in chuoi) c.gioTu.weekday};
+      final i = chuoi.indexWhere((c) => c.id == dat.id) + 1;
+      final cuoi = chuoi.last.gioTu;
+      dongChuoi = 'Lịch cố định · buổi $i/${chuoi.length} · ${thuChuCua(thu)} · tới '
+          '${cuoi.day.toString().padLeft(2, '0')}/${cuoi.month.toString().padLeft(2, '0')}';
+    }
     Widget viec(String ma, IconData icon, String chu, {Color? mau}) => ListTile(
           minTileHeight: 52,
           leading: Icon(icon, color: mau ?? _kNavy),
@@ -407,6 +469,7 @@ class _LuotDatSheet extends StatelessWidget {
       if (dat.tienCoc > 0) 'đã cọc ${fmtVnd(dat.tienCoc)}',
       if ((dat.nguoiTaoTen ?? '').isNotEmpty) 'đặt bởi ${dat.nguoiTaoTen}',
       if (dat.nhacLuc != null) 'đã nhắc ${gioPhut(dat.nhacLuc!)}${dat.nhacBoi != null ? ' · ${dat.nhacBoi}' : ''}',
+      if (dat.chuoiId != null && dongChuoi == null) 'lịch cố định hàng tuần',
     ].join(' · ');
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -434,6 +497,18 @@ class _LuotDatSheet extends StatelessWidget {
             '${_ngayChu(dat.gioTu)} · ${gioPhut(dat.gioTu)}–${gioPhut(dat.gioDen)}',
             style: _chu(14, FontWeight.w700, _kOrange),
           ),
+          if (dongChuoi != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.repeat_rounded, size: 16, color: _kNavy),
+                  const SizedBox(width: 4),
+                  Flexible(child: Text(dongChuoi, style: _chu(12.5, FontWeight.w700))),
+                ],
+              ),
+            ),
           if (phu.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
@@ -450,7 +525,9 @@ class _LuotDatSheet extends StatelessWidget {
             viec('nhan', Icons.how_to_reg_rounded, 'Khách đã đến: nhận ${ban.label}', mau: _kGreen),
             viec('sua', Icons.edit_rounded, 'Sửa lượt đặt'),
             viec('khong_den', Icons.person_off_rounded, 'Khách không đến'),
-            viec('huy', Icons.cancel_rounded, 'Huỷ lượt đặt', mau: _kRed),
+            viec('huy', Icons.cancel_rounded, dat.chuoiId != null ? 'Huỷ riêng buổi này' : 'Huỷ lượt đặt', mau: _kRed),
+            if (dat.chuoiId != null)
+              viec('huy_chuoi', Icons.event_busy_rounded, 'Huỷ buổi này và các buổi sau', mau: _kRed),
           ],
         ],
       ),
@@ -527,6 +604,13 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   late int _phut;
   bool _dangLuu = false;
   String? _loi;
+  /// Lịch cố định (đợt 3): lặp hàng tuần vào các [_thuLap] tới hết [_denNgay].
+  bool _lap = false;
+  Set<int> _thuLap = {};
+  DateTime? _denNgay;
+
+  List<DateTime> get _buoi =>
+      _lap && _denNgay != null ? cacBuoiLap(_tu, _thuLap, _denNgay!, _phut, DateTime.now()) : const [];
 
   @override
   void initState() {
@@ -571,16 +655,84 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     if (t != null) setState(() => _tu = DateTime(_tu.year, _tu.month, _tu.day, t.hour, t.minute));
   }
 
+  String _ngayNgan(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+
+  /// Lưu lịch cố định: trùng thì hỏi bỏ qua các buổi trùng rồi gửi lại.
+  Future<void> _luuLap() async {
+    final repo = ref.read(datTruocRepositoryProvider);
+    Future<Map<String, dynamic>> gui(bool boQua) => repo.datLap(
+          tableId: widget.ban.id,
+          tenKhach: _ten.text,
+          sdt: _sdt.text,
+          gioTu: _tu,
+          phut: _phut,
+          thu: _thuLap,
+          denNgay: _denNgay!,
+          ghiChu: _ghiChu.text,
+          tienCoc: double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+          boQuaTrung: boQua,
+        );
+    var r = await gui(false);
+    if (!mounted) return;
+    final trung = (r['trung'] as List?) ?? const [];
+    final conLai = (r['so_buoi_ghi_duoc'] as num?)?.toInt() ?? 0;
+    if (r['error_code'] == 'TRUNG_GIO' && conLai > 0) {
+      String gio(Object? v) => gioPhut(DateTime.parse(v as String).toLocal());
+      final dong = [
+        for (final t in trung.take(6))
+          '• ${_ngayChu(DateTime.parse(t['tu'] as String).toLocal())}, ${gio(t['tu'])}–${gio(t['den'])}: '
+              'trùng ${t['ten_khach']} (${gio(t['trung_tu'])}–${gio(t['trung_den'])})',
+        if (trung.length > 6) '• … và ${trung.length - 6} buổi nữa',
+        '',
+        'Đặt được $conLai buổi không trùng.',
+      ].join('\n');
+      final boQua = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: Text('${trung.length} buổi trùng giờ'),
+          content: Text(dong),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Chọn lại')),
+            TextButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text('Bỏ qua, đặt $conLai buổi còn lại'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (boQua != true) {
+        setState(() => _dangLuu = false);
+        return;
+      }
+      r = await gui(true);
+      if (!mounted) return;
+    }
+    if (r['success'] == true) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() {
+        _dangLuu = false;
+        _loi = r['message'] as String? ?? 'Chưa lưu được';
+      });
+    }
+  }
+
   Future<void> _luu() async {
     if (_dangLuu) return;
     if (_ten.text.trim().isEmpty) {
       setState(() => _loi = 'Nhập tên khách');
       return;
     }
+    if (_lap && (_buoi.isEmpty || _buoi.length > 120)) {
+      setState(() => _loi = _buoi.isEmpty ? 'Không có buổi nào: chọn thứ và ngày kết thúc' : 'Tối đa 120 buổi một lần');
+      return;
+    }
     setState(() {
       _dangLuu = true;
       _loi = null;
     });
+    if (_lap) return _luuLap();
     final r = await ref.read(datTruocRepositoryProvider).luu(
           id: widget.sua?.id,
           tableId: widget.ban.id,
@@ -600,6 +752,154 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
         _loi = r['message'] as String? ?? 'Chưa lưu được';
       });
     }
+  }
+
+  // "Lặp lại hàng tuần": thứ, ngày kết thúc, dòng đếm buổi.
+  Widget _phanLap() {
+    const tenThu = {1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7', 7: 'CN'};
+    final buoi = _buoi;
+    Widget nutDen(String nhan, DateTime d) {
+      final chon = _denNgay != null && _denNgay!.year == d.year && _denNgay!.month == d.month && _denNgay!.day == d.day;
+      return ChoiceChip(
+        label: Text(nhan, style: _chu(12.5, FontWeight.w700, chon ? Colors.white : _kNavy)),
+        selected: chon,
+        selectedColor: _kNavy,
+        backgroundColor: Colors.white,
+        showCheckmark: false,
+        onSelected: (_) => setState(() => _denNgay = d),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 4, 8, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _kNavy.withValues(alpha: 0.12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.repeat_rounded, color: _kNavy, size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Lặp lại hàng tuần (khách quen)', style: _chu(14, FontWeight.w700))),
+                Switch(
+                  value: _lap,
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: _kNavy,
+                  onChanged: (v) => setState(() {
+                    _lap = v;
+                    _loi = null;
+                    if (v && _thuLap.isEmpty) _thuLap = {_tu.weekday};
+                    if (v && _denNgay == null) _denNgay = DateTime(_tu.year, _tu.month, _tu.day + 27);
+                  }),
+                ),
+              ],
+            ),
+            if (_lap) ...[
+              Text('Các thứ', style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  for (final d in tenThu.keys)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Semantics(
+                          button: true,
+                          selected: _thuLap.contains(d),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(22),
+                            onTap: () => setState(() => _thuLap.contains(d) ? _thuLap.remove(d) : _thuLap.add(d)),
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: _thuLap.contains(d) ? _kNavy : Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: _thuLap.contains(d) ? _kNavy : _kNavy.withValues(alpha: 0.2)),
+                              ),
+                              child: Text(tenThu[d]!, style: _chu(12, FontWeight.w800, _thuLap.contains(d) ? Colors.white : _kNavy)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text('Đến ngày', style: _chu(12.5, FontWeight.w700, _kNavy.withValues(alpha: 0.6))),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  nutDen('4 tuần', DateTime(_tu.year, _tu.month, _tu.day + 27)),
+                  nutDen('8 tuần', DateTime(_tu.year, _tu.month, _tu.day + 55)),
+                  // thuê "cả tháng": tới ngày cuối tháng (ngày 0 của tháng kế = ngày cuối tháng này)
+                  nutDen('Hết tháng này', DateTime(_tu.year, _tu.month + 1, 0)),
+                  nutDen('Hết tháng sau', DateTime(_tu.year, _tu.month + 2, 0)),
+                  nutDen('3 tháng', DateTime(_tu.year, _tu.month, _tu.day + 90)),
+                  ActionChip(
+                    avatar: const Icon(Icons.event_rounded, size: 16, color: _kNavy),
+                    label: Text(_denNgay == null ? 'Chọn ngày' : '${_ngayNgan(_denNgay!)}/${_denNgay!.year}',
+                        style: _chu(12.5, FontWeight.w700)),
+                    backgroundColor: Colors.white,
+                    onPressed: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        initialDate: _denNgay ?? _tu,
+                        firstDate: DateTime(_tu.year, _tu.month, _tu.day),
+                        lastDate: DateTime(_tu.year, _tu.month, _tu.day + 366),
+                      );
+                      if (d != null) setState(() => _denNgay = d);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                buoi.isEmpty
+                    ? 'Chưa có buổi nào: chọn thứ và ngày kết thúc'
+                    : '${buoi.length} buổi · ${thuChuCua(_thuLap)} · ${gioPhut(_tu)}–${gioPhut(_den)} · '
+                        '${_ngayNgan(buoi.first)} → ${_ngayNgan(buoi.last)}',
+                style: _chu(13, FontWeight.w700, buoi.isEmpty || buoi.length > 120 ? _kRed : _kGreen),
+              ),
+              if (buoi.length > 120) Text('Tối đa 120 buổi một lần', style: _chu(12, FontWeight.w600, _kRed)),
+              // xem trước các buổi đầu: "T3 03/12", "T5 05/12"…
+              if (buoi.isNotEmpty && buoi.length <= 120) ...[
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    for (final b in buoi.take(6))
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _kNavy.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('${tenThu[b.weekday]} ${_ngayNgan(b)}', style: _chu(11.5, FontWeight.w700)),
+                      ),
+                    if (buoi.length > 6)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        child: Text('+${buoi.length - 6} buổi', style: _chu(11.5, FontWeight.w600, _kNavy.withValues(alpha: 0.6))),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   InputDecoration _o(String nhan, {IconData? icon, String? goiY}) => InputDecoration(
@@ -696,6 +996,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                     style: _chu(13, FontWeight.w700, _kRed),
                   ),
                 ),
+              if (widget.sua == null) _phanLap(),
               const SizedBox(height: 10),
               TextField(controller: _ghiChu, style: _chu(14, FontWeight.w500), decoration: _o('Ghi chú')),
               const SizedBox(height: 10),
@@ -723,7 +1024,14 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                   ),
                   child: _dangLuu
                       ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                      : Text(widget.sua == null ? 'Đặt' : 'Lưu', style: _chu(15.5, FontWeight.w800, Colors.white)),
+                      : Text(
+                          widget.sua != null
+                              ? 'Lưu'
+                              : _lap
+                                  ? 'Đặt ${_buoi.length} buổi'
+                                  : 'Đặt',
+                          style: _chu(15.5, FontWeight.w800, Colors.white),
+                        ),
                 ),
               ),
             ],

@@ -292,7 +292,17 @@ class _KhoiLuot extends StatelessWidget {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(gio, maxLines: 1, style: _chu(11, FontWeight.w600, chu).copyWith(decoration: gach)),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(gio, maxLines: 1, style: _chu(11, FontWeight.w600, chu).copyWith(decoration: gach)),
+                            ),
+                            if (d.chuoiId != null) ...[
+                              const SizedBox(width: 3),
+                              Icon(Icons.repeat_rounded, size: 12, color: chu), // lịch cố định
+                            ],
+                          ],
+                        ),
                         Flexible(
                           child: Text(
                             d.tenKhach,
