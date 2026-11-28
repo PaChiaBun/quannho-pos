@@ -228,6 +228,55 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
     _dat(ban, trongNgay, tu: tu);
   }
 
+  /// Nửa giờ kế tiếp của ngày đang xem để đặt nhanh: hôm nay = làm tròn lên từ bây giờ; ngày khác = 18:00.
+  DateTime _gioDatNhanh() {
+    final nay = DateTime.now();
+    if (_ngay != _dauNgay(nay)) return _ngay.add(const Duration(hours: 18));
+    final phut = nay.hour * 60 + nay.minute;
+    final len = ((phut + 29) ~/ 30) * 30;
+    return _ngay.add(Duration(minutes: len));
+  }
+
+  /// Nút "+ Đặt lịch" (dạng lưới): chọn bàn / sân rồi mở hộp đặt ở nửa giờ kế tiếp (sửa giờ trong hộp).
+  Future<void> _datNhanh(List<BanTableModel> bans, List<DatTruoc> dat) async {
+    final ban = bans.length == 1
+        ? bans.first
+        : await showModalBottomSheet<BanTableModel>(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) => Container(
+              margin: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+              decoration: BoxDecoration(color: _kCream, borderRadius: BorderRadius.circular(26)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Đặt cho bàn / sân nào?', style: _chu(18, FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final b in bans)
+                        ActionChip(
+                          label: Text(b.label, style: _chu(15, FontWeight.w800)),
+                          onPressed: () => Navigator.pop(ctx, b),
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: _kNavy.withValues(alpha: 0.18)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+    if (ban == null || !mounted) return;
+    _dat(ban, dat, tu: _gioDatNhanh());
+  }
+
   @override
   Widget build(BuildContext context) {
     final bansAsync = ref.watch(banDeDatProvider);
@@ -258,13 +307,42 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
         );
       }
       if (_luoi) {
-        return LichLuoi(
-          bans: bans,
-          dat: dat,
-          ngay: _ngay,
-          luc: widget.lucLuoi,
-          onDatO: (b, tu) => _datO(b, tu, dat),
-          onMo: (b, d) => _moLuot(b, d, dat),
+        return Column(
+          children: [
+            // Gợi ý cách đặt (Chủ Quán 28/11: lưới chưa nói chạm vào đâu để đặt)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F7F4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFB7E4DD)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.touch_app_rounded, size: 20, color: Color(0xFF0F766E)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Chạm ô trống để đặt bàn / sân vào giờ đó. Chạm lượt đặt để xem, nhận khách hoặc huỷ.',
+                      style: _chu(12.5, FontWeight.w600, const Color(0xFF0F5F58)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: LichLuoi(
+                bans: bans,
+                dat: dat,
+                ngay: _ngay,
+                luc: widget.lucLuoi,
+                onDatO: (b, tu) => _datO(b, tu, dat),
+                onMo: (b, d) => _moLuot(b, d, dat),
+              ),
+            ),
+          ],
         );
       }
       return LayoutBuilder(
@@ -348,6 +426,15 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
       ),
       // Điện thoại 1 cột, máy tính bảng 2 cột, màn rộng 3 cột.
       body: ResponsiveLayout(mobile: than(1), tablet: than(2), desktop: than(3)),
+      floatingActionButton: _luoi && (bansAsync.value?.isNotEmpty ?? false) && datAsync.hasValue
+          ? FloatingActionButton.extended(
+              onPressed: () => _datNhanh(bansAsync.value!, datAsync.value!),
+              backgroundColor: _kNavy,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: Text('Đặt lịch', style: _chu(15, FontWeight.w800, Colors.white)),
+            )
+          : null,
     );
   }
 }

@@ -152,7 +152,7 @@ Chỉ tính lượt đã thanh toán, theo ngày thanh toán; bàn huỷ không 
 Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:
 1. Ở màn Các hoạt động tính giờ bấm nút **"Lịch đặt"** (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).
 2. Chọn ngày bằng mũi tên hai bên, hoặc bấm vào ngày để chọn trên lịch.
-3. Lịch mở dạng **lưới**: cột bên trái là giờ, mỗi bàn / sân / phòng một cột, lượt đặt là khối màu (xanh đậm = đã đặt, xanh lá = khách đã đến, xám gạch ngang = huỷ hoặc không đến); hôm nay có vạch đỏ ở giờ hiện tại. Chạm vào **ô trống** ở đúng bàn và giờ muốn đặt (làm tròn theo nửa giờ): app mở hộp đặt đã điền sẵn bàn và giờ. Nhiều bàn hơn bề ngang màn thì vuốt ngang để xem.
+3. Lịch mở dạng **lưới**: cột bên trái là giờ, mỗi bàn / sân / phòng một cột, lượt đặt là khối màu (xanh đậm = đã đặt, xanh lá = khách đã đến; lượt đã huỷ hoặc không đến không chiếm ô, trừ khi còn cọc chưa xử lý); hôm nay có vạch đỏ ở giờ hiện tại. Trên lưới có dòng gợi ý. Chạm vào **ô trống** ở đúng bàn và giờ muốn đặt (làm tròn theo nửa giờ): app mở hộp đặt đã điền sẵn bàn và giờ. Hoặc bấm nút **"+ Đặt lịch"** ở góc dưới, chọn bàn / sân: app mở hộp đặt ở nửa giờ kế tiếp (ngày khác hôm nay thì 18:00), sửa giờ trong hộp. Nhiều bàn hơn bề ngang màn thì vuốt ngang để xem.
 4. Nhập tên khách, số điện thoại, đổi giờ bắt đầu nếu cần (bấm vào dòng giờ), chọn thời lượng (30 phút, 1 giờ, 1 giờ 30, 2 giờ, 3 giờ), rồi bấm **"Đặt"**.
 
 Muốn xem kiểu cũ (mỗi bàn một thẻ, có nút **"Đặt"**) thì bấm nút ở góc trên bên phải (**"Xem dạng danh sách"**); bấm lại để về lưới. Chạm ô giờ đã qua thì app báo "Giờ này đã qua".

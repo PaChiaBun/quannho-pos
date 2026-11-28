@@ -208,7 +208,7 @@
     "tinh-gio.md": {
       "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "5a4cd4b9785c334a",
       "lib/modules/tinh_gio/dat_truoc.dart": "f9e09cd780f4548f",
-      "lib/modules/tinh_gio/dat_truoc_ui.dart": "02bac7bc4f0c1a3b",
+      "lib/modules/tinh_gio/dat_truoc_ui.dart": "3327b9b0fbf5ae39",
       "lib/modules/tinh_gio/gia_gio_ui.dart": "b81d9523d30b7b7c",
       "lib/modules/tinh_gio/goi_gio_ui.dart": "b6e2c47b22421a51",
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
