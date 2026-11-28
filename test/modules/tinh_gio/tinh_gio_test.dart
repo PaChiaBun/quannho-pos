@@ -51,8 +51,10 @@ void main() {
     expect(tinhGioThoiLuong(60), '1g00');
     expect(tinhGioThoiLuong(61), '1g01');
     expect(tinhGioThoiLuong(90), '1g30');
-    expect(tinhGioDongHo(t0, t0.add(const Duration(minutes: 65, seconds: 59))), '1:05');
-    expect(tinhGioDongHo(t0, t0.subtract(const Duration(minutes: 3))), '0:00');
+    expect(tinhGioDongHo(t0, t0.add(const Duration(minutes: 65))), '1:05');
+    expect(tinhGioDongHo(t0, t0.add(const Duration(minutes: 65, seconds: 1))), '1:06', reason: 'phút lẻ làm tròn lên như tiền');
+    expect(tinhGioDongHo(t0, t0.add(const Duration(seconds: 10))), '0:01', reason: 'phút đầu đã tính tiền');
+    expect(tinhGioDongHo(t0, t0.subtract(const Duration(minutes: 3))), '0:01');
     expect(tinhGioThoiLuongDai(45), '45 phút');
     expect(tinhGioThoiLuongDai(120), '2 giờ');
     expect(tinhGioThoiLuongDai(90), '1 giờ 30 phút');

@@ -167,6 +167,13 @@ List<DatTruoc> khachQuenTu(List<DatTruoc> ds, {int toiDa = 4}) {
   return ra;
 }
 
+/// Số lần khách đã đặt (thẻ khách ở hộp đặt): bỏ lượt huỷ, một lịch cố định tính một lần.
+/// [ds] là tối đa [gioiHan] lượt mới nhất; đủ [gioiHan] lượt thì có thể còn nữa ([conNua]).
+({int lan, bool conNua}) soLanDat(List<DatTruoc> ds, {int gioiHan = 30}) => (
+      lan: {for (final d in ds) if (d.trangThai != 'huy') d.chuoiId ?? d.id}.length,
+      conNua: ds.length >= gioiHan,
+    );
+
 class DatTruocRepository {
   SupabaseClient get _sb => Supabase.instance.client;
 

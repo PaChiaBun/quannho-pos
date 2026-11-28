@@ -1095,6 +1095,9 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     final khoa = widget.sua?.coCocCho == true;
     if (k != null || khoa) {
       final ten = k?.name ?? _tim.text.trim();
+      // 30 lượt mới nhất của khách (cùng nguồn với hồ sơ khách); chưa đọc được thì không ghi
+      final dsDat = k == null ? null : ref.watch(luotDatCuaKhachProvider(k.id)).value;
+      final lanDat = dsDat == null ? null : soLanDat(dsDat);
       return Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
         decoration: BoxDecoration(
@@ -1114,7 +1117,11 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                   Text(
                     k == null
                         ? [if (_sdtLuu.isNotEmpty) _sdtLuu, 'đã cọc, không đổi khách'].join(' · ')
-                        : [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví\u00A0${fmtVnd(k.realBalance).replaceAll(' ', '\u00A0')}'].join(' · '),
+                        : [
+                            if ((k.phone ?? '').isNotEmpty) k.phone!,
+                            if (lanDat != null && lanDat.lan > 0) 'đã đặt\u00A0${lanDat.lan}${lanDat.conNua ? '+' : ''}\u00A0lần',
+                            'ví\u00A0${fmtVnd(k.realBalance).replaceAll(' ', '\u00A0')}',
+                          ].join(' · '),
                     style: _chu(12.5, FontWeight.w600, _kTeal),
                   ),
                 ],

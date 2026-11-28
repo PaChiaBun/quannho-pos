@@ -5571,7 +5571,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final (:t, :khung, :vao, :luc, :gia) = tg;
         final daChoi = luc.difference(vao);
         final chayLau = daChoi >= kTinhGioCanhBaoLau;
-        final soPhutChoi = daChoi.isNegative ? 0 : daChoi.inMinutes;
+        final soPhutChoi = tinhGioSoPhut(vao, luc); // như máy chủ tính tiền: làm tròn lên, ít nhất 1 phút
         const mauTien = Color(0xFFFFC94D); // vàng ấm: gợi tiền, xa màu đỏ cảnh báo, rõ trên nền xanh đậm
         const mauDo = Color(0xFFFF9B9B);
         // Số giờ luôn trắng: đỏ cạnh số tiền cam khó tách; cảnh báo đã có dải riêng bên dưới.

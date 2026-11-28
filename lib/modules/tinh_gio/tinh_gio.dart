@@ -34,10 +34,10 @@ String tinhGioThoiLuong(int soPhut) => soPhut >= 60
     ? '${soPhut ~/ 60}g${(soPhut % 60).toString().padLeft(2, '0')}'
     : '${soPhut}p';
 
-/// Đồng hồ trên thẻ bàn: "1:05" (giờ:phút) — không hiện giây để thẻ không nhảy liên tục.
+/// Đồng hồ trên thẻ bàn: "1:05" (giờ:phút) — không hiện giây để thẻ không nhảy liên tục. Đếm phút như máy chủ
+/// tính tiền (làm tròn lên, ít nhất 1): 28/11 thẻ ghi "0 phút" mà đã tính 1.000 đ.
 String tinhGioDongHo(DateTime tu, DateTime luc) {
-  final d = luc.difference(tu);
-  final phut = d.isNegative ? 0 : d.inMinutes;
+  final phut = tinhGioSoPhut(tu, luc);
   return '${phut ~/ 60}:${(phut % 60).toString().padLeft(2, '0')}';
 }
 

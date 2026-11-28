@@ -106,6 +106,16 @@ void main() {
     expect(khungDatCuaPhien(ds, 'px', 'b1'), isNull);
   });
 
+  test('soLanDat: bỏ lượt huỷ, một lịch cố định tính một lần, đủ 30 lượt thì có thể còn', () {
+    DatTruoc d(String id, String tt, {String? chuoi}) => DatTruoc(
+        id: id, tableId: 'b1', tenKhach: 'A', gioTu: DateTime(2030), gioDen: DateTime(2030), trangThai: tt,
+        createdAt: DateTime(2030), chuoiId: chuoi);
+    expect(soLanDat([d('1', 'da_nhan'), d('2', 'huy'), d('3', 'da_dat', chuoi: 'c'), d('4', 'da_dat', chuoi: 'c'), d('5', 'khong_den')]),
+        (lan: 3, conNua: false));
+    expect(soLanDat(const []), (lan: 0, conNua: false));
+    expect(soLanDat([for (var i = 0; i < 30; i++) d('$i', 'da_nhan')]).conNua, isTrue);
+  });
+
   test('khachQuenTu: mỗi khách một lần, mới nhất trước, tối đa 4', () {
     DatTruoc d(String id, String ten, {String? sdt, String? kh}) => DatTruoc(
         id: id, tableId: 'b1', tenKhach: ten, sdt: sdt, customerId: kh, gioTu: DateTime(2030), gioDen: DateTime(2030),

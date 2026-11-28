@@ -584,6 +584,9 @@ void main() {
           khachQuenDatProvider.overrideWith((ref) async => quen),
           giaGioCaiDatProvider.overrideWith((ref) async => const {}),
           allProductsProvider.overrideWith((ref) => Stream.value([monGio(200000)])),
+          // Anh Nam: 3 lượt + 1 lượt huỷ (không tính)
+          luotDatCuaKhachProvider.overrideWith((ref, id) async =>
+              [luot('n1', 'Anh Nam', 8, 9, 'da_nhan'), luot('n2', 'Anh Nam', 9, 10, 'da_nhan'), luot('n3', 'Anh Nam', 10, 11, 'khong_den'), luot('n4', 'Anh Nam', 11, 12, 'huy')]),
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -725,7 +728,7 @@ void main() {
     }, (_, __) {});
     expect(tester.takeException(), isNull);
     expect(trung, 'Trùng Chị Lan 19:00–20:00 · đổi giờ hoặc chọn bàn khác');
-    expect(find.text('0901111222 · ví\u00A00\u00A0đ'), findsOneWidget);
+    expect(find.text('0901111222 · đã đặt\u00A03\u00A0lần · ví\u00A00\u00A0đ'), findsOneWidget);
     expect(find.textContaining('4 buổi · T4 · 20:00–22:00'), findsOneWidget);
     expect(find.text('Tạm tính 4 buổi · 1.600.000 đ · cọc 200.000 đ'), findsOneWidget);
     expect(find.text('Đặt 4 buổi · nhận cọc 200.000 đ'), findsOneWidget);
