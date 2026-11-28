@@ -253,7 +253,8 @@ void main() {
       tester.view.physicalSize = co;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      final ngay = DateTime(2026, 11, 28);
+      // ngày cố định xa hiện tại: dùng 28/11/2026 thì đúng hôm đó màn ghi "Hôm nay" và ảnh mẫu lệch (QC 28/11)
+      final ngay = DateTime(2030, 11, 30);
       BanTableModel ban(String id, String ten) =>
           BanTableModel(id: id, zoneId: 'z', storeId: 's', label: ten, seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
       DatTruoc dat(String id, String ban, int gio, int phut, String ten, {String tt = 'da_dat', String? sdt, bool nhac = false}) => DatTruoc(
@@ -261,11 +262,11 @@ void main() {
             tableId: ban,
             tenKhach: ten,
             sdt: sdt,
-            gioTu: DateTime(2026, 11, 28, gio),
-            gioDen: DateTime(2026, 11, 28, gio).add(Duration(minutes: phut)),
+            gioTu: DateTime(2030, 11, 30, gio),
+            gioDen: DateTime(2030, 11, 30, gio).add(Duration(minutes: phut)),
             trangThai: tt,
-            nhacLuc: nhac ? DateTime(2026, 11, 28, gio - 1, 32) : null,
-            createdAt: DateTime(2026, 11, 27),
+            nhacLuc: nhac ? DateTime(2030, 11, 30, gio - 1, 32) : null,
+            createdAt: DateTime(2030, 11, 29),
           );
       await runZonedGuarded(() async {
         await tester.pumpWidget(ProviderScope(

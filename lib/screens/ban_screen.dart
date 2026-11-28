@@ -210,6 +210,28 @@ final activeSessionsProvider =
       return ref.watch(banRepositoryProvider).watchActiveSessions();
     });
 
+/// Tên nhân viên theo mã (staff_members.id = ban_sessions.waiter_id) của quán đang mở: thẻ bàn ở màn
+/// Các hoạt động tính giờ ghi người mở bàn. Đọc một lần khi màn mở; lỗi mạng thì trả rỗng (thẻ dùng tên
+/// người gọi món thay).
+final tenNhanVienTheoMaProvider = FutureProvider.autoDispose<Map<String, String>>((ref) async {
+  final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
+  if (storeId == null) return const {};
+  try {
+    final rows = await Supabase.instance.client
+        .from('staff_members')
+        .select('id, name')
+        .eq('store_id', storeId)
+        .timeout(const Duration(seconds: 10));
+    return {
+      for (final r in rows)
+        if ((r['name'] as String?)?.trim().isNotEmpty ?? false) r['id'] as String: (r['name'] as String).trim(),
+    };
+  } catch (e) {
+    AppLogger.warning('ban_screen', 'Tải tên nhân viên cho thẻ bàn thất bại: $e');
+    return const {};
+  }
+});
+
 final sessionItemsProvider = StreamProvider.autoDispose
     .family<List<BanSessionItemModel>, String>((ref, sessionId) {
       return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
@@ -997,7 +1019,6 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       body: Column(
         children: [
           const QrLockedBanner(),
-          if (_tinhGio) _thanhLichDat(),
           Expanded(
             child: zonesAsync.when(
               loading: () =>
@@ -1031,6 +1052,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                     ? _cachedZones
                     : zones;
 
+                // Chế độ tính giờ: sơ đồ riêng tự co giãn, không có cột tổng quan bên phải.
+                if (_tinhGio) return _buildLuoiTinhGio(displayZones);
+
                 // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
                 Widget tableGrid = _buildTableGrid(displayZones);
 
@@ -1060,7 +1084,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _tinhGio
+          ? null // mỗi khu có nút "Thêm bàn" riêng
+          : FloatingActionButton.extended(
         heroTag: 'ban_screen_fab',
         onPressed: () {
           final zoneId =
@@ -1083,33 +1109,285 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     );
   }
 
-  // Chế độ tính giờ: lịch đặt là việc hay dùng nên có hẳn một thanh, không chỉ biểu tượng trên góc.
-  Widget _thanhLichDat() {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const LichDatScreen()),
+  // ── Chế độ tính giờ: sơ đồ tự co giãn ────────────────────────────────────────
+  // Thẻ rộng ít nhất 320: điện thoại 1 cột, máy tính bảng / Sunmi 3 cột, máy tính 4 cột; nội dung rộng tối đa
+  // 1440 rồi nằm giữa. Bản thiết kế 27/11 (khung vẽ "Sơ đồ bàn tính giờ").
+  static const double _kTheTinhGioToiThieu = 320; // 300 thì tên người mở bị cắt sát số tiền (QC 28/11)
+  static const double _kRongTinhGioToiDa = 1440;
+
+  Widget _buildLuoiTinhGio(List<BanZoneModel> zones) {
+    final phienAsync = ref.watch(activeSessionsProvider);
+    final banAsync = ref.watch(allBanTablesProvider);
+    // Giữ danh sách tên nhân viên sống suốt màn (thẻ có khách đọc nó; lọc "Trống" không làm tải lại).
+    ref.watch(tenNhanVienTheoMaProvider);
+    final phien = phienAsync.value;
+    final moiBan = banAsync.value;
+    if (phien == null || moiBan == null) {
+      final loi = phienAsync.error ?? banAsync.error;
+      if (loi != null) {
+        AppLogger.error('ban_screen', 'Tải phiên bàn / danh sách bàn thất bại: $loi', loi);
+        return const Center(child: Text('Tải danh sách bàn thất bại. Hãy chụp lại báo chủ app.'));
+      }
+      return const Center(child: CircularProgressIndicator(color: _kNavy));
+    }
+    // Chỉ tính bàn thuộc khu đang hiện: bàn còn sót của khu đã xoá không được đếm mà không có thẻ để bấm.
+    final khuHien = {for (final k in zones) k.id};
+    final ban = locBanTinhGio(moiBan, zones).where((t) => khuHien.contains(t.zoneId)).toList();
+    if (ban.isEmpty) {
+      return _EmptyState(cheDoTinhGio: true, onAddZone: _addZone, onAddTable: () => _addTable(null));
+    }
+    final soChoi = ban.where((t) => phien.containsKey(t.id)).length;
+    final loc = switch (_statusFilter) {
+      'occupied' => ban.where((t) => phien.containsKey(t.id)).toList(),
+      'empty' => ban.where((t) => !phien.containsKey(t.id)).toList(),
+      _ => ban,
+    };
+    return LayoutBuilder(
+      builder: (context, c) {
+        final le = c.maxWidth > _kRongTinhGioToiDa ? (c.maxWidth - _kRongTinhGioToiDa) / 2 + 16 : 16.0;
+        final rong = c.maxWidth - le * 2;
+        final cot = ((rong + 12) / (_kTheTinhGioToiThieu + 12)).floor().clamp(1, 6);
+        // máy để chữ hệ thống to thì thẻ cao theo, không tràn
+        final caoThe = MediaQuery.textScalerOf(context).scale(112).clamp(112.0, 190.0);
+        final tomTat = _TomTatTinhGio(ban: ban, phien: phien, danhXung: _danhXung);
+        final hangLoc = _hangLocTinhGio(ban.length, soChoi);
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(le, 14, le, 0),
+              sliver: SliverToBoxAdapter(
+                // màn rộng: tóm tắt và hàng lọc chung một dòng; màn hẹp: xếp chồng
+                child: rong >= 700
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: tomTat),
+                          const SizedBox(width: 12),
+                          Expanded(child: hangLoc),
+                        ],
+                      )
+                    : Column(children: [tomTat, const SizedBox(height: 12), hangLoc]),
+              ),
+            ),
+            if (loc.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 48),
+                  child: Text(
+                    _statusFilter == 'occupied'
+                        ? 'Hiện không có $_danhXung nào đang chơi'
+                        : 'Không có $_danhXung nào trống',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF5E5A7A),
+                    ),
+                  ),
+                ),
+              ),
+            // "Tất cả": hiện mọi khu, kể cả khu chưa có bàn (để còn nút Thêm bàn, Sửa khu); đang lọc thì chỉ khu có bàn khớp.
+            for (final k in zones)
+              if (_statusFilter == 'all' || loc.any((t) => t.zoneId == k.id)) ...[
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(le, 22, le, 10),
+                  sliver: SliverToBoxAdapter(
+                    child: _dauKhuTinhGio(k, ban.where((t) => t.zoneId == k.id).toList(), phien),
+                  ),
+                ),
+                if (!ban.any((t) => t.zoneId == k.id))
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: le),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFD9D1C4)),
+                        ),
+                        child: Text(
+                          'Khu này chưa có $_danhXung. Bấm "Thêm $_danhXung" ở trên để thêm.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF5E5A7A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: le),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cot,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      mainAxisExtent: caoThe, // đủ 4 dòng: tên, giờ vào, người mở + số món, lượt đặt kế
+                    ),
+                    delegate: SliverChildListDelegate([
+                      for (final t in loc.where((t) => t.zoneId == k.id))
+                        _TheBanTinhGio(
+                          danhXung: _danhXung,
+                          table: t,
+                          session: phien[t.id],
+                          zone: k,
+                          onTap: () => phien[t.id] != null
+                              ? _manageSession(t, phien[t.id]!, k)
+                              : _chamBanTrong(t, k),
+                          onLongPress: () => _showTableOptions(t, phien[t.id], k),
+                        ),
+                    ]),
+                  ),
+                ),
+              ],
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Nút Lịch đặt + bộ lọc ba ô có kèm số bàn.
+  Widget _hangLocTinhGio(int tong, int choi) {
+    Widget o(String nhan, String gt, int flex) {
+      final chon = _statusFilter == gt;
+      return Expanded(
+        flex: flex,
+        child: Material(
+          color: chon ? _kNavy : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => setState(() => _statusFilter = gt),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    nhan,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: chon ? Colors.white : _kNavy,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        child: SizedBox(
-          height: 52,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+      );
+    }
+
+    return Row(
+      children: [
+        Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFFE6DDD0)),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const LichDatScreen()),
+            ),
+            child: SizedBox(
+              height: 48,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event_note_rounded, color: _kNavy, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Lịch đặt',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFE7DC),
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Row(
               children: [
-                const Icon(Icons.event_note_rounded, color: _kNavy, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  'Lịch đặt',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: _kNavy),
-                ),
-                const Spacer(),
-                Icon(Icons.chevron_right_rounded, color: _kNavy.withValues(alpha: 0.5)),
+                o('Tất cả $tong', 'all', 10),
+                const SizedBox(width: 2),
+                o('Đang chơi $choi', 'occupied', 13),
+                const SizedBox(width: 2),
+                o('Trống ${tong - choi}', 'empty', 10),
               ],
             ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  /// Đầu mỗi khu: biểu tượng, tên, số bàn đang chơi, nút sửa khu và nút thêm bàn vào khu.
+  Widget _dauKhuTinhGio(BanZoneModel k, List<BanTableModel> banKhu, Map<String, BanSessionModel> phien) {
+    final choi = banKhu.where((t) => phien.containsKey(t.id)).length;
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(11)),
+          child: Center(child: _zoneIconWidget(k.iconCode, size: 19, color: Colors.white)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                k.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+              ),
+              Text(
+                '$choi/${banKhu.length} đang chơi',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5E5A7A),
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Sửa khu',
+          onPressed: () => _editZone(k),
+          icon: const Icon(Icons.more_horiz_rounded, color: _kNavy),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _addTable(k.id),
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: Text('Thêm $_danhXung'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _kNavy,
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            side: const BorderSide(color: Color(0xFFB9B2CC)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2227,6 +2505,437 @@ void _openQrForTable(
     _openQrReview(context, ref, orders.first);
   } else {
     _openQrQueue(context, ref);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHẾ ĐỘ TÍNH GIỜ — ô tóm tắt và thẻ bàn hàng ngang
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Số tiền vàng nổi khối: lớp dưới viền xanh đen đổ bóng (cứng lệch xuống + mềm), lớp trên chữ vàng.
+/// Chủ Quán chọn 27/11 (viền trắng, viền vàng sẫm bị chê).
+Widget _soVangNoi(String chu, double co, {Color mau = const Color(0xFFFFC94D)}) {
+  TextStyle kieu({Paint? net, Color? mauChu, List<Shadow>? bong}) => GoogleFonts.plusJakartaSans(
+    fontSize: co,
+    height: 1.05,
+    fontWeight: FontWeight.w800,
+    color: mauChu,
+    foreground: net,
+    shadows: bong,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+  return Stack(
+    children: [
+      Text(
+        chu,
+        maxLines: 1,
+        style: kieu(
+          net: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = co * 0.12
+            ..strokeJoin = StrokeJoin.round
+            ..color = const Color(0xFF0A0926),
+          bong: [
+            Shadow(color: const Color(0xFF05041A), offset: Offset(0, co * 0.12)),
+            Shadow(color: const Color(0xB3000000), offset: Offset(0, co * 0.24), blurRadius: co * 0.4),
+          ],
+        ),
+      ),
+      Text(chu, maxLines: 1, style: kieu(mauChu: mau)),
+    ],
+  );
+}
+
+/// Nền xanh đậm nổi khối dùng chung cho ô tóm tắt và thẻ bàn đang chơi.
+BoxDecoration _nenXanhNoi(double bo) => BoxDecoration(
+  gradient: const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: [0, 0.55, 1],
+    colors: [Color(0xFF403BA3), Color(0xFF2A2679), Color(0xFF1E1B5E)],
+  ),
+  borderRadius: BorderRadius.circular(bo),
+  border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+  boxShadow: [
+    const BoxShadow(color: Color(0xFF15134A), offset: Offset(0, 3)),
+    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 8)),
+    BoxShadow(color: _kNavy.withValues(alpha: 0.38), blurRadius: 24, spreadRadius: -8, offset: const Offset(0, 16)),
+  ],
+);
+
+/// Ô tóm tắt đầu màn: số bàn đang chơi và tổng tiền giờ tạm tính của các bàn đang chạy.
+class _TomTatTinhGio extends ConsumerWidget {
+  final List<BanTableModel> ban;
+  final Map<String, BanSessionModel> phien;
+  final String danhXung;
+  const _TomTatTinhGio({required this.ban, required this.phien, required this.danhXung});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moiMon = ref.watch(openSessionItemsProvider).value;
+    final giaTheoMon = ref.watch(tinhGioGiaTheoMonProvider);
+    final luc = ref.watch(tinhGioTickProvider).value ?? DateTime.now();
+    final dsDat = ref.watch(tinhGioModuleActiveProvider)
+        ? (ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[])
+        : const <DatTruoc>[];
+    var soChoi = 0;
+    var tienGio = 0.0;
+    for (final t in ban) {
+      final s = phien[t.id];
+      if (s == null) continue;
+      soChoi++;
+      if (s.gioBatDau == null) continue;
+      tienGio += tinhGioTamTinhBan(
+        gioBatDauMs: s.gioBatDau!,
+        giaMotGio: t.tinhGio ? giaTheoMon[t.giaGioProductId]?.sellPrice : null,
+        mon: moiMon?[s.id] ?? const <BanSessionItemModel>[],
+        luc: luc,
+        khungDatDen: khungDatCuaPhien(dsDat, s.id, t.id),
+      ).tienGio;
+    }
+    final nhan = GoogleFonts.plusJakartaSans(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: Colors.white.withValues(alpha: 0.88),
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 13, 18, 14),
+      decoration: _nenXanhNoi(20),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              flex: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Đang chơi', style: nhan),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$soChoi',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 26, height: 1.05, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          TextSpan(
+                            text: ' / ${ban.length} $danhXung',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.85)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(width: 1, margin: const EdgeInsets.symmetric(horizontal: 14), color: Colors.white.withValues(alpha: 0.18)),
+            Expanded(
+              flex: 15,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Tiền giờ đang chạy', style: nhan),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: _soVangNoi(fmtVnd(tienGio), 24),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thẻ bàn hàng ngang của chế độ tính giờ. Có khách: nền xanh nổi, bên trái tên + giờ vào + khách, bên phải
+/// đồng hồ đã chơi và tổng tạm tính. Trống: nền trắng, giá giờ và nút Mở bàn (chưa có giá thì nút Đặt giá).
+class _TheBanTinhGio extends ConsumerWidget {
+  final BanTableModel table;
+  final BanSessionModel? session;
+  final BanZoneModel zone;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  /// "bàn", "sân", "phòng" theo loại hình quán.
+  final String danhXung;
+  const _TheBanTinhGio({
+    required this.danhXung,
+    required this.table,
+    required this.session,
+    required this.zone,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = session;
+    final moiMon = ref.watch(openSessionItemsProvider).value;
+    final monPhien = s != null ? (moiMon?[s.id] ?? const <BanSessionItemModel>[]) : const <BanSessionItemModel>[];
+    final monCon = monPhien.where((i) => i.kitchenStatus != 'huy').toList();
+    final tongMon = monCon.fold<double>(0, (a, i) => a + i.subtotal);
+    final soMon = monCon.where((i) => !i.laTienGio).fold<double>(0, (a, i) => a + i.quantity).toInt();
+    final giaGio = table.tinhGio ? ref.watch(tinhGioGiaTheoMonProvider)[table.giaGioProductId] : null;
+    final dsDat = ref.watch(tinhGioModuleActiveProvider)
+        ? (ref.watch(datTruocGanDayProvider).value ?? const <DatTruoc>[])
+        : const <DatTruoc>[];
+    final gioVao = s?.gioBatDau != null ? DateTime.fromMillisecondsSinceEpoch(s!.gioBatDau!) : null;
+    final luc = gioVao != null ? (ref.watch(tinhGioTickProvider).value ?? DateTime.now()) : DateTime.now();
+    final tamTinh = gioVao != null
+        ? tinhGioTamTinhBan(
+            gioBatDauMs: s!.gioBatDau!,
+            giaMotGio: giaGio?.sellPrice,
+            mon: monPhien,
+            luc: luc,
+            khungDatDen: khungDatCuaPhien(dsDat, s.id, table.id),
+          )
+        : null;
+    final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
+    final datKe = luotDatKeTiep(dsDat, table.id, DateTime.now());
+    final hienDatKe = datKe != null && datKe.gioTu.difference(DateTime.now()) < const Duration(hours: 12);
+    final treBep = s != null ? overdueUnsentItems(monCon, DateTime.now()) : const <BanSessionItemModel>[];
+    if (treBep.isNotEmpty) _logUnsentOverdueOnce(table.label, s!.id, treBep);
+    final qr = ref.watch(activeQrRequestsForTableProvider(table.id));
+
+    Widget nhanNho(String chu, Color nen, Color mau, {IconData? icon, VoidCallback? bam}) {
+      final o = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(color: nen, borderRadius: BorderRadius.circular(999)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[Icon(icon, size: 12, color: mau), const SizedBox(width: 3)],
+            Text(chu, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w800, color: mau)),
+          ],
+        ),
+      );
+      return bam == null ? o : GestureDetector(behavior: HitTestBehavior.opaque, onTap: bam, child: o);
+    }
+
+    final nhan = <Widget>[
+      if (qr.isNotEmpty)
+        nhanNho('QR (${qr.length})', Colors.amber, Colors.black,
+            icon: Icons.bolt_rounded, bam: () => _openQrForTable(context, ref, qr)),
+      if (treBep.isNotEmpty)
+        nhanNho('${treBep.length} món chưa gửi', const Color(0xFFFFE4E4), const Color(0xFFB42318)),
+      if (chayLau)
+        nhanNho('Quá ${kTinhGioCanhBaoLau.inHours} giờ', const Color(0xFFFFE4E4), const Color(0xFFB42318),
+            icon: Icons.warning_amber_rounded),
+    ];
+    Widget dongTen(Color mau, {Widget? sau}) => Row(
+      children: [
+        Flexible(
+          child: Text(
+            table.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(fontSize: 19, fontWeight: FontWeight.w800, color: mau),
+          ),
+        ),
+        if (sau != null) ...[const SizedBox(width: 8), sau],
+        if (nhan.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(children: [for (final n in nhan) Padding(padding: const EdgeInsets.only(right: 4), child: n)]),
+            ),
+          ),
+        ],
+      ],
+    );
+    Widget? dongDat(Color mau) => hienDatKe
+        ? Text(
+            'Đặt ${gioPhut(datKe.gioTu)} • ${datKe.tenKhach}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: mau),
+          )
+        : null;
+
+    final Widget the;
+    if (s != null) {
+      final vao = gioVao != null ? 'Vào ${tinhGioGioVao(gioVao, luc)}' : null;
+      final phu = [
+        if (vao != null) vao,
+        if (tamTinh?.daHuy ?? false) 'đã bỏ tiền giờ' else if (tamTinh?.theoKhungDat ?? false) 'tính đủ khung đặt',
+        '${s.guestCount}\u00A0khách', // không để "2" một dòng, "khách" một dòng
+      ].join(' • ');
+      // Người mở bàn: theo mã nhân viên của phiên; chưa tra được thì lấy người gọi món đầu tiên.
+      final nguoiMo = ref.watch(tenNhanVienTheoMaProvider).value?[s.waiterId] ??
+          monCon.map((i) => i.addedBy).firstWhere(
+                (n) => n != null && n.isNotEmpty && n != 'Tính giờ',
+                orElse: () => null,
+              );
+      final mo = Colors.white.withValues(alpha: 0.86);
+      final dongNguoiMon = Row(
+        children: [
+          Icon(Icons.person_outline_rounded, size: 15, color: mo),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              nguoiMo ?? 'Không rõ',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700, color: mo),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Icon(Icons.restaurant_menu_rounded, size: 14, color: mo),
+          const SizedBox(width: 3),
+          Text(
+            soMon > 0 ? '$soMon\u00A0món' : 'Chưa gọi món',
+            style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700, color: mo),
+          ),
+        ],
+      );
+      final dat = dongDat(const Color(0xFFFFC94D));
+      the = Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 14, 10),
+        decoration: _nenXanhNoi(18),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  dongTen(Colors.white),
+                  const SizedBox(height: 4),
+                  Text(
+                    phu,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: mo),
+                  ),
+                  const SizedBox(height: 2),
+                  dongNguoiMon,
+                  if (dat != null) dat,
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  gioVao != null ? 'Đã chơi' : 'Tạm tính',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.82),
+                  ),
+                ),
+                if (gioVao != null)
+                  Text(
+                    tinhGioDongHo(gioVao, luc),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 27,
+                      height: 1.05,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                const SizedBox(height: 2),
+                _soVangNoi(fmtVnd(tamTinh?.tong ?? tongMon), gioVao != null ? 17 : 22),
+              ],
+            ),
+          ],
+        ),
+      );
+    } else {
+      final dat = dongDat(_kOrange);
+      final coGia = table.tinhGio;
+      the = Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE6DDD0), width: 1.5),
+          boxShadow: [BoxShadow(color: _kNavy.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  dongTen(
+                    _kNavy,
+                    sau: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(color: _kGreen, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Trống',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF15803D)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text.rich(
+                    coGia && giaGio != null
+                        ? TextSpan(
+                            children: [
+                              TextSpan(
+                                text: fmtVnd(giaGio.sellPrice),
+                                style: const TextStyle(fontWeight: FontWeight.w800, color: _kNavy),
+                              ),
+                              TextSpan(text: '/giờ • ${table.seats} chỗ'),
+                            ],
+                          )
+                        : TextSpan(
+                            text: coGia ? '${table.seats} chỗ' : 'Chưa đặt giá giờ',
+                            style: coGia ? null : const TextStyle(color: Color(0xFFC2410C), fontWeight: FontWeight.w700),
+                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF5E5A7A)),
+                  ),
+                  if (dat != null) dat,
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: onTap,
+              icon: Icon(coGia ? Icons.play_arrow_rounded : Icons.sell_outlined, size: 18),
+              label: Text(coGia ? 'Mở $danhXung' : 'Đặt giá'),
+              style: FilledButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                textStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return _PulsingTableBorder(
+      isPulsing: qr.isNotEmpty,
+      borderRadius: BorderRadius.circular(18),
+      child: GestureDetector(onTap: onTap, onLongPress: onLongPress, child: the),
+    );
   }
 }
 
@@ -4833,34 +5542,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           maxLines: 1,
         );
         final chuTien = t.daHuy ? '0 đ' : fmtVnd(t.tienGio);
-        // Số tiền nổi khối: lớp dưới là viền xanh đen (nét vẽ quanh chữ) đổ bóng cứng lệch xuống + bóng mềm,
-        // lớp trên là chữ vàng. Chủ Quán chọn 27/11 (viền trắng, viền vàng sẫm bị chê).
         final tien = t.daHuy
             ? Text(chuTien, maxLines: 1, style: so(Colors.white.withValues(alpha: 0.5)))
-            : Stack(
-                children: [
-                  Text(
-                    chuTien,
-                    maxLines: 1,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 34,
-                      height: 1.05,
-                      fontWeight: FontWeight.w800,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 4
-                        ..strokeJoin = StrokeJoin.round
-                        ..color = const Color(0xFF0A0926),
-                      shadows: const [
-                        Shadow(color: Color(0xFF05041A), offset: Offset(0, 4)),
-                        Shadow(color: Color(0xB3000000), offset: Offset(0, 8), blurRadius: 14),
-                      ],
-                    ),
-                  ),
-                  Text(chuTien, maxLines: 1, style: so(mauTien)),
-                ],
-              );
+            : _soVangNoi(chuTien, 34, mau: mauTien);
         final chan = t.daHuy
             ? 'Quản lý đã bỏ tiền giờ của lượt này'
             : t.theoKhungDat

@@ -482,3 +482,29 @@ Chủ Quán thấy phần giờ và thanh toán "chưa rõ ràng"; đã đối c
 - C. Máy chủ: `supabase/migrations/20261127_tinh_gio_ten_dong.sql` chỉ đổi phần ghép tên dòng trong `qn_tinh_gio_ghi_dong_v1`: "Giờ chơi · A 1 · 14:05 – 15:35 · 1 giờ 30 phút × 60.000 đ/giờ"; khác ngày thì ghi "25/11 11:39 – 26/11 12:01". Số phút, số tiền không đổi. Không dùng tên món nữa (tên cũ đặt "60.000 đ" cạnh số tiền thật). `_ROLLBACK` là bản production lấy 27/11. Test `supabase/tests/tinh_gio_ten_dong_test.sql` (5 điểm); sửa điểm T5d (`ban_tinh_gio_v1_test.sql`) và D9f (`ban_dat_truoc_v1_test.sql`) theo tên mới. Bản sao 27/11 00:38: 5/5, bộ tính giờ và đặt trước đều TẤT CẢ PASS. Script `db-fix/tinh_gio_ten_dong_ap_dung.sh`. ĐÃ ÁP production 27/11 01:00 theo lời Chủ Quán "Áp lên máy chủ": chạy thử trong giao dịch trên máy chủ thật 5/5 rồi huỷ; backup `quannho_before_ten_dong_20261127_010020.dump`; áp (CREATE FUNCTION, REVOKE, COMMIT); test 5/5 PASS (tự ROLLBACK). Kiểm chỉ đọc: hàm có tên mới, chữ ký 3 tham số, quyền chỉ supabase_admin / postgres / service_role, `ban_chot_gio_v1` vẫn gọi nó; 3 phiên đang tính giờ đều của quán Demo. Hoàn tác: `ROLLBACK=1 bash db-fix/tinh_gio_ten_dong_ap_dung.sh`.
 - Hướng dẫn `tinh-gio.md` sửa 4 chỗ theo cách hiện mới (đã xuất lại, chưa đăng lên Boom).
 - Máy ảo, Demo: thẻ A 2, A 3 (mở 25/11), Bàn 1 (26/11) đều hiện đồng hồ đỏ; Bàn 1 mở ra thấy khối Giờ chơi. Chưa thử: bàn chạy dưới 6 giờ, khung đặt trước, bàn đã bỏ tiền giờ, máy tính bảng, Sunmi.
+
+### 27/11 — Màn ngoài thiết kế lại, tự co giãn điện thoại / máy tính bảng / máy tính
+
+Chủ Quán chê màn ngoài "nhìn xấu quá", xem thiết kế trên khung vẽ "Sơ đồ bàn tính giờ" (hai phương án A lưới thẻ, B hàng ngang, rồi một màn dùng chung tự co giãn) và bảo "Làm vào app".
+
+- Chỉ chế độ tính giờ (`BanScreen(cheDoTinhGio: true)`, `_buildLuoiTinhGio`); tab Bàn giữ nguyên `_TableCard` cũ.
+- Đầu màn: ô xanh nổi `_TomTatTinhGio` ("Đang chơi 3 / 6 bàn", "Tiền giờ đang chạy" = tổng `tienGio` tạm tính) + nút Lịch đặt + ba ô lọc có số. Màn rộng từ 700 thì hai phần chung một dòng.
+- Bỏ hàng chip khu, chip "To/Vừa/Nhỏ", thanh Lịch đặt cũ, cột tổng quan bên phải và nút nổi "Thêm bàn". Mỗi khu có đầu khu: biểu tượng, tên, "x/y đang chơi", nút "…" (sửa khu), "+ Thêm bàn" (thêm vào đúng khu).
+- Lưới: thẻ rộng tối thiểu 300, cao 100, nội dung rộng tối đa 1440 rồi nằm giữa. Pixel 7 (411) 1 cột; 1024 3 cột; 1440 4 cột.
+- Thẻ `_TheBanTinhGio`: có khách nền xanh nổi (tên, nhãn QR / món chưa gửi bếp / Quá 6 giờ, "Vào … • khách • món", lượt đặt kế tiếp; bên phải Đã chơi giờ:phút + tổng tạm tính vàng viền xanh đen); trống nền trắng (giá/giờ • chỗ, nút "Mở bàn", chưa giá thì "Đặt giá"). Vẫn nhấp nháy viền khi có đơn QR, vẫn ghi log món chưa gửi bếp.
+- Số vàng nổi dùng chung `_soVangNoi` (khối Giờ chơi trong bàn cũng dùng).
+- Máy ảo: cỡ điện thoại và cỡ 1024 (đổi `wm size` tạm rồi trả lại) đúng thiết kế; chạm thẻ Bàn 1 mở màn bàn; "Mở bàn" ở Bàn 3 mở hộp số khách (đã đóng, không mở bàn thật). Chưa thử: máy Sunmi thật, cỡ máy tính thật (bản Windows / web), lọc Đang chơi / Trống, nút sửa khu, thêm bàn từ đầu khu.
+- Hướng dẫn `tinh-gio.md` sửa mục "Màn hình gồm những gì" và 3 chỗ nhắc thanh Lịch đặt / thẻ khung đặt; chưa đăng Boom.
+- Chủ Quán: "Thiếu Nhân viên Mở Bàn - Số Món khách gọi trong bàn". Thẻ có khách thêm dòng người mở bàn (`tenNhanVienTheoMaProvider`: staff_members.id = ban_sessions.waiter_id, đọc một lần khi mở màn; chưa có thì lấy người gọi món đầu tiên) và số món ("Chưa gọi món" khi 0). Thẻ cao 112. Bản thiết kế SoDo cập nhật theo.
+- SỰ CỐ khi thử: Bàn 2 quán Demo bị mở lúc 27/11 01:32:11 (1 khách, tài khoản Quán Nhỏ POS (Demo)) trong lúc Claude điều khiển máy ảo; rất có thể do một thao tác tự động. Chưa huỷ, đã báo Chủ Quán.
+
+### 28/11 — QC lại các việc 27/11 (Chủ Quán: "Test QC lại những thứ bạn vừa làm")
+
+- Chụp dữ liệu Demo trước / sau (chỉ đọc): giống hệt, không mở bàn, thêm bàn, sửa khu nào.
+- Máy ảo cỡ điện thoại: lọc Tất cả / Đang chơi / Trống đúng; "…" mở Sửa khu; "+ Thêm bàn" chọn sẵn đúng khu; "Mở bàn" mở hộp số khách (đã đóng); giữ lâu ra "Đặt giá giờ" / "Sửa tên, số chỗ"; Lịch đặt mở và quay lại; chạm thẻ có khách mở màn bàn, khối ĐANG TÍNH GIỜ chấm xanh khi dưới 6 giờ; tab Bàn thường giữ thẻ cũ có đồng hồ. Cỡ 1024: 3 cột; cỡ 1440: 4 cột. Chữ hệ thống 130%: không tràn.
+- Máy chủ (chỉ đọc): từ lúc áp 20261127 có 4 dòng tiền giờ chốt tên mới (A 2, A 3, Bàn 1, Bàn 2 Demo, 27/11 01:43), order_items cũng tên mới, 0 dòng tên cũ.
+- Người đọc mã độc lập báo, đã sửa: khu chưa có bàn bị ẩn mất (giờ "Tất cả" hiện mọi khu, khu trống có ô nhắc "Bấm Thêm bàn"); thẻ cao cố định 112 tràn khi chữ hệ thống to (giờ cao theo cỡ chữ, tối đa 190); bàn còn sót của khu đã xoá bị đếm vào tổng mà không có thẻ (giờ chỉ đếm bàn thuộc khu đang hiện); tên nhân viên tải lại mỗi lần lọc (giờ giữ suốt màn, chỉ theo mã quán, lỗi có ghi log); danh sách bàn lỗi thì quay mãi (giờ báo lỗi). Thẻ rộng tối thiểu 300 → 320 (tên người mở bị cắt sát số tiền).
+- Không sửa: giờ "Vào" theo múi giờ máy (máy đặt sai múi giờ thì lệch với hoá đơn) — app dùng giờ máy ở mọi chỗ khác.
+- Test ảnh mẫu Lịch đặt dùng ngày 28/11/2026, đúng hôm nay nên màn ghi "Hôm nay" và hỏng: đổi sang 30/11/2030 (cùng Thứ 7), ảnh mẫu mới chỉ khác vùng ngày. test/modules/tinh_gio 40/40.
+- Chưa thử trên máy: khu trống (Demo không có, tạo khu là ghi dữ liệu).
+
