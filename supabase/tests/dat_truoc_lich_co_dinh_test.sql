@@ -3,6 +3,8 @@
 -- 02/12/2030 là Thứ Hai → 03/12 T3, 05/12 T5.
 -- ============================================================================
 BEGIN;
+-- Như PostgREST trên máy chủ thật: UPDATE / DELETE không có WHERE bị chặn (bài học 28/11, lịch cố định).
+LOAD 'safeupdate';
 
 CREATE OR REPLACE FUNCTION public._lc_as(p_role text, p_uid uuid DEFAULT NULL, p_store uuid DEFAULT NULL)
 RETURNS void LANGUAGE plpgsql AS $f$

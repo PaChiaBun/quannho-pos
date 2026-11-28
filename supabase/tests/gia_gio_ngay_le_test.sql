@@ -4,6 +4,8 @@
 -- 30/04/2027 là Thứ Sáu; 03/05/2027 là Thứ Hai. Giá gốc 60.000.
 -- ============================================================================
 BEGIN;
+-- Như PostgREST trên máy chủ thật: UPDATE / DELETE không có WHERE bị chặn (bài học 28/11, lịch cố định).
+LOAD 'safeupdate';
 
 CREATE OR REPLACE FUNCTION public._nl_as(p_role text, p_uid uuid DEFAULT NULL, p_store uuid DEFAULT NULL)
 RETURNS void LANGUAGE plpgsql AS $f$

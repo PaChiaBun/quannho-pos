@@ -3,6 +3,8 @@
 -- Cần đã áp 20261128_dat_truoc_lich_co_dinh.sql. Gọi như máy chủ thật: đặt request.jwt.claim.sub = người dùng.
 -- ============================================================================
 BEGIN;
+-- Như PostgREST trên máy chủ thật: UPDATE / DELETE không có WHERE bị chặn (bài học 28/11, lịch cố định).
+LOAD 'safeupdate';
 
 CREATE OR REPLACE FUNCTION public._tc_ok(p_cond boolean, p_msg text)
 RETURNS void LANGUAGE plpgsql AS $f$

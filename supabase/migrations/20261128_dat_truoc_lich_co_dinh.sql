@@ -66,7 +66,7 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('ban_dat_truoc'), hashtext(p_table_id));
 
   CREATE TEMP TABLE IF NOT EXISTS _qn_buoi (tu timestamptz, den timestamptz) ON COMMIT DROP;
-  DELETE FROM _qn_buoi;
+  DELETE FROM _qn_buoi WHERE true;   -- PostgREST bật safeupdate: DELETE phải có WHERE (lỗi 21000 lúc app gọi 28/11)
   INSERT INTO _qn_buoi
   SELECT (d::date + v_gio) AT TIME ZONE TZ, ((d::date + v_gio) AT TIME ZONE TZ) + make_interval(mins => p_phut)
   FROM generate_series(v_ngay_dau, p_den_ngay, interval '1 day') d

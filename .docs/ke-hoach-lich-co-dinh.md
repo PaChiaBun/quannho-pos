@@ -39,3 +39,7 @@
 ### 28/11 18:18 — ĐÃ ÁP production
 
 Chủ Quán: "Áp cả 5 đợt ngay". `DRYRUN=1 bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh` trên máy chủ thật PASS (tự huỷ), rồi `bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh`: sao lưu, áp, test PASS. Mốc hoàn tác `quannho_before_*_20261128_181842.dump` (trong /root/quannho-backups); hoàn tác: `ROLLBACK=1 bash db-fix/dat_truoc_lich_co_dinh_ap_dung.sh`.
+
+### 28/11 18:44 — Sửa nóng trên production: đặt lặp từ app luôn lỗi
+
+Thử thật trên Demo: bấm "Đặt 4 buổi" báo "Chưa làm được, kiểm tra mạng rồi thử lại"; nhật ký app: `PostgrestException DELETE requires a WHERE clause (21000)`. PostgREST trên máy chủ bật **safeupdate**: `DELETE FROM _qn_buoi;` (xoá bảng tạm) bị chặn. Test SQL chạy bằng psql không có safeupdate nên bản sao lẫn test sau áp đều không bắt được. Sửa: `20261128_dat_truoc_lap_where_true.sql` (chỉ thêm `WHERE true`; cũng sửa trong `20261128_dat_truoc_lich_co_dinh.sql`). Tái hiện trên máy chủ trong giao dịch tự huỷ (trước lỗi, sau chạy), Chủ Quán cho áp, sao lưu `quannho_before_lap_where_true_20261128_184429.dump`, áp, test PASS. Năm bộ test mới (đợt 1, 3, 4, 6, 7) thêm `LOAD 'safeupdate';` ngay sau `BEGIN;` — chạy lại trên máy chủ: chỉ đợt 3 vấp (trước khi sửa), các đợt khác PASS. Sau sửa: Demo đặt 4 buổi T7 05/12 → 26/12, huỷ cả chuỗi, đúng.
