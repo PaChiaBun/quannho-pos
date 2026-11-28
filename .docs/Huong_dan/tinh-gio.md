@@ -9,6 +9,7 @@ nguon:
   - lib/modules/tinh_gio/loai_hinh.dart
   - lib/modules/tinh_gio/dat_truoc.dart
   - lib/modules/tinh_gio/dat_truoc_ui.dart
+  - lib/modules/tinh_gio/bao_cao_tinh_gio.dart
   - lib/screens/ban_screen.dart
   - supabase/migrations/20261123_ban_tinh_gio_v1.sql
   - supabase/migrations/20261124_ban_dat_truoc_v1.sql
@@ -109,6 +110,15 @@ Mở nhầm bàn: huỷ trong 5 phút đầu thì chỉ cần chọn lý do. Bà
 ### Xem tiền giờ trong báo cáo
 Tiền giờ nằm trong doanh thu như mọi món. Muốn tách tiền giờ với đồ ăn uống: Báo cáo, tab **Sản phẩm**, lọc danh mục của món giá giờ (ví dụ "Tiền giờ").
 
+### Báo cáo tính giờ (giờ đông khách, theo bàn)
+Ở màn Các hoạt động tính giờ bấm nút biểu đồ cạnh **"Lịch đặt"** (Chủ quán, Quản lý, Thu ngân và người có quyền xem báo cáo mới thấy nút này). Chọn **"Hôm nay"**, **"7 ngày"**, **"30 ngày"** hoặc **"Tháng này"**:
+- **"Lượt chơi"**, **"Giờ chơi"**, **"Tiền giờ"**, **"Món kèm"** (đồ ăn uống gọi thêm trong các lượt đó), kèm trung bình mỗi lượt và tiền giờ chiếm bao nhiêu phần trăm.
+- **"Giờ đông khách"**: mỗi cột là một giờ trong ngày, cột cao là nhiều bàn có khách; dòng trên ghi giờ đông nhất và trung bình bao nhiêu phần trăm số bàn có khách giờ đó. Dùng để chọn giờ đặt giá cao / khuyến mãi giờ vắng.
+- **"Theo ngày"**: tiền giờ (vàng) và món kèm (xanh) từng ngày.
+- **"Theo bàn"**: số lượt, giờ chơi, giờ chơi trung bình mỗi ngày, tiền giờ, tiền món của từng bàn / sân / phòng.
+
+Chỉ tính lượt đã thanh toán, theo ngày thanh toán; bàn huỷ không tính. Số tiền là trước giảm giá và phụ thu của hoá đơn, nên có thể lệch nhẹ với doanh thu ở màn Báo cáo.
+
 ### Đặt trước sân, bàn, phòng
 Khách gọi điện đặt sân, đặt bàn bi da, đặt phòng hát trước thì ghi ở đâu:
 1. Ở màn Các hoạt động tính giờ bấm nút **"Lịch đặt"** (hoặc nút tờ lịch ở góc trên màn Quản lý Bàn).
@@ -172,6 +182,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| Báo cáo tính giờ ghi "Chưa có lượt chơi nào được thanh toán trong khoảng này." | Chưa thanh toán bàn tính giờ nào trong khoảng đã chọn | Chọn khoảng dài hơn ("30 ngày") |
 | "Đã lưu lượt đặt, nhưng chưa nhận được cọc: …" | Lượt đặt đã ghi nhưng bước nhận cọc lỗi (mất mạng, máy chủ chưa có tiền cọc vào ví khách) | Bấm lại nút đặt trong hộp đó (chỉ làm phần cọc); hoặc chạm lượt đặt → "Sửa lượt đặt" để nhập cọc |
 | "Máy chủ chưa có tiền cọc vào ví khách. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần cọc | Báo chủ app; trong lúc chờ đặt không cọc |
 | "Nhận cọc cần khách hàng: chọn khách hoặc nhập số điện thoại" | Có tiền cọc mà chưa có khách | Chọn khách hoặc nhập số điện thoại |

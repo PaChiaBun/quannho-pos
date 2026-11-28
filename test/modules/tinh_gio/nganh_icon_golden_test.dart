@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quannho_pos/core/models/product_model.dart';
 import 'package:quannho_pos/core/providers/app_providers.dart';
 import 'package:quannho_pos/core/repositories/ban_repository.dart';
+import 'package:quannho_pos/modules/tinh_gio/bao_cao_tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
@@ -472,5 +473,46 @@ void main() {
     expect(find.text('Chuyển khoản'), findsOneWidget);
     expect(find.text('Đặt · nhận cọc 200.000 đ'), findsOneWidget);
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_coc_360.png'));
+  });
+
+  // Đợt 5: màn Báo cáo tính giờ 7 ngày (dữ liệu giả).
+  testWidgets('báo cáo tính giờ', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    BanTableModel b(String id, String ten) =>
+        BanTableModel(id: id, zoneId: 'z', storeId: 's', label: ten, seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p');
+    LuotChoi l(String ban, int ngay, int gio, int phut, double tienGio, double tienMon) => LuotChoi(
+          tableId: ban,
+          thanhToanLuc: DateTime(2030, 12, ngay, gio).add(Duration(minutes: phut)),
+          doan: [DoanGio(DateTime(2030, 12, ngay, gio), DateTime(2030, 12, ngay, gio).add(Duration(minutes: phut)))],
+          tienGio: tienGio,
+          tienMon: tienMon,
+        );
+    final ds = [
+      l('s1', 1, 18, 120, 240000, 60000),
+      l('s1', 2, 19, 90, 180000, 45000),
+      l('s2', 2, 17, 60, 100000, 20000),
+      l('s1', 4, 18, 120, 240000, 80000),
+      l('s3', 5, 20, 150, 250000, 120000),
+      l('s2', 6, 9, 60, 80000, 15000),
+      l('s1', 7, 18, 60, 120000, 30000),
+      l('s3', 7, 19, 120, 200000, 90000),
+    ];
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          luotChoiProvider.overrideWith((ref, k) async => ds),
+          banBaoCaoTinhGioProvider.overrideWith((ref) async => [b('s1', 'Sân 1'), b('s2', 'Sân 2'), b('s3', 'Sân 3')]),
+        ],
+        child: MaterialApp(debugShowCheckedModeBanner: false, home: BaoCaoTinhGioScreen(homNay: DateTime(2030, 12, 7))),
+      ));
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(find.text('Giờ đông khách'), findsOneWidget);
+    expect(find.text('Sân 1'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/bao_cao_tinh_gio_360.png'));
   });
 }
