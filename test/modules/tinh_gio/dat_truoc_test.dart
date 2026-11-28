@@ -122,5 +122,7 @@ void main() {
       d('9', 'Tư'),
     ];
     expect(khachQuenTu(ds).map((x) => x.id), ['1', '3', '6', '8']);
+    // lượt gắn hồ sơ khách k2 (số 0999) và lượt chỉ ghi số 0999: một chip
+    expect(khachQuenTu([d('a', 'Bình', sdt: '0999', kh: 'k2'), d('b', 'Bình', sdt: '0999'), d('c', 'Hoa')]).map((x) => x.id), ['a', 'c']);
   });
 }

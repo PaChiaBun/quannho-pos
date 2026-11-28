@@ -237,7 +237,8 @@ class _LichDatScreenState extends ConsumerState<LichDatScreen> {
     final nay = DateTime.now();
     if (_ngay != _dauNgay(nay)) return _ngay.add(const Duration(hours: 18));
     final phut = nay.hour * 60 + nay.minute;
-    final len = ((phut + 29) ~/ 30) * 30;
+    // sau 23:30 không nhảy sang 00:00 ngày mai (lưới đang xem hôm nay)
+    final len = math.min(((phut + 29) ~/ 30) * 30, 23 * 60 + 30);
     return _ngay.add(Duration(minutes: len));
   }
 
@@ -759,13 +760,15 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   bool _moCoc = false;
   late bool _moGhiChu = _ghiChu.text.isNotEmpty;
   bool _ghiChuMoTay = false;
+  /// Tạm tính cả lịch cố định đã tính (khoá, tiền): khung giá tính theo từng phút, đừng tính lại mỗi lần gõ phím.
+  (int, double)? _nhoLap;
 
   /// Lượt đang sửa đã có cọc trong hệ thống (đã thu / đã trừ / đã xử lý) → ô cọc chỉ để xem.
   bool get _cocDaKhoa => widget.sua?.cocTrangThai != null;
   double get _soCoc => double.tryParse(_coc.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   bool get _timLaSo => RegExp(r'^[0-9+][0-9 .]{2,}$').hasMatch(_tim.text.trim());
-  String get _tenLuu => (_khach?.name ?? (_timLaSo ? _phu.text : _tim.text)).trim();
-  String get _sdtLuu => (_khach != null ? (_khach!.phone ?? '') : (_timLaSo ? _tim.text : _phu.text)).trim();
+  String get _tenLuu => (_timLaSo ? _phu.text : _tim.text).trim();
+  String get _sdtLuu => (_timLaSo ? _tim.text : _phu.text).replaceAll(RegExp(r'[\s.\-]'), '');
   late DateTime _tu;
   late int _phut;
   bool _dangLuu = false;
@@ -787,7 +790,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
       _phut = s.gioDen.difference(s.gioTu).inMinutes;
       if (s.customerId != null) {
         CoreCustomerRepository().getById(s.customerId!).then((k) {
-          if (mounted && k != null) setState(() => _khach = k);
+          if (mounted && k != null && _khach == null) setState(() => _khach = k);
         }).catchError((_) {});
       }
     } else if (widget.tuMacDinh != null) {
@@ -797,7 +800,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
       // mặc định: đầu giờ kế tiếp nếu là hôm nay, không thì 18:00
       final luc = DateTime.now();
       final n = widget.ngay;
-      _tu = _dauNgay(n) == _dauNgay(luc) ? DateTime(n.year, n.month, n.day, luc.hour + 1) : DateTime(n.year, n.month, n.day, 18);
+      _tu = _dauNgay(n) == _dauNgay(luc) ? DateTime(n.year, n.month, n.day, math.min(luc.hour + 1, 23)) : DateTime(n.year, n.month, n.day, 18);
       _phut = 60;
     }
   }
@@ -834,7 +837,8 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     final t = await _hoiGio(_den);
     if (t == null) return;
     var den = DateTime(_tu.year, _tu.month, _tu.day, t.hour, t.minute);
-    if (!den.isAfter(_tu)) den = den.add(const Duration(days: 1));
+    if (den == _tu) return; // bằng giờ bắt đầu: bấm nhầm, không thành lượt 24 giờ
+    if (den.isBefore(_tu)) den = den.add(const Duration(days: 1));
     setState(() => _phut = den.difference(_tu).inMinutes);
   }
 
@@ -860,7 +864,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     _cho = Timer(const Duration(milliseconds: 300), () async {
       try {
         final ds = await CoreCustomerRepository().searchByNameOrPhone(q);
-        if (mounted && _tim.text.trim() == q) setState(() => _goiY = ds.take(4).toList());
+        if (mounted && _khach == null && _tim.text.trim() == q) setState(() => _goiY = ds.take(4).toList());
       } catch (_) {}
     });
   }
@@ -870,8 +874,10 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
         _khach = k;
         _goiY = const [];
         _loi = null;
+        // khách chưa lưu số thì giữ số vừa gõ (gửi kèm lượt đặt để gọi nhắc)
+        final soGo = _sdtLuu;
         _tim.text = k.name;
-        _phu.text = k.phone ?? '';
+        _phu.text = (k.phone ?? '').trim().isNotEmpty ? k.phone! : soGo;
       });
 
   void _chonQuen(KhachQuen q) {
@@ -1059,6 +1065,14 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     }
   }
 
+  double _tamTinhLap(List<DateTime> buoi, double gia, Object caiDat, double Function(DateTime) tienBuoi) {
+    final khoa = Object.hash(Object.hashAll(buoi), _phut, gia, identityHashCode(caiDat));
+    if (_nhoLap?.$1 == khoa) return _nhoLap!.$2;
+    final v = buoi.fold<double>(0, (s, b) => s + tienBuoi(b));
+    _nhoLap = (khoa, v);
+    return v;
+  }
+
   // ── Các phần của hộp ──────────────────────────────────────────────────────
 
   Widget _nhanMuc(String s) => Padding(
@@ -1077,8 +1091,10 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
   /// Khách: thẻ khách đã chọn, hoặc ô tìm + khách khớp + khách quen + ô phụ của khách mới.
   Widget _phanKhach(List<KhachQuen> quen) {
     final k = _khach;
-    if (k != null) {
-      final khoa = widget.sua?.coCocCho == true; // cọc đang trong ví khách này: không đổi khách
+    // cọc đang trong ví khách của lượt: không đổi khách (kể cả lúc chưa tải được hồ sơ khách)
+    final khoa = widget.sua?.coCocCho == true;
+    if (k != null || khoa) {
+      final ten = k?.name ?? _tim.text.trim();
       return Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
         decoration: BoxDecoration(
@@ -1088,15 +1104,17 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
         ),
         child: Row(
           children: [
-            _anh(k.name, 40, _kNavy),
+            _anh(ten, 40, _kNavy),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(k.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(15.5, FontWeight.w800)),
+                  Text(ten, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(15.5, FontWeight.w800)),
                   Text(
-                    [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví ${fmtVnd(k.realBalance)}'].join(' · '),
+                    k == null
+                        ? [if (_sdtLuu.isNotEmpty) _sdtLuu, 'đã cọc, không đổi khách'].join(' · ')
+                        : [if ((k.phone ?? '').isNotEmpty) k.phone!, 'ví\u00A0${fmtVnd(k.realBalance).replaceAll(' ', '\u00A0')}'].join(' · '),
                     style: _chu(12.5, FontWeight.w600, _kTeal),
                   ),
                 ],
@@ -1143,7 +1161,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                           children: [
                             Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(14, FontWeight.w700)),
                             Text(
-                              [if ((g.phone ?? '').isNotEmpty) g.phone!, 'ví ${fmtVnd(g.realBalance)}'].join(' · '),
+                              [if ((g.phone ?? '').isNotEmpty) g.phone!, 'ví\u00A0${fmtVnd(g.realBalance).replaceAll(' ', '\u00A0')}'].join(' · '),
                               style: _chu(12, FontWeight.w500, _kNavy.withValues(alpha: 0.6)),
                             ),
                           ],
@@ -1177,7 +1195,10 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                           children: [
                             _anh(kq.ten, 22, _kMauAnh[i % _kMauAnh.length]),
                             const SizedBox(width: 6),
-                            Text(kq.ten, style: _chu(13, FontWeight.w700)),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 180),
+                              child: Text(kq.ten, maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(13, FontWeight.w700)),
+                            ),
                           ],
                         ),
                       ),
@@ -1597,7 +1618,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
     final coc = _soCoc > 0 && !_cocDaKhoa;
     final buoi = _buoi;
     final tomTat = [
-      if (_lap && buoi.isNotEmpty && tien != null) 'Tạm tính ${buoi.length} buổi · ${fmtVnd(buoi.fold<double>(0, (s, b) => s + tienBuoi(b)))}',
+      if (_lap && buoi.isNotEmpty && tien != null) 'Tạm tính ${buoi.length} buổi · ${fmtVnd(_tamTinhLap(buoi, gia, caiDat, tienBuoi))}',
       if (!_lap && coc && tien != null) 'Tạm tính ${fmtVnd(tien)}',
       if (coc) 'cọc ${fmtVnd(_soCoc)}',
     ].join(' · ');
@@ -1680,7 +1701,7 @@ class _DatTruocFormSheetState extends ConsumerState<DatTruocFormSheet> {
                       children: [
                         _oGio('Bắt đầu', _tu, tru: () => _doiTu(-30), cong: () => _doiTu(30), chon: _chonGio),
                         const SizedBox(width: 10),
-                        _oGio('Kết thúc', _den, tru: () => _doiPhut(-30), cong: () => _doiPhut(30), chon: _chonGioDen),
+                        _oGio(_dauNgay(_den) == _dauNgay(_tu) ? 'Kết thúc' : 'Kết thúc · hôm sau', _den, tru: () => _doiPhut(-30), cong: () => _doiPhut(30), chon: _chonGioDen),
                       ],
                     ),
                     const SizedBox(height: 10),

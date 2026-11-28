@@ -619,6 +619,83 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_moi_360.png'));
   });
 
+  // Màn hẹp 320, chữ to 1,3 (máy để cỡ chữ lớn): mở hết các dòng, không tràn.
+  testWidgets('hộp đặt màn 320 chữ to không tràn', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(320, 1600);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final loi = <Object>[];
+    await runZonedGuarded(() async {
+      await moHop(tester, gio: 18);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Anh Nam'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3 giờ'));
+      await tester.tap(find.text('Tiền cọc'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('500.000'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ghi chú'));
+      await tester.pumpAndSettle();
+    }, (e, _) => loi.add(e));
+    expect(tester.takeException(), isNull);
+    expect(loi.where((e) => '$e'.contains('overflow')), isEmpty);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_320_chu_to.png'));
+  });
+
+  // Sửa lượt đặt đã nhận cọc: không lặp tuần, cọc chỉ để xem, không đổi khách, nút "Lưu".
+  testWidgets('hộp sửa lượt đặt đã có cọc', (tester) async {
+    await _napPhong();
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sua = DatTruoc(
+        id: 'b', tableId: 's1', tenKhach: 'Chị Lan', sdt: '0912345678', gioTu: DateTime(2030, 12, 4, 19),
+        gioDen: DateTime(2030, 12, 4, 20, 30), trangThai: 'da_dat', createdAt: DateTime(2030, 11, 29), ghiChu: 'Cần bóng mới',
+        tienCoc: 100000, cocTrangThai: 'da_thu', cocQuy: 'cash');
+    await runZonedGuarded(() async {
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          khachQuenDatProvider.overrideWith((ref) async => quen),
+          giaGioCaiDatProvider.overrideWith((ref) async => const {}),
+          allProductsProvider.overrideWith((ref) => Stream.value([monGio(200000)])),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: const Color(0xFF6B6A8A),
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: DatTruocFormSheet(
+                ban: BanTableModel(id: 's1', zoneId: 'z', storeId: 's', label: 'Sân 1', seats: 4, sortOrder: 0, isActive: true, giaGioProductId: 'p'),
+                ngay: DateTime(2030, 12, 4),
+                trongNgay: [luot('a', 'Anh Hùng', 17, 18, 'da_nhan'), sua],
+                sua: sua,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+    }, (_, __) {});
+    expect(tester.takeException(), isNull);
+    expect(find.text('Sửa lượt đặt · Sân 1'), findsOneWidget);
+    expect(find.text('0912345678 · đã cọc, không đổi khách'), findsOneWidget, reason: 'chưa tải được hồ sơ khách vẫn khoá');
+    expect(find.text('Đổi'), findsNothing);
+    expect(find.byType(TextField), findsOneWidget, reason: 'chỉ còn ô ghi chú');
+    expect(find.text('Lặp lại hàng tuần'), findsNothing);
+    expect(find.text('Đã cọc 100.000 đ · đang trong ví khách, thanh toán bàn tự trừ'), findsOneWidget);
+    expect(find.textContaining('Trống, không trùng lượt nào · tạm tính 300.000 đ'), findsOneWidget, reason: 'không tự trùng với chính nó');
+    expect(find.text('CLB Cầu lông'), findsNothing, reason: 'sửa thì không gợi ý khách quen');
+    expect(find.text('Lưu'), findsOneWidget);
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dat_sua_coc_360.png'));
+  });
+
   testWidgets('hộp đặt đã điền: khách quen, trùng giờ, cọc, lặp tuần', (tester) async {
     await _napPhong();
     tester.view.physicalSize = const Size(360, 1400);
@@ -648,7 +725,7 @@ void main() {
     }, (_, __) {});
     expect(tester.takeException(), isNull);
     expect(trung, 'Trùng Chị Lan 19:00–20:00 · đổi giờ hoặc chọn bàn khác');
-    expect(find.text('0901111222 · ví 0 đ'), findsOneWidget);
+    expect(find.text('0901111222 · ví\u00A00\u00A0đ'), findsOneWidget);
     expect(find.textContaining('4 buổi · T4 · 20:00–22:00'), findsOneWidget);
     expect(find.text('Tạm tính 4 buổi · 1.600.000 đ · cọc 200.000 đ'), findsOneWidget);
     expect(find.text('Đặt 4 buổi · nhận cọc 200.000 đ'), findsOneWidget);

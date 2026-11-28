@@ -157,7 +157,10 @@ List<DatTruoc> khachQuenTu(List<DatTruoc> ds, {int toiDa = 4}) {
     final ten = d.tenKhach.trim();
     if (ten.isEmpty) continue;
     final sdt = d.sdt?.trim() ?? '';
-    if (!thay.add(d.customerId ?? (sdt.isNotEmpty ? sdt : ten.toLowerCase()))) continue;
+    // một khách có thể vừa có lượt gắn hồ sơ vừa có lượt chỉ ghi số: trùng khách hàng hoặc trùng số là một
+    final khoa = [?d.customerId, if (sdt.isNotEmpty) sdt, if (d.customerId == null && sdt.isEmpty) ten.toLowerCase()];
+    if (khoa.any(thay.contains)) continue;
+    thay.addAll(khoa);
     ra.add(d);
     if (ra.length == toiDa) break;
   }
