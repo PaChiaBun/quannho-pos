@@ -664,34 +664,50 @@ class _BanScreenState extends ConsumerState<BanScreen> {
 
   bool _isOpeningTable = false;
 
+  /// Màn Lịch đặt. Quay về thì đọc lại lượt đặt gần đây: màn này bị che nên luồng theo dõi bị tạm dừng, thẻ bàn
+  /// không thấy lượt vừa đặt cho tới khi mở lại app (thử Demo 28/11).
+  Future<void> _moLichDat(BuildContext context) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LichDatScreen()));
+    if (mounted) ref.invalidate(datTruocGanDayProvider);
+  }
+
   Future<void> _openTable(BanTableModel table, BanZoneModel zone) async {
     if (_isOpeningTable) return;
     _isOpeningTable = true;
     try {
       // Bàn có lượt đặt trước trong 60 phút tới (hoặc đang trong khung đặt): hỏi ai đang nhận bàn.
       String? nhanLuotDat;
-      final datKe = ref.read(tinhGioModuleActiveProvider)
-          ? luotDatKeTiep(
-              ref.read(datTruocGanDayProvider).value ?? const <DatTruoc>[],
-              table.id,
-              DateTime.now(),
-            )
-          : null;
-      if (datKe != null && datKe.gioTu.difference(DateTime.now()) <= const Duration(minutes: 60)) {
+      DatTruoc? datKe;
+      if (ref.read(tinhGioModuleActiveProvider)) {
+        // Hỏi thẳng máy chủ (danh sách trong máy có thể cũ — 28/11 đặt ở Lịch đặt xong quay về, Mở bàn không hỏi
+        // nhận khách nên không trừ cọc). Mất mạng thì dùng danh sách trong máy.
+        try {
+          datKe = await ref.read(datTruocRepositoryProvider).luotKeTiepCuaBan(table.id);
+        } catch (_) {
+          datKe = luotDatKeTiep(
+            ref.read(datTruocGanDayProvider).value ?? const <DatTruoc>[],
+            table.id,
+            DateTime.now(),
+          );
+        }
+        if (!mounted) return;
+      }
+      final ke = datKe; // biến cục bộ final để dùng trong hộp thoại
+      if (ke != null && ke.gioTu.difference(DateTime.now()) <= const Duration(minutes: 60)) {
         final chon = await showDialog<String>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('${table.label} có khách đặt ${gioPhut(datKe.gioTu)}–${gioPhut(datKe.gioDen)}'),
-            content: Text('Lượt đặt của ${datKe.tenKhach}. Ai đang nhận bàn này?'),
+            title: Text('${table.label} có khách đặt ${gioPhut(ke.gioTu)}–${gioPhut(ke.gioDen)}'),
+            content: Text('Lượt đặt của ${ke.tenKhach}. Ai đang nhận bàn này?'),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Thôi')),
               TextButton(onPressed: () => Navigator.pop(ctx, 'khac'), child: const Text('Khách khác')),
-              TextButton(onPressed: () => Navigator.pop(ctx, 'dat'), child: Text('${datKe.tenKhach} đã đến')),
+              TextButton(onPressed: () => Navigator.pop(ctx, 'dat'), child: Text('${ke.tenKhach} đã đến')),
             ],
           ),
         );
         if (chon == null || !mounted) return;
-        if (chon == 'dat') nhanLuotDat = datKe.id;
+        if (chon == 'dat') nhanLuotDat = ke.id;
       }
       final session = await showModalBottomSheet<BanSessionModel>(
         context: context,
@@ -1001,9 +1017,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             IconButton(
               icon: const Icon(Icons.event_note_rounded, color: _kNavy),
               tooltip: 'Lịch đặt',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LichDatScreen()),
-              ),
+              onPressed: () => _moLichDat(context),
             ),
           IconButton(
             icon: const Icon(Icons.add_location_alt_rounded, color: _kNavy),
@@ -1300,9 +1314,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const LichDatScreen()),
-            ),
+            onTap: () => _moLichDat(context),
             child: SizedBox(
               height: 48,
               child: Padding(

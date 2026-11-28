@@ -165,6 +165,17 @@ class DatTruocRepository {
     return rows.map(DatTruoc.fromMap).toList()..sort((a, b) => a.gioTu.compareTo(b.gioTu));
   }
 
+  /// Lượt đang chờ khách gần nhất của bàn [tableId] trong 60 phút tới (hoặc đang trong khung), đọc thẳng máy chủ.
+  /// Dùng lúc Mở bàn: danh sách theo dõi có thể cũ (màn bị che thì Riverpod tạm dừng luồng) mà đây là chỗ quyết
+  /// định gắn lượt đặt (và trừ cọc). Lỗi mạng → ném lỗi, nơi gọi dùng danh sách trong máy.
+  Future<DatTruoc?> luotKeTiepCuaBan(String tableId) async {
+    final storeId = await _storeId();
+    if (storeId == null) return null;
+    final luc = DateTime.now();
+    final ds = await _doc(storeId, luc, luc.add(const Duration(minutes: 61))).timeout(const Duration(seconds: 8));
+    return luotDatKeTiep(ds, tableId, luc);
+  }
+
   /// Các lượt có khung giờ chạm vào khoảng thời gian do [khoang] trả về (gọi lại mỗi lần tải).
   Stream<List<DatTruoc>> watch(({DateTime tu, DateTime den}) Function() khoang) async* {
     final storeId = await _storeId();
