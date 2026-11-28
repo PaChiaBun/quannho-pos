@@ -15,7 +15,7 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 | 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | App xong (0cc4764); máy chủ CHƯA ÁP — `ke-hoach-lich-co-dinh.md` |
 | 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 3) — `ke-hoach-tien-coc.md` |
 | 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | App xong, chỉ đọc, không đổi máy chủ — `ke-hoach-bao-cao-tinh-gio.md` |
-| 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | Chưa |
+| 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | App xong; máy chủ viết xong, bản sao đạt, CHƯA ÁP (áp sau đợt 1) — `ke-hoach-ngay-le-gia-gio.md` |
 | 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | Chưa |
 | 8 | Mất mạng: đo xem quán bị chặn thanh toán bàn tính giờ bao nhiêu lần, rồi mới quyết có làm chế độ dự phòng | mọi quán | Có | Chưa — đo trước |
 | — | Cân nhắc sau, chỉ làm khi có quán thật đòi: tạm dừng giờ, khách tự đặt qua mạng, màn hình phụ cho khách xem giờ | | | Chưa |
@@ -47,3 +47,4 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 - 28/11: đợt 4 giai đoạn A (máy chủ cọc = ví khách, thanh toán bàn v6) viết xong, bản sao đạt.
 - 28/11: đợt 4 giai đoạn B–D (app: hộp đặt khách + cọc, xử lý cọc, thu tiền bàn trừ cọc, hồ sơ khách) viết xong, thử máy ảo; Chủ Quán duyệt thiết kế, bảo commit, chưa áp.
 - 28/11: đợt 5 (báo cáo tính giờ, chỉ đọc) viết xong, thử máy ảo.
+- 28/11: đợt 6 (ngày lễ) Chủ Quán chốt khung Lễ luôn thắng + quán tự thêm ngày; máy chủ viết, bản sao đạt (chưa áp); app viết xong.

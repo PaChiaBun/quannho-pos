@@ -2,10 +2,13 @@
 // (TinhGioGiaGioSheet); trạng thái do hộp đó giữ và lưu một lần cùng giá một giờ.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/utils/money_formatter.dart';
 import 'gia_gio.dart';
+import 'ngay_le_ui.dart';
+import 'tinh_gio_widgets.dart' show ngayLeProvider;
 
 const _kNavy = Color(0xFF1C2151);
 const _kCream = Color(0xFFFFF8F0);
@@ -118,11 +121,13 @@ class GiaGioCaiThem extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
               child: Text(
-                'Ngoài các khung này tính giá một giờ ở trên. Khung nằm trên được ưu tiên khi hai khung trùng giờ.',
+                'Ngoài các khung này tính giá một giờ ở trên. Khung nằm trên được ưu tiên khi hai khung trùng giờ.'
+                '${caiDat.khung.any((k) => k.coNgayLe) ? ' Vào ngày lễ, khung có "ngày lễ" luôn được ưu tiên.' : ''}',
                 style: _chu(12, FontWeight.w500, _nhat(0.6)),
               ),
             ),
             for (var i = 0; i < caiDat.khung.length; i++) _dongKhung(context, i),
+            if (caiDat.khung.any((k) => k.coNgayLe)) const _DongNgayLe(),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
               child: OutlinedButton.icon(
@@ -258,15 +263,15 @@ class GiaGioCaiThem extends StatelessWidget {
 }
 
 /// Hộp thêm / sửa một khung giá. Trả về khung mới (null = huỷ).
-class KhungGiaSheet extends StatefulWidget {
+class KhungGiaSheet extends ConsumerStatefulWidget {
   final KhungGia? khung;
   const KhungGiaSheet({super.key, this.khung});
 
   @override
-  State<KhungGiaSheet> createState() => _KhungGiaSheetState();
+  ConsumerState<KhungGiaSheet> createState() => _KhungGiaSheetState();
 }
 
-class _KhungGiaSheetState extends State<KhungGiaSheet> {
+class _KhungGiaSheetState extends ConsumerState<KhungGiaSheet> {
   static const _tenThu = {1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7', 7: 'CN'};
   late Set<int> _thu = {...?widget.khung?.thu};
   late int _tu = widget.khung?.tuPhut ?? 17 * 60;
@@ -315,7 +320,7 @@ class _KhungGiaSheetState extends State<KhungGiaSheet> {
 
   void _luu() {
     final gia = _gia;
-    if (_thu.isEmpty) return setState(() => _loi = 'Chọn ít nhất một ngày.');
+    if (_thu.isEmpty) return setState(() => _loi = 'Chọn ít nhất một ngày, hoặc bật Ngày lễ.');
     if (gia == null) return setState(() => _loi = 'Nhập giá một giờ của khung này.');
     if (!_caNgay && _tu == _den) return setState(() => _loi = 'Giờ bắt đầu và kết thúc trùng nhau. Muốn cả ngày thì bật "Cả ngày".');
     Navigator.pop(
@@ -324,12 +329,19 @@ class _KhungGiaSheetState extends State<KhungGiaSheet> {
     );
   }
 
+  /// Nút nhanh chỉ đổi các thứ, giữ nguyên Ngày lễ ([thu] rỗng = "Chỉ ngày lễ").
   Widget _nutNhanh(String nhan, Set<int> thu) {
-    final chon = _thu.length == thu.length && _thu.containsAll(thu);
+    final thuNay = _thu.where((d) => d != kThuNgayLe).toSet();
+    final chon = thu.isEmpty
+        ? thuNay.isEmpty && _thu.contains(kThuNgayLe)
+        : thuNay.length == thu.length && thuNay.containsAll(thu);
     return ChoiceChip(
       label: Text(nhan),
       selected: chon,
-      onSelected: (_) => setState(() => _thu = {...thu}),
+      onSelected: (_) => setState(() {
+        _thu = thu.isEmpty ? {kThuNgayLe} : {...thu, if (_thu.contains(kThuNgayLe)) kThuNgayLe};
+        _loi = null;
+      }),
       showCheckmark: false,
       labelStyle: _chu(12.5, FontWeight.w700, chon ? Colors.white : _kNavy),
       selectedColor: _kNavy,
@@ -359,6 +371,54 @@ class _KhungGiaSheetState extends State<KhungGiaSheet> {
           ),
         ),
       );
+
+  /// Dòng bật "Ngày lễ" (thứ 8) + các ngày lễ sắp tới của quán.
+  Widget _oNgayLe() {
+    final bat = _thu.contains(kThuNgayLe);
+    final sapToi = ngayLeSapToi(ref.watch(ngayLeProvider).value ?? const [], DateTime.now());
+    final tomTat = sapToi.isEmpty
+        ? 'Quán chưa có ngày lễ nào'
+        : 'Sắp tới: ${sapToi.take(4).map((n) => ngayLeNgan(n.ngay)).join(', ')}'
+            '${sapToi.length > 4 ? ' +${sapToi.length - 4}' : ''}';
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: bat ? _kNavy : _nhat(0.14), width: bat ? 1.5 : 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile(
+            value: bat,
+            onChanged: (v) => setState(() {
+              v ? _thu.add(kThuNgayLe) : _thu.remove(kThuNgayLe);
+              _loi = null;
+            }),
+            activeTrackColor: _kTeal,
+            contentPadding: const EdgeInsets.fromLTRB(12, 0, 6, 0),
+            secondary: Icon(Icons.celebration_rounded, color: bat ? _kTeal : _nhat(0.5)),
+            title: Text('Ngày lễ', style: _chu(14, FontWeight.w800)),
+            subtitle: Text(bat ? tomTat : 'Bật để khung này áp cả ngày lễ, và thắng khung thường',
+                style: _chu(12, FontWeight.w600, sapToi.isEmpty && bat ? _kRed : _nhat(0.6))),
+          ),
+          if (bat)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                child: TextButton.icon(
+                  onPressed: () => moNgayLeSheet(context),
+                  icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                  label: Text(sapToi.isEmpty ? 'Thêm ngày lễ của quán' : 'Sửa ngày lễ của quán'),
+                  style: TextButton.styleFrom(foregroundColor: _kNavy, textStyle: _chu(13, FontWeight.w700)),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -422,8 +482,11 @@ class _KhungGiaSheetState extends State<KhungGiaSheet> {
                   _nutNhanh('Mọi ngày', {1, 2, 3, 4, 5, 6, 7}),
                   _nutNhanh('T2–T6', {1, 2, 3, 4, 5}),
                   _nutNhanh('T7, CN', {6, 7}),
+                  _nutNhanh('Chỉ ngày lễ', const {}),
                 ],
               ),
+              const SizedBox(height: 8),
+              _oNgayLe(),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -492,6 +555,34 @@ class _KhungGiaSheetState extends State<KhungGiaSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Ngày lễ của quán: 4 ngày sắp tới · Sửa" dưới danh sách khung khi có khung Lễ.
+class _DongNgayLe extends ConsumerWidget {
+  const _DongNgayLe();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final n = ngayLeSapToi(ref.watch(ngayLeProvider).value ?? const [], DateTime.now()).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 8, 4),
+      child: Row(
+        children: [
+          Icon(Icons.celebration_rounded, size: 18, color: n == 0 ? _kRed : _kTeal),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(n == 0 ? 'Quán chưa có ngày lễ nào: khung ngày lễ chưa áp' : 'Ngày lễ của quán: $n ngày sắp tới',
+                style: _chu(12.5, FontWeight.w700, n == 0 ? _kRed : _nhat(0.75))),
+          ),
+          TextButton(
+            onPressed: () => moNgayLeSheet(context),
+            style: TextButton.styleFrom(foregroundColor: _kNavy, textStyle: _chu(13, FontWeight.w800)),
+            child: Text(n == 0 ? 'Thêm' : 'Sửa'),
+          ),
+        ],
       ),
     );
   }

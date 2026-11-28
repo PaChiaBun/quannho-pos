@@ -174,8 +174,8 @@ BEGIN
   j := public._gk_rpc(format($q$SELECT public.ban_gia_gio_luu_v1(%L, ARRAY[%L], 7, 0, 0, '[]'::jsonb)$q$, S, T2));
   PERFORM public._gk_ok(j->>'error_code' = 'INVALID_PAYLOAD', 'L4 block 7 phút không có trong danh sách');
   j := public._gk_rpc(format($q$SELECT public.ban_gia_gio_luu_v1(%L, ARRAY[%L], 1, 0, 0,
-        '[{"thu":[8],"tu":"17:00","den":"23:00","gia":1}]'::jsonb)$q$, S, T2));
-  PERFORM public._gk_ok(j->>'error_code' = 'INVALID_PAYLOAD', 'L5 thứ 8 không hợp lệ');
+        '[{"thu":[9],"tu":"17:00","den":"23:00","gia":1}]'::jsonb)$q$, S, T2));
+  PERFORM public._gk_ok(j->>'error_code' = 'INVALID_PAYLOAD', 'L5 thứ 9 không hợp lệ (thứ 8 = Ngày lễ từ đợt 6)');
   j := public._gk_rpc(format($q$SELECT public.ban_gia_gio_luu_v1(%L, ARRAY['khong-co'], 1, 0, 0, '[]'::jsonb)$q$, S));
   PERFORM public._gk_ok(j->>'error_code' = 'INVALID_STATE', 'L6 bàn không thuộc quán bị từ chối');
   j := public._gk_rpc(format($q$SELECT public.ban_gia_gio_luu_v1(%L, ARRAY[%L], 1, 0, 0, '[]'::jsonb)$q$, S, T3));

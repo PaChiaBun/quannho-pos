@@ -1,9 +1,16 @@
 // Giá theo khung giờ + làm tròn block (đợt 1 lộ trình tính giờ, .docs/ke-hoach-gia-gio-khung-block.md).
 // CHÉP ĐÚNG TỪNG BƯỚC hàm máy chủ qn_tinh_gio_tinh_tien_v2 (migration 20261128_gia_gio_khung_block.sql):
 // số tạm tính trên app phải bằng số máy chủ chốt lúc thanh toán. Bộ ca kiểm dùng chung:
-// supabase/tests/gia_gio_khung_block_test.sql ↔ test/modules/tinh_gio/gia_gio_khung_test.dart.
+// supabase/tests/gia_gio_khung_block_test.sql ↔ test/modules/tinh_gio/gia_gio_khung_test.dart;
+// ngày lễ (đợt 6): supabase/tests/gia_gio_ngay_le_test.sql ↔ test/modules/tinh_gio/gia_gio_ngay_le_test.dart.
 
-/// Một khung giá của bàn. [thu]: 1 = Thứ Hai … 7 = Chủ nhật, theo ngày khung BẮT ĐẦU.
+/// Thứ 8 trong [KhungGia.thu] = Ngày lễ (đợt 6, migration 20261128_gia_gio_ngay_le.sql).
+const kThuNgayLe = 8;
+
+/// Ngày dạng số yyyymmdd (khoá tập ngày lễ, không lệch giờ).
+int soNgay(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
+
+/// Một khung giá của bàn. [thu]: 1 = Thứ Hai … 7 = Chủ nhật, 8 = Ngày lễ; theo ngày khung BẮT ĐẦU.
 /// [tuPhut], [denPhut]: phút trong ngày (0–1439), giờ Việt Nam; đến < từ = qua đêm; từ = đến = cả ngày.
 class KhungGia {
   final Set<int> thu;
@@ -14,16 +21,29 @@ class KhungGia {
 
   bool get caNgay => tuPhut == denPhut;
   bool get quaDem => tuPhut > denPhut;
+  bool get coNgayLe => thu.contains(kThuNgayLe);
 
-  /// Thời điểm [luc] (giờ máy, coi là giờ Việt Nam) có thuộc khung không.
-  bool chua(DateTime luc) {
-    final d = luc.weekday; // Dart: Thứ Hai = 1 … Chủ nhật = 7, giống isodow của Postgres
-    final truoc = d == 1 ? 7 : d - 1;
+  /// Giờ [luc] thuộc khung khi ngày bắt đầu khung (hôm nay, hoặc hôm qua với phần qua đêm) hợp [nay] / [truoc].
+  bool _khop(DateTime luc, bool nay, bool truoc) {
     final s = luc.hour * 3600000000 + luc.minute * 60000000 + luc.second * 1000000 + luc.millisecond * 1000 + luc.microsecond;
     final tu = tuPhut * 60000000, den = denPhut * 60000000;
-    if (tu == den) return thu.contains(d);
-    if (tu < den) return thu.contains(d) && s >= tu && s < den;
-    return (thu.contains(d) && s >= tu) || (thu.contains(truoc) && s < den);
+    if (tu == den) return nay;
+    if (tu < den) return nay && s >= tu && s < den;
+    return (nay && s >= tu) || (truoc && s < den);
+  }
+
+  /// Thời điểm [luc] (giờ máy, coi là giờ Việt Nam) có thuộc khung theo THỨ không (bỏ qua ngày lễ).
+  bool chua(DateTime luc) {
+    final d = luc.weekday; // Dart: Thứ Hai = 1 … Chủ nhật = 7, giống isodow của Postgres
+    return _khop(luc, thu.contains(d), thu.contains(d == 1 ? 7 : d - 1));
+  }
+
+  /// Khung Lễ có chứa [luc] không, với [ngayLe] là tập [soNgay] các ngày lễ của quán.
+  bool chuaNgayLe(DateTime luc, Set<int> ngayLe) {
+    if (!coNgayLe || ngayLe.isEmpty) return false;
+    final homNay = DateTime(luc.year, luc.month, luc.day);
+    return _khop(luc, ngayLe.contains(soNgay(homNay)),
+        ngayLe.contains(soNgay(DateTime(homNay.year, homNay.month, homNay.day - 1))));
   }
 
   /// "17:00 – 23:00", "22:00 – 02:00 (qua đêm)", "Cả ngày".
@@ -56,15 +76,27 @@ class KhungGia {
   }
 }
 
+/// Một ngày lễ của quán (bảng ban_ngay_le).
+class NgayLe {
+  final DateTime ngay;
+  final String ten;
+  const NgayLe(this.ngay, this.ten);
+}
+
 String gioPhutChu(int phut) => '${(phut ~/ 60).toString().padLeft(2, '0')}:${(phut % 60).toString().padLeft(2, '0')}';
 
 String thuChuCua(Set<int> thu) {
   const ten = {1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7', 7: 'CN'};
-  final ds = thu.toList()..sort();
-  if (ds.length == 7) return 'Mọi ngày';
-  // dãy liền nhau từ 3 ngày: "T2–T6"
-  if (ds.length >= 3 && ds.last - ds.first == ds.length - 1) return '${ten[ds.first]}–${ten[ds.last]}';
-  return ds.map((d) => ten[d]).join(', ');
+  final ds = thu.where((d) => d != kThuNgayLe).toList()..sort();
+  final le = thu.contains(kThuNgayLe);
+  if (ds.isEmpty) return le ? 'Ngày lễ' : '';
+  final chu = ds.length == 7
+      ? 'Mọi ngày'
+      // dãy liền nhau từ 3 ngày: "T2–T6"
+      : ds.length >= 3 && ds.last - ds.first == ds.length - 1
+          ? '${ten[ds.first]}–${ten[ds.last]}'
+          : ds.map((d) => ten[d]).join(', ');
+  return le ? '$chu, ngày lễ' : chu;
 }
 
 /// Các block được phép (khớp ràng buộc ban_gia_gio_block ở máy chủ).
@@ -75,9 +107,11 @@ class GiaGioCaiDat {
   final int block;
   final int toiThieu;
   final int anHan;
-  /// Theo thứ tự: khung đứng trên thắng khi chồng nhau.
+  /// Theo thứ tự: khung đứng trên thắng khi chồng nhau (vào ngày lễ, khung Lễ thắng trước).
   final List<KhungGia> khung;
-  const GiaGioCaiDat({this.block = 1, this.toiThieu = 0, this.anHan = 0, this.khung = const []});
+  /// Ngày lễ CỦA QUÁN ([soNgay]), dùng chung mọi bàn; không phải cài đặt của bàn (không so trong [trung]).
+  final Set<int> ngayLe;
+  const GiaGioCaiDat({this.block = 1, this.toiThieu = 0, this.anHan = 0, this.khung = const [], this.ngayLe = const {}});
 
   static const macDinh = GiaGioCaiDat();
 
@@ -91,11 +125,12 @@ class GiaGioCaiDat {
       khung.length == o.khung.length &&
       [for (var i = 0; i < khung.length; i++) '${khung[i].toJson()}' == '${o.khung[i].toJson()}'].every((x) => x);
 
-  GiaGioCaiDat copyWith({int? block, int? toiThieu, int? anHan, List<KhungGia>? khung}) => GiaGioCaiDat(
+  GiaGioCaiDat copyWith({int? block, int? toiThieu, int? anHan, List<KhungGia>? khung, Set<int>? ngayLe}) => GiaGioCaiDat(
         block: block ?? this.block,
         toiThieu: toiThieu ?? this.toiThieu,
         anHan: anHan ?? this.anHan,
         khung: khung ?? this.khung,
+        ngayLe: ngayLe ?? this.ngayLe,
       );
 }
 
@@ -129,16 +164,18 @@ int tinhGioLamTron(int phutChoi, GiaGioCaiDat c) {
   return tinh < c.toiThieu ? c.toiThieu : tinh;
 }
 
-/// Giá một giờ tại thời điểm [luc]: khung đầu tiên chứa nó, không thì giá gốc.
-double tinhGioGiaLuc(DateTime luc, double giaGoc, GiaGioCaiDat c) {
-  for (final k in c.khung) {
-    if (k.chua(luc)) return k.gia;
-  }
-  return giaGoc < 0 ? 0 : giaGoc;
-}
+/// Giá một giờ tại thời điểm [luc]: khung đang áp ([tinhGioKhungLuc]), không thì giá gốc.
+double tinhGioGiaLuc(DateTime luc, double giaGoc, GiaGioCaiDat c) =>
+    tinhGioKhungLuc(luc, c)?.gia ?? (giaGoc < 0 ? 0 : giaGoc);
 
-/// Khung đang áp lúc [luc] (null = giá gốc).
+/// Khung đang áp lúc [luc] (null = giá gốc). Ngày lễ: khung Lễ đầu tiên chứa [luc] thắng; không có thì như
+/// ngày thường — khung đầu tiên chứa [luc] theo thứ.
 KhungGia? tinhGioKhungLuc(DateTime luc, GiaGioCaiDat c) {
+  if (c.ngayLe.isNotEmpty) {
+    for (final k in c.khung) {
+      if (k.chuaNgayLe(luc, c.ngayLe)) return k;
+    }
+  }
   for (final k in c.khung) {
     if (k.chua(luc)) return k;
   }

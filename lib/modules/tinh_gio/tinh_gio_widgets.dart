@@ -43,12 +43,37 @@ final tinhGioGiaTheoMonProvider = Provider.autoDispose<Map<String, ProductModel>
   return {for (final p in ds) p.id: p};
 });
 
+/// Ngày lễ của quán (đợt 6, bảng ban_ngay_le), từ tuần trước trở đi, theo ngày. Máy chủ chưa có bảng hoặc lỗi
+/// mạng → rỗng (khung Lễ không áp, như máy chủ chưa áp đợt 6).
+final ngayLeProvider = FutureProvider.autoDispose<List<NgayLe>>((ref) async {
+  final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
+  if (storeId == null) return const [];
+  try {
+    final tu = DateTime.now().subtract(const Duration(days: 7));
+    final rows = await Supabase.instance.client
+        .from('ban_ngay_le')
+        .select('ngay, ten')
+        .eq('store_id', storeId)
+        .gte('ngay', '${tu.year}-${tu.month.toString().padLeft(2, '0')}-${tu.day.toString().padLeft(2, '0')}')
+        .order('ngay', ascending: true)
+        .timeout(const Duration(seconds: 10));
+    return [
+      for (final r in rows)
+        if (DateTime.tryParse('${r['ngay']}') case final d?) NgayLe(DateTime(d.year, d.month, d.day), '${r['ten'] ?? ''}'),
+    ];
+  } catch (e) {
+    debugPrint('[ngayLe] chưa đọc được ngày lễ (máy chủ chưa có hoặc lỗi mạng): $e');
+    return const [];
+  }
+});
+
 /// Khung giá + làm tròn của các bàn trong quán (đợt 1, bảng ban_gia_gio_cau_hinh / ban_gia_gio_khung). Đọc một
 /// lần khi màn mở; lưu xong thì invalidate. Máy chủ chưa có hai bảng (chưa áp migration) hoặc lỗi mạng → rỗng:
 /// app tính tạm như cũ, tiền thật vẫn do máy chủ chốt.
 final giaGioCaiDatProvider = FutureProvider.autoDispose<Map<String, GiaGioCaiDat>>((ref) async {
   final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
   if (storeId == null) return const {};
+  final ngayLe = {for (final n in await ref.watch(ngayLeProvider.future)) soNgay(n.ngay)};
   try {
     final db = Supabase.instance.client;
     final kq = await Future.wait([
@@ -73,10 +98,11 @@ final giaGioCaiDatProvider = FutureProvider.autoDispose<Map<String, GiaGioCaiDat
         toiThieu: (r['toi_thieu_phut'] as num?)?.toInt() ?? 0,
         anHan: (r['an_han_phut'] as num?)?.toInt() ?? 0,
         khung: khung[id] ?? const [],
+        ngayLe: ngayLe,
       );
     }
     for (final e in khung.entries) {
-      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(khung: e.value));
+      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(khung: e.value, ngayLe: ngayLe));
     }
     return ketQua;
   } catch (e) {

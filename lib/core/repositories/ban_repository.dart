@@ -1154,6 +1154,30 @@ class BanRepository {
     }
   }
 
+  /// Thêm / xoá ngày lễ của quán (`ban_ngay_le_luu_v1`, đợt 6). [them]: ngày → tên. Trả null khi đã lưu.
+  Future<String?> luuNgayLe({Map<DateTime, String> them = const {}, List<DateTime> xoa = const []}) async {
+    String ngay(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final storeId = await _storeId();
+    if (storeId == null) return 'Chưa chọn quán';
+    try {
+      final r = await _sb.rpc('ban_ngay_le_luu_v1', params: {
+        'p_store_id': storeId,
+        'p_them': [for (final e in them.entries) {'ngay': ngay(e.key), 'ten': e.value.trim()}],
+        'p_xoa': [for (final d in xoa) ngay(d)],
+      }).timeout(const Duration(seconds: 15));
+      if (r is Map && r['success'] == true) return null;
+      return (r is Map ? r['message'] as String? : null) ?? 'Chưa lưu được ngày lễ';
+    } catch (e) {
+      final s = '$e';
+      if (s.contains('PERMISSION_DENIED')) return 'Chỉ Chủ quán / Quản lý sửa được ngày lễ';
+      if (s.contains('NGAY_LE_QUA_NHIEU')) return 'Quán đã có quá 500 ngày lễ. Xoá bớt ngày cũ rồi thử lại.';
+      if (s.contains('PGRST202') || s.contains('Could not find the function')) {
+        return 'Máy chủ chưa có ngày lễ. Báo chủ app cập nhật máy chủ.';
+      }
+      return 'Chưa lưu được ngày lễ. Kiểm tra mạng rồi thử lại.';
+    }
+  }
+
   // ── Chuyển bàn ────────────────────────────────────────────────────────────
   /// Chuyển toàn bộ session (và tất cả items) sang bàn khác.
   /// Items không cần di chuyển vì chúng link qua session_id, không phải table_id.

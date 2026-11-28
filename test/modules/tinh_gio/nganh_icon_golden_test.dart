@@ -12,7 +12,9 @@ import 'package:quannho_pos/core/repositories/ban_repository.dart';
 import 'package:quannho_pos/modules/tinh_gio/bao_cao_tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc.dart';
 import 'package:quannho_pos/modules/tinh_gio/dat_truoc_ui.dart';
+import 'package:quannho_pos/modules/tinh_gio/gia_gio_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/loai_hinh.dart';
+import 'package:quannho_pos/modules/tinh_gio/ngay_le_ui.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio.dart';
 import 'package:quannho_pos/modules/tinh_gio/tinh_gio_widgets.dart';
 import 'package:quannho_pos/shared/widgets/module_tile.dart';
@@ -208,7 +210,7 @@ void main() {
   for (final (ten, coGia, coKhung) in const [('trong', false, false), ('da_co', true, false), ('co_khung', true, true)]) {
     testWidgets('hộp đặt giá giờ $ten', (tester) async {
       await _napPhong();
-      tester.view.physicalSize = Size(360, coKhung ? 1100 : 800);
+      tester.view.physicalSize = Size(360, coKhung ? 1200 : 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       ProductModel mon(String id, String ten, double gia, String dm) => ProductModel(
@@ -226,8 +228,10 @@ void main() {
                     'b2': const GiaGioCaiDat(block: 30, anHan: 5, toiThieu: 60, khung: [
                       KhungGia(thu: {1, 2, 3, 4, 5}, tuPhut: 17 * 60, denPhut: 23 * 60, gia: 80000),
                       KhungGia(thu: {6, 7}, tuPhut: 0, denPhut: 0, gia: 100000),
+                      KhungGia(thu: {kThuNgayLe}, tuPhut: 0, denPhut: 0, gia: 120000),
                     ]),
                 }),
+            ngayLeProvider.overrideWith((ref) async => [NgayLe(DateTime(2030, 12, 31), ''), NgayLe(DateTime(2031, 1, 1), '')]),
             allProductsProvider.overrideWith((ref) => Stream.value(<ProductModel>[
               mon('c1', 'Cà phê sữa đá', 25000, 'Cà phê'),
               if (coGia) mon('g60', 'Tiền giờ 60.000 đ', 60000, 'Tiền giờ'),
@@ -256,6 +260,39 @@ void main() {
       expect(find.text('Cà phê sữa đá'), findsNothing, reason: 'không liệt kê thực đơn');
       expect(find.text('60.000'), coGia ? findsNWidgets(2) : findsOneWidget, reason: 'ô giá điền sẵn + chip');
       expect(find.text('Không tính giờ (bàn thường)'), coGia ? findsOneWidget : findsNothing);
+      await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/gia_gio_$ten.png'));
+    });
+  }
+
+  // Đợt 6: hộp khung giá đang bật "Ngày lễ" và hộp Ngày lễ của quán (hôm nay cố định 02/12/2030).
+  final mauNgayLe = [
+    NgayLe(DateTime(2030, 12, 31), 'Giao thừa'),
+    NgayLe(DateTime(2031, 1, 1), 'Tết Dương lịch'),
+    for (var i = 0; i < 5; i++) NgayLe(DateTime(2031, 1, 22 + i), 'Tết'),
+  ];
+  for (final (ten, hop) in [
+    ('khung_le', const KhungGiaSheet(khung: KhungGia(thu: {6, 7, kThuNgayLe}, tuPhut: 0, denPhut: 0, gia: 120000))),
+    ('ngay_le', NgayLeSheet(homNay: DateTime(2030, 12, 2))),
+  ]) {
+    testWidgets('hộp $ten', (tester) async {
+      await _napPhong();
+      tester.view.physicalSize = Size(360, ten == 'ngay_le' ? 1250 : 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await runZonedGuarded(() async {
+        await tester.pumpWidget(ProviderScope(
+          overrides: [ngayLeProvider.overrideWith((ref) async => mauNgayLe)],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              backgroundColor: const Color(0xFF8E8A85),
+              body: Align(alignment: Alignment.bottomCenter, child: hop),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+      }, (_, _) {});
+      expect(tester.takeException(), isNull, reason: 'hộp không được tràn trên máy 360');
       await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/gia_gio_$ten.png'));
     });
   }

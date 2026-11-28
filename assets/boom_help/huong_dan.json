@@ -1,6 +1,6 @@
 {
- "version": 202611280753,
- "hash": "33831e9e26bd30e15d5cbbd580478b5db5fdda01a491d87c0a8193746bf729a8",
+ "version": 202611281040,
+ "hash": "cbdcf921ca0a943f17dfdc6088ad41138bc67dfc11457b7b897d8e4ddd0a8de1",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3523,6 +3523,14 @@
    "text": "Muốn buổi tối hoặc thứ Bảy, Chủ nhật tính giá khác:\n1. Mở hộp \"Đặt giá giờ\" của bàn (như mục trên), bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Bấm \"Thêm khung giá\". Chọn ngày áp dụng (bấm từng ngày T2…CN, hoặc nút nhanh \"Mọi ngày\", \"T2–T6\", \"T7, CN\"), chọn giờ \"Từ\" – \"Đến\" (bật \"Cả ngày\" nếu tính cả ngày), gõ \"Giá một giờ trong khung\", bấm \"Xong\".\n3. Thêm khung khác nếu cần (tối đa 12). Ngoài các khung, app tính theo \"Giá một giờ\" ở trên. Hai khung trùng giờ thì khung nằm trên được ưu tiên; bấm mũi tên lên để đổi thứ tự, bấm thùng rác để xoá khung.\n4. Bấm \"Lưu\". Muốn áp cho mọi bàn của khu thì chọn \"Cả khu\" trước khi lưu.\n\nKhách chơi vắt qua hai khung thì mỗi phút tính theo giá của khung lúc đó, ví dụ 16:30 – 17:30 mà từ 17:00 giá 80.000 đ thì tính 30 phút giá thường + 30 phút giá 80.000. Khung qua nửa đêm (ví dụ 22:00 – 02:00) tính theo ngày bắt đầu khung. Khung giá theo giờ Việt Nam."
   },
   {
+   "id": "tinh-gio#cac-viec-thuong-lam-gia-ngay-le-tet-30-4-2-9",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Giá ngày lễ (Tết, 30/4, 2/9…)",
+   "text": "1. Mở hộp \"Đặt giá giờ\" → \"Giá theo giờ & làm tròn\" → \"Thêm khung giá\" (hoặc bấm vào khung có sẵn để sửa).\n2. Bật dòng \"Ngày lễ\". Muốn khung chỉ dùng cho ngày lễ thì bấm nút nhanh \"Chỉ ngày lễ\". Chọn giờ (hoặc \"Cả ngày\"), gõ giá, bấm \"Xong\", rồi \"Lưu\".\n3. Thêm các ngày lễ của quán: trong hộp khung giá bấm \"Thêm ngày lễ của quán\" (hoặc \"Sửa ngày lễ của quán\"). Ở hộp \"Ngày lễ của quán\":\n   • \"Thêm nhanh\": bấm 01/01, 30/04, 01/05, 02/09 (app lấy lần tới của mỗi ngày).\n   • Tết âm lịch và ngày khác: gõ tên (ví dụ \"Tết\", không bắt buộc), bấm \"Chọn ngày trên lịch\", chọn một ngày hoặc ngày đầu và ngày cuối (tối đa 15 ngày liền), bấm \"Thêm\".\n   • Bỏ một ngày: bấm dấu ✕ ở ngày đó.\n\nDanh sách ngày lễ dùng chung cho mọi bàn, mỗi lần thêm / bỏ là lưu ngay. Vào ngày lễ, khung có \"ngày lễ\" luôn được ưu tiên hơn khung thường, dù nằm trên hay dưới; giờ nào không có khung ngày lễ thì tính như ngày thường. Ví dụ khung lễ 22:00 – 02:00 bắt đầu tối 30/4 thì tính tới 02:00 sáng hôm sau. Năm sau nhớ thêm lại ngày Tết âm lịch (app không tự tính âm lịch). Bàn đang có khách mà vừa thêm ngày lễ hôm nay thì lúc thanh toán cũng tính theo giá lễ."
+  },
+  {
    "id": "tinh-gio#cac-viec-thuong-lam-lam-tron-theo-block-choi-toi-thieu",
    "module": "tinh_gio",
    "module_name": "Các hoạt động tính giờ",
@@ -3745,6 +3753,38 @@
    "section": "Lỗi thường gặp",
    "title": "\"Máy chủ chưa có lịch cố định. Báo chủ app cập nhật máy chủ.\"",
    "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần đặt lặp hàng tuần\nLàm gì: Báo chủ app; trong lúc chờ đặt từng buổi (tắt \"Lặp lại hàng tuần\")"
+  },
+  {
+   "id": "tinh-gio#loi-may-chu-chua-co-ngay-le-bao-chu-app-cap-nhat-may-chu",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Máy chủ chưa có ngày lễ. Báo chủ app cập nhật máy chủ.\"",
+   "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần ngày lễ\nLàm gì: Báo chủ app; trong lúc chờ không dùng khung \"Ngày lễ\""
+  },
+  {
+   "id": "tinh-gio#loi-khung-ngay-le-khong-ap-dong-quan-chua-co-ngay-le-nao-mau-do",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "Khung ngày lễ không áp, dòng \"Quán chưa có ngày lễ nào\" màu đỏ",
+   "text": "Vì sao: Chưa thêm ngày lễ cho quán\nLàm gì: Bấm \"Thêm\" / \"Thêm ngày lễ của quán\" rồi thêm ngày"
+  },
+  {
+   "id": "tinh-gio#loi-moi-lan-chon-toi-da-15-ngay-lien",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Mỗi lần chọn tối đa 15 ngày liền.\"",
+   "text": "Vì sao: Chọn khoảng ngày quá dài trên lịch\nLàm gì: Chọn ngắn hơn, thêm nhiều lần"
+  },
+  {
+   "id": "tinh-gio#loi-chi-chu-quan-quan-ly-sua-duoc-ngay-le",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Chỉ Chủ quán / Quản lý sửa được ngày lễ\"",
+   "text": "Vì sao: Tài khoản không phải Chủ quán hay Quản lý\nLàm gì: Nhờ Chủ quán hoặc Quản lý thêm ngày lễ"
   },
   {
    "id": "tinh-gio#loi-may-chu-chua-co-khung-gia-gio-bao-chu-app-cap-nhat-may-chu",

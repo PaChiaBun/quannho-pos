@@ -205,13 +205,15 @@
       "lib/screens/kitchen_screen.dart": "d788ded3865f290d"
     },
     "tinh-gio.md": {
-      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "10d3c552fb323c58",
+      "lib/modules/tinh_gio/bao_cao_tinh_gio.dart": "f10fcbaa3d87efe8",
       "lib/modules/tinh_gio/dat_truoc.dart": "31a0c1d46832ea3a",
       "lib/modules/tinh_gio/dat_truoc_ui.dart": "d00e5e1856cbd977",
+      "lib/modules/tinh_gio/gia_gio_ui.dart": "67cb78964d4ea3cd",
       "lib/modules/tinh_gio/loai_hinh.dart": "835a9ccf1f76d2d8",
+      "lib/modules/tinh_gio/ngay_le_ui.dart": "11024880ff66605b",
       "lib/modules/tinh_gio/tinh_gio.dart": "24608675ba1de1fc",
-      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "b354065a61ea3cb9",
-      "lib/screens/ban_screen.dart": "8057ac548a44be14",
+      "lib/modules/tinh_gio/tinh_gio_widgets.dart": "5b1ff9fb804f07da",
+      "lib/screens/ban_screen.dart": "3df42b906b083d0b",
       "supabase/migrations/20261123_ban_tinh_gio_v1.sql": "4ad6aa2f895bbab5",
       "supabase/migrations/20261124_ban_dat_truoc_v1.sql": "b8489202a5a56fc5"
     }

@@ -5613,7 +5613,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             : t.theoKhungDat
             ? 'Khách đặt trước: tính đủ khung tới ${gioPhut(khung!)}'
             : giaNay != null
-            ? '${tienChu(giaNay)}/giờ${khungNay != null ? ' (khung ${khungNay.gioChu})' : ''}  •  $cachTinh, chốt khi Thanh toán'
+            ? '${tienChu(giaNay)}/giờ${khungNay != null ? ' (${khungNay.chuaNgayLe(luc, caiDat.ngayLe) ? 'ngày lễ, ' : ''}khung ${khungNay.gioChu})' : ''}  •  $cachTinh, chốt khi Thanh toán'
                   '${doiGia != null ? '\nTừ ${gioPhut(doiGia.luc)}: ${tienChu(doiGia.gia)}/giờ' : ''}'
             : 'Tính theo phút, chốt khi Thanh toán';
 
