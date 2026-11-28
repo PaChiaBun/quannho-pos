@@ -96,6 +96,13 @@
 
 ---
 
+### ⏱️ Các hoạt động tính giờ (module `tinh_gio`, index 15 — chưa phát hành)
+- Bi da, karaoke, sân cầu lông / bóng / tennis…: bàn gắn giá giờ, máy chủ chốt tiền giờ thành một dòng hoá đơn (theo phút, làm tròn 1.000 đ). Bật / tắt ở Module; tab "Tính giờ" ở thanh dưới.
+- Giá theo khung giờ / thứ / ngày lễ, làm tròn block, tối thiểu, ân hạn; gói giờ (về sớm đủ gói, lố tính thêm) + nhắc hết gói.
+- Lịch đặt dạng lưới giờ × bàn, hộp đặt (tìm khách, giờ −/+, dải lịch trong ngày, tạm tính), lịch cố định hàng tuần, nhắc 30 phút; tiền cọc vào ví khách + Thu Chi, thanh toán bàn tự trừ, huỷ thì để ví / quán giữ / hoàn.
+- Chuyển / gộp bàn giữ giờ, gói, cọc; báo cáo tính giờ là khối cuối Báo cáo → Doanh thu (chỉ khi bật module).
+- Mã: `lib/modules/tinh_gio/`, `lib/screens/ban_screen.dart` (`cheDoTinhGio`); máy chủ xem `.docs/kien-truc-data.md`; lộ trình `.docs/lo-trinh-tinh-gio.md`; hướng dẫn `.docs/Huong_dan/tinh-gio.md`.
+
 ## Features
 
 ### 🤖 AI Assistant (Boom)

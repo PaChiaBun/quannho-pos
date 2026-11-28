@@ -1,5 +1,7 @@
 # Kế hoạch đợt 5: Báo cáo tính giờ riêng trong module
 
+> 28/11 tối: không còn màn riêng — là khối cuối Báo cáo → Doanh thu (xem Nhật ký).
+
 Đợt 5 của `lo-trinh-tinh-gio.md`, bắt đầu 28/11/2026 khi Chủ Quán bảo "làm tiếp đi" (đợt 4 đã commit 5979af1). **Chỉ đọc**, không sửa máy chủ, không đụng tiền.
 
 ## Dữ liệu có sẵn (đọc máy chủ 28/11)
@@ -29,3 +31,7 @@
 - Test `bao_cao_tinh_gio_test.dart` 5; ảnh mẫu `bao_cao_tinh_gio_360.png`; test/modules/tinh_gio 80/80.
 - Máy ảo + Demo, 30 ngày: 10 lượt, 116 giờ 17 phút, tiền giờ 6.494.000 đ, món kèm 355.000 đ — khớp truy vấn chỉ đọc trên máy chủ (10 | 6.977 phút | 6.494.000 | 355.000). Sửa sau khi xem: mũi tên quay lại bị chìm (đặt iconTheme), chữ ngày ở 30 ngày quá nhỏ (cho tràn thay vì thu nhỏ).
 - Bài tinh-gio.md: mục "Báo cáo tính giờ" + một dòng lỗi.
+
+### 28/11 tối — chuyển vào Báo cáo → Doanh thu
+- Chủ Quán đổi hai lần: bỏ nút biểu đồ và màn `BaoCaoTinhGioScreen` ở màn Tính giờ; báo cáo là khối `BaoCaoTinhGioKhoi` cuối tab **Doanh thu** của module Báo cáo, cùng kỳ Hôm nay / Tuần này / Tháng này (`khoangTuKy`, cắt ở hôm nay), chỉ hiện khi bật module (`tinhGioModuleActiveProvider`). Quyền xem theo quyền vào Báo cáo như cũ. Commit eef493f → 1f4d09d.
+- QC 28/11 21:45 trên Demo: hôm nay 8 lượt / 532.000 tiền giờ / 310.000 món, khớp máy chủ; bàn bị gộp không thành lượt thừa (phiên nguồn không ở trạng thái `closed`). "Giờ chơi" là giờ đã tính tiền: lượt đặt trước tính tới hết khung đặt, gói tính đúng phút chơi.

@@ -4,7 +4,7 @@ Lập 28/11/2026 theo lời Chủ Quán "lập nguyên phần kế hoạch lớn
 
 ## Hiện có (tới 28/11)
 
-Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ chốt giờ; sơ đồ tự co giãn (điện thoại / máy tính bảng / máy tính) có đồng hồ, giờ vào, người mở bàn, số món, cảnh báo quá 6 giờ, tổng tiền giờ đang chạy; khối "ĐANG TÍNH GIỜ" trong bàn; một hoá đơn, dòng giờ ghi rõ giờ vào – ra × đơn giá; chuyển / gộp bàn giữ đúng giờ; bỏ tiền giờ, huỷ bàn đã chạy phải có Quản lý; đặt trước, nhắc 30 phút, tính đủ khung đặt; QR khách không gọi được món giá giờ; tab "Tính giờ" ở thanh dưới. **Chưa phát hành**; chỉ quán Demo có bàn tính giờ.
+Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ chốt giờ; sơ đồ tự co giãn (điện thoại / máy tính bảng / máy tính) có đồng hồ, giờ vào, người mở bàn, số món, cảnh báo quá 6 giờ, tổng tiền giờ đang chạy; khối "ĐANG TÍNH GIỜ" trong bàn; một hoá đơn, dòng giờ ghi rõ giờ vào – ra × đơn giá; chuyển / gộp bàn giữ đúng giờ; bỏ tiền giờ, huỷ bàn đã chạy phải có Quản lý; đặt trước, nhắc 30 phút, tính đủ khung đặt; QR khách không gọi được món giá giờ; tab "Tính giờ" ở thanh dưới. Đợt 1–8 làm xong và máy chủ đã áp 28/11 (xem bảng). **Chưa phát hành**; chỉ quán Demo có bàn tính giờ.
 
 ## Các đợt (theo thứ tự làm)
 
@@ -14,7 +14,7 @@ Tính theo phút, giá riêng từng bàn, làm tròn lên 1.000 đ, máy chủ 
 | 2 | Lịch đặt dạng lưới "giờ × bàn / sân", chạm ô trống để đặt | sân, karaoke | Không | Xong (c0750be), chỉ app — `ke-hoach-lich-dat-luoi.md` |
 | 3 | Lịch cố định: đặt lặp hàng tuần (ví dụ T3, T5 18–20 giờ cả tháng), kiểm trùng, bỏ một buổi | sân bóng, cầu lông, pickleball | Không | App xong (0cc4764); máy chủ ĐÃ ÁP 28/11 18:18 (mốc 20261128_181842) — `ke-hoach-lich-co-dinh.md` |
 | 4 | Tiền cọc vào Thu Chi, tự trừ vào hoá đơn lúc thanh toán, hoàn / mất cọc khi huỷ — làm chung ví khách (module Khách hàng) | sân, karaoke đặt trước | Có | App xong; máy chủ ĐÃ ÁP 28/11 18:19 (mốc 20261128_181909) — `ke-hoach-tien-coc.md` |
-| 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | App xong, chỉ đọc, không đổi máy chủ — `ke-hoach-bao-cao-tinh-gio.md` |
+| 5 | Báo cáo tính giờ riêng trong module: giờ chơi, tiền giờ, tỉ lệ bàn được dùng theo giờ / ngày, tiền giờ so với đồ uống | chủ quán | Không (chỉ đọc) | App xong, chỉ đọc, không đổi máy chủ; 28/11 Chủ Quán chuyển thành khối cuối **Báo cáo → Doanh thu** (chỉ khi bật module) — `ke-hoach-bao-cao-tinh-gio.md` |
 | 6 | Ngày lễ trong bảng giá (Tết, 30/4, 2/9…, quán tự thêm ngày) | karaoke, sân | Có | App xong; máy chủ ĐÃ ÁP 28/11 18:15 (mốc 20261128_181507) — `ke-hoach-ngay-le-gia-gio.md` |
 | 7 | Gói giờ và hẹn giờ kết thúc: bán "2 giờ", nhắc khi còn 10 phút / hết giờ | karaoke, sân | Có (gói) | App xong; máy chủ ĐÃ ÁP 28/11 18:17 (mốc 20261128_181658) — `ke-hoach-goi-gio.md` |
 | 8 | Mất mạng: đo xem quán bị chặn thanh toán bàn tính giờ bao nhiêu lần, rồi mới quyết có làm chế độ dự phòng | mọi quán | Có | Đã đo 30 ngày (28/11): lúc mạng chập chờn 496/497 phiên vẫn thanh toán xong → đề xuất chưa làm dự phòng, đo lại sau phát hành — `ke-hoach-mat-mang.md` |
