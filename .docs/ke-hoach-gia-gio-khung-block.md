@@ -101,4 +101,23 @@ Chưa hỏi, làm theo đề xuất: có ô ân hạn (mặc định 0); ngày l
 
 ## 8. Nhật ký thực hiện
 
-(chưa bắt đầu)
+### 28/11 — Giai đoạn A (máy chủ): viết xong, thử trên bản sao đạt, CHƯA ÁP
+
+- `supabase/migrations/20261128_gia_gio_khung_block.sql`: hai bảng (`ban_gia_gio_cau_hinh`, `ban_gia_gio_khung`, RLS chỉ đọc đúng quán), `qn_tinh_gio_tinh_tien_v2`, `qn_tinh_gio_thoi_luong_v1`, `qn_tinh_gio_tien_chu_v1`, `qn_tinh_gio_ghi_dong_v1` (lấy nguyên bản production 28/11, chỉ thay phần tính tiền + tên dòng; trả thêm `so_phut_choi`, `doan`), `ban_gia_gio_luu_v1`. `_ROLLBACK`: ghi_dong nguyên bản production 28/11, bỏ hàm và bảng mới.
+- Tên dòng: một giá như cũ; nhiều giá "… · 47 phút (27 phút × 60.000 + 20 phút × 90.000 đ/giờ)"; làm tròn "… · chơi 47 phút, tính 1 giờ × 60.000 đ/giờ".
+- Phút thuộc khung theo giờ VN của thời điểm BẮT ĐẦU phút đó (có giây: vào 16:59:30 thì phút đầu giá gốc). Ân hạn chỉ áp khi đã đủ ít nhất một block (chơi 4 phút, block 30, ân hạn 5 → 30, không thành 0).
+- Test `supabase/tests/gia_gio_khung_block_test.sql` 31 điểm: 14 ca mục 5 (+ biến thể), hồi quy 2.000 lượt ngẫu nhiên khớp công thức cũ từng đồng, lưu (phục vụ bị từ chối, cả khu, ân hạn ≥ block, block lạ, thứ 8, bàn quán khác, mặc định = xoá, bàn đang chạy), tên dòng (làm tròn, hai giá, vẫn một dòng).
+- Bản sao (`chuoi_stage_dryrun.sh`, TAG=gia_khung): test mới 31/31; `ban_tinh_gio_v1_test`, `ban_dat_truoc_v1_test`, `tinh_gio_ten_dong_test` TẤT CẢ PASS; chạy tệp hoàn tác rồi bộ tính giờ cũ vẫn PASS, bảng mới mất. Bản sao đã xoá. Hai lần test hỏng là lỗi của chính test (biến `GIA` trùng tên cột; phiên "47 phút" cộng giây thành 48), đã sửa.
+- Kịch bản áp `db-fix/gia_gio_khung_block_ap_dung.sh` (backup → áp → test). Chưa chạy, chờ Chủ Quán.
+
+### 28/11 — Giai đoạn B (app): viết xong, thử máy ảo, CHƯA commit (máy chủ chưa áp)
+
+Chủ Quán: "Làm tiếp đi chưa áp".
+- `lib/modules/tinh_gio/gia_gio.dart`: `KhungGia`, `GiaGioCaiDat`, `tinhGioLamTron`, `tinhGioGiaLuc`, `tinhGioKhungLuc`, `tinhGioDoiGiaKe`, `tinhGioTien` — chép đúng `qn_tinh_gio_tinh_tien_v2`; tiền tính bằng số nguyên phần trăm đồng (không lệch số thực). `tinhGioThanhTien` cũng chuyển sang số nguyên. `tinhGioTamTinhBan` nhận `caiDat`, thêm `soPhutTinh`.
+- `giaGioCaiDatProvider` (tinh_gio_widgets.dart) đọc hai bảng đúng quán, thứ tự `thu_tu, id` như máy chủ; máy chủ chưa có bảng / lỗi mạng → rỗng (tính như cũ). Nối vào thẻ bàn (tab Bàn và màn tính giờ), ô tóm tắt, khối ĐANG TÍNH GIỜ, TỔNG TẠM TÍNH.
+- Hộp Đặt giá giờ: phần "Giá theo giờ & làm tròn" (`gia_gio_ui.dart`: danh sách khung, thêm / sửa / xoá / đưa lên; chip block, ân hạn, tối thiểu), hộp `KhungGiaSheet` (ngày, nút nhanh, Từ – Đến bằng đồng hồ 24 giờ, Cả ngày, giá). Ví dụ sống 25 phút / 47 phút / 1 giờ 40 theo cài đặt đang sửa. Lưu: khung + làm tròn TRƯỚC (`BanRepository.luuGiaGioCaiDat` → `ban_gia_gio_luu_v1`), lỗi thì không đổi giá một giờ; không đổi gì thì không gọi (máy chủ cũ vẫn đặt giá được). Dòng báo lỗi chuyển lên ngay trên nút Lưu.
+- Khối ĐANG TÍNH GIỜ: "80.000 đ/giờ (khung 17:00 – 23:00) • làm tròn 30 phút…", dòng "Từ 17:00: 80.000 đ/giờ" khi sắp đổi giá trong 2 giờ. Thẻ bàn trống ghi giá đang áp "(theo khung)".
+- Test: `test/modules/tinh_gio/gia_gio_khung_test.dart` (bộ ca như SQL + hồi quy 2.000 lượt + tạm tính bàn); ảnh mẫu mới `gia_gio_co_khung.png`, hai ảnh hộp cũ dựng lại (giờ ví dụ cố định 16:30). test/modules/tinh_gio 54/54.
+- Máy ảo + Demo: mở hộp, thêm khung T2–T6 17:00–23:00 80.000, chọn mỗi 30 phút, ân hạn 5: tóm tắt và ví dụ đúng; bấm Lưu → "Máy chủ chưa có khung giá giờ…" hiện trên nút Lưu, giá A 1 không đổi. Dữ liệu Demo trước / sau giống hệt. Chưa thử: lưu thật (chờ áp máy chủ), khối đang chạy giờ với khung, máy tính bảng.
+- Hướng dẫn `tinh-gio.md`: hai mục mới "Giá theo khung giờ", "Làm tròn theo block, chơi tối thiểu", một dòng lỗi; sửa câu ví dụ dưới ô giá.
+

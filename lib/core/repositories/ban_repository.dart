@@ -1121,6 +1121,39 @@ class BanRepository {
     }
   }
 
+  /// Khung giá + làm tròn cho một hoặc nhiều bàn (`ban_gia_gio_luu_v1`, đợt 1 lộ trình tính giờ). [khung] theo
+  /// thứ tự ưu tiên, mỗi phần tử {"thu":[1..7],"tu":"17:00","den":"23:00","gia":70000}. Trả null khi đã lưu.
+  Future<String?> luuGiaGioCaiDat(
+    List<String> tableIds, {
+    required int block,
+    required int toiThieu,
+    required int anHan,
+    required List<Map<String, dynamic>> khung,
+  }) async {
+    if (tableIds.isEmpty) return null;
+    final storeId = await _storeId();
+    if (storeId == null) return 'Chưa chọn quán';
+    try {
+      final r = await _sb.rpc('ban_gia_gio_luu_v1', params: {
+        'p_store_id': storeId,
+        'p_table_ids': tableIds,
+        'p_block': block,
+        'p_toi_thieu': toiThieu,
+        'p_an_han': anHan,
+        'p_khung': khung,
+      }).timeout(const Duration(seconds: 15));
+      if (r is Map && r['success'] == true) return null;
+      return (r is Map ? r['message'] as String? : null) ?? 'Chưa lưu được khung giá giờ';
+    } catch (e) {
+      final s = '$e';
+      if (s.contains('PERMISSION_DENIED')) return 'Chỉ Chủ quán / Quản lý đặt được giá giờ';
+      if (s.contains('PGRST202') || s.contains('Could not find the function')) {
+        return 'Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ.';
+      }
+      return 'Chưa lưu được khung giá giờ. Kiểm tra mạng rồi thử lại.';
+    }
+  }
+
   // ── Chuyển bàn ────────────────────────────────────────────────────────────
   /// Chuyển toàn bộ session (và tất cả items) sang bàn khác.
   /// Items không cần di chuyển vì chúng link qua session_id, không phải table_id.

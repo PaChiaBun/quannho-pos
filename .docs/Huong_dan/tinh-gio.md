@@ -49,13 +49,32 @@ Bật tính giờ cho quán bi da, karaoke, sân cầu lông, sân bóng, tennis
 ### Đặt giá giờ cho bàn, phòng, sân
 Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:
 1. Ở màn Các hoạt động tính giờ, bấm **"Đặt giá"** ở bàn ghi **"Chưa đặt giá giờ"**. Bàn ở màn Quản lý Bàn, hoặc bàn đã có giá: **giữ lâu** vào bàn đang trống, chọn **"Đặt giá giờ"** (dòng nhỏ bên dưới ghi "Chưa tính giờ" hoặc giá đang dùng).
-2. Gõ số tiền vào ô **"Giá một giờ"**, ví dụ 60000, hoặc bấm một mức ở hàng **"Chọn nhanh"** (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.
+2. Gõ số tiền vào ô **"Giá một giờ"**, ví dụ 60000, hoặc bấm một mức ở hàng **"Chọn nhanh"** (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app tính sẵn ví dụ khách vào lúc này chơi 25 phút, 47 phút, 1 giờ 40 phải trả bao nhiêu (đã theo khung giá và cách làm tròn đang cài).
 3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm **"Cả khu · … bàn"**; không thì để **"Chỉ …"** (tên bàn).
 4. Bấm nút **"Lưu"** ở dưới cùng.
 
 App tự tạo trong Kho hàng một món tên "Giờ chơi 60.000 đ/giờ", danh mục "Tiền giờ"; mỗi mức giá là một món (món tạo từ trước có thể mang tên "Tiền giờ 60.000 đ", vẫn dùng bình thường). Không cần vào Kho hàng tạo trước.
 
 > Chỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi.
+
+### Giá theo khung giờ (giờ tối, cuối tuần đắt hơn)
+Muốn buổi tối hoặc thứ Bảy, Chủ nhật tính giá khác:
+1. Mở hộp **"Đặt giá giờ"** của bàn (như mục trên), bấm dòng **"Giá theo giờ & làm tròn"** để mở ra.
+2. Bấm **"Thêm khung giá"**. Chọn ngày áp dụng (bấm từng ngày T2…CN, hoặc nút nhanh **"Mọi ngày"**, **"T2–T6"**, **"T7, CN"**), chọn giờ **"Từ"** – **"Đến"** (bật **"Cả ngày"** nếu tính cả ngày), gõ **"Giá một giờ trong khung"**, bấm **"Xong"**.
+3. Thêm khung khác nếu cần (tối đa 12). Ngoài các khung, app tính theo **"Giá một giờ"** ở trên. Hai khung trùng giờ thì khung nằm trên được ưu tiên; bấm mũi tên lên để đổi thứ tự, bấm thùng rác để xoá khung.
+4. Bấm **"Lưu"**. Muốn áp cho mọi bàn của khu thì chọn **"Cả khu"** trước khi lưu.
+
+Khách chơi vắt qua hai khung thì mỗi phút tính theo giá của khung lúc đó, ví dụ 16:30 – 17:30 mà từ 17:00 giá 80.000 đ thì tính 30 phút giá thường + 30 phút giá 80.000. Khung qua nửa đêm (ví dụ 22:00 – 02:00) tính theo ngày bắt đầu khung. Khung giá theo giờ Việt Nam.
+
+### Làm tròn theo block, chơi tối thiểu
+Quán muốn tính tròn mỗi 15 / 30 phút hoặc tối thiểu 1 giờ:
+1. Trong hộp **"Đặt giá giờ"**, mở **"Giá theo giờ & làm tròn"**.
+2. **"Tính tiền theo"**: **"Từng phút"** (mặc định) hoặc **"Mỗi 5 phút"** … **"Mỗi 1 giờ"**. Chơi lố sang block mới thì tính trọn block đó, ví dụ mỗi 30 phút: chơi 47 phút tính 1 giờ.
+3. **"Ân hạn"** (khi đã chọn block): lố không quá số phút này thì chưa tính sang block mới, ví dụ ân hạn 5 phút: chơi 33 phút vẫn tính 30.
+4. **"Chơi tối thiểu"**: chơi ít hơn thì vẫn tính đủ, ví dụ tối thiểu 1 giờ: chơi 20 phút tính 1 giờ.
+5. Bấm **"Lưu"**.
+
+Trên hoá đơn, dòng tiền giờ ghi rõ: làm tròn thì "chơi 47 phút, tính 1 giờ × 60.000 đ/giờ"; nhiều giá thì "47 phút (27 phút × 60.000 + 20 phút × 90.000 đ/giờ)". Khối "ĐANG TÍNH GIỜ" trong bàn ghi giá đang áp lúc này và báo trước giờ sắp đổi giá, ví dụ "Từ 17:00: 80.000 đ/giờ".
 
 ### Bỏ tính giờ cho một bàn
 Giữ lâu vào bàn trống, chọn **"Đặt giá giờ"**, bấm **"Không tính giờ (bàn thường)"**.
@@ -114,6 +133,7 @@ Còn 30 phút tới giờ đặt, app bật hộp **"Sắp tới giờ đặt"**
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| "Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ." | Máy chủ của quán chưa được nâng cấp phần khung giá / làm tròn | Báo chủ app; trong lúc chờ vẫn đặt được giá một giờ như cũ (để phần "Giá theo giờ & làm tròn" ở mặc định) |
 | Giữ lâu vào bàn không thấy "Đặt giá giờ" | Quán chưa bật module Các hoạt động tính giờ, hoặc bàn đang có khách | Bật module Các hoạt động tính giờ; đợi bàn trống rồi giữ lâu lại |
 | "Chỉ Chủ quán / Quản lý đặt được giá giờ" | Tài khoản không phải Chủ quán hay Quản lý | Nhờ Chủ quán hoặc Quản lý đặt giá giờ |
 | "Bàn đang có khách tính giờ, tính tiền xong mới đổi giá giờ được" | Bàn đang chạy giờ | Tính tiền bàn đó rồi đổi |

@@ -202,11 +202,12 @@ void main() {
     await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/chon_loai_hinh_360.png'));
   });
 
-  // Hộp đặt giá giờ trên máy 360×800: bàn chưa có giá, và bàn đã có giá 60.000 (điền sẵn, có nút gỡ).
-  for (final (ten, coGia) in const [('trong', false), ('da_co', true)]) {
+  // Hộp đặt giá giờ trên máy 360×800: bàn chưa có giá, bàn đã có giá 60.000 (điền sẵn, có nút gỡ), và bàn đã cài
+  // khung giá + làm tròn (phần "Giá theo giờ & làm tròn" tự mở; máy cao 1000 để thấy hết). Khách vào lúc 16:30.
+  for (final (ten, coGia, coKhung) in const [('trong', false, false), ('da_co', true, false), ('co_khung', true, true)]) {
     testWidgets('hộp đặt giá giờ $ten', (tester) async {
       await _napPhong();
-      tester.view.physicalSize = const Size(360, 800);
+      tester.view.physicalSize = Size(360, coKhung ? 1100 : 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       ProductModel mon(String id, String ten, double gia, String dm) => ProductModel(
@@ -219,6 +220,13 @@ void main() {
         await tester.pumpWidget(ProviderScope(
           overrides: [
             tinhGioLoaiHinhProvider.overrideWith((ref) async => loaiHinhTheoId('bi_da')),
+            giaGioCaiDatProvider.overrideWith((ref) async => {
+                  if (coKhung)
+                    'b2': const GiaGioCaiDat(block: 30, anHan: 5, toiThieu: 60, khung: [
+                      KhungGia(thu: {1, 2, 3, 4, 5}, tuPhut: 17 * 60, denPhut: 23 * 60, gia: 80000),
+                      KhungGia(thu: {6, 7}, tuPhut: 0, denPhut: 0, gia: 100000),
+                    ]),
+                }),
             allProductsProvider.overrideWith((ref) => Stream.value(<ProductModel>[
               mon('c1', 'Cà phê sữa đá', 25000, 'Cà phê'),
               if (coGia) mon('g60', 'Tiền giờ 60.000 đ', 60000, 'Tiền giờ'),
@@ -231,7 +239,12 @@ void main() {
               backgroundColor: const Color(0xFF8E8A85),
               body: Align(
                 alignment: Alignment.bottomCenter,
-                child: TinhGioGiaGioSheet(table: b, tenKhu: 'Khu A', banCuaKhu: [ban('b1', 'Bàn 1', null), b, ban('b3', 'Bàn 3', null)]),
+                child: TinhGioGiaGioSheet(
+                  table: b,
+                  tenKhu: 'Khu A',
+                  banCuaKhu: [ban('b1', 'Bàn 1', null), b, ban('b3', 'Bàn 3', null)],
+                  lucViDu: DateTime(2030, 12, 2, 16, 30), // Thứ Hai
+                ),
               ),
             ),
           ),

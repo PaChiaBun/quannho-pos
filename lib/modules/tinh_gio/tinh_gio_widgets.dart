@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/session_provider.dart';
@@ -11,6 +12,7 @@ import '../../core/repositories/ban_repository.dart';
 import '../../core/repositories/core_product_repository.dart';
 import '../../core/utils/money_formatter.dart';
 import '../../shared/widgets/module_tile.dart';
+import 'gia_gio_ui.dart';
 import 'loai_hinh.dart';
 import 'nganh_icon.dart';
 import 'tinh_gio.dart';
@@ -40,6 +42,52 @@ final tinhGioGiaTheoMonProvider = Provider.autoDispose<Map<String, ProductModel>
   final ds = ref.watch(allProductsProvider).value ?? const <ProductModel>[];
   return {for (final p in ds) p.id: p};
 });
+
+/// Khung giá + làm tròn của các bàn trong quán (đợt 1, bảng ban_gia_gio_cau_hinh / ban_gia_gio_khung). Đọc một
+/// lần khi màn mở; lưu xong thì invalidate. Máy chủ chưa có hai bảng (chưa áp migration) hoặc lỗi mạng → rỗng:
+/// app tính tạm như cũ, tiền thật vẫn do máy chủ chốt.
+final giaGioCaiDatProvider = FutureProvider.autoDispose<Map<String, GiaGioCaiDat>>((ref) async {
+  final storeId = ref.watch(sessionProvider.select((s) => s?.storeId));
+  if (storeId == null) return const {};
+  try {
+    final db = Supabase.instance.client;
+    final kq = await Future.wait([
+      db.from('ban_gia_gio_cau_hinh').select('table_id, block_phut, toi_thieu_phut, an_han_phut').eq('store_id', storeId),
+      db
+          .from('ban_gia_gio_khung')
+          .select('id, table_id, thu, tu, den, gia, thu_tu')
+          .eq('store_id', storeId)
+          .order('thu_tu', ascending: true)
+          .order('id', ascending: true), // như máy chủ: ORDER BY thu_tu, id
+    ]).timeout(const Duration(seconds: 10));
+    final khung = <String, List<KhungGia>>{};
+    for (final r in kq[1]) {
+      final k = KhungGia.tuDong(r);
+      if (k != null) (khung[r['table_id'] as String] ??= []).add(k);
+    }
+    final ketQua = <String, GiaGioCaiDat>{};
+    for (final r in kq[0]) {
+      final id = r['table_id'] as String;
+      ketQua[id] = GiaGioCaiDat(
+        block: (r['block_phut'] as num?)?.toInt() ?? 1,
+        toiThieu: (r['toi_thieu_phut'] as num?)?.toInt() ?? 0,
+        anHan: (r['an_han_phut'] as num?)?.toInt() ?? 0,
+        khung: khung[id] ?? const [],
+      );
+    }
+    for (final e in khung.entries) {
+      ketQua.putIfAbsent(e.key, () => GiaGioCaiDat(khung: e.value));
+    }
+    return ketQua;
+  } catch (e) {
+    debugPrint('[giaGioCaiDat] chưa đọc được khung giá (máy chủ chưa có hoặc lỗi mạng): $e');
+    return const {};
+  }
+});
+
+/// Cài đặt giá giờ của một bàn (mặc định khi chưa cài / chưa đọc được).
+GiaGioCaiDat giaGioCuaBan(WidgetRef ref, String tableId) =>
+    ref.watch(giaGioCaiDatProvider).value?[tableId] ?? GiaGioCaiDat.macDinh;
 
 /// Loại hình quán đã chọn cho module Tính giờ (mặc định mục chung "Nhiều loại" khi chưa chọn hoặc chưa đọc được).
 final tinhGioLoaiHinhProvider = FutureProvider<LoaiHinh>((ref) async {
@@ -174,12 +222,15 @@ class TinhGioGiaGioSheet extends ConsumerStatefulWidget {
   final String tenKhu;
   /// Mọi bàn của khu (kể cả [table]) — dùng cho "Áp cho cả khu".
   final List<BanTableModel> banCuaKhu;
+  /// Giờ "khách vào" của các ví dụ tính tiền; null = bây giờ (ảnh mẫu trong test cố định giờ này).
+  final DateTime? lucViDu;
 
   const TinhGioGiaGioSheet({
     super.key,
     required this.table,
     required this.tenKhu,
     required this.banCuaKhu,
+    this.lucViDu,
   });
 
   @override
@@ -205,6 +256,10 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
 
   final _giaCtrl = TextEditingController();
   bool _caKhu = false;
+  /// Khung giá + làm tròn đang sửa; [_caiDatGoc] = bản đọc từ máy chủ (null = chưa đọc xong).
+  GiaGioCaiDat _caiDat = GiaGioCaiDat.macDinh;
+  GiaGioCaiDat? _caiDatGoc;
+  bool _moCaiThem = false;
   bool _dangLuu = false;
   String? _loi;
 
@@ -215,6 +270,14 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
   bool _daDienSan = false;
 
   void _dienSan() {
+    if (_caiDatGoc == null) {
+      final ds = ref.watch(giaGioCaiDatProvider);
+      if (ds.hasValue) {
+        _caiDatGoc = ds.value![widget.table.id] ?? GiaGioCaiDat.macDinh;
+        _caiDat = _caiDatGoc!;
+        _moCaiThem = !_caiDat.laMacDinh;
+      }
+    }
     if (_daDienSan) return;
     final id = widget.table.giaGioProductId;
     if (id == null) {
@@ -240,6 +303,31 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
       _loi = null;
     });
     final ids = _caKhu ? widget.banCuaKhu.map((b) => b.id).toList() : [widget.table.id];
+    // Khung giá + làm tròn lưu TRƯỚC giá một giờ: máy chủ từ chối thì chưa đổi gì cả. Không đổi gì (và không chép
+    // cho cả khu) thì không gọi, để máy chủ chưa có khung giá vẫn đặt được giá một giờ như cũ.
+    if (productId != null) {
+      final daCaiTrongKhu = ref.read(giaGioCaiDatProvider).value ?? const <String, GiaGioCaiDat>{};
+      final canLuu = !_caiDat.trung(_caiDatGoc ?? GiaGioCaiDat.macDinh) ||
+          (_caKhu && (!_caiDat.laMacDinh || ids.any((id) => !(daCaiTrongKhu[id]?.laMacDinh ?? true))));
+      if (canLuu) {
+        final loiCd = await ref.read(banRepositoryProvider).luuGiaGioCaiDat(
+              ids,
+              block: _caiDat.block,
+              toiThieu: _caiDat.toiThieu,
+              anHan: _caiDat.anHan,
+              khung: [for (final k in _caiDat.khung) k.toJson()],
+            );
+        if (!mounted) return;
+        if (loiCd != null) {
+          setState(() {
+            _dangLuu = false;
+            _loi = loiCd;
+          });
+          return;
+        }
+        ref.invalidate(giaGioCaiDatProvider);
+      }
+    }
     final loi = await ref.read(banRepositoryProvider).datGiaGio(ids, productId);
     if (!mounted) return;
     if (loi == null) {
@@ -292,6 +380,8 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
       GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: w, color: c ?? _kNavy);
 
   Color _nhat(double a) => _kNavy.withValues(alpha: a);
+
+  DateTime get _lucViDu => widget.lucViDu ?? DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -363,19 +453,31 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                         itemBuilder: (_, i) => _chipGia(chonNhanh[i], dangDung: giaDaCo.contains(chonNhanh[i])),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    GiaGioCaiThem(
+                      caiDat: _caiDat,
+                      mo: _moCaiThem,
+                      khoa: _dangLuu || _caiDatGoc == null,
+                      onMo: () => setState(() => _moCaiThem = !_moCaiThem),
+                      onDoi: (c) => setState(() {
+                        _caiDat = c;
+                        _loi = null;
+                      }),
+                    ),
                     if (widget.banCuaKhu.length > 1) ...[
                       const SizedBox(height: 16),
                       _phamVi(),
                     ],
-                    if (_loi != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
-                      ),
                   ],
                 ),
               ),
             ),
+            // Báo lỗi ngay trên nút Lưu (trong phần cuộn thì bấm Lưu xong không thấy — máy ảo 28/11)
+            if (_loi != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: Text(_loi!, textAlign: TextAlign.center, style: _chu(13, FontWeight.w700, _kRed)),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: SizedBox(
@@ -448,7 +550,16 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
                   style: _chu(19, FontWeight.w800).copyWith(letterSpacing: -0.3),
                 ),
                 const SizedBox(height: 2),
-                Text('Thu theo số phút', maxLines: 1, overflow: TextOverflow.ellipsis, style: _chu(12.5, FontWeight.w500, _nhat(0.6))),
+                Text(
+                  _caiDat.block > 1
+                      ? 'Làm tròn mỗi ${tinhGioThoiLuongDai(_caiDat.block)}'
+                      : _caiDat.khung.isNotEmpty
+                          ? 'Thu theo số phút, giá theo khung giờ'
+                          : 'Thu theo số phút',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _chu(12.5, FontWeight.w500, _nhat(0.6)),
+                ),
               ],
             ),
           ),
@@ -532,23 +643,32 @@ class _TinhGioGiaGioSheetState extends ConsumerState<TinhGioGiaGioSheet> {
             ],
           ),
           Divider(height: 18, color: _nhat(0.08)),
-          if (gia >= 1000)
+          if (gia >= 1000) ...[
+            // Ví dụ sống theo cài đặt đang sửa (khung giá, làm tròn), tính như máy chủ, khách vào lúc này.
+            Text('Khách vào lúc ${gioPhutChu(_lucViDu.hour * 60 + _lucViDu.minute)}, chơi:',
+                style: _chu(11.5, FontWeight.w600, _nhat(0.55))),
+            const SizedBox(height: 4),
             Row(
               children: [
-                for (final (nhan, phut) in const [('30 phút', 30), ('1 giờ 30', 90), ('2 giờ', 120)])
+                for (final (nhan, phut) in const [('25 phút', 25), ('47 phút', 47), ('1 giờ 40', 100)])
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(nhan, style: _chu(11.5, FontWeight.w600, _nhat(0.55))),
-                        const SizedBox(height: 2),
-                        Text(fmtVnd(tinhGioThanhTien(phut, gia.toDouble())), style: _chu(13.5, FontWeight.w800)),
-                      ],
-                    ),
+                    child: Builder(builder: (_) {
+                      final v = tinhGioTien(vao: _lucViDu, phutChoi: phut, giaGoc: gia.toDouble(), caiDat: _caiDat);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(nhan, style: _chu(11.5, FontWeight.w600, _nhat(0.55))),
+                          const SizedBox(height: 2),
+                          Text(fmtVnd(v.thanhTien), style: _chu(13.5, FontWeight.w800)),
+                          if (v.soPhutTinh != phut)
+                            Text('tính ${tinhGioThoiLuongDai(v.soPhutTinh)}', style: _chu(10.5, FontWeight.w600, _kTeal)),
+                        ],
+                      );
+                    }),
                   ),
               ],
-            )
-          else
+            ),
+          ] else
             Text('Tính theo từng phút, làm tròn lên 1.000 đ.', style: _chu(12.5, FontWeight.w500, _nhat(0.6))),
         ],
       ),

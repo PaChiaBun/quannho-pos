@@ -2590,6 +2590,7 @@ class _TomTatTinhGio extends ConsumerWidget {
         mon: moiMon?[s.id] ?? const <BanSessionItemModel>[],
         luc: luc,
         khungDatDen: khungDatCuaPhien(dsDat, s.id, t.id),
+        caiDat: giaGioCuaBan(ref, t.id),
       ).tienGio;
     }
     final nhan = GoogleFonts.plusJakartaSans(
@@ -2694,6 +2695,7 @@ class _TheBanTinhGio extends ConsumerWidget {
             mon: monPhien,
             luc: luc,
             khungDatDen: khungDatCuaPhien(dsDat, s.id, table.id),
+            caiDat: giaGioCuaBan(ref, table.id),
           )
         : null;
     final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
@@ -2894,10 +2896,14 @@ class _TheBanTinhGio extends ConsumerWidget {
                         ? TextSpan(
                             children: [
                               TextSpan(
-                                text: fmtVnd(giaGio.sellPrice),
+                                // khung giá (đợt 1): giá đang áp lúc này
+                                text: fmtVnd(tinhGioGiaLuc(DateTime.now(), giaGio.sellPrice, giaGioCuaBan(ref, table.id))),
                                 style: const TextStyle(fontWeight: FontWeight.w800, color: _kNavy),
                               ),
-                              TextSpan(text: '/giờ • ${table.seats} chỗ'),
+                              TextSpan(
+                                text: '/giờ${giaGioCuaBan(ref, table.id).khung.isNotEmpty ? ' (theo khung)' : ''}'
+                                    ' • ${table.seats} chỗ',
+                              ),
                             ],
                           )
                         : TextSpan(
@@ -2996,6 +3002,7 @@ class _TableCard extends ConsumerWidget {
             mon: sessionItems ?? const <BanSessionItemModel>[],
             luc: luc,
             khungDatDen: khungDatCuaPhien(dsDat, session!.id, table.id),
+            caiDat: giaGioCuaBan(ref, table.id),
           )
         : null;
     final chayLau = gioVao != null && luc.difference(gioVao) >= kTinhGioCanhBaoLau;
@@ -5489,6 +5496,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       mon: items,
       luc: luc,
       khungDatDen: khung,
+      caiDat: giaGioCuaBan(ref, widget.table.id),
     );
     return (t: t, khung: khung, vao: DateTime.fromMillisecondsSinceEpoch(moc), luc: luc, gia: gia);
   }
@@ -5544,12 +5552,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final tien = t.daHuy
             ? Text(chuTien, maxLines: 1, style: so(Colors.white.withValues(alpha: 0.5)))
             : _soVangNoi(chuTien, 34, mau: mauTien);
+        // Khung giá (đợt 1): đơn giá ĐANG áp lúc này, cách làm tròn, và giờ sắp đổi giá trong 2 giờ tới.
+        final caiDat = giaGioCuaBan(ref, widget.table.id);
+        final giaNay = gia == null ? null : tinhGioGiaLuc(luc, gia, caiDat);
+        final khungNay = tinhGioKhungLuc(luc, caiDat);
+        final doiGia = gia == null || t.daHuy ? null : tinhGioDoiGiaKe(luc, gia, caiDat);
+        final cachTinh = caiDat.block > 1 ? 'làm tròn ${tinhGioThoiLuongDai(caiDat.block)}' : 'tính theo phút';
+        String tienChu(double v) => fmtVnd(v).replaceAll(' ', '\u00A0');
         final chan = t.daHuy
             ? 'Quản lý đã bỏ tiền giờ của lượt này'
             : t.theoKhungDat
             ? 'Khách đặt trước: tính đủ khung tới ${gioPhut(khung!)}'
-            : gia != null
-            ? '${fmtVnd(gia).replaceAll(' ', ' ')}/giờ  •  tính theo phút, chốt khi Thanh toán'
+            : giaNay != null
+            ? '${tienChu(giaNay)}/giờ${khungNay != null ? ' (khung ${khungNay.gioChu})' : ''}  •  $cachTinh, chốt khi Thanh toán'
+                  '${doiGia != null ? '\nTừ ${gioPhut(doiGia.luc)}: ${tienChu(doiGia.gia)}/giờ' : ''}'
             : 'Tính theo phút, chốt khi Thanh toán';
 
         // Khối nổi 3D: lớp ngoài là "bề dày" xanh đậm lộ ra 4 điểm ảnh ở đáy (12 thì Chủ Quán chê đen nặng), hai lớp

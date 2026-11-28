@@ -2,7 +2,10 @@
 // Số THẬT do máy chủ chốt (ban_chot_gio_v1, migration 20261123_ban_tinh_gio_v1.sql). Các hàm dưới đây
 // phải ra cùng kết quả với máy chủ để tiền tạm tính trên thẻ bàn khớp dòng tiền giờ lúc tính tiền.
 import '../../core/repositories/ban_repository.dart' show BanSessionItemModel, BanTableModel, BanZoneModel;
+import 'gia_gio.dart';
 import 'loai_hinh.dart' show loaiHinhTheoMaKhuVuc;
+
+export 'gia_gio.dart';
 
 /// Mã module ở Trang chủ.
 const kTinhGioModuleId = 'tinh_gio';
@@ -20,10 +23,10 @@ int tinhGioSoPhut(DateTime tu, DateTime den) {
   return phut < 1 ? 1 : phut;
 }
 
-/// Tiền giờ: theo phút, làm tròn lên 1.000đ.
+/// Tiền giờ một giá: theo phút, làm tròn lên 1.000đ (tính bằng số nguyên như máy chủ, không lệch số thực).
 double tinhGioThanhTien(int soPhut, double giaMotGio) {
   final gia = giaMotGio < 0 ? 0.0 : giaMotGio;
-  return (soPhut * gia / 60 / 1000).ceil() * 1000.0;
+  return tienTuTongXu(soPhut * (gia * 100).round());
 }
 
 /// "1g30", "45p" — giống tên dòng tiền giờ máy chủ ghi.
@@ -104,7 +107,10 @@ bool huyBanCanChotTruoc({
 
 /// Số tạm tính của một bàn đang chạy giờ, tính tới [luc] theo đồng hồ của máy đang xem.
 class TinhGioTamTinh {
+  /// Số phút chơi (đã kéo tới hết khung đặt nếu có), làm tròn lên.
   final int soPhut;
+  /// Số phút tính tiền sau làm tròn block / tối thiểu (bằng [soPhut] khi bàn không cài làm tròn).
+  final int soPhutTinh;
   /// Tiền giờ của đoạn đang chạy (0 khi Quản lý đã huỷ dòng tiền giờ của đoạn này).
   final double tienGio;
   /// Tổng bàn: các món chưa huỷ + [tienGio] (dòng đã chốt của đoạn đang chạy được thay bằng số tạm tính).
@@ -114,22 +120,25 @@ class TinhGioTamTinh {
   final bool theoKhungDat;
   const TinhGioTamTinh({
     required this.soPhut,
+    int? soPhutTinh,
     required this.tienGio,
     required this.tong,
     required this.daHuy,
     this.theoKhungDat = false,
-  });
+  }) : soPhutTinh = soPhutTinh ?? soPhut;
 }
 
 /// [mon] = MỌI dòng của phiên (kể cả đã huỷ). [giaMotGio] null (chưa tải được món giá giờ) thì giữ
 /// số đã chốt gần nhất nếu có. [khungDatDen] = giờ hết khung của lượt đặt trước mà phiên đã nhận (còn ở
-/// đúng bàn đã đặt): chưa hết khung thì tính tới hết khung, như máy chủ làm lúc chốt.
+/// đúng bàn đã đặt): chưa hết khung thì tính tới hết khung, như máy chủ làm lúc chốt. [caiDat] = khung giá +
+/// làm tròn của bàn (đợt 1); mặc định tính theo phút một giá như cũ.
 TinhGioTamTinh tinhGioTamTinhBan({
   required int gioBatDauMs,
   required double? giaMotGio,
   required Iterable<BanSessionItemModel> mon,
   required DateTime luc,
   DateTime? khungDatDen,
+  GiaGioCaiDat caiDat = GiaGioCaiDat.macDinh,
 }) {
   BanSessionItemModel? dongDoan;
   var tongMon = 0.0;
@@ -142,14 +151,17 @@ TinhGioTamTinh tinhGioTamTinhBan({
   }
   final daHuy = dongDoan?.kitchenStatus == 'huy';
   final theoKhung = khungDatDen != null && khungDatDen.isAfter(luc);
-  final soPhut = tinhGioSoPhut(DateTime.fromMillisecondsSinceEpoch(gioBatDauMs), theoKhung ? khungDatDen : luc);
+  final vao = DateTime.fromMillisecondsSinceEpoch(gioBatDauMs);
+  final soPhut = tinhGioSoPhut(vao, theoKhung ? khungDatDen : luc);
+  final tien = giaMotGio == null ? null : tinhGioTien(vao: vao, phutChoi: soPhut, giaGoc: giaMotGio, caiDat: caiDat);
   final tienGio = daHuy
       ? 0.0
-      : giaMotGio == null
+      : tien == null
           ? (dongDoan?.subtotal ?? 0.0)
-          : tinhGioThanhTien(soPhut, giaMotGio);
+          : tien.thanhTien;
   return TinhGioTamTinh(
     soPhut: soPhut,
+    soPhutTinh: tien?.soPhutTinh,
     tienGio: tienGio,
     tong: tongMon + tienGio,
     daHuy: daHuy,

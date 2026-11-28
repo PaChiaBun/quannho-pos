@@ -1,6 +1,6 @@
 {
- "version": 202611280524,
- "hash": "e5684527e753034eeb774d3a0c26fa84390406540530c2e4c6d18ef729b9cf81",
+ "version": 202611280604,
+ "hash": "a8bb2efffeaa4fcfb49dc978b1823b114e8693ad0388dc32ccf387b26c96dd8e",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -3512,7 +3512,23 @@
    "module_name": "Các hoạt động tính giờ",
    "section": "Các việc thường làm",
    "title": "Đặt giá giờ cho bàn, phòng, sân",
-   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở màn Các hoạt động tính giờ, bấm \"Đặt giá\" ở bàn ghi \"Chưa đặt giá giờ\". Bàn ở màn Quản lý Bàn, hoặc bàn đã có giá: giữ lâu vào bàn đang trống, chọn \"Đặt giá giờ\" (dòng nhỏ bên dưới ghi \"Chưa tính giờ\" hoặc giá đang dùng).\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app quy sẵn ra tiền cho 30 phút, 1 giờ 30, 2 giờ.\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Giờ chơi 60.000 đ/giờ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món (món tạo từ trước có thể mang tên \"Tiền giờ 60.000 đ\", vẫn dùng bình thường). Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
+   "text": "Cài giá mỗi giờ cho bàn bi da, phòng hát, sân ở đâu:\n1. Ở màn Các hoạt động tính giờ, bấm \"Đặt giá\" ở bàn ghi \"Chưa đặt giá giờ\". Bàn ở màn Quản lý Bàn, hoặc bàn đã có giá: giữ lâu vào bàn đang trống, chọn \"Đặt giá giờ\" (dòng nhỏ bên dưới ghi \"Chưa tính giờ\" hoặc giá đang dùng).\n2. Gõ số tiền vào ô \"Giá một giờ\", ví dụ 60000, hoặc bấm một mức ở hàng \"Chọn nhanh\" (mức có dấu tích là giá quán đang dùng). Bên dưới ô giá app tính sẵn ví dụ khách vào lúc này chơi 25 phút, 47 phút, 1 giờ 40 phải trả bao nhiêu (đã theo khung giá và cách làm tròn đang cài).\n3. Muốn đặt cùng giá cho mọi bàn của khu thì bấm \"Cả khu · … bàn\"; không thì để \"Chỉ …\" (tên bàn).\n4. Bấm nút \"Lưu\" ở dưới cùng.\n\nApp tự tạo trong Kho hàng một món tên \"Giờ chơi 60.000 đ/giờ\", danh mục \"Tiền giờ\"; mỗi mức giá là một món (món tạo từ trước có thể mang tên \"Tiền giờ 60.000 đ\", vẫn dùng bình thường). Không cần vào Kho hàng tạo trước.\n\nChỉ Chủ quán và Quản lý đặt được giá giờ. Bàn đang có khách tính giờ thì chưa đổi được giá giờ; tính tiền xong mới đổi."
+  },
+  {
+   "id": "tinh-gio#cac-viec-thuong-lam-gia-theo-khung-gio-gio-toi-cuoi-tuan-dat",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Giá theo khung giờ (giờ tối, cuối tuần đắt hơn)",
+   "text": "Muốn buổi tối hoặc thứ Bảy, Chủ nhật tính giá khác:\n1. Mở hộp \"Đặt giá giờ\" của bàn (như mục trên), bấm dòng \"Giá theo giờ & làm tròn\" để mở ra.\n2. Bấm \"Thêm khung giá\". Chọn ngày áp dụng (bấm từng ngày T2…CN, hoặc nút nhanh \"Mọi ngày\", \"T2–T6\", \"T7, CN\"), chọn giờ \"Từ\" – \"Đến\" (bật \"Cả ngày\" nếu tính cả ngày), gõ \"Giá một giờ trong khung\", bấm \"Xong\".\n3. Thêm khung khác nếu cần (tối đa 12). Ngoài các khung, app tính theo \"Giá một giờ\" ở trên. Hai khung trùng giờ thì khung nằm trên được ưu tiên; bấm mũi tên lên để đổi thứ tự, bấm thùng rác để xoá khung.\n4. Bấm \"Lưu\". Muốn áp cho mọi bàn của khu thì chọn \"Cả khu\" trước khi lưu.\n\nKhách chơi vắt qua hai khung thì mỗi phút tính theo giá của khung lúc đó, ví dụ 16:30 – 17:30 mà từ 17:00 giá 80.000 đ thì tính 30 phút giá thường + 30 phút giá 80.000. Khung qua nửa đêm (ví dụ 22:00 – 02:00) tính theo ngày bắt đầu khung. Khung giá theo giờ Việt Nam."
+  },
+  {
+   "id": "tinh-gio#cac-viec-thuong-lam-lam-tron-theo-block-choi-toi-thieu",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Các việc thường làm",
+   "title": "Làm tròn theo block, chơi tối thiểu",
+   "text": "Quán muốn tính tròn mỗi 15 / 30 phút hoặc tối thiểu 1 giờ:\n1. Trong hộp \"Đặt giá giờ\", mở \"Giá theo giờ & làm tròn\".\n2. \"Tính tiền theo\": \"Từng phút\" (mặc định) hoặc \"Mỗi 5 phút\" … \"Mỗi 1 giờ\". Chơi lố sang block mới thì tính trọn block đó, ví dụ mỗi 30 phút: chơi 47 phút tính 1 giờ.\n3. \"Ân hạn\" (khi đã chọn block): lố không quá số phút này thì chưa tính sang block mới, ví dụ ân hạn 5 phút: chơi 33 phút vẫn tính 30.\n4. \"Chơi tối thiểu\": chơi ít hơn thì vẫn tính đủ, ví dụ tối thiểu 1 giờ: chơi 20 phút tính 1 giờ.\n5. Bấm \"Lưu\".\n\nTrên hoá đơn, dòng tiền giờ ghi rõ: làm tròn thì \"chơi 47 phút, tính 1 giờ × 60.000 đ/giờ\"; nhiều giá thì \"47 phút (27 phút × 60.000 + 20 phút × 90.000 đ/giờ)\". Khối \"ĐANG TÍNH GIỜ\" trong bàn ghi giá đang áp lúc này và báo trước giờ sắp đổi giá, ví dụ \"Từ 17:00: 80.000 đ/giờ\"."
   },
   {
    "id": "tinh-gio#cac-viec-thuong-lam-bo-tinh-gio-cho-mot-ban",
@@ -3625,6 +3641,14 @@
    "section": "Các việc thường làm",
    "title": "Nhắc gọi khách trước giờ đặt",
    "text": "Còn 30 phút tới giờ đặt, app bật hộp \"Sắp tới giờ đặt\" kèm chuông, ghi bàn, giờ, tên và số điện thoại khách. Bấm \"Gọi khách\" để gọi, rồi bấm \"Đã nhắc\". Một người bấm \"Đã nhắc\" thì máy khác không nhắc nữa, và lịch ghi giờ đã nhắc. Hộp nhắc chỉ hiện khi app đang mở; app đang tắt thì không có thông báo. Lượt đặt khi còn dưới 30 phút tới giờ thì không nhắc."
+  },
+  {
+   "id": "tinh-gio#loi-may-chu-chua-co-khung-gia-gio-bao-chu-app-cap-nhat-may-chu",
+   "module": "tinh_gio",
+   "module_name": "Các hoạt động tính giờ",
+   "section": "Lỗi thường gặp",
+   "title": "\"Máy chủ chưa có khung giá giờ. Báo chủ app cập nhật máy chủ.\"",
+   "text": "Vì sao: Máy chủ của quán chưa được nâng cấp phần khung giá / làm tròn\nLàm gì: Báo chủ app; trong lúc chờ vẫn đặt được giá một giờ như cũ (để phần \"Giá theo giờ & làm tròn\" ở mặc định)"
   },
   {
    "id": "tinh-gio#loi-giu-lau-vao-ban-khong-thay-dat-gia-gio",
